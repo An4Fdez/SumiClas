@@ -1,0 +1,44 @@
+# ---- Node / React (apps/frontend) ----
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.local
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+.parcel-cache/
+.vite/
+.turbo/
+
+# ---- .NET (apps/backend) ----
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+appsettings.Local.json
+appsettings.*.Local.json
+*.pfx
+
+# ---- IDE / editores ----
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# ---- Sistema operativo ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+logs/

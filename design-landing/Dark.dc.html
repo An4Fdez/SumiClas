@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{
+      --bg:#1C1A18; --surface:#262320; --text:#F2EEE8; --text2:#B0A99F;
+      --accent:#D98F5F; --accent2:#74A886; --alert:#D97873; --border:#38332E;
+      --on-accent:#241C16;
+    }
+    body{ margin:0; font-family:'Work Sans', sans-serif; }
+    h1,h2,h3{ font-family:'Sora', sans-serif; margin:0; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ color:#f0ab7c; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; font-family:'Work Sans',sans-serif; font-weight:600; cursor:pointer; border:none; }
+    .btn-primary{ background:var(--accent); color:var(--on-accent); }
+  </style>
+</helmet>
+
+<div style="width:1440px; background:var(--bg); color:var(--text);">
+
+  <!-- HEADER -->
+  <div style="position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; height:76px; padding:0 120px; background:rgba(28,26,24,0.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--border);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" fill="#D98F5F"/><path d="M7.5 9.5H16.5" stroke="#241C16" stroke-width="1.75" stroke-linecap="round"/><path d="M7.5 13H13.5" stroke="#241C16" stroke-width="1.75" stroke-linecap="round"/></svg>
+      <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:20px;">SumiClas</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:28px;">
+      <div style="width:38px; height:38px; border-radius:10px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text2)" stroke="none"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
+      </div>
+      <a href="#" style="font-size:15px; color:var(--text); font-weight:500;">Iniciar sesión</a>
+      <button class="btn btn-primary" style="padding:12px 22px; font-size:15px;">Buscar mi colegio</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div style="display:flex; align-items:center; gap:64px; padding:96px 120px 100px; max-width:1440px; box-sizing:border-box;">
+    <div style="flex:1 1 0; display:flex; flex-direction:column; gap:26px;">
+      <h1 style="font-size:46px; line-height:1.18; font-weight:700; letter-spacing:-0.5px;">Todo lo del cole de tus hijos, en un solo sitio.<br><span style="color:var(--accent);">Sin perderte nada entre 200 mensajes de WhatsApp.</span></h1>
+      <p style="font-size:18px; line-height:1.55; color:var(--text2); font-weight:400; max-width:520px;">Avisos, calendario, deberes y gastos de clase organizados por tema — con un resumen semanal automático para no tener que leerlo todo.</p>
+      <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start;">
+        <button class="btn btn-primary" style="padding:18px 32px; font-size:17px;">Buscar mi colegio
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <div style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text2);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Gratis durante la Beta · Verificamos tu colegio antes de darte acceso
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1 1 0; display:flex; justify-content:center;">
+      <div style="width:420px; background:var(--surface); border-radius:20px; box-shadow:0 24px 60px -20px rgba(0,0,0,0.55); border:1px solid var(--border); overflow:hidden;">
+        <div style="padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:16px;">Avisos</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div style="display:flex; flex-direction:column;">
+          <div style="display:flex; gap:14px; padding:16px 22px; border-bottom:1px solid var(--border); align-items:flex-start;">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--alert); margin-top:6px; flex-shrink:0;"></div>
+            <div><div style="font-weight:600; font-size:14.5px;">Excursión al museo — jueves</div><div style="font-size:13px; color:var(--text2); margin-top:3px;">Traer autorización firmada</div></div>
+          </div>
+          <div style="display:flex; gap:14px; padding:16px 22px; border-bottom:1px solid var(--border); align-items:flex-start;">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:6px; flex-shrink:0;"></div>
+            <div><div style="font-weight:600; font-size:14.5px;">Examen de mates — viernes</div><div style="font-size:13px; color:var(--text2); margin-top:3px;">Temas 4 y 5 del libro</div></div>
+          </div>
+          <div style="display:flex; gap:14px; padding:16px 22px; align-items:flex-start;">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--accent2); margin-top:6px; flex-shrink:0;"></div>
+            <div><div style="font-weight:600; font-size:14.5px;">Cumpleaños de Martina — sábado</div><div style="font-size:13px; color:var(--text2); margin-top:3px;">Se puede llevar algo para compartir</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOLOR -> SOLUCION -->
+  <div style="padding:0 120px 100px;">
+    <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0; border:1px solid var(--border); border-radius:20px; overflow:hidden;">
+      <div style="padding:44px 48px; display:flex; flex-direction:column; gap:22px; border-right:1px solid var(--border);">
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:15px; color:var(--text2); text-transform:uppercase; letter-spacing:0.06em;">Así es ahora</span>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:var(--alert); font-size:18px; line-height:1.4;">✕</span><span style="font-size:16px; line-height:1.5;">Mensajes duplicados en el grupo de WhatsApp</span></div>
+          <div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:var(--alert); font-size:18px; line-height:1.4;">✕</span><span style="font-size:16px; line-height:1.5;">Información importante perdida entre el ruido</span></div>
+          <div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:var(--alert); font-size:18px; line-height:1.4;">✕</span><span style="font-size:16px; line-height:1.5;">Avisos urgentes que nadie ve a tiempo</span></div>
+        </div>
+      </div>
+      <div style="padding:44px 48px; display:flex; flex-direction:column; gap:22px; background:var(--surface);">
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:15px; color:var(--accent2); text-transform:uppercase; letter-spacing:0.06em;">Así es con SumiClas</span>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; gap:12px; align-items:flex-start;"><svg width="18" height="18" style="margin-top:2px; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:16px; line-height:1.5;">Cada aviso en su sitio, sin duplicados</span></div>
+          <div style="display:flex; gap:12px; align-items:flex-start;"><svg width="18" height="18" style="margin-top:2px; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:16px; line-height:1.5;">Todo organizado y siempre disponible</span></div>
+          <div style="display:flex; gap:12px; align-items:flex-start;"><svg width="18" height="18" style="margin-top:2px; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:16px; line-height:1.5;">Lo urgente destaca de verdad, porque no abusamos del rojo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div style="padding:0 120px 100px; display:flex; flex-direction:column; gap:44px;">
+    <div style="text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center;">
+      <h2 style="font-size:32px; font-weight:700;">Todo lo que necesitas, en un mismo sitio</h2>
+      <p style="font-size:16px; color:var(--text2); max-width:520px;">Cada sección resuelve algo concreto — sin ruido, sin buscar entre mensajes.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:24px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(217,143,95,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Avisos</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Cada aviso donde debe estar, no perdido entre 200 mensajes.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(217,143,95,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Calendario</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Todas las fechas del cole en un único calendario, sin líos.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(217,143,95,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Deberes</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Los deberes de cada día, claros y sin preguntarle dos veces al niño.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(217,143,95,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6.5" width="19" height="12" rx="2.5"/><path d="M2.5 10.5h19"/><circle cx="7" cy="14.5" r="1"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Gastos de clase</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Sabrás exactamente cuánto te toca pagar del regalo de la profe, sin preguntarlo en el grupo.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(217,143,95,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Objetos perdidos</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Encuentra la chaqueta perdida sin publicar una foto en el grupo.</p>
+      </div>
+      <div style="background:linear-gradient(160deg,#D98F5F,#B5673A); border-radius:16px; padding:28px; display:flex; flex-direction:column; gap:14px; color:#241C16;">
+        <div style="width:44px; height:44px; border-radius:12px; background:rgba(36,28,22,0.16); display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#241C16" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Resumen semanal con IA</span>
+        <p style="font-size:14.5px; line-height:1.5; margin:0; opacity:0.85;">Un resumen automático de tu semana, para no tener que leerlo todo.</p>
+        <div style="background:rgba(36,28,22,0.14); border-radius:10px; padding:12px 14px; font-size:13px; line-height:1.5; font-style:italic;">"Esta semana: excursión al museo el jueves (traer autorización firmada), examen de mates el viernes, cumpleaños de Martina el sábado."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL PROOF -->
+  <div style="padding:0 120px 100px; display:flex; flex-direction:column; gap:36px;">
+    <div style="text-align:center; display:flex; flex-direction:column; gap:10px; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:18px;">4.8/5</span>
+        <span style="font-size:15px; color:var(--text2);">· basado en 127 familias de la Beta</span>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:20px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:3px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p style="font-size:14px; line-height:1.55; margin:0;">"Antes se me pasaban las autorizaciones de las excursiones entre tanto mensaje. Ahora las veo directas en Avisos."</p>
+        <span style="font-size:13px; color:var(--text2); font-weight:500;">Laura M., madre de 2º de Primaria</span>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:3px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p style="font-size:14px; line-height:1.55; margin:0;">"El resumen semanal es lo mejor. Me lo leo el domingo por la noche y ya sé todo lo que viene."</p>
+        <span style="font-size:13px; color:var(--text2); font-weight:500;">Javier R., padre de 4º de Primaria</span>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:3px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p style="font-size:14px; line-height:1.55; margin:0;">"Dejamos de discutir en el grupo por lo del regalo de fin de curso. Ahora está todo clarísimo en Gastos de clase."</p>
+        <span style="font-size:13px; color:var(--text2); font-weight:500;">Marta S., madre de 1º de ESO</span>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:3px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p style="font-size:14px; line-height:1.55; margin:0;">"Mi hijo se dejó la chaqueta en el comedor y la encontramos gracias a Objetos perdidos, sin publicar nada en el grupo."</p>
+        <span style="font-size:13px; color:var(--text2); font-weight:500;">Carlos P., padre de 3º de Primaria</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMO FUNCIONA -->
+  <div style="padding:0 120px 100px; display:flex; flex-direction:column; gap:44px;">
+    <h2 style="font-size:32px; font-weight:700; text-align:center;">Cómo funciona</h2>
+    <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:32px;">
+      <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start;">
+        <div style="width:48px; height:48px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-family:'Sora',sans-serif; font-weight:700; font-size:19px; display:flex; align-items:center; justify-content:center;">1</div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Busca tu colegio</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Lo verificamos contra el listado oficial antes de darte acceso.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start;">
+        <div style="width:48px; height:48px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-family:'Sora',sans-serif; font-weight:700; font-size:19px; display:flex; align-items:center; justify-content:center;">2</div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Únete a la clase</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Con el código de invitación de la clase de tu hijo.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start;">
+        <div style="width:48px; height:48px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-family:'Sora',sans-serif; font-weight:700; font-size:19px; display:flex; align-items:center; justify-content:center;">3</div>
+        <span style="font-family:'Sora',sans-serif; font-weight:700; font-size:17px;">Empieza a ver todo</span>
+        <p style="font-size:14.5px; color:var(--text2); line-height:1.5; margin:0;">Avisos, calendario y deberes, al momento.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA FINAL + FAQ -->
+  <div style="padding:0 120px 100px; display:flex; flex-direction:column; gap:64px;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:64px; display:flex; flex-direction:column; align-items:center; gap:22px; text-align:center;">
+      <h2 style="font-size:30px; font-weight:700; max-width:560px;">¿Listo para dejar de perderte cosas importantes?</h2>
+      <button class="btn btn-primary" style="padding:18px 32px; font-size:17px;">Buscar mi colegio</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:20px; max-width:760px; margin:0 auto; width:100%;">
+      <h3 style="font-size:22px; font-weight:700; text-align:center;">Preguntas frecuentes</h3>
+      <div style="display:flex; flex-direction:column; border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border); background:var(--surface);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:600; font-size:15.5px;">¿Esto sustituye al grupo de WhatsApp del cole?</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg);"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <p style="font-size:14.5px; color:var(--text2); line-height:1.55; margin:14px 0 0;">No lo sustituye del todo, pero concentra todo lo importante (avisos, fechas, deberes) en un sitio ordenado, para que no dependas de leer 200 mensajes.</p>
+        </div>
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border);"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:600; font-size:15.5px;">¿Es gratis?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border);"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:600; font-size:15.5px;">¿Qué pasa con los datos de mi hijo?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div style="padding:20px 24px;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:600; font-size:15.5px;">¿Puede unirse el profesor o el AMPA?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="border-top:1px solid var(--border); padding:40px 120px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" fill="#D98F5F"/><path d="M7.5 9.5H16.5" stroke="#241C16" stroke-width="1.75" stroke-linecap="round"/><path d="M7.5 13H13.5" stroke="#241C16" stroke-width="1.75" stroke-linecap="round"/></svg>
+      <span style="font-size:14px; color:var(--text2);">© 2026 SumiClas</span>
+    </div>
+    <div style="display:flex; gap:32px;">
+      <a href="#" style="font-size:14px; color:var(--text2);">Política de privacidad</a>
+      <a href="#" style="font-size:14px; color:var(--text2);">Términos y condiciones</a>
+      <a href="#" style="font-size:14px; color:var(--text2);">Contacto</a>
+      <a href="#" style="font-size:14px; color:var(--text2);">Iniciar sesión</a>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
