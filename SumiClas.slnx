@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/apps/" />
+  <Folder Name="/apps/backend/" />
+  <Folder Name="/apps/backend/api/">
+    <Project Path="apps/backend/api/SumiClas.Api.csproj" />
+  </Folder>
+  <Folder Name="/apps/backend/src/">
+    <Project Path="apps/backend/src/SumiClas/SumiClas.csproj" />
+  </Folder>
+  <Folder Name="/apps/frontend/">
+    <Project Path="apps/frontend/sumiclas-web/sumiClas-web.esproj">
+      <BuildType Project="Debug" />
+      <Build />
+    </Project>
+  </Folder>
+  <Folder Name="/apps/test/" />
+  <Folder Name="/solutionItems/">
+    <File Path=".gitignore" />
+    <File Path="Readme.md" />
+  </Folder>
+</Solution>

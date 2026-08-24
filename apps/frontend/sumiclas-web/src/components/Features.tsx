@@ -1,7 +1,7 @@
 import { Reveal } from './Reveal';
 import { featureMeta, type FeatureKey } from './featureMeta';
 
-type Color = 'rose' | 'brand' | 'mint' | 'sun';
+type Color = 'rose' | 'brand' | 'mint' | 'sun' | 'violet' | 'orange';
 
 const features: {
   key: FeatureKey;
@@ -19,7 +19,7 @@ const features: {
     key: 'calendario',
     title: 'Calendario',
     text: 'Excursiones, reuniones y actividades por clase o colegio. Cumpleaños como capa opcional, con icono propio.',
-    color: 'brand',
+    color: 'violet',
   },
   {
     key: 'deberes',
@@ -37,7 +37,7 @@ const features: {
     key: 'perdidos',
     title: 'Objetos perdidos',
     text: 'Tablón simple de buscado / encontrado, visible para toda la clase o todo el colegio según lo marques.',
-    color: 'rose',
+    color: 'orange',
   },
   {
     key: 'resumen',
@@ -71,6 +71,18 @@ const colorClasses: Record<Color, { bg: string; text: string; ring: string; glow
     text: 'text-sun-600 dark:text-sun-300',
     ring: 'group-hover:border-sun-300 dark:group-hover:border-sun-700',
     glow: 'group-hover:shadow-sun-500/20',
+  },
+  violet: {
+    bg: 'bg-violet-100 dark:bg-violet-900/40',
+    text: 'text-violet-600 dark:text-violet-300',
+    ring: 'group-hover:border-violet-300 dark:group-hover:border-violet-700',
+    glow: 'group-hover:shadow-violet-500/20',
+  },
+  orange: {
+    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    text: 'text-orange-600 dark:text-orange-300',
+    ring: 'group-hover:border-orange-300 dark:group-hover:border-orange-700',
+    glow: 'group-hover:shadow-orange-500/20',
   },
 };
 

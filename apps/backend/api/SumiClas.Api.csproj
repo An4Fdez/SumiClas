@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Configurations>Debug;Production</Configurations>
+        <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+        <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
+        <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+        <Nullable>enable</Nullable>
+        <SpaRoot>..\..\frontend\sumiclas-web\</SpaRoot>
+        <SpaProxyServerUrl>https://localhost:4004</SpaProxyServerUrl>
+        <SpaProxyLaunchCommand>pnpm run dev -- --m $(Configuration.toLower())</SpaProxyLaunchCommand>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11"/>
+        <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.11" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\src\SumiClas\SumiClas.csproj" />
+    </ItemGroup>
+
+    <!--https://github.com/paketo-buildpacks/dotnet-publish/issues/613-->
+    <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
+        <!-- Ensure Node.js is installed -->
+        <Exec Command="node --version" ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+        </Exec>
+        <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE."/>
+        <Message Importance="high" Text="Restoring dependencies using 'pnpm'. This may take several minutes..."/>
+        <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm install"/>
+    </Target>
+
+    <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+        <Exec WorkingDirectory="$(SpaRoot) " Command="pnpm install"/>
+        <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm run build -- --m $(Configuratíon.toLower())"/>
+
+        <ItemGroup>
+            <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)') " Exclude="@(ResolvedFileToPublish)">
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
+                <ExcludeFromSingLeFile>true</ExcludeFromSingLeFile>
+            </ResolvedFileToPublish>
+            <DistFiles Include="$(SpaRoot)dist\**"/>
+        </ItemGroup>
+    </Target>
+</Project>

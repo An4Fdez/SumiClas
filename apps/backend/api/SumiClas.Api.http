@@ -1,0 +1,6 @@
+@SumiClas_HostAddress = http://localhost:5011
+
+GET {{SumiClas_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

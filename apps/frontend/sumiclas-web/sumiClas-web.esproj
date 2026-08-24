@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/0.5.62-alpha">
+  <!-- See https://youtrack.jetbrains.com/issue/RIDER-91987 -->
+  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <FrameworkPathOverride>C: \Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.5\mscorlib.dll</FrameworkPathOverride>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OS)' == 'Unix' ">
+    <FrameworkPathOverride>/snap/dotnet-sdk/current/shared/Microsoft.NETCore.App/7.0.5/mscorLib.dll</FrameworkPathOverride>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <StartupCommand>pnpm run dev</StartupCommand>
+    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
+    <!-- Allows the build (or compile) script located on package.json to run on Build -->
+    <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <!-- Folder where production build objects will be placed -->
+    <PublishAssetsDirectory>$(MSBuildProjectDirectory)\dist</PublishAssetsDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
+    <JavaScriptTestFramework>Jest</JavaScriptTestFramework>
+    <StartupCommand>set BROWSER=none&amp;&amp;pnpm start</StartupCommand>
+    <Platforms>AnyCPU</Platforms>
+    <Configurations>Debug;Production</Configurations>
+    <ProductionBuildCommand>pnpm run build</ProductionBuildCommand>
+    <BuildOutputFolder>$(MSBuildProjectDirectory)\build</BuildOutputFolder>
+  </PropertyGroup>
+</Project>

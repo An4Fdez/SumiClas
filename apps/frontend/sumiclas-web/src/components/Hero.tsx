@@ -139,7 +139,7 @@ function PhoneMockup() {
           {/* Notice cards */}
           <div className="space-y-2 px-4 pb-5">
             <NoticeCard color="rose" icon={<Bell className="h-3.5 w-3.5" />} title="Mañana no hay clase" meta="Toda la clase · Tutora" priority />
-            <NoticeCard color="brand" icon={<Calendar className="h-3.5 w-3.5" />} title="Excursión al museo — jueves" meta="Toda la clase · Delegada" />
+            <NoticeCard color="violet" icon={<Calendar className="h-3.5 w-3.5" />} title="Excursión al museo — jueves" meta="Toda la clase · Delegada" />
             <NoticeCard color="mint" icon={<BookOpen className="h-3.5 w-3.5" />} title="Examen de mates — viernes" meta="Toda la clase · Tutora" />
             <NoticeCard color="sun" icon={<CheckCircle2 className="h-3.5 w-3.5" />} title="Regalo profe: 18 de 24 pagados" meta="Toda la clase · Delegada" />
           </div>
@@ -149,13 +149,14 @@ function PhoneMockup() {
   );
 }
 
-type NoticeColor = 'rose' | 'brand' | 'mint' | 'sun';
+type NoticeColor = 'rose' | 'brand' | 'mint' | 'sun' | 'violet';
 
 const colorMap: Record<NoticeColor, string> = {
   rose: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300',
   brand: 'bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300',
   mint: 'bg-mint-100 text-mint-600 dark:bg-mint-900/40 dark:text-mint-300',
   sun: 'bg-sun-100 text-sun-600 dark:bg-sun-900/40 dark:text-sun-300',
+  violet: 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300',
 };
 
 function NoticeCard({

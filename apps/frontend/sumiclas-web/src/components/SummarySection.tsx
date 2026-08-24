@@ -63,7 +63,7 @@ export function SummarySection() {
                 </p>
 
                 <div className="mt-4 space-y-3">
-                  <SummaryItem icon={<Calendar className="h-4 w-4" />} color="brand" text="Jueves: excursión al museo. Traer autorización firmada." />
+                  <SummaryItem icon={<Calendar className="h-4 w-4" />} color="violet" text="Jueves: excursión al museo. Traer autorización firmada." />
                   <SummaryItem icon={<BookOpen className="h-4 w-4" />} color="mint" text="Viernes: examen de matemáticas (temas 3 y 4)." />
                   <SummaryItem icon={<Gift className="h-4 w-4" />} color="rose" text="Sábado: cumpleaños de Martina." />
                 </div>
@@ -81,12 +81,13 @@ export function SummarySection() {
   );
 }
 
-type ItemColor = 'brand' | 'mint' | 'rose';
+type ItemColor = 'brand' | 'mint' | 'rose' | 'violet';
 
 const itemColors: Record<ItemColor, string> = {
   brand: 'bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300',
   mint: 'bg-mint-100 text-mint-600 dark:bg-mint-900/40 dark:text-mint-300',
   rose: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300',
+  violet: 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300',
 };
 
 function SummaryItem({ icon, color, text }: { icon: React.ReactNode; color: ItemColor; text: string }) {
