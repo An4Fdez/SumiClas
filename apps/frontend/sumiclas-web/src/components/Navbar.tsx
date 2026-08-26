@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X, Moon, Sun, LogIn } from 'lucide-react';
 import { Logo } from './Logo';
 import { useTheme } from '@/hooks/useTheme';
@@ -31,9 +32,9 @@ export function Navbar() {
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <a href="#top" className="shrink-0">
+        <Link to="/" className="shrink-0">
           <Logo />
-        </a>
+        </Link>
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-1 md:flex">
@@ -58,13 +59,13 @@ export function Navbar() {
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
 
-          <a
-            href="#login"
+          <Link
+            to="/login"
             className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white sm:flex"
           >
             <LogIn className="h-4 w-4" />
             Iniciar sesión
-          </a>
+          </Link>
 
           <a
             href="#buscar-colegio"
@@ -100,13 +101,13 @@ export function Navbar() {
               </li>
             ))}
             <li>
-              <a
-                href="#login"
+              <Link
+                to="/login"
                 onClick={() => setOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Iniciar sesión
-              </a>
+              </Link>
             </li>
             <li className="pt-2">
               <a
