@@ -1,41 +1,42 @@
+using Asp.Versioning;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddApiVersioning(versionOptions =>
+{
+    versionOptions.AssumeDefaultVersionWhenUnspecified = true;
+    versionOptions.ApiVersionReader = new HeaderApiVersionReader("X-Api-Version");
+    versionOptions.DefaultApiVersion = new ApiVersion(1, 0);
+}).AddApiExplorer(explorerOptions => { explorerOptions.GroupNameFormat = "'v'VVV"; }).AddOpenApi();
+
+builder.Services.AddHealthChecks();
+
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().WithDocumentPerVersion();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
+app.UseSwaggerUI(swaggerUiOptions =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+    if (app.DescribeApiVersions().Reverse().Any())
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
+        foreach (var apiVersion in app.DescribeApiVersions().Reverse())
+        {
+            swaggerUiOptions.SwaggerEndpoint($"/swagger/{apiVersion.GroupName}.json",
+                apiVersion.GroupName.ToUpperInvariant());
+        }
+        
+    }
 
+});
+
+app.MapHealthChecks("/healthy");
+app.UseHttpsRedirection();
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
