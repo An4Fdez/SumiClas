@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Moon, Sun, LogIn, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
 import { useTheme } from '@/hooks/useTheme';
@@ -15,6 +15,12 @@ const links = [
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
+  // Navbar/Layout no se desmonta al navegar entre rutas públicas (Login, Registro,
+  // Onboarding comparten el mismo <Layout/>), así que sin esto la sesión/nombre
+  // quedarían "congelados" con el valor que tenían al montarse por primera vez.
+  // useLocation() fuerza una re-renderización en cada cambio de ruta para releer
+  // localStorage siempre con el dato más reciente.
+  useLocation();
   const conectado = isAuthenticated();
   const tutor = conectado ? getTutorInfo() : null;
   const nombreTutor = tutor?.nombre ?? 'Mi cuenta';

@@ -3,6 +3,9 @@ import { Layout } from '@/components/layout/Layout';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
+import Registro from '@/pages/Registro';
+import Terminos from '@/pages/Terminos';
+import Privacidad from '@/pages/Privacidad';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import Avisos from '@/pages/Avisos';
@@ -19,6 +22,9 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/terminos" element={<Terminos />} />
+        <Route path="/privacidad" element={<Privacidad />} />
         <Route path="/onboarding" element={<Onboarding />} />
       </Route>
 

@@ -112,10 +112,10 @@ export default function Login() {
           <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             ¿No tienes cuenta?{' '}
             <Link
-              to="/onboarding"
+              to="/registro"
               className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              Busca tu colegio y crea tu clase
+              Regístrate
             </Link>
           </p>
         </div>
