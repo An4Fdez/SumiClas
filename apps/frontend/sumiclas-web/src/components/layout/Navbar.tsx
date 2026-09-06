@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Moon, Sun, LogIn, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
@@ -14,27 +14,13 @@ const links = [
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const conectado = isAuthenticated();
   const tutor = conectado ? getTutorInfo() : null;
   const nombreTutor = tutor?.nombre ?? 'Mi cuenta';
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'border-b border-slate-200/70 bg-white/80 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/70'
-          : 'border-b border-transparent bg-transparent'
-      }`}
-    >
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/70">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link to="/" className="shrink-0">
           <Logo />

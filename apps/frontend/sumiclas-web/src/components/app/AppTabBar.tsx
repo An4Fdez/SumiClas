@@ -14,7 +14,7 @@ const tabs: { to: string; label: string; icon: LucideIcon }[] = [
 export function AppTabBar() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex max-w-5xl items-stretch justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-stretch justify-between px-4 sm:px-6 lg:px-8">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}

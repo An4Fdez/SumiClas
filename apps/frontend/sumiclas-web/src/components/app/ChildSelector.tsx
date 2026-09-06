@@ -58,7 +58,7 @@ export function ChildSelector() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+        className="flex min-w-0 items-center gap-2.5 rounded-xl px-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
       >
         <Avatar nombre={hijoActual.alumnoNombre} />
         {label}
