@@ -1,3 +1,5 @@
+import type { ClassRole } from '@/lib/roles';
+
 export type HijoContexto = {
   id: string;
   alumnoNombre: string;
@@ -53,4 +55,23 @@ export const resumenPorHijo: Record<string, ResumenSecciones> = {
     gastos: { pendiente: false },
     objetosPerdidos: { hayNovedades: false },
   },
+};
+
+export type OtroTutor = {
+  id: string;
+  nombre: string;
+  rol: ClassRole;
+};
+
+export const rolClasePorHijo: Record<string, ClassRole> = {
+  h1: 'delegado',
+  h2: 'participante',
+};
+
+export const otrosTutoresPorHijo: Record<string, OtroTutor[]> = {
+  h1: [
+    { id: 't1', nombre: 'Carlos Gómez', rol: 'participante' },
+    { id: 't2', nombre: 'Laura Sáez', rol: 'participante' },
+  ],
+  h2: [{ id: 't3', nombre: 'Marta Ibáñez', rol: 'delegado' }],
 };

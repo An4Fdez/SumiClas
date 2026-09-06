@@ -30,6 +30,7 @@ export default function Onboarding() {
   const [colegio, setColegio] = useState<Colegio | null>(null);
   const [clase, setClase] = useState<Clase | null>(null);
   const [customClases, setCustomClases] = useState<Clase[]>([]);
+  const [claseEsNueva, setClaseEsNueva] = useState(false);
 
   const clasesDelColegio = colegio
     ? [...clasesMock, ...customClases].filter((c) => c.colegioId === colegio.id)
@@ -51,6 +52,7 @@ export default function Onboarding() {
 
   const handleSelectClase = (c: Clase) => {
     setClase(c);
+    setClaseEsNueva(false);
     setStep(3);
   };
 
@@ -64,6 +66,7 @@ export default function Onboarding() {
     const nueva: Clase = { id: `custom-${Date.now()}`, colegioId: colegio.id, nombre };
     setCustomClases((prev) => [...prev, nueva]);
     setClase(nueva);
+    setClaseEsNueva(true);
     setStep(3);
   };
 
@@ -82,6 +85,7 @@ export default function Onboarding() {
         clase: clase?.nombre,
         alumno: `${data.nombre} ${data.apellido.charAt(0)}.`,
         segundoTutor: data.unirseComoSegundoTutor,
+        rolAsignado: claseEsNueva ? 'delegado' : 'participante',
       },
     });
   };

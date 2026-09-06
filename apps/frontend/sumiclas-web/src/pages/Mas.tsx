@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { UserRound, Bell, HelpCircle, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
+import { UserRound, Bell, HelpCircle, ShieldCheck, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
 import { setAuthenticated } from '@/lib/auth';
 
 const items: { icon: LucideIcon; label: string; href: string }[] = [
@@ -16,6 +16,16 @@ export default function Mas() {
       </h1>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <Link
+          to="/mas/rol"
+          className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
+        >
+          <ShieldCheck className="h-4 w-4 text-slate-400" />
+          <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+            Mi rol en la clase
+          </span>
+          <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+        </Link>
         {items.map((item) => (
           <a
             key={item.label}

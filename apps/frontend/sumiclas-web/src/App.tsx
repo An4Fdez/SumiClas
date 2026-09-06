@@ -11,6 +11,7 @@ import Deberes from '@/pages/Deberes';
 import Gastos from '@/pages/Gastos';
 import ObjetosPerdidos from '@/pages/ObjetosPerdidos';
 import Mas from '@/pages/Mas';
+import RolClase from '@/pages/RolClase';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/gastos" element={<Gastos />} />
         <Route path="/objetos-perdidos" element={<ObjetosPerdidos />} />
         <Route path="/mas" element={<Mas />} />
+        <Route path="/mas/rol" element={<RolClase />} />
       </Route>
     </Routes>
   );

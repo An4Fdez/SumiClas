@@ -1,6 +1,8 @@
 import { useState, type FocusEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useChildContext } from '@/hooks/useChildContext';
+import { badgeColorClasses } from '@/lib/colorClasses';
+import { roleMeta } from '@/lib/roles';
 
 function Avatar({ nombre }: { nombre: string }) {
   return (
@@ -10,8 +12,20 @@ function Avatar({ nombre }: { nombre: string }) {
   );
 }
 
+function RoleBadge({ rol }: { rol: 'delegado' | 'participante' }) {
+  const meta = roleMeta[rol];
+  const c = badgeColorClasses[meta.color];
+  return (
+    <span
+      className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold sm:inline-block ${c.bg} ${c.text}`}
+    >
+      {meta.label}
+    </span>
+  );
+}
+
 export function ChildSelector() {
-  const { hijos, hijoActual, setHijoActualId } = useChildContext();
+  const { hijos, hijoActual, setHijoActualId, rolActual } = useChildContext();
   const [open, setOpen] = useState(false);
 
   if (!hijoActual) return null;
@@ -30,6 +44,7 @@ export function ChildSelector() {
       <div className="flex min-w-0 items-center gap-2.5">
         <Avatar nombre={hijoActual.alumnoNombre} />
         {label}
+        {rolActual && <RoleBadge rol={rolActual} />}
       </div>
     );
   }
@@ -47,6 +62,7 @@ export function ChildSelector() {
       >
         <Avatar nombre={hijoActual.alumnoNombre} />
         {label}
+        {rolActual && <RoleBadge rol={rolActual} />}
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
         />

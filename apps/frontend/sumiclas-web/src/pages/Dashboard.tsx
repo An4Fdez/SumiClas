@@ -5,12 +5,14 @@ import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
 import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses, type PaletteColor } from '@/lib/colorClasses';
 import { resumenIAPorHijo } from '@/data/appMock';
+import { roleMeta, type ClassRole } from '@/lib/roles';
 
 type OnboardingState = {
   colegio?: string;
   clase?: string;
   alumno?: string;
   segundoTutor?: boolean;
+  rolAsignado?: ClassRole;
 };
 
 export default function Dashboard() {
@@ -36,7 +38,17 @@ export default function Dashboard() {
                   en <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.colegio}</strong>
                 </>
               )}
-              . ¡Bienvenido/a!
+              .{' '}
+              {onboardingState.rolAsignado && (
+                <>
+                  Se te ha asignado el rol de{' '}
+                  <strong className="font-semibold text-slate-900 dark:text-white">
+                    {roleMeta[onboardingState.rolAsignado].label}
+                  </strong>{' '}
+                  de esta clase.{' '}
+                </>
+              )}
+              ¡Bienvenido/a!
             </p>
           </div>
         </Reveal>
