@@ -1,9 +1,9 @@
-import { Hero } from '@/components/Hero';
-import { Problem } from '@/components/Problem';
-import { SummarySection } from '@/components/SummarySection';
-import { Features } from '@/components/Features';
-import { SocialProof } from '@/components/SocialProof';
-import { FinalCTA } from '@/components/FinalCTA';
+import { Hero } from '@/components/landing/Hero';
+import { Problem } from '@/components/landing/Problem';
+import { SummarySection } from '@/components/landing/SummarySection';
+import { Features } from '@/components/landing/Features';
+import { SocialProof } from '@/components/landing/SocialProof';
+import { FinalCTA } from '@/components/landing/FinalCTA';
 
 export default function Home() {
   return (

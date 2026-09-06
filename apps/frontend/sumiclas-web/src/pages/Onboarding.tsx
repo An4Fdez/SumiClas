@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, LayoutGrid, type LucideIcon } from 'lucide-react';
-import { Reveal } from '@/components/Reveal';
+import { Reveal } from '@/components/layout/Reveal';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';

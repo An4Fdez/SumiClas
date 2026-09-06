@@ -1,5 +1,5 @@
 import { Search, ArrowRight, Bell, Calendar, BookOpen, CheckCircle2, Sparkles } from 'lucide-react';
-import { Reveal } from './Reveal';
+import { Reveal } from '@/components/layout/Reveal';
 
 export function Hero() {
   return (

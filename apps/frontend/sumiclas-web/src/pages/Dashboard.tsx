@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Calendar, BookOpen, Wallet, PackageSearch, AlertCircle, Sparkles, type LucideIcon } from 'lucide-react';
-import { Reveal } from '@/components/Reveal';
+import { Reveal } from '@/components/layout/Reveal';
 import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
 import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses, type PaletteColor } from '@/lib/colorClasses';

@@ -1,8 +1,8 @@
 import { Link, Outlet } from 'react-router-dom';
 import { Moon, Sun } from 'lucide-react';
 import { Logo } from './Logo';
-import { ChildSelector } from './app/ChildSelector';
-import { AppTabBar } from './app/AppTabBar';
+import { ChildSelector } from '@/components/app/ChildSelector';
+import { AppTabBar } from '@/components/app/AppTabBar';
 import { ChildProvider } from '@/context/ChildProvider';
 import { useTheme } from '@/hooks/useTheme';
 

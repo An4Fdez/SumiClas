@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
-import { AppLayout } from '@/components/AppLayout';
+import { Layout } from '@/components/layout/Layout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
 import Onboarding from '@/pages/Onboarding';

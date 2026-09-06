@@ -1,5 +1,5 @@
-import { Reveal } from './Reveal';
-import { featureMeta, type FeatureKey } from './featureMeta';
+import { Reveal } from '@/components/layout/Reveal';
+import { featureMeta, type FeatureKey } from '@/data/featureMeta';
 
 type Color = 'rose' | 'brand' | 'mint' | 'sun' | 'violet' | 'orange';
 
