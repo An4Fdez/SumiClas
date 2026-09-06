@@ -7,6 +7,7 @@ import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';
 import { StudentStep } from '@/components/onboarding/StudentStep';
 import { colegiosMock, clasesMock, alumnosMock, type Colegio, type Clase } from '@/data/onboardingMock';
+import { setAuthenticated, setTutorInfo, type TutorRole } from '@/lib/auth';
 
 const stepMeta = [
   {
@@ -69,8 +70,12 @@ export default function Onboarding() {
   const handleConfirmAlumno = (data: {
     nombre: string;
     apellido: string;
+    tutorNombre: string;
+    tutorRol: TutorRole;
     unirseComoSegundoTutor: boolean;
   }) => {
+    setTutorInfo({ nombre: data.tutorNombre, rol: data.tutorRol });
+    setAuthenticated(true);
     navigate('/inicio', {
       state: {
         colegio: colegio?.nombre,

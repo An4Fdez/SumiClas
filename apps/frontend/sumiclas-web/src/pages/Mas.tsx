@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { UserRound, Bell, HelpCircle, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
+import { setAuthenticated } from '@/lib/auth';
 
 const items: { icon: LucideIcon; label: string; href: string }[] = [
   { icon: UserRound, label: 'Mi perfil', href: '#perfil' },
@@ -28,6 +29,7 @@ export default function Mas() {
         ))}
         <Link
           to="/"
+          onClick={() => setAuthenticated(false)}
           className="flex items-center gap-3 px-4 py-3.5 text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/15"
         >
           <LogOut className="h-4 w-4" />

@@ -2,13 +2,22 @@ import { useState, type FormEvent } from 'react';
 import { UserRound, ArrowRight, Users2 } from 'lucide-react';
 import type { AlumnoRegistrado } from '@/data/onboardingMock';
 import { normalizeText } from '@/lib/text';
+import type { TutorRole } from '@/lib/auth';
 
 type ConfirmPayload = {
   nombre: string;
   apellido: string;
+  tutorNombre: string;
+  tutorRol: TutorRole;
   unirseComoSegundoTutor: boolean;
   alumnoExistenteId?: string;
 };
+
+const rolOptions: { value: TutorRole; label: string }[] = [
+  { value: 'madre', label: 'Madre' },
+  { value: 'padre', label: 'Padre' },
+  { value: 'tutor', label: 'Tutor/a legal' },
+];
 
 export function StudentStep({
   alumnosEnClase,
@@ -19,6 +28,8 @@ export function StudentStep({
 }) {
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
+  const [tutorNombre, setTutorNombre] = useState('');
+  const [tutorRol, setTutorRol] = useState<TutorRole | null>(null);
   const [posiblesCoincidencias, setPosiblesCoincidencias] = useState<AlumnoRegistrado[] | null>(null);
 
   const buscarCoincidencias = () => {
@@ -31,13 +42,19 @@ export function StudentStep({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !apellido.trim()) return;
+    if (!nombre.trim() || !apellido.trim() || !tutorNombre.trim() || !tutorRol) return;
     const matches = buscarCoincidencias();
     if (matches.length > 0) {
       setPosiblesCoincidencias(matches);
       return;
     }
-    onConfirm({ nombre: nombre.trim(), apellido: apellido.trim(), unirseComoSegundoTutor: false });
+    onConfirm({
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      tutorNombre: tutorNombre.trim(),
+      tutorRol,
+      unirseComoSegundoTutor: false,
+    });
   };
 
   if (posiblesCoincidencias) {
@@ -64,7 +81,14 @@ export function StudentStep({
             <button
               type="button"
               onClick={() =>
-                onConfirm({ nombre, apellido, unirseComoSegundoTutor: true, alumnoExistenteId: al.id })
+                onConfirm({
+                  nombre,
+                  apellido,
+                  tutorNombre: tutorNombre.trim(),
+                  tutorRol: tutorRol as TutorRole,
+                  unirseComoSegundoTutor: true,
+                  alumnoExistenteId: al.id,
+                })
               }
               className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/25"
             >
@@ -76,7 +100,13 @@ export function StudentStep({
         <button
           type="button"
           onClick={() =>
-            onConfirm({ nombre: nombre.trim(), apellido: apellido.trim(), unirseComoSegundoTutor: false })
+            onConfirm({
+              nombre: nombre.trim(),
+              apellido: apellido.trim(),
+              tutorNombre: tutorNombre.trim(),
+              tutorRol: tutorRol as TutorRole,
+              unirseComoSegundoTutor: false,
+            })
           }
           className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
         >
@@ -131,6 +161,51 @@ export function StudentStep({
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           Solo se mostrará a otras familias como "{nombre || 'Nombre'} {apellido ? `${apellido.charAt(0)}.` : 'A.'}"
         </p>
+      </div>
+
+      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+        <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Tus datos</p>
+
+        <div>
+          <label
+            htmlFor="nombre-tutor"
+            className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300"
+          >
+            Tu nombre
+          </label>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition-colors focus-within:border-brand-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100 dark:border-slate-700 dark:bg-slate-800/60 dark:focus-within:border-brand-500 dark:focus-within:bg-slate-900 dark:focus-within:ring-brand-900/40">
+            <UserRound className="h-4 w-4 shrink-0 text-slate-400" />
+            <input
+              id="nombre-tutor"
+              type="text"
+              required
+              value={tutorNombre}
+              onChange={(e) => setTutorNombre(e.target.value)}
+              placeholder="Ana Ruiz"
+              className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <p className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">Eres su...</p>
+          <div className="grid grid-cols-3 gap-2">
+            {rolOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTutorRol(opt.value)}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
+                  tutorRol === opt.value
+                    ? 'border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/30 dark:text-brand-300'
+                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:border-slate-600'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <button

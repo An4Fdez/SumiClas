@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun, LogIn } from 'lucide-react';
+import { Menu, X, Moon, Sun, LogIn, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
 import { useTheme } from '@/hooks/useTheme';
+import { isAuthenticated, getTutorInfo } from '@/lib/auth';
 
 const links = [
   { label: 'Cómo funciona', href: '#como-funciona' },
@@ -15,6 +16,9 @@ export function Navbar() {
   const { theme, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const conectado = isAuthenticated();
+  const tutor = conectado ? getTutorInfo() : null;
+  const nombreTutor = tutor?.nombre ?? 'Mi cuenta';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -60,19 +64,12 @@ export function Navbar() {
           </button>
 
           <Link
-            to="/login"
+            to={conectado ? '/inicio' : '/login'}
             className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white sm:flex"
           >
-            <LogIn className="h-4 w-4" />
-            Iniciar sesión
+            {conectado ? <UserRound className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+            {conectado ? nombreTutor : 'Iniciar sesión'}
           </Link>
-
-          <a
-            href="#buscar-colegio"
-            className="hidden rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-transform hover:scale-[1.03] active:scale-95 md:inline-flex"
-          >
-            Buscar mi colegio
-          </a>
 
           {/* Mobile toggle */}
           <button
@@ -102,21 +99,12 @@ export function Navbar() {
             ))}
             <li>
               <Link
-                to="/login"
+                to={conectado ? '/inicio' : '/login'}
                 onClick={() => setOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                Iniciar sesión
+                {conectado ? nombreTutor : 'Iniciar sesión'}
               </Link>
-            </li>
-            <li className="pt-2">
-              <a
-                href="#buscar-colegio"
-                onClick={() => setOpen(false)}
-                className="block rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-center text-base font-semibold text-white shadow-lg shadow-brand-500/25"
-              >
-                Buscar mi colegio
-              </a>
             </li>
           </ul>
         </div>

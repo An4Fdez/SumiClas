@@ -1,7 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Bell, Calendar, BookOpen, CheckCircle2, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
+import { isAuthenticated } from '@/lib/auth';
 
 export function Hero() {
+  const navigate = useNavigate();
+
+  const handleBuscarColegio = () => {
+    navigate(isAuthenticated() ? '/onboarding' : '/login');
+  };
+
   return (
     <section id="top" className="relative overflow-hidden pt-28 pb-20 sm:pt-32 lg:pt-40 lg:pb-28">
       {/* Background decorations */}
@@ -56,7 +64,11 @@ export function Hero() {
                   placeholder="Escribe el nombre de tu colegio…"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
-                <button className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.03] active:scale-95">
+                <button
+                  type="button"
+                  onClick={handleBuscarColegio}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.03] active:scale-95"
+                >
                   Empezar
                   <ArrowRight className="h-4 w-4" />
                 </button>
