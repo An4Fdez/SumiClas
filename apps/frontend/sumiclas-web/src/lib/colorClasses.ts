@@ -8,3 +8,12 @@ export const badgeColorClasses: Record<PaletteColor, { bg: string; text: string 
   violet: { bg: 'bg-violet-100 dark:bg-violet-900/40', text: 'text-violet-600 dark:text-violet-300' },
   orange: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-600 dark:text-orange-300' },
 };
+
+export const dotColorClasses: Record<PaletteColor, string> = {
+  rose: 'bg-rose-500',
+  brand: 'bg-brand-500',
+  mint: 'bg-mint-500',
+  sun: 'bg-sun-500',
+  violet: 'bg-violet-500',
+  orange: 'bg-orange-500',
+};

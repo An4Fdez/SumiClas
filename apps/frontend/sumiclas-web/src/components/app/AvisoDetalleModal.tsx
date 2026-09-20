@@ -65,7 +65,7 @@ export function AvisoDetalleModal({
 
         {aviso.eventoRelacionado && (
           <Link
-            to="/calendario"
+            to={`/calendario?evento=${aviso.eventoRelacionado.id}`}
             className="mt-5 inline-flex items-center gap-1.5 rounded-xl border border-violet-200 px-3 py-2 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-900/20"
           >
             <ArrowUpRight className="h-4 w-4" />

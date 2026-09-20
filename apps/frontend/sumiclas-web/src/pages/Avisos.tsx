@@ -8,13 +8,8 @@ import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { getTutorInfo } from '@/lib/auth';
 import { roleMeta } from '@/lib/roles';
-import {
-  avisosClasePorHijo,
-  avisosColegioMock,
-  eventosCalendarioMock,
-  type Aviso,
-  type AvisoPrioridad,
-} from '@/data/avisosMock';
+import { avisosClasePorHijo, avisosColegioMock, type Aviso, type AvisoPrioridad } from '@/data/avisosMock';
+import { eventosCalendarioMock } from '@/data/calendarioMock';
 
 type FiltroAlcance = 'todos' | 'colegio' | 'clase';
 type FiltroLeido = 'no-leidos' | 'leidos' | null;

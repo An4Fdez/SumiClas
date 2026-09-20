@@ -1,10 +1,8 @@
+import { eventosCalendarioMock, type EventoRelacionado } from '@/data/calendarioMock';
+
+export type { EventoRelacionado };
 export type AvisoPrioridad = 'baja' | 'normal' | 'alta';
 export type AvisoAlcance = 'colegio' | 'clase';
-
-export type EventoRelacionado = {
-  id: string;
-  titulo: string;
-};
 
 export type Aviso = {
   id: string;
@@ -21,10 +19,11 @@ export type Aviso = {
   leido: boolean;
 };
 
-export const eventosCalendarioMock: EventoRelacionado[] = [
-  { id: 'ev1', titulo: 'Excursión al museo' },
-  { id: 'ev2', titulo: 'Reunión de padres' },
-];
+function eventoRelacionado(id: string): EventoRelacionado {
+  const evento = eventosCalendarioMock.find((ev) => ev.id === id);
+  if (!evento) throw new Error(`Evento de calendario no encontrado: ${id}`);
+  return { id: evento.id, titulo: evento.titulo };
+}
 
 const now = Date.now();
 const hoursAgo = (h: number) => new Date(now - h * 3_600_000).toISOString();
@@ -69,7 +68,7 @@ export const avisosClasePorHijo: Record<string, Aviso[]> = {
       autorNombre: 'Elena Torres',
       autorRol: 'Profesora',
       fecha: hoursAgo(3),
-      eventoRelacionado: eventosCalendarioMock[0],
+      eventoRelacionado: eventoRelacionado('ev1'),
       leido: false,
     },
     {
@@ -108,7 +107,7 @@ export const avisosClasePorHijo: Record<string, Aviso[]> = {
       autorNombre: 'Marta Ibáñez',
       autorRol: 'Delegada de padres',
       fecha: daysAgo(1),
-      eventoRelacionado: eventosCalendarioMock[1],
+      eventoRelacionado: eventoRelacionado('ev2'),
       leido: true,
     },
   ],
