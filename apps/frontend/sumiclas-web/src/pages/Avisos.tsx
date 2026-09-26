@@ -110,7 +110,7 @@ export default function Avisos() {
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div
             className={`grid h-12 w-12 place-items-center rounded-xl ${badgeColorClasses.rose.bg} ${badgeColorClasses.rose.text}`}
           >
@@ -119,7 +119,7 @@ export default function Avisos() {
           <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Avisos
           </h1>
-          <p className="mt-2 max-w-xl text-slate-600 dark:text-slate-400">
+          <p className="mt-2 truncate text-slate-600 dark:text-slate-400">
             Los avisos del colegio y de tu clase, ordenados por fecha y con lo prioritario destacado arriba.
           </p>
         </div>

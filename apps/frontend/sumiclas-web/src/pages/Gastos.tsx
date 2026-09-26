@@ -95,7 +95,7 @@ export default function Gastos() {
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div
             className={`grid h-12 w-12 place-items-center rounded-xl ${badgeColorClasses.sun.bg} ${badgeColorClasses.sun.text}`}
           >
@@ -104,7 +104,7 @@ export default function Gastos() {
           <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Gastos de clase
           </h1>
-          <p className="mt-2 max-w-xl text-slate-600 dark:text-slate-400">
+          <p className="mt-2 truncate text-slate-600 dark:text-slate-400">
             Llevad la cuenta de los pagos entre todos: regalos, material, excursiones… sin mover ni un euro dentro de la app.
           </p>
         </div>

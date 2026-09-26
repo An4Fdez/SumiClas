@@ -137,7 +137,7 @@ export default function Deberes() {
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div
             className={`grid h-12 w-12 place-items-center rounded-xl ${badgeColorClasses.mint.bg} ${badgeColorClasses.mint.text}`}
           >
@@ -146,7 +146,7 @@ export default function Deberes() {
           <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             Deberes
           </h1>
-          <p className="mt-2 max-w-xl text-slate-600 dark:text-slate-400">
+          <p className="mt-2 truncate text-slate-600 dark:text-slate-400">
             Pizarra organizada por día y asignatura, con hilo corto de comentarios para dudas puntuales.
           </p>
         </div>
