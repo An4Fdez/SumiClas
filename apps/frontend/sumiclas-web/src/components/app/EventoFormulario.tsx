@@ -4,6 +4,8 @@ import type { HijoContexto } from '@/data/appMock';
 import { nombresMeses } from '@/lib/date';
 import { tipoEventoMeta, type EventoTipo } from '@/data/calendarioMock';
 import { SelectDropdown } from './SelectDropdown';
+import { DatePicker } from './DatePicker';
+import { TimePicker } from './TimePicker';
 
 const todosLosTipos: EventoTipo[] = ['excursion', 'reunion', 'actividad', 'otros', 'cumpleanos'];
 
@@ -250,20 +252,18 @@ export function EventoFormulario({
             </label>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Fecha
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  required
-                  className={inputClasses}
-                />
-              </label>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Hora (opcional)
-                <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className={inputClasses} />
-              </label>
+              <div>
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Fecha</span>
+                <div className="mt-1.5">
+                  <DatePicker value={fecha} onChange={setFecha} />
+                </div>
+              </div>
+              <div>
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Hora (opcional)</span>
+                <div className="mt-1.5">
+                  <TimePicker value={hora} onChange={setHora} />
+                </div>
+              </div>
             </div>
 
             <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">

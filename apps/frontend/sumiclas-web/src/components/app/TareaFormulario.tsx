@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { AsignaturaInfo } from '@/data/deberesMock';
+import { DatePicker } from './DatePicker';
 
 export type NuevaTarea = {
   asignaturaId: string;
@@ -179,10 +180,12 @@ export function TareaFormulario({
           />
         </label>
 
-        <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-          Fecha de entrega
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required className={inputClasses} />
-        </label>
+        <div className="mt-4">
+          <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Fecha de entrega</span>
+          <div className="mt-1.5">
+            <DatePicker value={fecha} onChange={setFecha} />
+          </div>
+        </div>
 
         <button
           type="submit"
