@@ -6,4 +6,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="Shared\Aplicacion\" />
+      <Folder Include="Shared\Dominio\" />
+      <Folder Include="Shared\Infraestructura\Persistencia\" />
+    </ItemGroup>
+
 </Project>

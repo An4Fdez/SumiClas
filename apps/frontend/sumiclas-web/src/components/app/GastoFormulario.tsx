@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import { ParticipantesDropdown } from '@/components/app/ParticipantesDropdown';
+import { SelectDropdown } from '@/components/app/SelectDropdown';
 import type { EventoRelacionado } from '@/data/calendarioMock';
 
 export type NuevoGasto = {
@@ -84,17 +85,19 @@ export function GastoFormulario({
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Se publicará para {claseNombre}.</p>
 
         {eventos.length > 0 && (
-          <label className="mt-5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Evento relacionado (opcional)
-            <select value={eventoId} onChange={(e) => handleEventoChange(e.target.value)} className={inputClasses}>
-              <option value="">Ninguno</option>
-              {eventos.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.titulo}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="mt-5">
+            <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Evento relacionado (opcional)
+            </span>
+            <div className="mt-1.5">
+              <SelectDropdown
+                value={eventoId}
+                placeholder="Ninguno"
+                options={[{ value: '', label: 'Ninguno' }, ...eventos.map((ev) => ({ value: ev.id, label: ev.titulo }))]}
+                onChange={handleEventoChange}
+              />
+            </div>
+          </div>
         )}
 
         <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">

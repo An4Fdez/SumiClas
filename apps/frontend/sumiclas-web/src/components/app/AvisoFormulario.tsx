@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import type { AvisoPrioridad, EventoRelacionado } from '@/data/avisosMock';
+import { SelectDropdown } from './SelectDropdown';
 
 const prioridadOpciones: { value: AvisoPrioridad; label: string }[] = [
   { value: 'baja', label: 'Baja' },
@@ -111,21 +112,19 @@ export function AvisoFormulario({
         </fieldset>
 
         {eventos.length > 0 && (
-          <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Evento relacionado (opcional)
-            <select
-              value={eventoId}
-              onChange={(e) => setEventoId(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="">Ninguno</option>
-              {eventos.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.titulo}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="mt-4">
+            <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Evento relacionado (opcional)
+            </span>
+            <div className="mt-1.5">
+              <SelectDropdown
+                value={eventoId}
+                placeholder="Ninguno"
+                options={[{ value: '', label: 'Ninguno' }, ...eventos.map((ev) => ({ value: ev.id, label: ev.titulo }))]}
+                onChange={setEventoId}
+              />
+            </div>
+          </div>
         )}
 
         <button

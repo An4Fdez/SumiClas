@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { HijoContexto } from '@/data/appMock';
 import { nombresMeses } from '@/lib/date';
 import { tipoEventoMeta, type EventoTipo } from '@/data/calendarioMock';
+import { SelectDropdown } from './SelectDropdown';
 
 const todosLosTipos: EventoTipo[] = ['excursion', 'reunion', 'actividad', 'otros', 'cumpleanos'];
 
@@ -163,47 +164,42 @@ export function EventoFormulario({
         {esCumpleanos ? (
           <>
             {hijos.length > 1 && (
-              <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Hijo/a
-                <select value={hijoId} onChange={(e) => setHijoId(e.target.value)} className={inputClasses}>
-                  {hijos.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.alumnoNombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="mt-4">
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Hijo/a</span>
+                <div className="mt-1.5">
+                  <SelectDropdown
+                    value={hijoId}
+                    options={hijos.map((h) => ({ value: h.id, label: h.alumnoNombre }))}
+                    onChange={setHijoId}
+                  />
+                </div>
+              </div>
             )}
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Día
-                <select
-                  value={diaCumple}
-                  onChange={(e) => setDiaCumple(Number(e.target.value))}
-                  className={inputClasses}
-                >
-                  {Array.from({ length: diasDelMes }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Mes
-                <select
-                  value={mesCumple}
-                  onChange={(e) => handleCambiarMes(Number(e.target.value))}
-                  className={inputClasses}
-                >
-                  {nombresMeses.map((nombre, i) => (
-                    <option key={nombre} value={i + 1}>
-                      {nombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div>
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Día</span>
+                <div className="mt-1.5">
+                  <SelectDropdown
+                    value={String(diaCumple)}
+                    options={Array.from({ length: diasDelMes }, (_, i) => i + 1).map((d) => ({
+                      value: String(d),
+                      label: String(d),
+                    }))}
+                    onChange={(v) => setDiaCumple(Number(v))}
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Mes</span>
+                <div className="mt-1.5">
+                  <SelectDropdown
+                    value={String(mesCumple)}
+                    options={nombresMeses.map((nombre, i) => ({ value: String(i + 1), label: nombre }))}
+                    onChange={(v) => handleCambiarMes(Number(v))}
+                  />
+                </div>
+              </div>
             </div>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Nunca se pide ni se guarda el año de nacimiento.
