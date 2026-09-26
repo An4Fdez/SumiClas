@@ -1,13 +1,13 @@
 import { Bell, Calendar, BookOpen, Wallet, PackageSearch, Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type FeatureKey = 'avisos' | 'calendario' | 'deberes' | 'gastos' | 'perdidos' | 'resumen';
+export type FeatureKey = 'announcements' | 'calendar' | 'homework' | 'expenses' | 'lostAndFound' | 'summary';
 
 export const featureMeta: Record<FeatureKey, { icon: LucideIcon; color: string }> = {
-  avisos: { icon: Bell, color: 'rose' },
-  calendario: { icon: Calendar, color: 'violet' },
-  deberes: { icon: BookOpen, color: 'mint' },
-  gastos: { icon: Wallet, color: 'sun' },
-  perdidos: { icon: PackageSearch, color: 'orange' },
-  resumen: { icon: Sparkles, color: 'brand' },
+  announcements: { icon: Bell, color: 'rose' },
+  calendar: { icon: Calendar, color: 'violet' },
+  homework: { icon: BookOpen, color: 'mint' },
+  expenses: { icon: Wallet, color: 'sun' },
+  lostAndFound: { icon: PackageSearch, color: 'orange' },
+  summary: { icon: Sparkles, color: 'brand' },
 };

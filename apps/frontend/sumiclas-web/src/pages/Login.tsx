@@ -11,7 +11,7 @@ export default function Login() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setAuthenticated(true);
-    navigate('/inicio');
+    navigate('/home');
   };
 
   return (
@@ -73,7 +73,7 @@ export default function Login() {
                   Contraseña
                 </label>
                 <Link
-                  to="/recuperar-contrasena"
+                  to="/forgot-password"
                   className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                 >
                   ¿La olvidaste?
@@ -112,7 +112,7 @@ export default function Login() {
           <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             ¿No tienes cuenta?{' '}
             <Link
-              to="/registro"
+              to="/register"
               className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
               Regístrate

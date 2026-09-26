@@ -1,8 +1,8 @@
 const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
 
-export function formatFechaRelativa(fechaISO: string): string {
-  const fecha = new Date(fechaISO);
-  const diffMs = fecha.getTime() - Date.now();
+export function formatRelativeDate(dateISO: string): string {
+  const date = new Date(dateISO);
+  const diffMs = date.getTime() - Date.now();
   const diffMin = Math.round(diffMs / 60_000);
   const diffH = Math.round(diffMs / 3_600_000);
   const diffD = Math.round(diffMs / 86_400_000);
@@ -11,99 +11,99 @@ export function formatFechaRelativa(fechaISO: string): string {
   if (Math.abs(diffH) < 24) return rtf.format(diffH, 'hour');
   if (Math.abs(diffD) < 7) return rtf.format(diffD, 'day');
 
-  return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-export type DiaCalendario = {
-  fecha: Date;
-  enMesActual: boolean;
-  esHoy: boolean;
+export type CalendarDay = {
+  date: Date;
+  inCurrentMonth: boolean;
+  isToday: boolean;
 };
 
-export function esMismoDiaCalendario(a: Date, b: Date): boolean {
+export function isSameCalendarDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** Año en el que mostrar un evento: el real, salvo recurrentes anuales, que siempre se navegan al año en curso. */
-export function anioVisibleEvento(fechaISO: string, recurrenteAnual: boolean): number {
-  return recurrenteAnual ? new Date().getFullYear() : new Date(fechaISO).getFullYear();
+/** Year to display an event in: the real one, except for yearly recurring events, which always navigate to the current year. */
+export function visibleYearForEvent(dateISO: string, recurringAnnual: boolean): number {
+  return recurringAnnual ? new Date().getFullYear() : new Date(dateISO).getFullYear();
 }
 
-/** true si un evento ocurre ese día; para recurrentes anuales (cumpleaños) compara solo mes+día. */
-export function eventoOcurreEnDia(fechaEventoISO: string, dia: Date, recurrenteAnual: boolean): boolean {
-  const fechaEvento = new Date(fechaEventoISO);
-  if (recurrenteAnual) {
-    return fechaEvento.getMonth() === dia.getMonth() && fechaEvento.getDate() === dia.getDate();
+/** true if an event occurs on that day; for yearly recurring events (birthdays) compares month+day only. */
+export function eventOccursOnDay(eventDateISO: string, day: Date, recurringAnnual: boolean): boolean {
+  const eventDate = new Date(eventDateISO);
+  if (recurringAnnual) {
+    return eventDate.getMonth() === day.getMonth() && eventDate.getDate() === day.getDate();
   }
-  return esMismoDiaCalendario(fechaEvento, dia);
+  return isSameCalendarDay(eventDate, day);
 }
 
-/** Matriz de semanas (L-D) que cubren el mes indicado (mes: 0-11), con relleno de días adyacentes. */
-export function generarMatrizMes(anio: number, mes: number): DiaCalendario[][] {
-  const primerDia = new Date(anio, mes, 1);
-  const ultimoDia = new Date(anio, mes + 1, 0);
-  const offsetInicio = (primerDia.getDay() + 6) % 7;
-  const offsetFin = (7 - ((ultimoDia.getDay() + 6) % 7) - 1 + 7) % 7;
-  const totalDias = offsetInicio + ultimoDia.getDate() + offsetFin;
+/** Matrix of weeks (Mon-Sun) covering the given month (month: 0-11), padded with adjacent days. */
+export function generateMonthMatrix(year: number, month: number): CalendarDay[][] {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const endOffset = (7 - ((lastDay.getDay() + 6) % 7) - 1 + 7) % 7;
+  const totalDays = startOffset + lastDay.getDate() + endOffset;
 
-  const hoy = new Date();
-  const cursor = new Date(anio, mes, 1 - offsetInicio);
-  const dias: DiaCalendario[] = [];
+  const today = new Date();
+  const cursor = new Date(year, month, 1 - startOffset);
+  const days: CalendarDay[] = [];
 
-  for (let i = 0; i < totalDias; i++) {
-    dias.push({
-      fecha: new Date(cursor),
-      enMesActual: cursor.getMonth() === mes,
-      esHoy: esMismoDiaCalendario(cursor, hoy),
+  for (let i = 0; i < totalDays; i++) {
+    days.push({
+      date: new Date(cursor),
+      inCurrentMonth: cursor.getMonth() === month,
+      isToday: isSameCalendarDay(cursor, today),
     });
     cursor.setDate(cursor.getDate() + 1);
   }
 
-  const semanas: DiaCalendario[][] = [];
-  for (let i = 0; i < dias.length; i += 7) {
-    semanas.push(dias.slice(i, i + 7));
+  const weeks: CalendarDay[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
   }
-  return semanas;
+  return weeks;
 }
 
-export function formatMesAnio(anio: number, mes: number): string {
-  const texto = new Date(anio, mes, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  const limpio = texto.replace(' de ', ' ');
-  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+export function formatMonthYear(year: number, month: number): string {
+  const text = new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const clean = text.replace(' de ', ' ');
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
-/** Semana (L-D) que contiene la fecha indicada. */
-export function generarSemana(fecha: Date): DiaCalendario[] {
-  const offsetInicio = (fecha.getDay() + 6) % 7;
-  const inicio = new Date(fecha);
-  inicio.setDate(fecha.getDate() - offsetInicio);
+/** Week (Mon-Sun) containing the given date. */
+export function generateWeek(date: Date): CalendarDay[] {
+  const startOffset = (date.getDay() + 6) % 7;
+  const start = new Date(date);
+  start.setDate(date.getDate() - startOffset);
 
-  const hoy = new Date();
-  const dias: DiaCalendario[] = [];
+  const today = new Date();
+  const days: CalendarDay[] = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(inicio);
-    d.setDate(inicio.getDate() + i);
-    dias.push({ fecha: d, enMesActual: d.getMonth() === fecha.getMonth(), esHoy: esMismoDiaCalendario(d, hoy) });
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    days.push({ date: d, inCurrentMonth: d.getMonth() === date.getMonth(), isToday: isSameCalendarDay(d, today) });
   }
-  return dias;
+  return days;
 }
 
-export function formatRangoSemana(dias: DiaCalendario[]): string {
-  const inicio = dias[0].fecha;
-  const fin = dias[6].fecha;
-  const mesInicio = nombresMeses[inicio.getMonth()].slice(0, 3).toLowerCase();
-  const mesFin = nombresMeses[fin.getMonth()].slice(0, 3).toLowerCase();
+export function formatWeekRange(days: CalendarDay[]): string {
+  const start = days[0].date;
+  const end = days[6].date;
+  const startMonth = monthNames[start.getMonth()].slice(0, 3).toLowerCase();
+  const endMonth = monthNames[end.getMonth()].slice(0, 3).toLowerCase();
 
-  if (inicio.getFullYear() === fin.getFullYear()) {
-    if (inicio.getMonth() === fin.getMonth()) {
-      return `${inicio.getDate()} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`;
+  if (start.getFullYear() === end.getFullYear()) {
+    if (start.getMonth() === end.getMonth()) {
+      return `${start.getDate()} – ${end.getDate()} ${endMonth} ${end.getFullYear()}`;
     }
-    return `${inicio.getDate()} ${mesInicio} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`;
+    return `${start.getDate()} ${startMonth} – ${end.getDate()} ${endMonth} ${end.getFullYear()}`;
   }
-  return `${inicio.getDate()} ${mesInicio} ${inicio.getFullYear()} – ${fin.getDate()} ${mesFin} ${fin.getFullYear()}`;
+  return `${start.getDate()} ${startMonth} ${start.getFullYear()} – ${end.getDate()} ${endMonth} ${end.getFullYear()}`;
 }
 
-export const nombresMeses = [
+export const monthNames = [
   'Enero',
   'Febrero',
   'Marzo',
@@ -118,7 +118,7 @@ export const nombresMeses = [
   'Diciembre',
 ];
 
-export function formatDiaCompleto(fecha: Date): string {
-  const texto = fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+export function formatFullDay(date: Date): string {
+  const text = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

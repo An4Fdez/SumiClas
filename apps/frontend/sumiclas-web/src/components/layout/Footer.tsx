@@ -5,17 +5,17 @@ const cols = [
   {
     title: 'Producto',
     links: [
-      { label: 'Cómo funciona', href: '#como-funciona' },
-      { label: 'Funcionalidades', href: '#funcionalidades' },
-      { label: 'Opiniones', href: '#opiniones' },
+      { label: 'Cómo funciona', href: '#how-it-works' },
+      { label: 'Funcionalidades', href: '#features' },
+      { label: 'Opiniones', href: '#testimonials' },
       { label: 'Preguntas frecuentes', href: '#faq' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Política de privacidad', href: '#privacidad' },
-      { label: 'Términos y condiciones', href: '#terminos' },
+      { label: 'Política de privacidad', href: '#privacy' },
+      { label: 'Términos y condiciones', href: '#terms' },
       { label: 'Política de cookies', href: '#cookies' },
     ],
   },
@@ -23,7 +23,7 @@ const cols = [
     title: 'Contacto',
     links: [
       { label: 'hola@sumiclas.es', href: 'mailto:hola@sumiclas.es' },
-      { label: 'Soporte', href: '#soporte' },
+      { label: 'Soporte', href: '#support' },
       { label: 'Iniciar sesión', href: '/login' },
     ],
   },

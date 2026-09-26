@@ -6,7 +6,7 @@ import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';
 import { StudentStep } from '@/components/onboarding/StudentStep';
-import { colegiosMock, clasesMock, alumnosMock, type Colegio, type Clase } from '@/data/onboardingMock';
+import { schoolsMock, schoolClassesMock, registeredStudentsMock, type School, type SchoolClass } from '@/data/onboardingMock';
 import { setAuthenticated } from '@/lib/auth';
 
 const stepMeta = [
@@ -27,64 +27,64 @@ const stepMeta = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [colegio, setColegio] = useState<Colegio | null>(null);
-  const [clase, setClase] = useState<Clase | null>(null);
-  const [customClases, setCustomClases] = useState<Clase[]>([]);
-  const [claseEsNueva, setClaseEsNueva] = useState(false);
+  const [school, setSchool] = useState<School | null>(null);
+  const [schoolClass, setSchoolClass] = useState<SchoolClass | null>(null);
+  const [customSchoolClasses, setCustomSchoolClasses] = useState<SchoolClass[]>([]);
+  const [isNewClass, setIsNewClass] = useState(false);
 
-  const clasesDelColegio = colegio
-    ? [...clasesMock, ...customClases].filter((c) => c.colegioId === colegio.id)
+  const schoolClassesForSchool = school
+    ? [...schoolClassesMock, ...customSchoolClasses].filter((c) => c.schoolId === school.id)
     : [];
 
-  const alumnosDeLaClase = clase ? alumnosMock.filter((a) => a.claseId === clase.id) : [];
+  const studentsInClass = schoolClass ? registeredStudentsMock.filter((a) => a.classId === schoolClass.id) : [];
 
-  const handleSelectColegio = (c: Colegio) => {
-    setColegio(c);
-    setClase(null);
+  const handleSelectSchool = (s: School) => {
+    setSchool(s);
+    setSchoolClass(null);
     setStep(2);
   };
 
-  const handleChangeColegio = () => {
-    setColegio(null);
-    setClase(null);
+  const handleChangeSchool = () => {
+    setSchool(null);
+    setSchoolClass(null);
     setStep(1);
   };
 
-  const handleSelectClase = (c: Clase) => {
-    setClase(c);
-    setClaseEsNueva(false);
+  const handleSelectClass = (c: SchoolClass) => {
+    setSchoolClass(c);
+    setIsNewClass(false);
     setStep(3);
   };
 
-  const handleChangeClase = () => {
-    setClase(null);
+  const handleChangeClass = () => {
+    setSchoolClass(null);
     setStep(2);
   };
 
-  const handleCreateClase = (nombre: string) => {
-    if (!colegio) return;
-    const nueva: Clase = { id: `custom-${Date.now()}`, colegioId: colegio.id, nombre };
-    setCustomClases((prev) => [...prev, nueva]);
-    setClase(nueva);
-    setClaseEsNueva(true);
+  const handleCreateClass = (name: string) => {
+    if (!school) return;
+    const created: SchoolClass = { id: `custom-${Date.now()}`, schoolId: school.id, name };
+    setCustomSchoolClasses((prev) => [...prev, created]);
+    setSchoolClass(created);
+    setIsNewClass(true);
     setStep(3);
   };
 
-  const handleConfirmAlumno = (data: {
-    nombre: string;
-    apellido: string;
-    unirseComoSegundoTutor: boolean;
+  const handleConfirmStudent = (data: {
+    name: string;
+    lastName: string;
+    joinAsSecondGuardian: boolean;
   }) => {
-    // Ya autenticado y con los datos del tutor guardados desde /registro; esto es
-    // defensivo por si se llega aquí ya con sesión iniciada (p. ej. desde el landing).
+    // Already authenticated with the guardian's data saved from /register; this is
+    // defensive in case this is reached with a session already started (e.g. from the landing page).
     setAuthenticated(true);
-    navigate('/inicio', {
+    navigate('/home', {
       state: {
-        colegio: colegio?.nombre,
-        clase: clase?.nombre,
-        alumno: `${data.nombre} ${data.apellido.charAt(0)}.`,
-        segundoTutor: data.unirseComoSegundoTutor,
-        rolAsignado: claseEsNueva ? 'delegado' : 'participante',
+        school: school?.name,
+        schoolClass: schoolClass?.name,
+        student: `${data.name} ${data.lastName.charAt(0)}.`,
+        secondGuardian: data.joinAsSecondGuardian,
+        assignedRole: isNewClass ? 'classRepresentative' : 'participant',
       },
     });
   };
@@ -116,22 +116,22 @@ export default function Onboarding() {
           <div className="absolute -inset-8 -z-10 rounded-[3rem] bg-gradient-to-br from-brand-400/20 via-mint-400/20 to-rose-400/20 blur-2xl" />
 
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900 sm:p-12">
-            {colegio && step > 1 && (
+            {school && step > 1 && (
               <SelectionSummary
                 icon={MapPin}
-                title={colegio.nombre}
-                subtitle={`${colegio.direccion}, ${colegio.localidad}`}
+                title={school.name}
+                subtitle={`${school.address}, ${school.city}`}
                 color="brand"
-                onChange={handleChangeColegio}
+                onChange={handleChangeSchool}
               />
             )}
-            {clase && step > 2 && (
+            {schoolClass && step > 2 && (
               <SelectionSummary
                 icon={LayoutGrid}
-                title={`Clase ${clase.nombre}`}
-                subtitle={colegio?.nombre}
+                title={`Clase ${schoolClass.name}`}
+                subtitle={school?.name}
                 color="mint"
-                onChange={handleChangeClase}
+                onChange={handleChangeClass}
               />
             )}
 
@@ -141,11 +141,11 @@ export default function Onboarding() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{stepMeta[step - 1].text}</p>
 
             <div className="mt-6">
-              {step === 1 && <SchoolSearchStep colegios={colegiosMock} onSelect={handleSelectColegio} />}
+              {step === 1 && <SchoolSearchStep schools={schoolsMock} onSelect={handleSelectSchool} />}
               {step === 2 && (
-                <ClassStep clases={clasesDelColegio} onSelect={handleSelectClase} onCreate={handleCreateClase} />
+                <ClassStep schoolClasses={schoolClassesForSchool} onSelect={handleSelectClass} onCreate={handleCreateClass} />
               )}
-              {step === 3 && <StudentStep alumnosEnClase={alumnosDeLaClase} onConfirm={handleConfirmAlumno} />}
+              {step === 3 && <StudentStep studentsInClass={studentsInClass} onConfirm={handleConfirmStudent} />}
             </div>
           </div>
         </Reveal>

@@ -10,37 +10,37 @@ const features: {
   color: Color;
 }[] = [
   {
-    key: 'avisos',
+    key: 'announcements',
     title: 'Avisos',
     text: 'Listado ordenado por fecha. Lo prioritario destaca arriba. Solo publica lo oficial el tutor, el delegado o el AMPA.',
     color: 'rose',
   },
   {
-    key: 'calendario',
+    key: 'calendar',
     title: 'Calendario',
     text: 'Excursiones, reuniones y actividades por clase o colegio. Cumpleaños como capa opcional, con icono propio.',
     color: 'violet',
   },
   {
-    key: 'deberes',
+    key: 'homework',
     title: 'Deberes',
     text: 'Pizarra organizada por día y asignatura, con hilo corto de comentarios para dudas puntuales. No es un chat libre.',
     color: 'mint',
   },
   {
-    key: 'gastos',
+    key: 'expenses',
     title: 'Gastos de clase',
     text: 'Acordaos de quién falta por pagar el regalo o el material de clase. Sin mover un euro dentro de la app.',
     color: 'sun',
   },
   {
-    key: 'perdidos',
+    key: 'lostAndFound',
     title: 'Objetos perdidos',
     text: 'Tablón simple de buscado / encontrado, visible para toda la clase o todo el colegio según lo marques.',
     color: 'orange',
   },
   {
-    key: 'resumen',
+    key: 'summary',
     title: 'Resumen semanal (IA)',
     text: 'Cada semana se genera un resumen a partir de lo publicado. No tienes que leerlo todo: la IA te lo resume.',
     color: 'brand',
@@ -88,7 +88,7 @@ const colorClasses: Record<Color, { bg: string; text: string; ring: string; glow
 
 export function Features() {
   return (
-    <section id="funcionalidades" className="relative py-20 sm:py-28">
+    <section id="features" className="relative py-20 sm:py-28">
       {/* soft bg */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900" />
 

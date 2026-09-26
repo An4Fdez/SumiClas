@@ -39,7 +39,7 @@ const avatarColors: Record<Color, string> = {
 
 export function SocialProof() {
   return (
-    <section id="opiniones" className="relative py-20 sm:py-28">
+    <section id="testimonials" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Aggregate */}
         <Reveal>

@@ -1,22 +1,22 @@
 import type { PaletteColor } from '@/lib/colorClasses';
 
-export type ClassRole = 'delegado' | 'participante';
+export type ClassRole = 'classRepresentative' | 'participant';
 
-export const MAX_DELEGADOS = 3;
+export const MAX_CLASS_REPRESENTATIVES = 3;
 
 export const roleMeta: Record<ClassRole, { label: string; description: string; color: PaletteColor }> = {
-  delegado: {
+  classRepresentative: {
     label: 'Delegado/a de padres',
     description: 'Puede publicar avisos y eventos oficiales de la clase.',
     color: 'sun',
   },
-  participante: {
+  participant: {
     label: 'Participante',
     description: 'Puede comentar en Deberes y publicar en Objetos perdidos, pero no publicar avisos oficiales.',
     color: 'mint',
   },
 };
 
-export function canManageDelegados(rol: ClassRole | null): boolean {
-  return rol === 'delegado';
+export function canManageClassRepresentatives(role: ClassRole | null): boolean {
+  return role === 'classRepresentative';
 }

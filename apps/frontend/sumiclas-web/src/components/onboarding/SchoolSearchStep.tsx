@@ -1,17 +1,17 @@
 import { useEffect, useState, type KeyboardEvent } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
-import type { Colegio } from '@/data/onboardingMock';
+import type { School } from '@/data/onboardingMock';
 import { normalizeText } from '@/lib/text';
 
 const MAX_DROPDOWN_RESULTS = 8;
 const DEBOUNCE_MS = 300;
 
 export function SchoolSearchStep({
-  colegios,
+  schools,
   onSelect,
 }: {
-  colegios: Colegio[];
-  onSelect: (colegio: Colegio) => void;
+  schools: School[];
+  onSelect: (school: School) => void;
 }) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -26,14 +26,14 @@ export function SchoolSearchStep({
   const trimmed = debouncedQuery.trim();
   const results =
     trimmed.length > 0
-      ? colegios.filter((c) => {
+      ? schools.filter((s) => {
           const q = normalizeText(trimmed);
-          return normalizeText(c.nombre).includes(q) || normalizeText(c.localidad).includes(q);
+          return normalizeText(s.name).includes(q) || normalizeText(s.city).includes(q);
         })
       : [];
 
-  const handleSelect = (colegio: Colegio) => {
-    onSelect(colegio);
+  const handleSelect = (school: School) => {
+    onSelect(school);
     setDropdownOpen(false);
     setShowFullList(false);
     setQuery('');
@@ -78,16 +78,16 @@ export function SchoolSearchStep({
                 Sin resultados para "{trimmed}".
               </p>
             ) : (
-              results.slice(0, MAX_DROPDOWN_RESULTS).map((c) => (
+              results.slice(0, MAX_DROPDOWN_RESULTS).map((s) => (
                 <button
-                  key={c.id}
+                  key={s.id}
                   type="button"
-                  onClick={() => handleSelect(c)}
+                  onClick={() => handleSelect(s)}
                   className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <span>
-                    <span className="block text-sm font-semibold text-slate-900 dark:text-white">{c.nombre}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">{c.localidad}</span>
+                    <span className="block text-sm font-semibold text-slate-900 dark:text-white">{s.name}</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">{s.city}</span>
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" />
                 </button>
@@ -108,17 +108,17 @@ export function SchoolSearchStep({
                 No hemos encontrado ningún colegio. Prueba con otro nombre o localidad.
               </p>
             ) : (
-              results.map((c) => (
+              results.map((s) => (
                 <button
-                  key={c.id}
+                  key={s.id}
                   type="button"
-                  onClick={() => handleSelect(c)}
+                  onClick={() => handleSelect(s)}
                   className="flex w-full items-center justify-between gap-2 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <span>
-                    <span className="block text-sm font-semibold text-slate-900 dark:text-white">{c.nombre}</span>
+                    <span className="block text-sm font-semibold text-slate-900 dark:text-white">{s.name}</span>
                     <span className="block text-xs text-slate-500 dark:text-slate-400">
-                      {c.direccion}, {c.localidad}
+                      {s.address}, {s.city}
                     </span>
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" />

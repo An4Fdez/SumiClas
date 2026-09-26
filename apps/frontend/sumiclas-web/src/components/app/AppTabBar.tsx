@@ -2,13 +2,13 @@ import { NavLink } from 'react-router-dom';
 import { Home, Bell, Calendar, BookOpen, Wallet, PackageSearch, MoreHorizontal, type LucideIcon } from 'lucide-react';
 
 const tabs: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: '/inicio', label: 'Inicio', icon: Home },
-  { to: '/avisos', label: 'Avisos', icon: Bell },
-  { to: '/calendario', label: 'Calendario', icon: Calendar },
-  { to: '/deberes', label: 'Deberes', icon: BookOpen },
-  { to: '/gastos', label: 'Gastos', icon: Wallet },
-  { to: '/objetos-perdidos', label: 'Perdidos', icon: PackageSearch },
-  { to: '/mas', label: 'Más', icon: MoreHorizontal },
+  { to: '/home', label: 'Inicio', icon: Home },
+  { to: '/announcements', label: 'Avisos', icon: Bell },
+  { to: '/calendar', label: 'Calendario', icon: Calendar },
+  { to: '/homework', label: 'Deberes', icon: BookOpen },
+  { to: '/expenses', label: 'Gastos', icon: Wallet },
+  { to: '/lost-and-found', label: 'Perdidos', icon: PackageSearch },
+  { to: '/more', label: 'Más', icon: MoreHorizontal },
 ];
 
 export function AppTabBar() {

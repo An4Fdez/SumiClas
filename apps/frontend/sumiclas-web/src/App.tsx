@@ -3,18 +3,18 @@ import { Layout } from '@/components/layout/Layout';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
-import Registro from '@/pages/Registro';
-import Terminos from '@/pages/Terminos';
-import Privacidad from '@/pages/Privacidad';
+import Register from '@/pages/Register';
+import Terms from '@/pages/Terms';
+import Privacy from '@/pages/Privacy';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
-import Avisos from '@/pages/Avisos';
-import Calendario from '@/pages/Calendario';
-import Deberes from '@/pages/Deberes';
-import Gastos from '@/pages/Gastos';
-import ObjetosPerdidos from '@/pages/ObjetosPerdidos';
-import Mas from '@/pages/Mas';
-import RolClase from '@/pages/RolClase';
+import Announcements from '@/pages/Announcements';
+import Calendar from '@/pages/Calendar';
+import Homework from '@/pages/Homework';
+import Expenses from '@/pages/Expenses';
+import LostAndFound from '@/pages/LostAndFound';
+import More from '@/pages/More';
+import MyClassRole from '@/pages/MyClassRole';
 
 export default function App() {
   return (
@@ -22,21 +22,21 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/terminos" element={<Terminos />} />
-        <Route path="/privacidad" element={<Privacidad />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/onboarding" element={<Onboarding />} />
       </Route>
 
       <Route element={<AppLayout />}>
-        <Route path="/inicio" element={<Dashboard />} />
-        <Route path="/avisos" element={<Avisos />} />
-        <Route path="/calendario" element={<Calendario />} />
-        <Route path="/deberes" element={<Deberes />} />
-        <Route path="/gastos" element={<Gastos />} />
-        <Route path="/objetos-perdidos" element={<ObjetosPerdidos />} />
-        <Route path="/mas" element={<Mas />} />
-        <Route path="/mas/rol" element={<RolClase />} />
+        <Route path="/home" element={<Dashboard />} />
+        <Route path="/announcements" element={<Announcements />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/homework" element={<Homework />} />
+        <Route path="/expenses" element={<Expenses />} />
+        <Route path="/lost-and-found" element={<LostAndFound />} />
+        <Route path="/more" element={<More />} />
+        <Route path="/more/class-role" element={<MyClassRole />} />
       </Route>
     </Routes>
   );

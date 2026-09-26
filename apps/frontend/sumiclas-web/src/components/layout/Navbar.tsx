@@ -3,27 +3,27 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Moon, Sun, LogIn, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
 import { useTheme } from '@/hooks/useTheme';
-import { isAuthenticated, getTutorInfo } from '@/lib/auth';
+import { isAuthenticated, getGuardianInfo } from '@/lib/auth';
 
 const links = [
-  { label: 'Cómo funciona', href: '#como-funciona' },
-  { label: 'Funcionalidades', href: '#funcionalidades' },
-  { label: 'Opiniones', href: '#opiniones' },
+  { label: 'Cómo funciona', href: '#how-it-works' },
+  { label: 'Funcionalidades', href: '#features' },
+  { label: 'Opiniones', href: '#testimonials' },
   { label: 'Preguntas', href: '#faq' },
 ];
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
-  // Navbar/Layout no se desmonta al navegar entre rutas públicas (Login, Registro,
-  // Onboarding comparten el mismo <Layout/>), así que sin esto la sesión/nombre
-  // quedarían "congelados" con el valor que tenían al montarse por primera vez.
-  // useLocation() fuerza una re-renderización en cada cambio de ruta para releer
-  // localStorage siempre con el dato más reciente.
+  // Navbar/Layout is not unmounted when navigating between public routes (Login, Register,
+  // Onboarding share the same <Layout/>), so without this the session/name would stay
+  // "frozen" with the value they had when first mounted.
+  // useLocation() forces a re-render on every route change to always re-read
+  // localStorage with the freshest data.
   useLocation();
-  const conectado = isAuthenticated();
-  const tutor = conectado ? getTutorInfo() : null;
-  const nombreTutor = tutor?.nombre ?? 'Mi cuenta';
+  const isLoggedIn = isAuthenticated();
+  const guardian = isLoggedIn ? getGuardianInfo() : null;
+  const guardianName = guardian?.name ?? 'Mi cuenta';
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/70">
@@ -56,11 +56,11 @@ export function Navbar() {
           </button>
 
           <Link
-            to={conectado ? '/inicio' : '/login'}
+            to={isLoggedIn ? '/home' : '/login'}
             className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white sm:flex"
           >
-            {conectado ? <UserRound className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-            {conectado ? nombreTutor : 'Iniciar sesión'}
+            {isLoggedIn ? <UserRound className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+            {isLoggedIn ? guardianName : 'Iniciar sesión'}
           </Link>
 
           {/* Mobile toggle */}
@@ -91,11 +91,11 @@ export function Navbar() {
             ))}
             <li>
               <Link
-                to={conectado ? '/inicio' : '/login'}
+                to={isLoggedIn ? '/home' : '/login'}
                 onClick={() => setOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                {conectado ? nombreTutor : 'Iniciar sesión'}
+                {isLoggedIn ? guardianName : 'Iniciar sesión'}
               </Link>
             </li>
           </ul>

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { LayoutGrid, Plus, ArrowRight } from 'lucide-react';
-import type { Clase } from '@/data/onboardingMock';
+import type { SchoolClass } from '@/data/onboardingMock';
 
 const cardColors = ['brand', 'mint', 'rose', 'sun', 'violet', 'orange'] as const;
 type CardColor = (typeof cardColors)[number];
@@ -18,31 +18,31 @@ const colorClasses: Record<CardColor, string> = {
 };
 
 export function ClassStep({
-  clases,
+  schoolClasses,
   onSelect,
   onCreate,
 }: {
-  clases: Clase[];
-  onSelect: (clase: Clase) => void;
-  onCreate: (nombre: string) => void;
+  schoolClasses: SchoolClass[];
+  onSelect: (schoolClass: SchoolClass) => void;
+  onCreate: (name: string) => void;
 }) {
   const [creating, setCreating] = useState(false);
-  const [curso, setCurso] = useState('');
-  const [letra, setLetra] = useState('');
+  const [gradeLevel, setGradeLevel] = useState('');
+  const [letterSuffix, setLetterSuffix] = useState('');
 
   const handleCreate = (e: FormEvent) => {
     e.preventDefault();
-    const cursoTrim = curso.trim();
-    const letraTrim = letra.trim().toUpperCase();
-    if (!cursoTrim || !letraTrim) return;
-    onCreate(`${cursoTrim}${letraTrim}`);
+    const trimmedGrade = gradeLevel.trim();
+    const trimmedLetter = letterSuffix.trim().toUpperCase();
+    if (!trimmedGrade || !trimmedLetter) return;
+    onCreate(`${trimmedGrade}${trimmedLetter}`);
   };
 
   return (
     <div>
-      {clases.length > 0 ? (
+      {schoolClasses.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {clases.map((c, i) => (
+          {schoolClasses.map((c, i) => (
             <button
               key={c.id}
               type="button"
@@ -51,7 +51,7 @@ export function ClassStep({
                 colorClasses[cardColors[i % cardColors.length]]
               }`}
             >
-              <span className="font-display text-lg font-bold">{c.nombre}</span>
+              <span className="font-display text-lg font-bold">{c.name}</span>
             </button>
           ))}
         </div>
@@ -85,16 +85,16 @@ export function ClassStep({
           <div className="mt-3 flex gap-2">
             <input
               type="text"
-              value={curso}
-              onChange={(e) => setCurso(e.target.value)}
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(e.target.value)}
               placeholder="Curso (ej. 3º)"
               required
               className="w-2/3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             />
             <input
               type="text"
-              value={letra}
-              onChange={(e) => setLetra(e.target.value)}
+              value={letterSuffix}
+              onChange={(e) => setLetterSuffix(e.target.value)}
               placeholder="Letra (ej. C)"
               maxLength={2}
               required

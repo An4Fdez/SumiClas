@@ -1,18 +1,18 @@
 import { createContext } from 'react';
-import type { HijoContexto, ResumenSecciones, OtroTutor } from '@/data/appMock';
+import type { Child, DashboardSummary, OtherGuardian } from '@/data/appMock';
 import type { ClassRole } from '@/lib/roles';
 
 export type ChildContextValue = {
-  hijos: HijoContexto[];
-  hijoActualId: string;
-  setHijoActualId: (id: string) => void;
-  hijoActual: HijoContexto | undefined;
-  resumenActual: ResumenSecciones | undefined;
-  rolActual: ClassRole | null;
-  otrosTutoresActual: OtroTutor[];
-  cederRolDelegado: (tutorId: string) => void;
-  asignarDelegado: (tutorId: string) => void;
-  renunciarDelegado: () => void;
+  children: Child[];
+  currentChildId: string;
+  setCurrentChildId: (id: string) => void;
+  currentChild: Child | undefined;
+  currentSummary: DashboardSummary | undefined;
+  currentRole: ClassRole | null;
+  otherGuardians: OtherGuardian[];
+  transferClassRepresentative: (guardianId: string) => void;
+  assignClassRepresentative: (guardianId: string) => void;
+  resignClassRepresentative: () => void;
 };
 
 export const ChildContext = createContext<ChildContextValue | null>(null);

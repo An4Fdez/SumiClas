@@ -1,14 +1,14 @@
 const AUTH_KEY = 'sumiclas-auth';
-const TUTOR_KEY = 'sumiclas-tutor';
+const GUARDIAN_KEY = 'sumiclas-guardian';
 
-export type TutorRole = 'padre' | 'madre' | 'tutor';
+export type GuardianRole = 'father' | 'mother' | 'guardian';
 
-export type TutorInfo = {
-  nombre: string;
-  rol: TutorRole;
+export type GuardianInfo = {
+  name: string;
+  role: GuardianRole;
 };
 
-/** Prototipo sin backend: la sesión se simula con un flag en localStorage. */
+/** Backend-less prototype: the session is simulated with a flag in localStorage. */
 export function isAuthenticated(): boolean {
   try {
     return localStorage.getItem(AUTH_KEY) === 'true';
@@ -23,26 +23,26 @@ export function setAuthenticated(value: boolean) {
       localStorage.setItem(AUTH_KEY, 'true');
     } else {
       localStorage.removeItem(AUTH_KEY);
-      localStorage.removeItem(TUTOR_KEY);
+      localStorage.removeItem(GUARDIAN_KEY);
     }
   } catch {
-    // localStorage no disponible (modo privado, etc.) — se ignora
+    // localStorage unavailable (private mode, etc.) — ignored
   }
 }
 
-export function getTutorInfo(): TutorInfo | null {
+export function getGuardianInfo(): GuardianInfo | null {
   try {
-    const raw = localStorage.getItem(TUTOR_KEY);
-    return raw ? (JSON.parse(raw) as TutorInfo) : null;
+    const raw = localStorage.getItem(GUARDIAN_KEY);
+    return raw ? (JSON.parse(raw) as GuardianInfo) : null;
   } catch {
     return null;
   }
 }
 
-export function setTutorInfo(info: TutorInfo) {
+export function setGuardianInfo(info: GuardianInfo) {
   try {
-    localStorage.setItem(TUTOR_KEY, JSON.stringify(info));
+    localStorage.setItem(GUARDIAN_KEY, JSON.stringify(info));
   } catch {
-    // localStorage no disponible — se ignora
+    // localStorage unavailable — ignored
   }
 }

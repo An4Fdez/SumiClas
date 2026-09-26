@@ -1,77 +1,77 @@
 import type { ClassRole } from '@/lib/roles';
 
-export type HijoContexto = {
+export type Child = {
   id: string;
-  alumnoNombre: string;
-  colegioNombre: string;
-  claseNombre: string;
+  studentName: string;
+  schoolName: string;
+  className: string;
 };
 
-export type ResumenSecciones = {
-  avisos: { nuevos: number; urgente: boolean };
-  calendario: { proximo: string | null; enDias: number | null };
-  deberes: { pendientes: number; proxima: string | null };
-  gastos: { pendiente: boolean; concepto?: string };
-  objetosPerdidos: { hayNovedades: boolean; cantidad?: number };
+export type DashboardSummary = {
+  announcements: { new: number; urgent: boolean };
+  calendar: { next: string | null; daysUntil: number | null };
+  homework: { pending: number; nextDueDate: string | null };
+  expenses: { pending: boolean; item?: string };
+  lostAndFound: { hasUpdates: boolean; count?: number };
 };
 
-export const hijosMock: HijoContexto[] = [
-  { id: 'h1', alumnoNombre: 'Martina R.', colegioNombre: 'CEIP Miguel de Cervantes', claseNombre: '3ºA' },
-  { id: 'h2', alumnoNombre: 'Pablo R.', colegioNombre: 'CEIP Miguel de Cervantes', claseNombre: '1ºB' },
+export const childrenMock: Child[] = [
+  { id: 'h1', studentName: 'Martina R.', schoolName: 'CEIP Miguel de Cervantes', className: '3ºA' },
+  { id: 'h2', studentName: 'Pablo R.', schoolName: 'CEIP Miguel de Cervantes', className: '1ºB' },
 ];
 
-export type ResumenIA = {
-  fecha: string;
-  puntos: string[];
+export type AISummary = {
+  date: string;
+  points: string[];
 };
 
-export const resumenIAPorHijo: Record<string, ResumenIA> = {
+export const aiSummaryByChild: Record<string, AISummary> = {
   h1: {
-    fecha: '18 oct',
-    puntos: [
+    date: '18 oct',
+    points: [
       'Jueves: excursión al museo. Hay que entregar la autorización firmada.',
       'Viernes: examen de matemáticas (temas 3 y 4).',
       'Quedan 6 familias por pagar el regalo de la profe.',
     ],
   },
   h2: {
-    fecha: '18 oct',
-    puntos: ['Sin avisos nuevos esta semana.', 'El 25 de octubre hay reunión de padres a las 17:00.'],
+    date: '18 oct',
+    points: ['Sin avisos nuevos esta semana.', 'El 25 de octubre hay reunión de padres a las 17:00.'],
   },
 };
 
-export const resumenPorHijo: Record<string, ResumenSecciones> = {
+export const summaryByChild: Record<string, DashboardSummary> = {
   h1: {
-    avisos: { nuevos: 3, urgente: true },
-    calendario: { proximo: 'Excursión al museo', enDias: 3 },
-    deberes: { pendientes: 1, proxima: 'mañana' },
-    gastos: { pendiente: true, concepto: 'Regalo de la profe' },
-    objetosPerdidos: { hayNovedades: true, cantidad: 1 },
+    announcements: { new: 3, urgent: true },
+    calendar: { next: 'Excursión al museo', daysUntil: 3 },
+    homework: { pending: 1, nextDueDate: 'mañana' },
+    expenses: { pending: true, item: 'Regalo de la profe' },
+    lostAndFound: { hasUpdates: true, count: 1 },
   },
   h2: {
-    avisos: { nuevos: 0, urgente: false },
-    calendario: { proximo: 'Reunión de padres', enDias: 7 },
-    deberes: { pendientes: 0, proxima: null },
-    gastos: { pendiente: false },
-    objetosPerdidos: { hayNovedades: false },
+    announcements: { new: 0, urgent: false },
+    calendar: { next: 'Reunión de padres', daysUntil: 7 },
+    homework: { pending: 0, nextDueDate: null },
+    expenses: { pending: false },
+    lostAndFound: { hasUpdates: false },
   },
 };
 
-export type OtroTutor = {
+export type OtherGuardian = {
   id: string;
-  nombre: string;
-  rol: ClassRole;
+  name: string;
+  role: ClassRole;
 };
 
-export const rolClasePorHijo: Record<string, ClassRole> = {
-  h1: 'delegado',
-  h2: 'participante',
+export const classRoleByChild: Record<string, ClassRole> = {
+  h1: 'classRepresentative',
+  h2: 'participant',
 };
 
-export const otrosTutoresPorHijo: Record<string, OtroTutor[]> = {
+export const otherGuardiansByChild: Record<string, OtherGuardian[]> = {
   h1: [
-    { id: 't1', nombre: 'Carlos Gómez', rol: 'participante' },
-    { id: 't2', nombre: 'Laura Sáez', rol: 'participante' },
+    { id: 't1', name: 'Carlos Gómez', role: 'participant' },
+    { id: 't2', name: 'Laura Sáez', role: 'participant' },
   ],
-  h2: [{ id: 't3', nombre: 'Marta Ibáñez', rol: 'delegado' }],
+  h2: [{ id: 't3', name: 'Marta Ibáñez', role: 'classRepresentative' }],
 };

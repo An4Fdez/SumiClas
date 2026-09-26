@@ -16,10 +16,10 @@ async function sha1Hex(value: string): Promise<string> {
 }
 
 /**
- * Comprueba la contraseña contra la API pública "Have I Been Pwned" (Pwned Passwords)
- * usando k-anonimato: solo se envían los 5 primeros caracteres del hash SHA-1, nunca
- * la contraseña real ni el hash completo. Si la API no responde, no bloqueamos el
- * registro (fail-open) — es una comprobación adicional, no la única barrera.
+ * Checks the password against the public "Have I Been Pwned" API (Pwned Passwords)
+ * using k-anonymity: only the first 5 characters of the SHA-1 hash are sent, never
+ * the real password or the full hash. If the API doesn't respond, registration is
+ * not blocked (fail-open) — this is an extra check, not the only barrier.
  */
 export async function isPasswordPwned(password: string): Promise<boolean> {
   try {

@@ -19,7 +19,7 @@ SumiClas es una app de coordinación escolar (sustituto del grupo de WhatsApp de
 apps/
   backend/
     api/        → SumiClas.Api (ASP.NET Core Web API, net10.0)
-    src/        → SumiClas (librería de dominio/aplicación/infraestructura, net10.0)
+    src/        → SumiClas (librería de dominio/aplicación/infraestructura, net10.0), carpetas en inglés (shared/domain/application/infrastructure)
   frontend/
     sumiclas-web/  → Vite + React + TypeScript + Tailwind (sin backend real conectado aún)
   test/
@@ -56,13 +56,14 @@ pnpm dev
 
 ## Convenciones comunes
 
-- **Idioma**: español en todo — identificadores, comentarios (cuando hagan falta), documentación y mensajes de commit. Esto es intencional y coincide con el código y el historial existentes; no traduzcas a inglés por iniciativa propia.
-- **Comentarios en código**: por defecto, no escribas comentarios (ver preferencia general de estilo). Si alguna vez son necesarios para explicar un porqué no obvio, en español.
+- **Idioma**: desde esta decisión en adelante, **el código va en inglés** — nombres de archivo, carpetas, componentes, clases, variables, tipos, casos de uso, y comentarios de código (cuando hagan falta). En **español** se quedan: el `README`, todos los `AGENTS.md` (este incluido), los mensajes de commit, y la documentación de `docs/`. Esto es una reversión deliberada de la convención anterior ("español en todo"); no la reintroduzcas por iniciativa propia. Ver el glosario de dominio español→inglés en `apps/backend/AGENTS.md` y `apps/frontend/AGENTS.md`.
+- **Texto visible para el usuario final de la app** (botones, títulos, mensajes en la UI): sigue en **español**, porque los usuarios reales (familias/profesores) son hispanohablantes. Solo el código cambia de idioma, no el contenido que se renderiza en pantalla.
+- **Comentarios en código**: por defecto, no escribas comentarios (ver preferencia general de estilo). Si alguna vez son necesarios para explicar un porqué no obvio, en inglés (a partir de ahora).
 - **Commits**: frase descriptiva en español, sin prefijos tipo Conventional Commits (`feat:`, `fix:`...). Ejemplos reales del historial: "Realización de la pantalla de gastos", "Cambio en los componentes de fecha y hora para adaptar al modo elegido (claro/oscuro)". Un commit, un cambio coherente.
 - **Ramas**: se trabaja commiteando directo a `main` (no hay ramas de feature ni PRs en este proyecto). No crees ramas por tu cuenta salvo que el usuario lo pida explícitamente para una tarea concreta.
 - **Estilo/formato**:
   - Frontend: ESLint + `typescript-eslint` (`apps/frontend/sumiclas-web/eslint.config.js`) es la única verificación de estilo configurada. No hay Prettier.
-  - Backend: no hay `dotnet format` ni analizadores de estilo configurados todavía. Sigue el estilo ya presente en el código (carpetas `Shared/Aplicacion`, `Shared/Dominio`, `Shared/Infraestructura` en español).
+  - Backend: no hay `dotnet format` ni analizadores de estilo configurados todavía. Carpetas de capa en inglés (`shared/application`, `shared/domain`, `shared/infrastructure`).
   - No hay hooks de pre-commit (ni Husky ni equivalente) en este repo.
 
 ## Reglas generales
@@ -81,3 +82,4 @@ pnpm dev
 - Arquitectura y dominio: `docs/arquitectura-app-coordinacion-escolar.md`
 - Diseño de pantalla inicial: `docs/diseno-pantalla-inicial.md`
 - Investigación de requisitos: `docs/investigacion-requisitos-sumiclas.md`
+- Glosario de dominio español→inglés (para nombrar código): `docs/glosario-dominio.md`

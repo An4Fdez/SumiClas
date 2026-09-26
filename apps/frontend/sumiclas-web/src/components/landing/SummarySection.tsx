@@ -3,7 +3,7 @@ import { Reveal } from '@/components/layout/Reveal';
 
 export function SummarySection() {
   return (
-    <section id="como-funciona" className="relative overflow-hidden py-20 sm:py-28">
+    <section id="how-it-works" className="relative overflow-hidden py-20 sm:py-28">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-mint-300/20 blur-3xl dark:bg-mint-600/10" />
       </div>

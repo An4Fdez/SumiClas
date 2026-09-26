@@ -4,46 +4,46 @@ import { Reveal } from '@/components/layout/Reveal';
 import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
 import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses, type PaletteColor } from '@/lib/colorClasses';
-import { resumenIAPorHijo } from '@/data/appMock';
+import { aiSummaryByChild } from '@/data/appMock';
 import { roleMeta, type ClassRole } from '@/lib/roles';
 
 type OnboardingState = {
-  colegio?: string;
-  clase?: string;
-  alumno?: string;
-  segundoTutor?: boolean;
-  rolAsignado?: ClassRole;
+  school?: string;
+  schoolClass?: string;
+  student?: string;
+  secondGuardian?: boolean;
+  assignedRole?: ClassRole;
 };
 
 export default function Dashboard() {
   const location = useLocation();
   const onboardingState = (location.state ?? {}) as OnboardingState;
-  const { hijoActualId, resumenActual } = useChildContext();
-  const resumenIA = resumenIAPorHijo[hijoActualId];
+  const { currentChildId, currentSummary } = useChildContext();
+  const aiSummary = aiSummaryByChild[currentChildId];
 
   return (
     <div>
-      {onboardingState.alumno && (
+      {onboardingState.student && (
         <Reveal className="mb-6">
           <div className="flex items-start gap-3 rounded-2xl border border-mint-200 bg-mint-50/60 p-4 dark:border-mint-700/40 dark:bg-mint-900/15">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-400 via-mint-400 to-rose-400 text-white">
               <Sparkles className="h-4 w-4" />
             </div>
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              Hemos {onboardingState.segundoTutor ? 'vinculado' : 'dado de alta'} a{' '}
-              <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.alumno}</strong>
-              {onboardingState.colegio && (
+              Hemos {onboardingState.secondGuardian ? 'vinculado' : 'dado de alta'} a{' '}
+              <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.student}</strong>
+              {onboardingState.school && (
                 <>
                   {' '}
-                  en <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.colegio}</strong>
+                  en <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.school}</strong>
                 </>
               )}
               .{' '}
-              {onboardingState.rolAsignado && (
+              {onboardingState.assignedRole && (
                 <>
                   Se te ha asignado el rol de{' '}
                   <strong className="font-semibold text-slate-900 dark:text-white">
-                    {roleMeta[onboardingState.rolAsignado].label}
+                    {roleMeta[onboardingState.assignedRole].label}
                   </strong>{' '}
                   de esta clase.{' '}
                 </>
@@ -63,13 +63,13 @@ export default function Dashboard() {
         </p>
       </Reveal>
 
-      {resumenActual && resumenIA && (
+      {currentSummary && aiSummary && (
         <Reveal delay={40} className="mt-6">
-          <WeeklySummaryCard fecha={resumenIA.fecha} puntos={resumenIA.puntos} />
+          <WeeklySummaryCard date={aiSummary.date} points={aiSummary.points} />
         </Reveal>
       )}
 
-      {!resumenActual ? (
+      {!currentSummary ? (
         <Reveal delay={80} className="mt-6">
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -84,30 +84,30 @@ export default function Dashboard() {
         <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Reveal delay={0}>
             <SectionCard
-              to="/avisos"
+              to="/announcements"
               color="rose"
               icon={Bell}
               title="Avisos"
               value={
-                resumenActual.avisos.nuevos > 0
-                  ? `${resumenActual.avisos.nuevos} ${resumenActual.avisos.nuevos === 1 ? 'nuevo' : 'nuevos'}`
+                currentSummary.announcements.new > 0
+                  ? `${currentSummary.announcements.new} ${currentSummary.announcements.new === 1 ? 'nuevo' : 'nuevos'}`
                   : 'Sin novedades'
               }
-              highlight={resumenActual.avisos.urgente}
+              highlight={currentSummary.announcements.urgent}
               highlightLabel="Urgente"
             />
           </Reveal>
 
           <Reveal delay={60}>
             <SectionCard
-              to="/calendario"
+              to="/calendar"
               color="violet"
               icon={Calendar}
               title="Calendario"
               value={
-                resumenActual.calendario.proximo
-                  ? `${resumenActual.calendario.proximo} en ${resumenActual.calendario.enDias} ${
-                      resumenActual.calendario.enDias === 1 ? 'día' : 'días'
+                currentSummary.calendar.next
+                  ? `${currentSummary.calendar.next} en ${currentSummary.calendar.daysUntil} ${
+                      currentSummary.calendar.daysUntil === 1 ? 'día' : 'días'
                     }`
                   : 'Sin eventos próximos'
               }
@@ -116,15 +116,15 @@ export default function Dashboard() {
 
           <Reveal delay={120}>
             <SectionCard
-              to="/deberes"
+              to="/homework"
               color="mint"
               icon={BookOpen}
               title="Deberes"
               value={
-                resumenActual.deberes.pendientes > 0
-                  ? `${resumenActual.deberes.pendientes} ${
-                      resumenActual.deberes.pendientes === 1 ? 'pendiente' : 'pendientes'
-                    } para ${resumenActual.deberes.proxima}`
+                currentSummary.homework.pending > 0
+                  ? `${currentSummary.homework.pending} ${
+                      currentSummary.homework.pending === 1 ? 'pendiente' : 'pendientes'
+                    } para ${currentSummary.homework.nextDueDate}`
                   : 'Sin deberes pendientes'
               }
             />
@@ -132,34 +132,34 @@ export default function Dashboard() {
         </div>
       )}
 
-      {resumenActual && (
+      {currentSummary && (
         <div className="mt-4 flex flex-wrap justify-center gap-4">
           <Reveal delay={180} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
             <SectionCard
-              to="/gastos"
+              to="/expenses"
               color="sun"
               icon={Wallet}
               title="Gastos de clase"
               value={
-                resumenActual.gastos.pendiente
-                  ? `Pago pendiente: ${resumenActual.gastos.concepto}`
+                currentSummary.expenses.pending
+                  ? `Pago pendiente: ${currentSummary.expenses.item}`
                   : 'Todo al día'
               }
-              highlight={resumenActual.gastos.pendiente}
+              highlight={currentSummary.expenses.pending}
               highlightLabel="Pendiente"
             />
           </Reveal>
 
           <Reveal delay={240} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
             <SectionCard
-              to="/objetos-perdidos"
+              to="/lost-and-found"
               color="orange"
               icon={PackageSearch}
               title="Objetos perdidos"
               value={
-                resumenActual.objetosPerdidos.hayNovedades
-                  ? `${resumenActual.objetosPerdidos.cantidad} ${
-                      resumenActual.objetosPerdidos.cantidad === 1 ? 'novedad' : 'novedades'
+                currentSummary.lostAndFound.hasUpdates
+                  ? `${currentSummary.lostAndFound.count} ${
+                      currentSummary.lostAndFound.count === 1 ? 'novedad' : 'novedades'
                     }`
                   : 'Sin novedades'
               }
