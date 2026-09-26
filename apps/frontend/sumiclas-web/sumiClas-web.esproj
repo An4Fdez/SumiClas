@@ -25,4 +25,9 @@
     <ProductionBuildCommand>pnpm run build</ProductionBuildCommand>
     <BuildOutputFolder>$(MSBuildProjectDirectory)\build</BuildOutputFolder>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="src\modulos\avisos\dominio\" />
+    <Folder Include="src\modulos\avisos\infrastructura\" />
+  </ItemGroup>
 </Project>

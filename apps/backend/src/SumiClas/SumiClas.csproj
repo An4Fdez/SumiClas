@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Shared\Aplicacion\" />
-      <Folder Include="Shared\Dominio\" />
-      <Folder Include="Shared\Infraestructura\Persistencia\" />
+      <Folder Include="compartido\aplicacion\" />
+      <Folder Include="compartido\dominio\" />
+      <Folder Include="compartido\infrastructura\Persistencia\" />
     </ItemGroup>
 
 </Project>

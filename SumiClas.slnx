@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/apps/" />
-  <Folder Name="/apps/backend/" />
+  <Folder Name="/apps/backend/">
+    <File Path="apps/backend/AGENTS.md" />
+  </Folder>
   <Folder Name="/apps/backend/api/">
     <Project Path="apps/backend/api/SumiClas.Api.csproj" />
   </Folder>
@@ -8,6 +10,7 @@
     <Project Path="apps/backend/src/SumiClas/SumiClas.csproj" />
   </Folder>
   <Folder Name="/apps/frontend/">
+    <File Path="apps/frontend/AGENTS.md" />
     <Project Path="apps/frontend/sumiclas-web/sumiClas-web.esproj">
       <BuildType Project="Debug" />
       <Build />
@@ -16,6 +19,7 @@
   <Folder Name="/apps/test/" />
   <Folder Name="/solutionItems/">
     <File Path=".gitignore" />
+    <File Path="AGENTS.md" />
     <File Path="Readme.md" />
   </Folder>
 </Solution>
