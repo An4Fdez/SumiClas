@@ -30,7 +30,7 @@ const features: {
   {
     key: 'gastos',
     title: 'Gastos de clase',
-    text: 'Regalo colectivo, material… defines quién participa y cada uno marca su parte como pagada. Sin mover dinero.',
+    text: 'Acordaos de quién falta por pagar el regalo o el material de clase. Sin mover un euro dentro de la app.',
     color: 'sun',
   },
   {
