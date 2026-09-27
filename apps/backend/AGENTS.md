@@ -56,7 +56,9 @@ SumiClas/
   Students/Domain/
   Users/Domain/
   Announcements/Domain/  → Announcement (raíz) + AnnouncementReadReceipt (entidad hija)
-  Calendar/             (pendiente de diseñar)
+  Calendar/Domain/       → CalendarEvent (raíz) + EventDate (value object)
+    · Los eventos puntuales (Trip/Meeting/Activity/Other) referencian ClassId (una Class concreta, coherente con que no son permanentes).
+    · Birthday referencia StudentId, nunca ClassId: Class se recrea cada SchoolYear, y un cumpleaños se repite para siempre — si se enlazara a una Class fija, dejaría de aparecer al cambiar el alumno de clase el curso siguiente. Qué clase mostrar se resuelve en consulta (Student → Enrollment activo → Class), no se guarda en el evento.
   Homework/             (pendiente de diseñar)
   Expenses/             (pendiente de diseñar)
   LostAndFound/         (pendiente de diseñar)
