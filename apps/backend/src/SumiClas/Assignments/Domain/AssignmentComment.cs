@@ -21,16 +21,26 @@ public sealed class AssignmentComment : Entity
 
     internal static Result<AssignmentComment> Create(Guid authorId, string text, IClock clock)
     {
-        if (authorId == Guid.Empty)
+        var validation = Validate(authorId, text);
+        if (validation.IsFailure)
         {
-            return Result<AssignmentComment>.Failure(AssignmentErrors.CommentAuthorRequired);
-        }
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return Result<AssignmentComment>.Failure(AssignmentErrors.CommentTextRequired);
+            return Result<AssignmentComment>.Failure(validation.Error!);
         }
 
         var comment = new AssignmentComment(Guid.NewGuid(), authorId, text.Trim(), clock.UtcNow);
         return Result<AssignmentComment>.Success(comment);
+    }
+
+    private static Result Validate(Guid authorId, string text)
+    {
+        if (authorId == Guid.Empty)
+        {
+            return Result.Failure(AssignmentErrors.CommentAuthorRequired);
+        }
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Result.Failure(AssignmentErrors.CommentTextRequired);
+        }
+        return Result.Success();
     }
 }

@@ -17,17 +17,27 @@ public sealed class StudentName : ValueObject
 
     public static Result<StudentName> Create(string firstName, string firstSurname, string? secondSurname = null)
     {
-        if (string.IsNullOrWhiteSpace(firstName))
+        var validation = Validate(firstName, firstSurname);
+        if (validation.IsFailure)
         {
-            return Result<StudentName>.Failure(StudentErrors.NameRequired);
-        }
-        if (string.IsNullOrWhiteSpace(firstSurname))
-        {
-            return Result<StudentName>.Failure(StudentErrors.FirstSurnameRequired);
+            return Result<StudentName>.Failure(validation.Error!);
         }
 
         var normalizedSecondSurname = string.IsNullOrWhiteSpace(secondSurname) ? null : secondSurname.Trim();
         return Result<StudentName>.Success(new StudentName(firstName.Trim(), firstSurname.Trim(), normalizedSecondSurname));
+    }
+
+    private static Result Validate(string firstName, string firstSurname)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+        {
+            return Result.Failure(StudentErrors.NameRequired);
+        }
+        if (string.IsNullOrWhiteSpace(firstSurname))
+        {
+            return Result.Failure(StudentErrors.FirstSurnameRequired);
+        }
+        return Result.Success();
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

@@ -70,21 +70,10 @@ public sealed class CalendarEvent : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        if (type == EventType.Birthday)
+        var validation = Validate(scope, classId, type, title, authorId);
+        if (validation.IsFailure)
         {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.UseCreateBirthdayForBirthdays);
-        }
-        if (scope == EventScope.Class && (classId is null || classId == Guid.Empty))
-        {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.ClassRequiredForClassScope);
-        }
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.TitleRequired);
-        }
-        if (authorId == Guid.Empty)
-        {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.AuthorRequired);
+            return Result<CalendarEvent>.Failure(validation.Error!);
         }
 
         var eventDate = EventDate.OnDate(date);
@@ -106,6 +95,27 @@ public sealed class CalendarEvent : AggregateRoot
         return Result<CalendarEvent>.Success(calendarEvent);
     }
 
+    private static Result Validate(EventScope scope, Guid? classId, EventType type, string title, Guid authorId)
+    {
+        if (type == EventType.Birthday)
+        {
+            return Result.Failure(CalendarEventErrors.UseCreateBirthdayForBirthdays);
+        }
+        if (scope == EventScope.Class && (classId is null || classId == Guid.Empty))
+        {
+            return Result.Failure(CalendarEventErrors.ClassRequiredForClassScope);
+        }
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure(CalendarEventErrors.TitleRequired);
+        }
+        if (authorId == Guid.Empty)
+        {
+            return Result.Failure(CalendarEventErrors.AuthorRequired);
+        }
+        return Result.Success();
+    }
+
     /// <summary>
     /// Birthdays are always Class-scoped (via the student's current class, resolved
     /// dynamically) and always recurring (month+day, never a year — see EventDate/StudentId).
@@ -118,17 +128,10 @@ public sealed class CalendarEvent : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        if (studentId == Guid.Empty)
+        var validation = ValidateBirthday(studentId, title, authorId);
+        if (validation.IsFailure)
         {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.StudentRequiredForBirthday);
-        }
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.TitleRequired);
-        }
-        if (authorId == Guid.Empty)
-        {
-            return Result<CalendarEvent>.Failure(CalendarEventErrors.AuthorRequired);
+            return Result<CalendarEvent>.Failure(validation.Error!);
         }
 
         var eventDate = EventDate.RecurringAnnual(month, day);
@@ -152,6 +155,23 @@ public sealed class CalendarEvent : AggregateRoot
             clock.UtcNow);
 
         return Result<CalendarEvent>.Success(birthday);
+    }
+
+    private static Result ValidateBirthday(Guid studentId, string title, Guid authorId)
+    {
+        if (studentId == Guid.Empty)
+        {
+            return Result.Failure(CalendarEventErrors.StudentRequiredForBirthday);
+        }
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure(CalendarEventErrors.TitleRequired);
+        }
+        if (authorId == Guid.Empty)
+        {
+            return Result.Failure(CalendarEventErrors.AuthorRequired);
+        }
+        return Result.Success();
     }
 
     private static string? NormalizeOptional(string? value) =>

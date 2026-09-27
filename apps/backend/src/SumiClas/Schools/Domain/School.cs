@@ -17,16 +17,26 @@ public sealed class School : AggregateRoot
 
     public static Result<School> Register(string name, string officialCode, string? address = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        var validation = Validate(name, officialCode);
+        if (validation.IsFailure)
         {
-            return Result<School>.Failure(SchoolErrors.NameRequired);
-        }
-        if (string.IsNullOrWhiteSpace(officialCode))
-        {
-            return Result<School>.Failure(SchoolErrors.OfficialCodeRequired);
+            return Result<School>.Failure(validation.Error!);
         }
 
         var school = new School(Guid.NewGuid(), name.Trim(), officialCode.Trim(), address);
         return Result<School>.Success(school);
+    }
+
+    private static Result Validate(string name, string officialCode)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result.Failure(SchoolErrors.NameRequired);
+        }
+        if (string.IsNullOrWhiteSpace(officialCode))
+        {
+            return Result.Failure(SchoolErrors.OfficialCodeRequired);
+        }
+        return Result.Success();
     }
 }

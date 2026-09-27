@@ -15,17 +15,27 @@ public sealed class Class : AggregateRoot
 
     public static Result<Class> Create(Guid schoolYearId, string name)
     {
-        if (schoolYearId == Guid.Empty)
+        var validation = Validate(schoolYearId, name);
+        if (validation.IsFailure)
         {
-            return Result<Class>.Failure(ClassErrors.SchoolYearRequired);
-        }
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return Result<Class>.Failure(ClassErrors.NameRequired);
+            return Result<Class>.Failure(validation.Error!);
         }
 
         var schoolClass = new Class(Guid.NewGuid(), schoolYearId, name.Trim());
         return Result<Class>.Success(schoolClass);
+    }
+
+    private static Result Validate(Guid schoolYearId, string name)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            return Result.Failure(ClassErrors.SchoolYearRequired);
+        }
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result.Failure(ClassErrors.NameRequired);
+        }
+        return Result.Success();
     }
 
     public Result Rename(string newName)

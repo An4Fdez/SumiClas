@@ -30,18 +30,28 @@ public sealed class EventDate : ValueObject
 
     public static Result<EventDate> RecurringAnnual(int month, int day)
     {
+        var validation = Validate(month, day);
+        if (validation.IsFailure)
+        {
+            return Result<EventDate>.Failure(validation.Error!);
+        }
+
+        return Result<EventDate>.Success(new EventDate(month, day, null));
+    }
+
+    private static Result Validate(int month, int day)
+    {
         if (month < 1 || month > 12)
         {
-            return Result<EventDate>.Failure(CalendarEventErrors.InvalidMonth);
+            return Result.Failure(CalendarEventErrors.InvalidMonth);
         }
 
         // 2000 is a leap year, so Feb 29 is always accepted as a valid recurring day.
         if (day < 1 || day > DateTime.DaysInMonth(2000, month))
         {
-            return Result<EventDate>.Failure(CalendarEventErrors.InvalidDay);
+            return Result.Failure(CalendarEventErrors.InvalidDay);
         }
-
-        return Result<EventDate>.Success(new EventDate(month, day, null));
+        return Result.Success();
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

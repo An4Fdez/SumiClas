@@ -23,21 +23,31 @@ public sealed class SchoolYear : AggregateRoot
 
     public static Result<SchoolYear> Create(Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
     {
-        if (schoolId == Guid.Empty)
+        var validation = Validate(schoolId, label, startDate, endDate);
+        if (validation.IsFailure)
         {
-            return Result<SchoolYear>.Failure(SchoolYearErrors.SchoolRequired);
-        }
-        if (string.IsNullOrWhiteSpace(label))
-        {
-            return Result<SchoolYear>.Failure(SchoolYearErrors.LabelRequired);
-        }
-        if (endDate <= startDate)
-        {
-            return Result<SchoolYear>.Failure(SchoolYearErrors.InvalidDateRange);
+            return Result<SchoolYear>.Failure(validation.Error!);
         }
 
         var schoolYear = new SchoolYear(Guid.NewGuid(), schoolId, label.Trim(), startDate, endDate);
         return Result<SchoolYear>.Success(schoolYear);
+    }
+
+    private static Result Validate(Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
+    {
+        if (schoolId == Guid.Empty)
+        {
+            return Result.Failure(SchoolYearErrors.SchoolRequired);
+        }
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return Result.Failure(SchoolYearErrors.LabelRequired);
+        }
+        if (endDate <= startDate)
+        {
+            return Result.Failure(SchoolYearErrors.InvalidDateRange);
+        }
+        return Result.Success();
     }
 
     /// <summary>

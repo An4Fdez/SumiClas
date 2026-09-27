@@ -53,21 +53,10 @@ public sealed class Announcement : AggregateRoot
         Guid? relatedEventId,
         IClock clock)
     {
-        if (scope == AnnouncementScope.Class && (classId is null || classId == Guid.Empty))
+        var validation = Validate(scope, classId, title, body, authorId);
+        if (validation.IsFailure)
         {
-            return Result<Announcement>.Failure(AnnouncementErrors.ClassRequiredForClassScope);
-        }
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return Result<Announcement>.Failure(AnnouncementErrors.TitleRequired);
-        }
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return Result<Announcement>.Failure(AnnouncementErrors.BodyRequired);
-        }
-        if (authorId == Guid.Empty)
-        {
-            return Result<Announcement>.Failure(AnnouncementErrors.AuthorRequired);
+            return Result<Announcement>.Failure(validation.Error!);
         }
 
         var announcement = new Announcement(
@@ -82,6 +71,27 @@ public sealed class Announcement : AggregateRoot
             clock.UtcNow);
 
         return Result<Announcement>.Success(announcement);
+    }
+
+    private static Result Validate(AnnouncementScope scope, Guid? classId, string title, string body, Guid authorId)
+    {
+        if (scope == AnnouncementScope.Class && (classId is null || classId == Guid.Empty))
+        {
+            return Result.Failure(AnnouncementErrors.ClassRequiredForClassScope);
+        }
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure(AnnouncementErrors.TitleRequired);
+        }
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return Result.Failure(AnnouncementErrors.BodyRequired);
+        }
+        if (authorId == Guid.Empty)
+        {
+            return Result.Failure(AnnouncementErrors.AuthorRequired);
+        }
+        return Result.Success();
     }
 
     /// <summary>Idempotent: if the user already has a receipt, does nothing.</summary>

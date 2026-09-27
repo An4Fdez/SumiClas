@@ -52,21 +52,10 @@ public sealed class Assignment : AggregateRoot
         bool isProposal,
         IClock clock)
     {
-        if (classId == Guid.Empty)
+        var validation = Validate(classId, subjectId, title, authorId);
+        if (validation.IsFailure)
         {
-            return Result<Assignment>.Failure(AssignmentErrors.ClassRequired);
-        }
-        if (subjectId == Guid.Empty)
-        {
-            return Result<Assignment>.Failure(AssignmentErrors.SubjectRequired);
-        }
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return Result<Assignment>.Failure(AssignmentErrors.TitleRequired);
-        }
-        if (authorId == Guid.Empty)
-        {
-            return Result<Assignment>.Failure(AssignmentErrors.AuthorRequired);
+            return Result<Assignment>.Failure(validation.Error!);
         }
 
         var assignment = new Assignment(
@@ -81,6 +70,27 @@ public sealed class Assignment : AggregateRoot
             clock.UtcNow);
 
         return Result<Assignment>.Success(assignment);
+    }
+
+    private static Result Validate(Guid classId, Guid subjectId, string title, Guid authorId)
+    {
+        if (classId == Guid.Empty)
+        {
+            return Result.Failure(AssignmentErrors.ClassRequired);
+        }
+        if (subjectId == Guid.Empty)
+        {
+            return Result.Failure(AssignmentErrors.SubjectRequired);
+        }
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure(AssignmentErrors.TitleRequired);
+        }
+        if (authorId == Guid.Empty)
+        {
+            return Result.Failure(AssignmentErrors.AuthorRequired);
+        }
+        return Result.Success();
     }
 
     public Result AddComment(Guid authorId, string text, IClock clock)

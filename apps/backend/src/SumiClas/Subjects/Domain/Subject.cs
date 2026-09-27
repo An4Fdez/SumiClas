@@ -21,16 +21,26 @@ public sealed class Subject : AggregateRoot
 
     public static Result<Subject> Create(Guid classId, string label)
     {
-        if (classId == Guid.Empty)
+        var validation = Validate(classId, label);
+        if (validation.IsFailure)
         {
-            return Result<Subject>.Failure(SubjectErrors.ClassRequired);
-        }
-        if (string.IsNullOrWhiteSpace(label))
-        {
-            return Result<Subject>.Failure(SubjectErrors.LabelRequired);
+            return Result<Subject>.Failure(validation.Error!);
         }
 
         var subject = new Subject(Guid.NewGuid(), classId, label.Trim());
         return Result<Subject>.Success(subject);
+    }
+
+    private static Result Validate(Guid classId, string label)
+    {
+        if (classId == Guid.Empty)
+        {
+            return Result.Failure(SubjectErrors.ClassRequired);
+        }
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return Result.Failure(SubjectErrors.LabelRequired);
+        }
+        return Result.Success();
     }
 }
