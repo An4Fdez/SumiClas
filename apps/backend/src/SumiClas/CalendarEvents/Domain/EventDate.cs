@@ -1,6 +1,6 @@
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Calendar.Domain;
+namespace SumiClas.CalendarEvents.Domain;
 
 /// <summary>
 /// A one-time date (Year set) for regular events, or a recurring annual month+day

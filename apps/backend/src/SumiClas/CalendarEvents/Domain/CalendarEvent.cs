@@ -1,6 +1,6 @@
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Calendar.Domain;
+namespace SumiClas.CalendarEvents.Domain;
 
 public sealed class CalendarEvent : AggregateRoot
 {

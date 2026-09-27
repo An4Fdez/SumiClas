@@ -1,4 +1,4 @@
-namespace SumiClas.Calendar.Domain;
+namespace SumiClas.CalendarEvents.Domain;
 
 public enum EventType
 {

@@ -17,7 +17,7 @@ public sealed class Announcement : AggregateRoot
     public Priority Priority { get; private set; }
     public Guid AuthorId { get; private set; }
 
-    /// <summary>Optional cross-module reference to a Calendar module event (not designed yet).</summary>
+    /// <summary>Optional cross-module reference to a CalendarEvents module CalendarEvent.</summary>
     public Guid? RelatedEventId { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
