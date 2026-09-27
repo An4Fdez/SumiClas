@@ -38,19 +38,28 @@ Organizar en tres carpetas, no todo en `Program.cs`:
 
 ### `src/SumiClas/` — dominio y aplicación (vertical slice)
 
-Cada módulo/agregado es **autocontenido**: trae su propio `Domain/`, `Application/` e `Infrastructure/`. Un módulo = un agregado raíz — módulos con agregados distintos no se agrupan bajo una carpeta común (`School`, `SchoolYear`, `Class` y `Enrollment` son cuatro módulos separados, no uno "Schools" con los cuatro dentro), aunque estén muy relacionados. Estado real hoy (solo `Domain/`, el resto pendiente):
+Cada módulo es **autocontenido**: trae su propio `Domain/`, `Application/` e `Infrastructure/`.
+
+**Un agregado tiene exactamente una raíz** (`: AggregateRoot`); todo lo demás que forme parte de ese mismo agregado es una **entidad hija** (`: Entity`, nunca `: AggregateRoot`) o un value object, accesible/mutable solo a través de la raíz — nunca con su propio repositorio ni su propia colección de domain events. Ejemplo real: `Announcement` (raíz) contiene una colección privada de `AnnouncementReadReceipt` (entidad hija — quién ha leído el aviso); se crean y protegen sus invariantes (ej. "como mucho un recibo por usuario") desde un método de la propia raíz (`Announcement.MarkAsReadBy(...)`), nunca instanciando la hija por fuera. Si dudas si algo es una raíz nueva o una entidad hija, pregúntate: ¿tiene sentido consultarlo/guardarlo independientemente de su supuesto "padre"? Si no, es hija.
+
+La regla para decidir si dos **agregados** (cada uno con su propia raíz) van en el mismo módulo o en módulos separados es de **acoplamiento/bounded context**, no "un módulo = un agregado" a rajatabla: los del núcleo estructural (`School`, `SchoolYear`, `Class`, `Enrollment`, `Student`, `User`) están débilmente acoplados entre sí → cada uno en su propio módulo. Agregados que pertenecen a la misma feature de cara al usuario irían en el mismo módulo (ej. todo lo que cuelgue de la feature "Avisos" bajo `Announcements/Domain/`), coincidiendo con la lista de módulos funcionales ya nombrada aquí (`Announcements`, `Calendar`, `Homework`, `Expenses`, `LostAndFound`).
+
+Estado real hoy (solo `Domain/`, el resto pendiente):
 ```
 SumiClas/
-  shared/domain/     → Entity, AggregateRoot, DomainEventBase, ValueObject, Error, Result/Result<T>
+  shared/domain/       → Entity, AggregateRoot, DomainEventBase, ValueObject, Error, Result/Result<T>, IClock
+  shared/infrastructure/ → SystemClock
   Schools/Domain/
   SchoolYears/Domain/
   Classes/Domain/
   Enrollments/Domain/
   Students/Domain/
   Users/Domain/
-  Announcements/      (pendiente de diseñar)
-  Calendar/           (pendiente de diseñar)
-  ...
+  Announcements/Domain/  → Announcement (raíz) + AnnouncementReadReceipt (entidad hija)
+  Calendar/             (pendiente de diseñar)
+  Homework/             (pendiente de diseñar)
+  Expenses/             (pendiente de diseñar)
+  LostAndFound/         (pendiente de diseñar)
 ```
 `shared/` es la excepción, no la regla: solo debe contener lo que de verdad usan varios módulos (p. ej. la clase base `Entity`, el `DbContext` compartido cuando exista). Si algo es específico de un módulo, va dentro de su carpeta, no en `shared/`.
 
