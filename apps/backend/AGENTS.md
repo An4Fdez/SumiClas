@@ -4,7 +4,7 @@ Aplica a `apps/backend/**`. Ver también el `AGENTS.md` de la raíz (convencione
 
 ## Estado actual (importante)
 
-Este backend es, a día de hoy, **un esqueleto**: `apps/backend/api/Program.cs` solo tiene versionado por header, Swagger/OpenAPI y un health check en `/healthy`. Las carpetas `shared/application`, `shared/domain`, `shared/infrastructure` en `apps/backend/src/SumiClas` están vacías. Todo lo que sigue es la arquitectura **objetivo** acordada con el usuario para cuando se implemente el primer módulo real, no una descripción de código ya existente. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
+`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI y un health check en `/healthy` — la capa `api` aún no tiene endpoints reales. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain únicamente** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz). `shared/application/` y `shared/infrastructure/persistence/` siguen vacías, y ningún módulo tiene todavía `Application/` ni `Infrastructure/` (ni Endpoints propios) — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
 
 ## Estructura de proyectos
 
@@ -38,26 +38,35 @@ Organizar en tres carpetas, no todo en `Program.cs`:
 
 ### `src/SumiClas/` — dominio y aplicación (vertical slice)
 
-Cada módulo/agregado es **autocontenido**: trae su propio `Domain/`, `Application/` e `Infrastructure/`. Ejemplo (ilustrativo, aún no creado):
+Cada módulo/agregado es **autocontenido**: trae su propio `Domain/`, `Application/` e `Infrastructure/`. Un módulo = un agregado raíz — módulos con agregados distintos no se agrupan bajo una carpeta común (`School`, `SchoolYear`, `Class` y `Enrollment` son cuatro módulos separados, no uno "Schools" con los cuatro dentro), aunque estén muy relacionados. Estado real hoy (solo `Domain/`, el resto pendiente):
 ```
 SumiClas/
-  shared/           → código realmente transversal: clases base, value objects genéricos, utilidades comunes, configuración compartida de EF Core
-  Announcements/
-    Domain/
-    Application/
-    Infrastructure/
-  Calendar/
-    Domain/
-    Application/
-    Infrastructure/
+  shared/domain/     → Entity, AggregateRoot, DomainEventBase, ValueObject, Error, Result/Result<T>
+  Schools/Domain/
+  SchoolYears/Domain/
+  Classes/Domain/
+  Enrollments/Domain/
+  Students/Domain/
+  Users/Domain/
+  Announcements/      (pendiente de diseñar)
+  Calendar/           (pendiente de diseñar)
   ...
 ```
-`shared/` es la excepción, no la regla: solo debe contener lo que de verdad usan varios módulos (p. ej. una clase base `Entity`, el `DbContext` compartido). Si algo es específico de un módulo, va dentro de su carpeta, no en `shared/`.
+`shared/` es la excepción, no la regla: solo debe contener lo que de verdad usan varios módulos (p. ej. la clase base `Entity`, el `DbContext` compartido cuando exista). Si algo es específico de un módulo, va dentro de su carpeta, no en `shared/`.
+
+**Manejo de errores en Domain**: los agregados y value objects no lanzan excepciones de dominio — todo factory method o método de comportamiento que pueda fallar devuelve `Result`/`Result<T>` (`SumiClas.Shared.Domain`), con un `Error` (`Code` + `Message`) describiendo el fallo. Quien llama decide qué hacer con `IsFailure`/`Error`; no introduzcas una excepción de dominio nueva sin acordarlo antes.
+
+**Idioma de `Error.Code` vs. `Error.Message`**: `Code` es un identificador simbólico de código (en inglés, ej. `"SchoolYear.Archived"`) para que la futura Application lo mapee a un `ProblemDetails` sin parsear texto — no cambia. `Message` es el texto que puede acabar mostrándose al usuario final de la app (directo o como base de un mensaje en la respuesta HTTP), así que va **en español**, igual que el resto de texto de cara al usuario (ver `AGENTS.md` de la raíz). Cada `*Errors.cs` nuevo debe seguir este mismo reparto: `Code` en inglés, `Message` en español.
+
+**Fechas/horas en Domain — `IClock`, nunca `DateTimeOffset.UtcNow` directo**: ningún agregado, value object o evento de dominio llama a `DateTimeOffset.UtcNow` (ni `DateTime.Now`) directamente — eso acopla el dominio a un reloj real y hace imposible testear comportamiento dependiente del tiempo. En su lugar:
+- `IClock` (`SumiClas.Shared.Domain`, con `DateTimeOffset UtcNow { get; }`) es la abstracción que se pasa como parámetro a cualquier factory method o método de comportamiento que necesite "ahora" (ej. `Enrollment.Create(studentId, classId, IClock clock)`, `SchoolYear.Archive(IClock clock)`).
+- `SystemClock` (`SumiClas.Shared.Infrastructure`, en `shared/infrastructure/`) es la única implementación real (`DateTimeOffset.UtcNow`), y la única clase de todo el dominio donde ese literal puede aparecer. Cuando exista Application/Infrastructure, `SystemClock` se registra como singleton en el contenedor de DI; en tests se sustituye por un `IClock` de prueba con una fecha fija.
+- No añadas una segunda forma de obtener la hora actual (otro helper, otra clase) sin acordarlo antes — `IClock` es la única vía.
 
 ## Reglas de dependencia entre capas y módulos
 
 - **Dentro de un módulo**: `Domain` no depende de nada externo (ni de `Application`, ni de `Infrastructure`, ni de paquetes de infraestructura como EF Core); `Application` depende solo de su propio `Domain`; `Infrastructure` implementa los contratos (interfaces) definidos en `Application`/`Domain` de ese mismo módulo.
-- **Entre módulos distintos**: nunca acceso directo al `Domain` o `Infrastructure` de otro módulo. Si un módulo necesita algo de otro, debe ser a través de un contrato expuesto en la capa `Application` del módulo dueño, o mediante eventos — nunca importando sus clases internas directamente.
+- **Entre módulos distintos**: nunca acceso directo al `Domain` o `Infrastructure` de otro módulo. La comunicación entre las capas `Application` de módulos distintos se hace enviando una `Query`/`Command` a través de un **QueryBus implementado con MediatR** (`IMediator`/`ISender.Send(...)`): el `Handler` correspondiente, registrado en la `Application` del módulo dueño, la resuelve. Los módulos no se acoplan por referencia directa a la implementación del otro (solo al tipo del mensaje Query/Command) — nunca se inyecta directamente una interfaz/servicio del módulo dueño en la `Application` del módulo consumidor, y nunca se importan sus clases internas directamente.
 - La capa `api` puede depender de `Application` de cualquier módulo (para invocar casos de uso vía MediatR) pero nunca debe contener lógica de negocio ni acceder directamente a `Domain`/`Infrastructure`.
 
 ## CQRS con MediatR

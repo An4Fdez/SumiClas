@@ -8,7 +8,6 @@
 
     <ItemGroup>
       <Folder Include="shared\application\" />
-      <Folder Include="shared\domain\" />
       <Folder Include="shared\infrastructure\persistence\" />
     </ItemGroup>
 
