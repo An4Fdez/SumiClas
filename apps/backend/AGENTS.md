@@ -4,7 +4,7 @@ Aplica a `apps/backend/**`. Ver también el `AGENTS.md` de la raíz (convencione
 
 ## Estado actual (importante)
 
-`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI y un health check en `/healthy` — la capa `api` aún no tiene endpoints reales. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain únicamente** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz). `shared/application/` y `shared/infrastructure/persistence/` siguen vacías, y ningún módulo tiene todavía `Application/` ni `Infrastructure/` (ni Endpoints propios) — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
+`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI y un health check en `/healthy` — la capa `api` aún no tiene endpoints reales. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz) más los módulos funcionales (`Announcements`, `CalendarEvents`, `Subjects`, `Assignments`, `ClassExpenses`, `LostItems`). Además ya existen los **mapeos de EF Core/PostgreSQL** de los 12 agregados en `shared/infrastructure/persistence/mappings/` (ver sección "Base de datos" para la convención). `shared/application/` sigue vacía, y ningún módulo tiene todavía `Application/` (ni Endpoints propios) ni un `DbContext`/migraciones reales — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
 
 ## Estructura de proyectos
 
@@ -46,11 +46,12 @@ La regla para decidir si dos **agregados** (cada uno con su propia raíz) van en
 
 **Nombre de la carpeta de módulo = plural de la raíz del agregado** (`: AggregateRoot`) que contiene, siempre — no el nombre de la pantalla/feature del frontend si difiere: `School`→`Schools`, `SchoolYear`→`SchoolYears`, `CalendarEvent`→`CalendarEvents`, `Assignment`→`Assignments`. Cuando un módulo tiene una única raíz (todos los casos hasta ahora), el nombre de la carpeta es literal y sin ambigüedad; no lo sustituyas por un nombre de feature más "bonito" (`Calendar`, `Homework`) aunque coincida con el nombre de la pantalla del frontend.
 
-Estado real hoy (solo `Domain/`, el resto pendiente):
+Estado real hoy (`Domain/` completo en los 12 módulos + mapeos EF Core, el resto pendiente):
 ```
 SumiClas/
   shared/domain/       → Entity, AggregateRoot, DomainEventBase, ValueObject, Error, Result/Result<T>, IClock
   shared/infrastructure/ → SystemClock
+  shared/infrastructure/persistence/mappings/ → un IEntityTypeConfiguration<T> por agregado (los 12), ver sección "Base de datos"
   Schools/Domain/
   SchoolYears/Domain/
   Classes/Domain/
@@ -102,9 +103,35 @@ Los casos de uso de cada módulo se implementan como **Commands/Queries + Handle
 
 ## Base de datos
 
-- **PostgreSQL** vía **EF Core + Npgsql**.
-- **Migraciones de EF Core desde el primer commit** que introduzca una entidad persistente — no acumules cambios de esquema sin migración correspondiente.
-- El `DbContext` (u otros elementos de infraestructura realmente compartidos entre módulos, como configuración base de EF Core) vive en `SumiClas/shared/infrastructure/`.
+- **PostgreSQL** vía **EF Core + Npgsql** (`Microsoft.EntityFrameworkCore` + `Npgsql.EntityFrameworkCore.PostgreSQL`, referenciados en `SumiClas.csproj`).
+- **Migraciones de EF Core desde el primer commit** que introduzca una entidad persistente — no acumules cambios de esquema sin migración correspondiente. Todavía no hay `DbContext` ni migraciones, solo los mapeos (ver debajo); no asumas que "ya hay persistencia real" por eso.
+- El `DbContext` (cuando exista) vive en `SumiClas/shared/infrastructure/`.
+
+### Mapeos EF Core (`shared/infrastructure/persistence/mappings/`)
+
+**Excepción deliberada a la regla de `shared/`**: aunque cada mapeo (`IEntityTypeConfiguration<T>`) referencia el `Domain` de un único módulo (p. ej. `SchoolConfiguration` solo conoce `SumiClas.Schools.Domain`), todos los mapeos viven centralizados aquí en vez de en el `Infrastructure/` de cada módulo — decisión explícita del usuario, no un descuido. Esto invierte la dirección de dependencia habitual (`shared` pasa a depender de `Domain` de todos los módulos, en vez de que los módulos dependan de `shared`); si en el futuro esto genera fricción real (por ejemplo, un `DbContext` que ya no quiere conocer todos los módulos a la vez), revisarlo. Los repositorios (`IStudentRepository` → `StudentRepository`, etc.) sí siguen la regla general: van en el `Infrastructure/` de su propio módulo, no aquí — aquí solo va la configuración de mapeo entidad↔tabla.
+
+**Un mapeo por tabla, no por agregado**: un agregado con colecciones de value objects o de entidades hijas en tabla propia (vía `OwnsMany` + `.ToTable(...)`) genera más de una tabla, y cada una tiene su propio archivo de mapeo — no se mete la configuración de la tabla hija como lambda inline dentro del mapeo del agregado.
+
+Las 12 tablas de agregado sí implementan `IEntityTypeConfiguration<T>` (`SchoolConfiguration`, `SchoolYearConfiguration`, `ClassConfiguration`, `EnrollmentConfiguration`, `StudentConfiguration`, `UserConfiguration`, `AnnouncementConfiguration`, `CalendarEventConfiguration`, `SubjectConfiguration`, `AssignmentConfiguration`, `ClassExpenseConfiguration`, `LostItemConfiguration`) — pensadas para registrarse vía `ApplyConfigurationsFromAssembly` cuando exista el `DbContext`.
+
+Las 5 tablas hijas (`GuardianLinkConfiguration` → `StudentGuardians`, `ClassRoleAssignmentConfiguration` → `UserClassRoles`, `AnnouncementReadReceiptConfiguration` → `AnnouncementReadReceipts`, `AssignmentCommentConfiguration` → `AssignmentComments`, `ExpenseParticipantConfiguration` → `ClassExpenseParticipants`) **NO** implementan `IEntityTypeConfiguration<T>` — a propósito. Un value object o entidad hija solo existe dentro de su agregado (`OwnsOne`/`OwnsMany`); si su mapeo implementara `IEntityTypeConfiguration<T>`, `ApplyConfigurationsFromAssembly` lo registraría también como entidad independiente, y EF Core lanzaría una excepción en tiempo de ejecución al construir el modelo ("no puede ser owned y no-owned a la vez"). En su lugar, cada uno expone un método `Configure(OwnedNavigationBuilder<TOwner, TDependent> builder)` (nombre del propietario y del tipo dependiente explícitos, nunca genérico) que incluye **todo** lo de esa tabla, incluida la FK sombra hacia el propietario (`builder.WithOwner().HasForeignKey(...)`) — y solo se invoca a mano desde el `OwnsMany(...)` del agregado propietario, nunca por asembly-scanning. Ejemplo real: `StudentConfiguration` (tabla `Students`) hace `builder.OwnsMany(s => s.Guardians, guardian => new GuardianLinkConfiguration().Configure(guardian));` para la tabla `StudentGuardians`, sin nada más.
+
+17 archivos en total (12 + 5). Los value objects que van en columnas de la misma tabla del agregado en vez de tabla propia (`StudentName` en `Students`, `Email` en `Users`, `EventDate` en `CalendarEvents` — `OwnsOne` sin `.ToTable(...)`) no cuentan aquí: no son una tabla distinta, así que su configuración sí va inline dentro del mapeo del agregado, sin archivo propio.
+
+Convenciones seguidas en los mapeos ya creados, a seguir en los que se añadan después:
+
+- **Enums** → `.HasConversion<string>()` con `.HasMaxLength(30)` (columna legible en la BBDD, no un `int` opaco).
+- **`decimal`** (`ClassExpense.TotalAmount`) → `.HasPrecision(10, 2)` explícito, nunca precisión implícita.
+- **Value objects singulares en la misma tabla** (`StudentName` en `Student`, `Email` en `User`, `EventDate` en `CalendarEvent`) → `OwnsOne` inline, sin `.ToTable(...)`.
+- **Colecciones de value objects o entidades hijas en tabla propia** (`GuardianLink`, `ClassRoleAssignment`, `ExpenseParticipant`, `AnnouncementReadReceipt`, `AssignmentComment`) → `OwnsMany`, mapeo delegado a su propia clase (no `IEntityTypeConfiguration<T>`, ver regla de arriba), que incluye `.ToTable(...)` y la FK sombra. Para value objects (sin `Id` propio) la clave es compuesta y hay que declararla explícitamente (FK sombra del propietario + la propiedad natural del VO, p. ej. `("StudentId", "GuardianId")`); para entidades hijas (`AnnouncementReadReceipt`, `AssignmentComment`, que sí heredan `Id` de `Entity`) es `HasKey(x => x.Id)` normal.
+- **Navegación sobre propiedad de solo lectura respaldada por campo privado** (todas las colecciones anteriores se exponen como `IReadOnlyCollection<T>` calculado desde un `List<T>` privado, p. ej. `Guardians => _guardians.AsReadOnly()`): tras el `OwnsMany`, en el mapeo del agregado, `builder.Navigation(x => x.Colección).UsePropertyAccessMode(PropertyAccessMode.Field)` — EF Core no puede usar un setter que no existe, así que accede al campo directamente.
+- **`AggregateRoot.DomainEvents`** (y cualquier propiedad calculada como `SchoolYear.IsArchived` o `EventDate.IsRecurringAnnual`) → siempre `builder.Ignore(...)`, en cualquier mapeo nuevo. Si no se ignoran, EF Core intenta mapearlas como si fueran datos reales.
+- **Guid, `DateOnly`, `TimeOnly?`, `DateTimeOffset`/`DateTimeOffset?`** → sin configuración especial, Npgsql los mapea de forma nativa a `uuid`/`date`/`time`/`timestamptz`.
+- **`string`**: `HasMaxLength(n)` cuando hay un límite natural razonable (nombres, títulos, etiquetas, códigos); sin límite (columna `text`) para contenido libre (`Body`, `Description`, `Text` de comentarios).
+- **No se han añadido índices únicos** (p. ej. `User.Email`, `School.OfficialCode`) todavía — la unicidad sigue en la sección "Pendiente de decidir" más abajo, no metas una constraint de BBDD para eso sin acordarlo antes, ya que quien construya la futura `Application` necesita saber si esa unicidad se comprueba antes del `INSERT` o se delega en una excepción de BBDD.
+
+**Constructor adicional solo para EF Core** (`Entity`/`AggregateRoot` en `shared/domain/`, y en `Enrollment`/`Student`): EF Core necesita un constructor cuyos parámetros mapeen 1:1 con propiedades persistidas; los agregados cuyo único constructor real recibe algo que no es una propiedad (`Enrollment` recibe `IClock clock`, `Student` recibe un `GuardianLink firstGuardian` suelto en vez de la colección completa) no cumplen esa condición. La solución aplicada es añadir un constructor privado **sin parámetros**, exclusivamente para que EF Core materialice la entidad por reflexión (nunca se llama desde código de dominio) — por eso `Entity` y `AggregateRoot` ahora también tienen un constructor protegido sin parámetros, además del que recibe `Guid id`. Si añades un agregado nuevo cuyo constructor real tenga un parámetro así, sigue el mismo patrón (constructor privado vacío + comentario explicando por qué existe) en vez de cambiar la forma del constructor real solo para complacer a EF Core.
 
 ## Manejo de errores
 

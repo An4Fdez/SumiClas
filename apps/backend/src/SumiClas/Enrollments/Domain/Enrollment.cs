@@ -18,6 +18,11 @@ public sealed class Enrollment : AggregateRoot
         CreatedAt = clock.UtcNow;
     }
 
+    /// <summary>EF Core materialization only — the real constructor takes an IClock, which EF cannot bind.</summary>
+    private Enrollment()
+    {
+    }
+
     /// <summary>Direct enrollment: a guardian enrolls their child in a class, already confirmed.</summary>
     public static Result<Enrollment> Create(Guid studentId, Guid classId, IClock clock)
     {

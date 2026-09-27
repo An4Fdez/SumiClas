@@ -9,6 +9,11 @@ public abstract class AggregateRoot : Entity
     {
     }
 
+    /// <summary>EF Core materialization only — see Entity's parameterless constructor.</summary>
+    protected AggregateRoot()
+    {
+    }
+
     protected void AddDomainEvent(DomainEventBase domainEvent) => _domainEvents.Add(domainEvent);
 
     public void ClearDomainEvents() => _domainEvents.Clear();

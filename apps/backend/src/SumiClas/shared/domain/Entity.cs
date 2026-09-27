@@ -9,6 +9,11 @@ public abstract class Entity
         Id = id;
     }
 
+    /// <summary>EF Core materialization only, for aggregates whose real constructor takes a parameter EF cannot bind (e.g. IClock).</summary>
+    protected Entity()
+    {
+    }
+
     public override bool Equals(object? obj) =>
         obj is Entity other && other.GetType() == GetType() && other.Id == Id;
 

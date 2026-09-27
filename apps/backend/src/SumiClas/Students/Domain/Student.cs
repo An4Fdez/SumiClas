@@ -15,6 +15,12 @@ public sealed class Student : AggregateRoot
         _guardians.Add(firstGuardian);
     }
 
+    /// <summary>EF Core materialization only — the real constructor takes firstGuardian, which doesn't map to a single property.</summary>
+    private Student()
+    {
+        Name = null!;
+    }
+
     /// <summary>
     /// A Student is always registered by a guardian (section 7.2 of the domain doc):
     /// it never exists without at least one guardian, not even transiently.
