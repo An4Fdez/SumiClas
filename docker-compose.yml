@@ -1,0 +1,25 @@
+name: sumiclas
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: sumiclas-postgres
+    restart: unless-stopped
+    # Local dev credentials only — there is no real data yet (mock data still), so
+    # these are not secrets. Revisit via env vars/.env once a real environment exists.
+    environment:
+      POSTGRES_USER: sumiclas
+      POSTGRES_PASSWORD: sumiclas_dev
+      POSTGRES_DB: sumiclas
+    ports:
+      - "5432:5432"
+    volumes:
+      - sumiclas_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sumiclas -d sumiclas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sumiclas_postgres_data:

@@ -57,6 +57,13 @@ public sealed class CalendarEvent : AggregateRoot
         CreatedAt = createdAt;
     }
 
+    /// <summary>EF Core materialization only — constructor parameters can never bind to an owned-type navigation (EventDate), even when named to match.</summary>
+    private CalendarEvent()
+    {
+        Title = null!;
+        EventDate = null!;
+    }
+
     /// <summary>For Trip, Meeting, Activity and Other — one-time events on a real date. Use CreateBirthday for birthdays.</summary>
     public static Result<CalendarEvent> Create(
         EventScope scope,

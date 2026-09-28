@@ -4,7 +4,7 @@ Aplica a `apps/backend/**`. Ver también el `AGENTS.md` de la raíz (convencione
 
 ## Estado actual (importante)
 
-`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI y un health check en `/healthy` — la capa `api` aún no tiene endpoints reales. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz) más los módulos funcionales (`Announcements`, `CalendarEvents`, `Subjects`, `Assignments`, `ClassExpenses`, `LostItems`). Además ya existen los **mapeos de EF Core/PostgreSQL** de los 12 agregados en `shared/infrastructure/persistence/mappings/` (ver sección "Base de datos" para la convención). `shared/application/` sigue vacía, y ningún módulo tiene todavía `Application/` (ni Endpoints propios) ni un `DbContext`/migraciones reales — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
+`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI, health check en `/healthy` y arranque de infraestructura — la capa `api` aún no tiene endpoints reales ni `Application` en ningún módulo. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz) más los módulos funcionales (`Announcements`, `CalendarEvents`, `Subjects`, `Assignments`, `ClassExpenses`, `LostItems`). Además ya existen los **mapeos de EF Core/PostgreSQL** de los 12 agregados en `shared/infrastructure/persistence/mappings/`, el `SumiClasDbContext`, la `SumiClasDbContextFactory` de diseño, y la **migración inicial ya generada y aplicada** en `shared/infrastructure/persistence/migrations/` (las 17 tablas ya existen en el Postgres de `docker-compose.yml`) — ver sección "Base de datos". `apps/backend/api/Bootstrap/` ya tiene contenido real (`AddSumiClasInfrastructure`, `ApplySumiClasMigrations`, ver esa sección) — es el primer trozo de la carpeta `Bootstrap/` descrita más abajo, el resto (`AddSumiClasApplication()`, etc.) sigue sin existir. `shared/application/` sigue vacía, y ningún módulo tiene todavía `Application/` ni Endpoints propios — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
 
 ## Estructura de proyectos
 
@@ -46,12 +46,14 @@ La regla para decidir si dos **agregados** (cada uno con su propia raíz) van en
 
 **Nombre de la carpeta de módulo = plural de la raíz del agregado** (`: AggregateRoot`) que contiene, siempre — no el nombre de la pantalla/feature del frontend si difiere: `School`→`Schools`, `SchoolYear`→`SchoolYears`, `CalendarEvent`→`CalendarEvents`, `Assignment`→`Assignments`. Cuando un módulo tiene una única raíz (todos los casos hasta ahora), el nombre de la carpeta es literal y sin ambigüedad; no lo sustituyas por un nombre de feature más "bonito" (`Calendar`, `Homework`) aunque coincida con el nombre de la pantalla del frontend.
 
-Estado real hoy (`Domain/` completo en los 12 módulos + mapeos EF Core, el resto pendiente):
+Estado real hoy (`Domain/` completo en los 12 módulos + mapeos/DbContext de EF Core, el resto pendiente):
 ```
 SumiClas/
   shared/domain/       → Entity, AggregateRoot, DomainEventBase, ValueObject, Error, Result/Result<T>, IClock
   shared/infrastructure/ → SystemClock
   shared/infrastructure/persistence/mappings/ → un IEntityTypeConfiguration<T> por agregado (los 12), ver sección "Base de datos"
+  shared/infrastructure/persistence/ → SumiClasDbContext, SumiClasDbContextFactory (solo diseño/dotnet ef)
+  shared/infrastructure/persistence/migrations/ → pendiente de generar (el usuario, no el agente — ver sección "Base de datos")
   Schools/Domain/
   SchoolYears/Domain/
   Classes/Domain/
@@ -104,8 +106,22 @@ Los casos de uso de cada módulo se implementan como **Commands/Queries + Handle
 ## Base de datos
 
 - **PostgreSQL** vía **EF Core + Npgsql** (`Microsoft.EntityFrameworkCore` + `Npgsql.EntityFrameworkCore.PostgreSQL`, referenciados en `SumiClas.csproj`).
-- **Migraciones de EF Core desde el primer commit** que introduzca una entidad persistente — no acumules cambios de esquema sin migración correspondiente. Todavía no hay `DbContext` ni migraciones, solo los mapeos (ver debajo); no asumas que "ya hay persistencia real" por eso.
-- El `DbContext` (cuando exista) vive en `SumiClas/shared/infrastructure/`.
+- **Migraciones de EF Core desde el primer commit** que introduzca una entidad persistente — no acumules cambios de esquema sin migración correspondiente.
+- El `DbContext` (`SumiClasDbContext`) vive en `shared/infrastructure/persistence/` — registra los 12 `DbSet<T>` de agregado y llama a `modelBuilder.ApplyConfigurationsFromAssembly(...)` en `OnModelCreating` (así recoge los 12 mapeos `IEntityTypeConfiguration<T>` de `mappings/` automáticamente; los 5 mapeos de tabla hija se aplican transitivamente desde dentro de esos, ver sección de mapeos).
+- **`SumiClasDbContextFactory`** (mismo `shared/infrastructure/persistence/`, implementa `IDesignTimeDbContextFactory<SumiClasDbContext>`) existe **solo** para que la herramienta `dotnet ef` pueda construir el `DbContext` al generar/aplicar migraciones — `Program.cs` todavía no registra `SumiClasDbContext` vía DI (eso es Application/Infrastructure bootstrap, pendiente), así que sin esta factory `dotnet ef` no tendría forma de instanciarlo. Apunta a la instancia local de `docker-compose.yml` (credenciales de desarrollo, no reales). Nunca se usa en tiempo de ejecución real, solo en diseño/CLI.
+- Migraciones en `shared/infrastructure/persistence/migrations/`, namespace `SumiClas.Shared.Infrastructure.Persistence.Migrations` (hay que pasarlo explícito con `--namespace`, si no `dotnet ef` lo derivaría en minúsculas de la ruta de carpetas). Comandos para generar una migración nueva (desde `apps/backend/src/SumiClas`):
+  ```bash
+  dotnet ef migrations add <Nombre> --context SumiClasDbContext --output-dir shared/infrastructure/persistence/migrations --namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
+  ```
+  Ya existe una primera migración (`InitialCreate`, generada y aplicada) con las 17 tablas de los 12 agregados + 5 tablas hijas.
+  **Cuidado con `SumiClasDbContextModelSnapshot.cs`**: al generar la *primera* migración, `dotnet ef` puede colocarlo en una ruta espuria anidada (`SumiClas/Shared/Infrastructure/Persistence/Migrations/`, con un `SumiClas/` de más y en PascalCase) en vez de en `shared/infrastructure/persistence/migrations/` junto a los otros dos ficheros — pasó la primera vez. Revisa dónde ha quedado y muévelo si hace falta; el contenido en sí (namespace incluido) sale correcto, solo la ubicación del fichero falla.
+- **El agente no puede ejecutar `dotnet ef` en este sandbox**: solo hay SDKs .NET 6/8/9 instaladas, no .NET 10 (`NETSDK1045` al compilar `SumiClas.csproj`), y `dotnet ef` necesita compilar el proyecto. Es la misma limitación ya documentada para `dotnet build`. El usuario debe ejecutar `dotnet ef migrations add`/`dotnet ef database update` en su propia máquina; el agente revisa después los ficheros generados.
+
+### Arranque automático de migraciones (`apps/backend/api/Bootstrap/`)
+
+- `InfrastructureServiceCollectionExtensions.AddSumiClasInfrastructure(configuration)` registra `SumiClasDbContext` vía `AddDbContext` con Npgsql, leyendo la cadena de conexión de `ConnectionStrings:SumiClasDb` (config estándar de ASP.NET Core, no una convención propia).
+- `WebApplicationMigrationExtensions.ApplySumiClasMigrations()` llama a `Database.Migrate()` al arrancar **en todos los entornos, sin distinguir Development de producción** — decisión explícita del usuario (revirtió una primera versión que lo limitaba a `IsDevelopment()`). Ambas se invocan desde `Program.cs` (`builder.Services.AddSumiClasInfrastructure(...)` y `app.ApplySumiClasMigrations()`), que se mantiene como orquestador fino, sin la lógica en sí.
+- `ConnectionStrings:SumiClasDb` vive en `apps/backend/api/appsettings.Development.json`, con las mismas credenciales de desarrollo de `docker-compose.yml` (`Host=localhost;Port=5432;Database=sumiclas;Username=sumiclas;Password=sumiclas_dev`) — no son secretos reales, mismo razonamiento que en `docker-compose.yml` y en `AGENTS.md` raíz. No hay nada en `appsettings.json` (base/producción): la cadena de conexión de un entorno real todavía no está decidida (ver "Pendiente de decidir") — si se despliega a un entorno real antes de decidir eso, `ApplySumiClasMigrations()` se ejecutará igualmente ahí (ahora ya no distingue por entorno), así que hará falta una `ConnectionStrings:SumiClasDb` real en ese momento o fallará al arrancar.
 
 ### Mapeos EF Core (`shared/infrastructure/persistence/mappings/`)
 
@@ -131,7 +147,11 @@ Convenciones seguidas en los mapeos ya creados, a seguir en los que se añadan d
 - **`string`**: `HasMaxLength(n)` cuando hay un límite natural razonable (nombres, títulos, etiquetas, códigos); sin límite (columna `text`) para contenido libre (`Body`, `Description`, `Text` de comentarios).
 - **No se han añadido índices únicos** (p. ej. `User.Email`, `School.OfficialCode`) todavía — la unicidad sigue en la sección "Pendiente de decidir" más abajo, no metas una constraint de BBDD para eso sin acordarlo antes, ya que quien construya la futura `Application` necesita saber si esa unicidad se comprueba antes del `INSERT` o se delega en una excepción de BBDD.
 
-**Constructor adicional solo para EF Core** (`Entity`/`AggregateRoot` en `shared/domain/`, y en `Enrollment`/`Student`): EF Core necesita un constructor cuyos parámetros mapeen 1:1 con propiedades persistidas; los agregados cuyo único constructor real recibe algo que no es una propiedad (`Enrollment` recibe `IClock clock`, `Student` recibe un `GuardianLink firstGuardian` suelto en vez de la colección completa) no cumplen esa condición. La solución aplicada es añadir un constructor privado **sin parámetros**, exclusivamente para que EF Core materialice la entidad por reflexión (nunca se llama desde código de dominio) — por eso `Entity` y `AggregateRoot` ahora también tienen un constructor protegido sin parámetros, además del que recibe `Guid id`. Si añades un agregado nuevo cuyo constructor real tenga un parámetro así, sigue el mismo patrón (constructor privado vacío + comentario explicando por qué existe) en vez de cambiar la forma del constructor real solo para complacer a EF Core.
+**Constructor adicional solo para EF Core** (`Entity`/`AggregateRoot` en `shared/domain/`, y en `Enrollment`, `Student`, `CalendarEvent`, `User`): EF Core necesita un constructor cuyos parámetros mapeen 1:1 con propiedades persistidas — pero hay dos formas de no cumplir esa condición, no solo una:
+1. Un parámetro que no corresponde a ninguna propiedad (`Enrollment` recibe `IClock clock`; `Student` recibe un `GuardianLink firstGuardian` suelto en vez de la colección completa).
+2. **Un parámetro que corresponde a una propiedad owned (`OwnsOne`/`OwnsMany`)** — EF Core nunca enlaza un parámetro de constructor a una navegación owned, ni aunque el nombre coincida exactamente con la propiedad (`CalendarEvent` recibe `EventDate eventDate`; `User` recibe `Email email`). Este segundo caso es fácil de pasar por alto porque el constructor "parece" válido a simple vista — solo se descubre al ejecutar `dotnet ef migrations add` y ver el error `No suitable constructor was found` señalando justo el parámetro owned.
+
+La solución en ambos casos es la misma: un constructor privado **sin parámetros**, exclusivamente para que EF Core materialice la entidad por reflexión (nunca se llama desde código de dominio) — por eso `Entity` y `AggregateRoot` también tienen un constructor protegido sin parámetros, además del que recibe `Guid id`. Si añades un agregado nuevo con un constructor real que tenga un parámetro de cualquiera de los dos tipos, sigue el mismo patrón (constructor privado vacío + comentario explicando por qué existe, con `null!` en las propiedades de tipo referencia no anulables) en vez de cambiar la forma del constructor real solo para complacer a EF Core — y, si el agregado tiene alguna propiedad owned, dalo por hecho de entrada en vez de esperar a que `dotnet ef` lo señale.
 
 ## Manejo de errores
 
@@ -153,3 +173,5 @@ Usar el `ProblemDetails` estándar de ASP.NET Core (`builder.Services.AddProblem
 
 - Autenticación/JWT: el doc de arquitectura indica JWT (email+contraseña o magic link), pero no hay nada implementado todavía.
 - Despliegue/hosting (Docker, Render/Fly.io/Railway según el doc) — no es responsabilidad de este AGENTS.md de código, pero no asumas configuración de infraestructura sin confirmarla.
+- Estrategia de migraciones de EF Core en producción (auto-aplicar al arrancar, como ya hace `ApplySumiClasMigrations()` en Development, vs. paso de despliegue separado) — ver sección "Base de datos".
+- Cadena de conexión de un entorno real (no local): `ConnectionStrings:SumiClasDb` solo existe hoy en `appsettings.Development.json` con las credenciales de `docker-compose.yml`.

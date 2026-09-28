@@ -36,12 +36,16 @@ SumiClas.slnx   → solución que agrupa los proyectos anteriores
 - **Node.js** (versión compatible con pnpm/Vite; no hay `engines` fijado en `package.json` todavía).
 - **pnpm** — es el gestor de paquetes oficial del frontend (el backend ya invoca `pnpm run dev` vía `SpaProxy` en `SumiClas.Api.csproj`, y hay `pnpm-workspace.yaml`).
   - Existe un `package-lock.json` residual en `apps/frontend/sumiclas-web` junto al `pnpm-lock.yaml`. Es un resto de npm: **no lo uses para instalar ni lo actualices**; puede eliminarse en una limpieza futura si el usuario lo confirma.
+- **Docker** (Docker Desktop o equivalente con `docker compose`) — solo para levantar la instancia local de PostgreSQL (`docker-compose.yml` en la raíz), no para el resto de la app.
 
 ### Arrancar en desarrollo
 **Flujo habitual del usuario (IDE):** abrir `SumiClas.slnx` en Visual Studio/Rider y ejecutar el proyecto `SumiClas.Api`. El `SpaProxy` configurado en el `.csproj` arranca automáticamente `pnpm run dev` en el frontend.
 
 **Equivalente en terminal (el que debe usar el agente, que no tiene IDE):**
 ```bash
+# PostgreSQL (desde la raíz del repo, solo la primera vez o si el contenedor no está corriendo)
+docker compose up -d
+
 # Backend (desde la raíz del repo)
 dotnet run --project apps/backend/api/SumiClas.Api.csproj
 
@@ -50,6 +54,7 @@ cd apps/frontend/sumiclas-web
 pnpm install   # solo la primera vez / tras cambios en dependencias
 pnpm dev
 ```
+- `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue/hosting real (producción) sigue sin decidir (ver "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend todavía no tiene `DbContext` ni cadena de conexión configurada — este contenedor deja la BBDD lista para cuando se construya esa pieza, pero `dotnet run` hoy no la usa todavía.
 - Frontend (Vite): `https://localhost:4004`.
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
 - El proxy de Vite reenvía `/api/` a `http://localhost:4000` — este puerto no coincide con el perfil `https` de `launchSettings.json`; si tocas la integración frontend↔backend, confírmalo con el usuario antes de asumir cuál es el puerto correcto.

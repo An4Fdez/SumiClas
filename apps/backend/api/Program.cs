@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using SumiClas.Api.Bootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,9 +14,11 @@ builder.Services.AddApiVersioning(versionOptions =>
 }).AddApiExplorer(explorerOptions => { explorerOptions.GroupNameFormat = "'v'VVV"; }).AddOpenApi();
 
 builder.Services.AddHealthChecks();
+builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 
 
 var app = builder.Build();
+app.ApplySumiClasMigrations();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

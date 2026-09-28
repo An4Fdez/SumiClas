@@ -20,6 +20,7 @@
   <Folder Name="/solutionItems/">
     <File Path=".gitignore" />
     <File Path="AGENTS.md" />
+    <File Path="docker-compose.yml" />
     <File Path="Readme.md" />
   </Folder>
 </Solution>

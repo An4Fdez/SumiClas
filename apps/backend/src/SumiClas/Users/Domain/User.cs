@@ -16,6 +16,13 @@ public sealed class User : AggregateRoot
         Email = email;
     }
 
+    /// <summary>EF Core materialization only — constructor parameters can never bind to an owned-type navigation (Email), even when named to match.</summary>
+    private User()
+    {
+        FullName = null!;
+        Email = null!;
+    }
+
     public static Result<User> Register(string fullName, Email email)
     {
         if (string.IsNullOrWhiteSpace(fullName))

@@ -1,0 +1,40 @@
+using Microsoft.EntityFrameworkCore;
+using SumiClas.Announcements.Domain;
+using SumiClas.Assignments.Domain;
+using SumiClas.CalendarEvents.Domain;
+using SumiClas.Classes.Domain;
+using SumiClas.ClassExpenses.Domain;
+using SumiClas.Enrollments.Domain;
+using SumiClas.LostItems.Domain;
+using SumiClas.Schools.Domain;
+using SumiClas.SchoolYears.Domain;
+using SumiClas.Students.Domain;
+using SumiClas.Subjects.Domain;
+using SumiClas.Users.Domain;
+
+namespace SumiClas.Shared.Infrastructure.Persistence;
+
+public sealed class SumiClasDbContext : DbContext
+{
+    public SumiClasDbContext(DbContextOptions<SumiClasDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<School> Schools => Set<School>();
+    public DbSet<SchoolYear> SchoolYears => Set<SchoolYear>();
+    public DbSet<Class> Classes => Set<Class>();
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
+    public DbSet<Subject> Subjects => Set<Subject>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<ClassExpense> ClassExpenses => Set<ClassExpense>();
+    public DbSet<LostItem> LostItems => Set<LostItem>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SumiClasDbContext).Assembly);
+    }
+}
