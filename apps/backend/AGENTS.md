@@ -4,7 +4,7 @@ Aplica a `apps/backend/**`. Ver también el `AGENTS.md` de la raíz (convencione
 
 ## Estado actual (importante)
 
-`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI, health check en `/healthy` y arranque de infraestructura — la capa `api` aún no tiene endpoints reales ni `Application` en ningún módulo. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz) más los módulos funcionales (`Announcements`, `CalendarEvents`, `Subjects`, `Assignments`, `ClassExpenses`, `LostItems`). Además ya existen los **mapeos de EF Core/PostgreSQL** de los 12 agregados en `shared/infrastructure/persistence/mappings/`, el `SumiClasDbContext`, la `SumiClasDbContextFactory` de diseño, y la **migración inicial ya generada y aplicada** en `shared/infrastructure/persistence/migrations/` (las 17 tablas ya existen en el Postgres de `docker-compose.yml`) — ver sección "Base de datos". `apps/backend/api/Bootstrap/` ya tiene contenido real (`AddSumiClasInfrastructure`, `ApplySumiClasMigrations`, ver esa sección) — es el primer trozo de la carpeta `Bootstrap/` descrita más abajo, el resto (`AddSumiClasApplication()`, etc.) sigue sin existir. `shared/application/` sigue vacía, y ningún módulo tiene todavía `Application/` ni Endpoints propios — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
+`apps/backend/api/Program.cs` sigue siendo solo versionado por header, Swagger/OpenAPI, health check en `/healthy` y arranque de infraestructura — la capa `api` aún no tiene endpoints reales ni `Application` en ningún módulo. En `apps/backend/src/SumiClas` ya existe el kernel compartido (`shared/domain/`) y el núcleo estructural en capa **Domain** (`Schools`, `SchoolYears`, `Classes`, `Enrollments`, `Students`, `Users`, cada uno con su propio agregado raíz) más los módulos funcionales (`Announcements`, `CalendarEvents`, `Subjects`, `Assignments`, `ClassExpenses`, `LostItems`). Además ya existen los **mapeos de EF Core/PostgreSQL** de los 12 agregados en `shared/infrastructure/persistence/mappings/`, el `SumiClasDbContext`, la `SumiClasDbContextFactory` de diseño, y la **migración inicial ya generada y aplicada** en `shared/infrastructure/persistence/migrations/` (las 17 tablas ya existen en el Postgres de `docker-compose.yml`) — ver sección "Base de datos". `apps/backend/api/Bootstrap/` ya tiene contenido real (`AddSumiClasInfrastructure`, `ApplySumiClasMigrations`, ver esa sección) — es el primer trozo de la carpeta `Bootstrap/` descrita más abajo, el resto (`AddSumiClasApplication()`, etc.) sigue sin existir. `shared/application/` solo contiene `IUnitOfWork`, `ICommand` y `UnitOfWorkBehavior`, y únicamente `Schools` tiene `Application/` (caso de uso `RegisterSchool`, ver "Estructura de un caso de uso") e `Infrastructure/` (`SchoolRepository`); ningún módulo tiene todavía Endpoints propios — eso es la arquitectura **objetivo** que sigue el resto de este documento, no algo ya construido. Si al leer el código encuentras que algo no coincide con este documento, coméntalo antes de asumir cuál de los dos manda.
 
 ## Estructura de proyectos
 
@@ -96,6 +96,26 @@ Nota: las pantallas del frontend se llaman "Calendario"/`Calendar` y "Deberes"/`
 ## CQRS con MediatR
 
 Los casos de uso de cada módulo se implementan como **Commands/Queries + Handlers de MediatR**, viviendo en la carpeta `Application` de ese módulo (p. ej. `Announcements/Application/CreateAnnouncement/CreateAnnouncementCommand.cs` + `CreateAnnouncementCommandHandler.cs`). Los endpoints en `api/Endpoints/` no contienen lógica: reciben la request HTTP, la traducen a un Command/Query y llaman a `IMediator.Send(...)`.
+
+### Estructura de un caso de uso (patrón acordado)
+
+Cada caso de uso vive en `<Módulo>/Application/<NombreCasoUso>.cs` (directamente en `Application/`, sin subcarpeta por caso de uso, para que la estructura no crezca) como **una clase estática** con el nombre del caso de uso, que anida tres tipos (excepción deliberada a "un archivo por clase", decisión explícita del usuario):
+
+- **`Command`** (o `Query`): `record` que implementa `IRequest<Result>` / `IRequest<Result<T>>` de MediatR.
+- **`UseCase`**: contiene la lógica (llama al Domain y al repositorio; nunca toca el `IUnitOfWork`). Expone `ExecuteAsync(Command, CancellationToken)`. No depende de MediatR, así que se puede testear sin él.
+- **`Handler`**: adaptador fino de MediatR; solo delega en `UseCase.ExecuteAsync`.
+
+El namespace es `SumiClas.<Módulo>.Application` (no hay subcarpeta ni namespace por caso de uso).
+
+Ejemplo real: `Schools/Application/RegisterSchool.cs` (`RegisterSchool.Command`, `RegisterSchool.UseCase`, `RegisterSchool.Handler`).
+
+**Persistencia:** los repositorios (`Schools/Infrastructure/SchoolRepository.cs`) solo añaden/leen; **el guardado es transparente al caso de uso**: `UnitOfWorkBehavior<TRequest, TResponse>` (`shared/application/`, pipeline behavior de MediatR) gestiona una **transacción de BBDD por comando raíz**: el primer `Command` la abre y hace `Commit` solo si su `Result` es éxito (fallo o excepción → `Rollback`); los `Command` anidados (vía `Send` desde otro handler) se unen a la transacción activa y solo hacen `SaveChanges` (flush) para que las lecturas posteriores de la misma petición vean sus cambios. Solo el `Result` del raíz decide el commit: un handler que ignore el fallo de un comando anidado lo confirma igualmente, así que debe propagarlo. El `DbContext` es scoped (uno por petición) y el endpoint envía un único `Command`, así que comando raíz = petición HTTP; si un endpoint enviara varios, cada uno tendría su propia transacción Solo envuelve requests que implementen el marcador `ICommand` (los `Command` lo declaran junto a `IRequest<Result>`; las `Query` no). `IUnitOfWork` lo implementa `SumiClasDbContext`.
+
+**El id se genera fuera del Domain** y llega en el `Command` (`Guid Id`). Los factory methods reciben `id` como primer parámetro y devuelven `Error` `<Agregado>.IdRequired` si es `Guid.Empty`. El command devuelve `Result` (no `Result<Guid>`), porque el llamador ya conoce el id.
+
+> **Deuda pendiente:** solo `School.Register` sigue este patrón. Los otros 11 agregados aún generan su id con `Guid.NewGuid()` dentro del Domain; hay que migrarlos al mismo esquema (id como parámetro + `IdRequired`) cuando se construya su `Application`.
+>
+> **Pendiente de cablear:** `RegisterSchool` aún no está registrado en DI (`AddSumiClasApplication()`: MediatR, `UnitOfWorkBehavior` como `IPipelineBehavior<,>` abierto, `UseCase`, `ISchoolRepository`→`SchoolRepository`, `IUnitOfWork`→`SumiClasDbContext`) ni tiene endpoint ni tests. MediatR 12.5.0 (última versión con licencia Apache; las 13+ son comerciales).
 
 ## Nomenclatura
 

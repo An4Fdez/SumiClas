@@ -15,20 +15,24 @@ public sealed class School : AggregateRoot
         Address = address;
     }
 
-    public static Result<School> Register(string name, string officialCode, string? address = null)
+    public static Result<School> Register(Guid id, string name, string officialCode, string? address = null)
     {
-        var validation = Validate(name, officialCode);
+        var validation = Validate(id, name, officialCode);
         if (validation.IsFailure)
         {
             return Result<School>.Failure(validation.Error!);
         }
 
-        var school = new School(Guid.NewGuid(), name.Trim(), officialCode.Trim(), address);
+        var school = new School(id, name.Trim(), officialCode.Trim(), address);
         return Result<School>.Success(school);
     }
 
-    private static Result Validate(string name, string officialCode)
+    private static Result Validate(Guid id, string name, string officialCode)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(SchoolErrors.IdRequired);
+        }
         if (string.IsNullOrWhiteSpace(name))
         {
             return Result.Failure(SchoolErrors.NameRequired);

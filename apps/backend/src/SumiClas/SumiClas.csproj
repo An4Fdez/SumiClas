@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="MediatR" Version="12.5.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
       <!-- Npgsql.EntityFrameworkCore.PostgreSQL 10.0.3 pins Relational to 10.0.4, older than the 10.0.12 above; forced up explicitly to avoid a FileNotFoundException at runtime from the version mismatch. -->
       <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
