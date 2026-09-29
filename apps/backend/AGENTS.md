@@ -53,7 +53,7 @@ SumiClas/
   shared/infrastructure/ → SystemClock
   shared/infrastructure/persistence/mappings/ → un IEntityTypeConfiguration<T> por agregado (los 12), ver sección "Base de datos"
   shared/infrastructure/persistence/ → SumiClasDbContext, SumiClasDbContextFactory (solo diseño/dotnet ef)
-  shared/infrastructure/persistence/migrations/ → pendiente de generar (el usuario, no el agente — ver sección "Base de datos")
+  shared/infrastructure/persistence/migrations/ → migración inicial `InitialCreate` ya generada y aplicada (ver sección "Base de datos")
   Schools/Domain/
   SchoolYears/Domain/
   Classes/Domain/
@@ -115,7 +115,7 @@ Los casos de uso de cada módulo se implementan como **Commands/Queries + Handle
   ```
   Ya existe una primera migración (`InitialCreate`, generada y aplicada) con las 17 tablas de los 12 agregados + 5 tablas hijas.
   **Cuidado con `SumiClasDbContextModelSnapshot.cs`**: al generar la *primera* migración, `dotnet ef` puede colocarlo en una ruta espuria anidada (`SumiClas/Shared/Infrastructure/Persistence/Migrations/`, con un `SumiClas/` de más y en PascalCase) en vez de en `shared/infrastructure/persistence/migrations/` junto a los otros dos ficheros — pasó la primera vez. Revisa dónde ha quedado y muévelo si hace falta; el contenido en sí (namespace incluido) sale correcto, solo la ubicación del fichero falla.
-- **El agente no puede ejecutar `dotnet ef` en este sandbox**: solo hay SDKs .NET 6/8/9 instaladas, no .NET 10 (`NETSDK1045` al compilar `SumiClas.csproj`), y `dotnet ef` necesita compilar el proyecto. Es la misma limitación ya documentada para `dotnet build`. El usuario debe ejecutar `dotnet ef migrations add`/`dotnet ef database update` en su propia máquina; el agente revisa después los ficheros generados.
+- **El agente sí puede ejecutar `dotnet build` y `dotnet ef`**: la máquina tiene instalado el SDK .NET 10 (10.0.401) y `dotnet ef` 10.0.12, así que el agente puede generar/aplicar migraciones directamente. Tras generar una migración, revisa los ficheros resultantes (en especial la ubicación del `ModelSnapshot`, ver aviso de arriba).
 
 ### Arranque automático de migraciones (`apps/backend/api/Bootstrap/`)
 
@@ -173,5 +173,5 @@ Usar el `ProblemDetails` estándar de ASP.NET Core (`builder.Services.AddProblem
 
 - Autenticación/JWT: el doc de arquitectura indica JWT (email+contraseña o magic link), pero no hay nada implementado todavía.
 - Despliegue/hosting (Docker, Render/Fly.io/Railway según el doc) — no es responsabilidad de este AGENTS.md de código, pero no asumas configuración de infraestructura sin confirmarla.
-- Estrategia de migraciones de EF Core en producción (auto-aplicar al arrancar, como ya hace `ApplySumiClasMigrations()` en Development, vs. paso de despliegue separado) — ver sección "Base de datos".
+- Estrategia de migraciones de EF Core en producción (auto-aplicar al arrancar, como ya hace `ApplySumiClasMigrations()` en todos los entornos, vs. paso de despliegue separado) — ver sección "Base de datos".
 - Cadena de conexión de un entorno real (no local): `ConnectionStrings:SumiClasDb` solo existe hoy en `appsettings.Development.json` con las credenciales de `docker-compose.yml`.
