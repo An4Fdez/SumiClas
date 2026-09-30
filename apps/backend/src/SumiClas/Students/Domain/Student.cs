@@ -25,11 +25,12 @@ public sealed class Student : AggregateRoot
     /// A Student is always registered by a guardian (section 7.2 of the domain doc):
     /// it never exists without at least one guardian, not even transiently.
     /// </summary>
-    public static Result<Student> Register(StudentName name, Guid firstGuardianId, GuardianRole firstGuardianRole)
+    public static Result<Student> Register(Guid id, StudentName name, Guid firstGuardianId, GuardianRole firstGuardianRole)
     {
-        if (firstGuardianId == Guid.Empty)
+        var validation = Validate(id, firstGuardianId);
+        if (validation.IsFailure)
         {
-            return Result<Student>.Failure(StudentErrors.FirstGuardianRequired);
+            return Result<Student>.Failure(validation.Error!);
         }
 
         var guardianLink = GuardianLink.Create(firstGuardianId, firstGuardianRole);
@@ -38,8 +39,21 @@ public sealed class Student : AggregateRoot
             return Result<Student>.Failure(guardianLink.Error!);
         }
 
-        var student = new Student(Guid.NewGuid(), name, guardianLink.Value);
+        var student = new Student(id, name, guardianLink.Value);
         return Result<Student>.Success(student);
+    }
+
+    private static Result Validate(Guid id, Guid firstGuardianId)
+    {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(StudentErrors.IdRequired);
+        }
+        if (firstGuardianId == Guid.Empty)
+        {
+            return Result.Failure(StudentErrors.FirstGuardianRequired);
+        }
+        return Result.Success();
     }
 
     public Result AddGuardian(Guid guardianId, GuardianRole role)
