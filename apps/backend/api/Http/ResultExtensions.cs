@@ -6,15 +6,20 @@ public static class ResultExtensions
 {
     /// <summary>
     /// Maps a failed <see cref="Result"/> to a standard ProblemDetails response.
-    /// Codes ending in ".NotFound" map to 404; every other domain error is a validation failure (400) for now (map 409 etc. here once they exist).
+    /// Codes ending in ".NotFound" map to 404, codes ending in "AlreadyRegistered" or "AlreadyExists" map to 409,
+    /// and every other domain error is a validation failure (400).
     /// </summary>
     public static IResult ToProblem(this Result result)
     {
         var error = result.Error ?? throw new InvalidOperationException("A successful result has no error to map.");
 
-        var statusCode = error.Code.EndsWith(".NotFound", StringComparison.Ordinal)
-            ? StatusCodes.Status404NotFound
-            : StatusCodes.Status400BadRequest;
+        var statusCode = error.Code switch
+        {
+            var code when code.EndsWith(".NotFound", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
+            var code when code.EndsWith("AlreadyRegistered", StringComparison.Ordinal)
+                || code.EndsWith("AlreadyExists", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status400BadRequest,
+        };
 
         return Results.Problem(
             title: error.Code,

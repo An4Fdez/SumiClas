@@ -5,6 +5,8 @@ namespace SumiClas.Users.Domain;
 public static class UserErrors
 {
     public static readonly Error NotFound = new("User.NotFound", "No se ha encontrado el usuario.");
+    public static readonly Error IdRequired = new("User.IdRequired", "El identificador del usuario no puede estar vacío.");
+    public static readonly Error EmailAlreadyRegistered = new("User.EmailAlreadyRegistered", "Ya existe un usuario con este correo electrónico.");
     public static readonly Error FullNameRequired = new("User.FullNameRequired", "El nombre completo del usuario no puede estar vacío.");
     public static readonly Error InvalidEmailFormat = new("User.InvalidEmailFormat", "El formato del correo electrónico no es válido.");
     public static readonly Error ClassIdRequired = new("User.ClassIdRequired", "El identificador de la clase no puede estar vacío.");

@@ -22,6 +22,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
                 .IsRequired()
                 .HasMaxLength(320)
                 .HasColumnName("Email");
+            email.HasIndex(e => e.Value).IsUnique();
         });
         builder.Navigation(u => u.Email).IsRequired();
 

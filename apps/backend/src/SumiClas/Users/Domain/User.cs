@@ -23,14 +23,28 @@ public sealed class User : AggregateRoot
         Email = null!;
     }
 
-    public static Result<User> Register(string fullName, Email email)
+    public static Result<User> Register(Guid id, string fullName, Email email)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
+        var validation = Validate(id, fullName);
+        if (validation.IsFailure)
         {
-            return Result<User>.Failure(UserErrors.FullNameRequired);
+            return Result<User>.Failure(validation.Error!);
         }
 
-        return Result<User>.Success(new User(Guid.NewGuid(), fullName.Trim(), email));
+        return Result<User>.Success(new User(id, fullName.Trim(), email));
+    }
+
+    private static Result Validate(Guid id, string fullName)
+    {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(UserErrors.IdRequired);
+        }
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return Result.Failure(UserErrors.FullNameRequired);
+        }
+        return Result.Success();
     }
 
     /// <summary>Default role when joining a class — always allowed, no limit.</summary>
