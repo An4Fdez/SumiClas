@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SumiClas.Shared.Application;
 using SumiClas.Shared.Infrastructure.Persistence;
 
 namespace SumiClas.Api.Bootstrap;
@@ -9,6 +10,9 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<SumiClasDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SumiClasDb")));
+
+        services.AddScoped<IUnitOfWork>(serviceProvider => serviceProvider.GetRequiredService<SumiClasDbContext>());
+        services.AddRepositoriesByConvention(typeof(SumiClasDbContext).Assembly);
 
         return services;
     }

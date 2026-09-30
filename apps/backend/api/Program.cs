@@ -15,6 +15,7 @@ builder.Services.AddApiVersioning(versionOptions =>
 
 builder.Services.AddHealthChecks();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
+builder.Services.AddSumiClasApplication();
 
 
 var app = builder.Build();
