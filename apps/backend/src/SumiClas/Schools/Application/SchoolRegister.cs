@@ -5,7 +5,7 @@ using SumiClas.Shared.Domain;
 
 namespace SumiClas.Schools.Application;
 
-public static class RegisterSchool
+public static class SchoolRegister
 {
     public sealed record Command(Guid Id, string Name, string OfficialCode, string? Address)
         : IRequest<Result>, ICommand;

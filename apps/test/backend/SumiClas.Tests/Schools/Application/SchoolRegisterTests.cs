@@ -6,14 +6,14 @@ using SumiClas.Shared.Domain;
 namespace SumiClas.Tests.Schools.Application;
 
 [TestFixture]
-public class RegisterSchoolTests
+public class SchoolRegisterTests
 {
     private static readonly Guid SchoolId = Guid.Parse("3f2b1c7e-8d4a-4c1e-9b5f-0a6d2e7c9b10");
 
     private Mock<ISchoolRepository> _schools = null!;
     private List<School> _added = null!;
-    private RegisterSchool.UseCase _useCase = null!;
-    private RegisterSchool.Handler _handler = null!;
+    private SchoolRegister.UseCase _useCase = null!;
+    private SchoolRegister.Handler _handler = null!;
 
     [SetUp]
     public void SetUp()
@@ -25,14 +25,14 @@ public class RegisterSchoolTests
             .Callback<School, CancellationToken>((school, _) => _added.Add(school))
             .Returns(Task.CompletedTask);
 
-        _useCase = new RegisterSchool.UseCase(_schools.Object);
-        _handler = new RegisterSchool.Handler(_useCase);
+        _useCase = new SchoolRegister.UseCase(_schools.Object);
+        _handler = new SchoolRegister.Handler(_useCase);
     }
 
     [Test]
     public async Task UseCase_WithValidCommand_ReturnsSuccessAndAddsSchool()
     {
-        var command = new RegisterSchool.Command(SchoolId, "  CEIP Sumi  ", "  28000001  ", "Calle Mayor 1");
+        var command = new SchoolRegister.Command(SchoolId, "  CEIP Sumi  ", "  28000001  ", "Calle Mayor 1");
 
         var result = await _useCase.ExecuteAsync(command);
 
@@ -48,7 +48,7 @@ public class RegisterSchoolTests
     [Test]
     public async Task UseCase_WithoutAddress_AddsSchoolWithNullAddress()
     {
-        var command = new RegisterSchool.Command(SchoolId, "CEIP Sumi", "28000001", null);
+        var command = new SchoolRegister.Command(SchoolId, "CEIP Sumi", "28000001", null);
 
         var result = await _useCase.ExecuteAsync(command);
 
@@ -59,7 +59,7 @@ public class RegisterSchoolTests
     [Test]
     public async Task UseCase_WithEmptyId_ReturnsIdRequiredAndAddsNothing()
     {
-        var command = new RegisterSchool.Command(Guid.Empty, "CEIP Sumi", "28000001", null);
+        var command = new SchoolRegister.Command(Guid.Empty, "CEIP Sumi", "28000001", null);
 
         var result = await _useCase.ExecuteAsync(command);
 
@@ -70,7 +70,7 @@ public class RegisterSchoolTests
     [TestCase("   ")]
     public async Task UseCase_WithBlankName_ReturnsNameRequiredAndAddsNothing(string name)
     {
-        var command = new RegisterSchool.Command(SchoolId, name, "28000001", null);
+        var command = new SchoolRegister.Command(SchoolId, name, "28000001", null);
 
         var result = await _useCase.ExecuteAsync(command);
 
@@ -81,7 +81,7 @@ public class RegisterSchoolTests
     [TestCase("   ")]
     public async Task UseCase_WithBlankOfficialCode_ReturnsOfficialCodeRequiredAndAddsNothing(string officialCode)
     {
-        var command = new RegisterSchool.Command(SchoolId, "CEIP Sumi", officialCode, null);
+        var command = new SchoolRegister.Command(SchoolId, "CEIP Sumi", officialCode, null);
 
         var result = await _useCase.ExecuteAsync(command);
 
@@ -91,7 +91,7 @@ public class RegisterSchoolTests
     [Test]
     public async Task Handler_WithValidCommand_DelegatesToUseCaseAndAddsSchool()
     {
-        var command = new RegisterSchool.Command(SchoolId, "CEIP Sumi", "28000001", null);
+        var command = new SchoolRegister.Command(SchoolId, "CEIP Sumi", "28000001", null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -102,7 +102,7 @@ public class RegisterSchoolTests
     [Test]
     public async Task Handler_WithInvalidCommand_ReturnsTheUseCaseFailure()
     {
-        var command = new RegisterSchool.Command(SchoolId, "", "28000001", null);
+        var command = new SchoolRegister.Command(SchoolId, "", "28000001", null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 

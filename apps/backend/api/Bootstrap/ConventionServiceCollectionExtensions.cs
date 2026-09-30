@@ -28,7 +28,25 @@ public static class ConventionServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers every public nested class named "UseCase" declared inside a static class (e.g. RegisterSchool.UseCase).
+    /// Registers every concrete class declared in a "*.Domain.Services" namespace (domain services, e.g. SchoolFinder).
+    /// </summary>
+    public static IServiceCollection AddDomainServicesByConvention(this IServiceCollection services, Assembly assembly)
+    {
+        var domainServices = assembly.GetTypes().Where(type =>
+            type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
+            && type.Namespace is not null
+            && type.Namespace.EndsWith(".Domain.Services", StringComparison.Ordinal));
+
+        foreach (var domainService in domainServices)
+        {
+            services.AddScoped(domainService);
+        }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers every public nested class named "UseCase" declared inside a static class (e.g. SchoolRegister.UseCase).
     /// </summary>
     public static IServiceCollection AddUseCasesByConvention(this IServiceCollection services, Assembly assembly)
     {
