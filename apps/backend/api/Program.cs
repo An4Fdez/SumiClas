@@ -43,7 +43,6 @@ app.UseSwaggerUI(swaggerUiOptions =>
 });
 
 app.MapHealthChecks("/healthy");
-app.MapSchoolsEndpoints();
-app.MapSchoolYearsEndpoints();
+app.MapEndpoints();
 app.UseHttpsRedirection();
 app.Run();

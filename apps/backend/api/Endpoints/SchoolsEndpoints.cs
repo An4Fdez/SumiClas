@@ -6,9 +6,9 @@ namespace SumiClas.Api.Endpoints;
 
 public sealed record SchoolRegisterRequest(Guid Id, string Name, string OfficialCode, string? Address);
 
-public static class SchoolsEndpoints
+public sealed class SchoolsEndpoints : IEndpoints
 {
-    public static void MapSchoolsEndpoints(this WebApplication app)
+    public void Map(IEndpointRouteBuilder app)
     {
         var schools = app.MapGroup("/schools");
 

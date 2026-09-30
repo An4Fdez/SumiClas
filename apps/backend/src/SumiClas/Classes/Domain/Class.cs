@@ -13,20 +13,24 @@ public sealed class Class : AggregateRoot
         Name = name;
     }
 
-    public static Result<Class> Create(Guid schoolYearId, string name)
+    public static Result<Class> Create(Guid id, Guid schoolYearId, string name)
     {
-        var validation = Validate(schoolYearId, name);
+        var validation = Validate(id, schoolYearId, name);
         if (validation.IsFailure)
         {
             return Result<Class>.Failure(validation.Error!);
         }
 
-        var schoolClass = new Class(Guid.NewGuid(), schoolYearId, name.Trim());
+        var schoolClass = new Class(id, schoolYearId, name.Trim());
         return Result<Class>.Success(schoolClass);
     }
 
-    private static Result Validate(Guid schoolYearId, string name)
+    private static Result Validate(Guid id, Guid schoolYearId, string name)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(ClassErrors.IdRequired);
+        }
         if (schoolYearId == Guid.Empty)
         {
             return Result.Failure(ClassErrors.SchoolYearRequired);

@@ -6,9 +6,9 @@ namespace SumiClas.Api.Endpoints;
 
 public sealed record SchoolYearCreateRequest(Guid Id, Guid SchoolId, string Label, DateOnly StartDate, DateOnly EndDate);
 
-public static class SchoolYearsEndpoints
+public sealed class SchoolYearsEndpoints : IEndpoints
 {
-    public static void MapSchoolYearsEndpoints(this WebApplication app)
+    public void Map(IEndpointRouteBuilder app)
     {
         var schoolYears = app.MapGroup("/school-years");
 

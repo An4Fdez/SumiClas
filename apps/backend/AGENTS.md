@@ -19,12 +19,12 @@ apps/backend/
 
 Organizar en tres carpetas, no todo en `Program.cs`:
 
-- **`Endpoints/`** — un archivo (o subcarpeta) por módulo con los endpoints de ese módulo mapeados como método de extensión, invocado desde `Program.cs`. Aquí también viven los DTOs de request/response de esa capa HTTP (no reutilices las entidades de dominio como DTOs).
+- **`Endpoints/`** — un archivo (o subcarpeta) por módulo con los endpoints de ese módulo que implementa `IEndpoints` (`Endpoints/IEndpoints.cs`). **No hay que registrar nada en `Program.cs`**: `app.MapEndpoints()` (`Endpoints/EndpointsExtensions.cs`) descubre por reflexión toda clase concreta que implemente `IEndpoints` y llama a su `Map`. Aquí también viven los DTOs de request/response de esa capa HTTP (no reutilices las entidades de dominio como DTOs); los DTO de request se llaman `<CasoDeUso>Request` (`SchoolRegisterRequest`).
   ```csharp
   // Endpoints/AnnouncementsEndpoints.cs
-  public static class AnnouncementsEndpoints
+  public sealed class AnnouncementsEndpoints : IEndpoints
   {
-      public static void MapAnnouncementsEndpoints(this WebApplication app)
+      public void Map(IEndpointRouteBuilder app)
       {
           app.MapGet("/announcements", ...);
           app.MapPost("/announcements", ...);
@@ -34,7 +34,7 @@ Organizar en tres carpetas, no todo en `Program.cs`:
 - **`Middleware/`** — middleware transversal (manejo de errores, logging de requests, etc.).
 - **`Bootstrap/`** — inyección de dependencias y arranque: métodos de extensión que registran servicios de cada módulo (`AddSumiClasApplication()`, `AddSumiClasInfrastructure()`, etc.), invocados desde `Program.cs` para que este no acumule configuración de DI directamente.
 
-`Program.cs` debe quedar como orquestador fino: llama a los métodos de `Bootstrap/` para registrar servicios y a los `Map*Endpoints()` de `Endpoints/` para mapear rutas, sin lógica propia.
+`Program.cs` debe quedar como orquestador fino: llama a los métodos de `Bootstrap/` para registrar servicios y a `app.MapEndpoints()` (descubre todos los `IEndpoints` de `Endpoints/`) para mapear rutas, sin lógica propia.
 
 ### `src/SumiClas/` — dominio y aplicación (vertical slice)
 
@@ -115,9 +115,9 @@ Ejemplo real: `Schools/Application/SchoolRegister.cs` (`SchoolRegister.Command`,
 
 **El id se genera fuera del Domain** y llega en el `Command` (`Guid Id`). Los factory methods reciben `id` como primer parámetro y devuelven `Error` `<Agregado>.IdRequired` si es `Guid.Empty`. El command devuelve `Result` (no `Result<Guid>`), porque el llamador ya conoce el id.
 
-> **Deuda pendiente:** solo `School.Register` y `SchoolYear.Create` siguen el patrón de id aportado desde fuera. Los otros 10 agregados aún generan su id con `Guid.NewGuid()` dentro del Domain; hay que migrarlos al mismo esquema (id como parámetro + `IdRequired`) cuando se construya su `Application`.
+> **Deuda pendiente:** solo `School.Register`, `SchoolYear.Create` y `Class.Create` siguen el patrón de id aportado desde fuera. Los otros 9 agregados aún generan su id con `Guid.NewGuid()` dentro del Domain; hay que migrarlos al mismo esquema (id como parámetro + `IdRequired`) cuando se construya su `Application`.
 >
-> **Endpoints hechos:** `POST /schools` y `POST /school-years`. **Registro en DI (hecho):** `Bootstrap/ApplicationServiceCollectionExtensions.AddSumiClasApplication()` registra MediatR (handlers del ensamblado) y `UnitOfWorkBehavior` como behavior abierto; `AddSumiClasInfrastructure()` registra `IUnitOfWork` → `SumiClasDbContext`. Ambos se invocan desde `Program.cs`. **Registro por convención (`Bootstrap/ConventionServiceCollectionExtensions.cs`), no hay que añadir nada a mano por agregado ni caso de uso:** (1) toda clase concreta llamada `*Repository` se registra (`AddScoped`) contra cada interfaz que implemente y termine en `Repository` (`SchoolRepository` → `ISchoolRepository`); (2) toda clase pública anidada llamada `UseCase` dentro de una clase estática se registra como `AddScoped`. **Respeta esos sufijos**: un nombre distinto (`SchoolRepo`) no da error al compilar, y el fallo aparece al resolver la dependencia (en Development lo detecta `ValidateOnBuild` al arrancar). MediatR 12.5.0 (última con licencia Apache; las 13+ son comerciales). `SchoolRegister` ya tiene endpoint (`POST /schools`, `api/Endpoints/SchoolsEndpoints.cs`: **el cliente aporta el `Id`** en el body y el endpoint responde 201 sin cuerpo; sin `HasApiVersion` explícito, porque por defecto es la 1.0 (`AssumeDefaultVersionWhenUnspecified`); los `Error` se mapean a `ProblemDetails` 400 con `Results.Problem` vía `api/Http/ResultExtensions.ToProblem()`, ampliar ahí el mapeo de códigos cuando haya 404/409). Probado de extremo a extremo contra Postgres (201, 400 por validación de dominio). Sin tests automáticos. **Pendiente:** un `id` repetido (p. ej. un reintento del cliente) lanza la violación de PK y devuelve 500 en vez de 409; habría que comprobarlo en el `UseCase` con `GetByIdAsync`, devolver un error `School.AlreadyExists` y mapearlo a 409 en `ToProblem()`, en línea con la decisión pendiente de unicidad.
+> **Endpoints hechos:** `POST /schools`, `POST /school-years` y `POST /classes`. **Registro en DI (hecho):** `Bootstrap/ApplicationServiceCollectionExtensions.AddSumiClasApplication()` registra MediatR (handlers del ensamblado) y `UnitOfWorkBehavior` como behavior abierto; `AddSumiClasInfrastructure()` registra `IUnitOfWork` → `SumiClasDbContext`. Ambos se invocan desde `Program.cs`. **Registro por convención (`Bootstrap/ConventionServiceCollectionExtensions.cs`), no hay que añadir nada a mano por agregado ni caso de uso:** (1) toda clase concreta llamada `*Repository` se registra (`AddScoped`) contra cada interfaz que implemente y termine en `Repository` (`SchoolRepository` → `ISchoolRepository`); (2) toda clase pública anidada llamada `UseCase` dentro de una clase estática se registra como `AddScoped`. **Respeta esos sufijos**: un nombre distinto (`SchoolRepo`) no da error al compilar, y el fallo aparece al resolver la dependencia (en Development lo detecta `ValidateOnBuild` al arrancar). MediatR 12.5.0 (última con licencia Apache; las 13+ son comerciales). `SchoolRegister` ya tiene endpoint (`POST /schools`, `api/Endpoints/SchoolsEndpoints.cs`: **el cliente aporta el `Id`** en el body y el endpoint responde 201 sin cuerpo; sin `HasApiVersion` explícito, porque por defecto es la 1.0 (`AssumeDefaultVersionWhenUnspecified`); los `Error` se mapean a `ProblemDetails` 400 con `Results.Problem` vía `api/Http/ResultExtensions.ToProblem()`, ampliar ahí el mapeo de códigos cuando haya 404/409). Probado de extremo a extremo contra Postgres (201, 400 por validación de dominio). Sin tests automáticos. **Pendiente:** un `id` repetido (p. ej. un reintento del cliente) lanza la violación de PK y devuelve 500 en vez de 409; habría que comprobarlo en el `UseCase` con `GetByIdAsync`, devolver un error `School.AlreadyExists` y mapearlo a 409 en `ToProblem()`, en línea con la decisión pendiente de unicidad.
 
 ### Comunicación entre módulos: `IQueryBus` y servicios de dominio
 
@@ -126,6 +126,7 @@ Ejemplo real: `Schools/Application/SchoolRegister.cs` (`SchoolRegister.Command`,
 - **Registro por convención:** toda clase concreta en un namespace `*.Domain.Services` se registra sola (`AddDomainServicesByConvention`).
 - **Errores 404:** un `Error.Code` que termine en `.NotFound` se mapea a 404 en `ResultExtensions.ToProblem()`; el resto, 400.
 - Ejemplo real: `SchoolYearCreate.UseCase` envía `SchoolFinderById.Query` para comprobar que el colegio existe antes de crear el curso.
+- **Guards de regla entre módulos:** si un módulo debe validar una regla de otro (no solo la existencia), la query se la pregunta al dueño y la regla se queda en su Domain. Ejemplo: `ClassCreate.UseCase` envía `SchoolYearEnsureIsActive.Query` (`IQuery<Result>`), cuyo handler usa `SchoolYearFinder` y llama a `SchoolYear.EnsureIsActive()`; el consumidor solo recibe el `Result` (`SchoolYear.NotFound` → 404, `SchoolYear.Archived` → 400).
 
 ## Nomenclatura
 
