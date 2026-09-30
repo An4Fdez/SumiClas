@@ -2,6 +2,11 @@
   <Folder Name="/apps/" />
   <Folder Name="/apps/backend/">
     <File Path="apps/backend/AGENTS.md" />
+    <File Path="apps/backend/api/Bootstrap/ApplicationServiceCollectionExtensions.cs" />
+    <File Path="apps/backend/api/Bootstrap/ConventionServiceCollectionExtensions.cs" />
+    <File Path="apps/backend/api/Bootstrap/InfrastructureServiceCollectionExtensions.cs" />
+    <File Path="apps/backend/api/Bootstrap/WebApplicationMigrationExtensions.cs" />
+    <File Path="apps/backend/api/Endpoints/SchoolsEndpoints.cs" />
   </Folder>
   <Folder Name="/apps/backend/api/">
     <Project Path="apps/backend/api/SumiClas.Api.csproj" />
@@ -17,6 +22,9 @@
     </Project>
   </Folder>
   <Folder Name="/apps/test/" />
+  <Folder Name="/apps/test/backend/">
+    <Project Path="apps/test/backend/SumiClas.Tests/SumiClas.Tests.csproj" />
+  </Folder>
   <Folder Name="/solutionItems/">
     <File Path=".gitignore" />
     <File Path="AGENTS.md" />

@@ -28,6 +28,7 @@ obj/
 appsettings.Local.json
 appsettings.*.Local.json
 *.pfx
+*.atl
 
 # ---- IDE / editores ----
 .vs/
