@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using SumiClas.Api.Bootstrap;
+using SumiClas.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,5 +43,6 @@ app.UseSwaggerUI(swaggerUiOptions =>
 });
 
 app.MapHealthChecks("/healthy");
+app.MapSchoolsEndpoints();
 app.UseHttpsRedirection();
 app.Run();
