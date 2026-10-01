@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Students.Application;
@@ -6,9 +7,9 @@ namespace SumiClas.Api.Endpoints;
 
 public sealed record StudentRegisterRequest(
     Guid Id,
-    string FirstName,
-    string FirstSurname,
-    string? SecondSurname,
+    [StringLength(100)] string FirstName,
+    [StringLength(100)] string FirstSurname,
+    [StringLength(100)] string? SecondSurname,
     Guid FirstGuardianId,
     string FirstGuardianRole);
 

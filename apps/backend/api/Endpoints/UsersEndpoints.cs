@@ -1,10 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Users.Application;
 
 namespace SumiClas.Api.Endpoints;
 
-public sealed record UserRegisterRequest(Guid Id, string FullName, string Email);
+public sealed record UserRegisterRequest(Guid Id, [StringLength(200)] string FullName, [StringLength(320)] string Email);
 
 public sealed class UsersEndpoints : IEndpoints
 {

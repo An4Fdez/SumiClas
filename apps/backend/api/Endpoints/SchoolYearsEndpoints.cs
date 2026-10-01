@@ -1,10 +1,16 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.SchoolYears.Application;
 
 namespace SumiClas.Api.Endpoints;
 
-public sealed record SchoolYearCreateRequest(Guid Id, Guid SchoolId, string Label, DateOnly StartDate, DateOnly EndDate);
+public sealed record SchoolYearCreateRequest(
+    Guid Id,
+    Guid SchoolId,
+    [StringLength(100)] string Label,
+    DateOnly StartDate,
+    DateOnly EndDate);
 
 public sealed class SchoolYearsEndpoints : IEndpoints
 {

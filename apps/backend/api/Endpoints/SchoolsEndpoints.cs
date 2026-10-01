@@ -1,10 +1,15 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Schools.Application;
 
 namespace SumiClas.Api.Endpoints;
 
-public sealed record SchoolRegisterRequest(Guid Id, string Name, string OfficialCode, string? Address);
+public sealed record SchoolRegisterRequest(
+    Guid Id,
+    [StringLength(200)] string Name,
+    [StringLength(50)] string OfficialCode,
+    [StringLength(300)] string? Address);
 
 public sealed class SchoolsEndpoints : IEndpoints
 {

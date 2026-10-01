@@ -1,10 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Classes.Application;
 
 namespace SumiClas.Api.Endpoints;
 
-public sealed record ClassCreateRequest(Guid Id, Guid SchoolYearId, string Name);
+public sealed record ClassCreateRequest(Guid Id, Guid SchoolYearId, [StringLength(100)] string Name);
 
 public sealed class ClassesEndpoints : IEndpoints
 {

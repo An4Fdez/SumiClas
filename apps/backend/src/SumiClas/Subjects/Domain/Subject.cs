@@ -19,20 +19,24 @@ public sealed class Subject : AggregateRoot
         Label = label;
     }
 
-    public static Result<Subject> Create(Guid classId, string label)
+    public static Result<Subject> Create(Guid id, Guid classId, string label)
     {
-        var validation = Validate(classId, label);
+        var validation = Validate(id, classId, label);
         if (validation.IsFailure)
         {
             return Result<Subject>.Failure(validation.Error!);
         }
 
-        var subject = new Subject(Guid.NewGuid(), classId, label.Trim());
+        var subject = new Subject(id, classId, label.Trim());
         return Result<Subject>.Success(subject);
     }
 
-    private static Result Validate(Guid classId, string label)
+    private static Result Validate(Guid id, Guid classId, string label)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(SubjectErrors.IdRequired);
+        }
         if (classId == Guid.Empty)
         {
             return Result.Failure(SubjectErrors.ClassRequired);
