@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SumiClas.Shared.Application;
+using SumiClas.Shared.Domain;
 using SumiClas.Shared.Infrastructure;
 using SumiClas.Shared.Infrastructure.Persistence;
 
@@ -13,6 +14,7 @@ public static class InfrastructureServiceCollectionExtensions
             options.UseNpgsql(configuration.GetConnectionString("SumiClasDb")));
 
         services.AddScoped<IUnitOfWork>(serviceProvider => serviceProvider.GetRequiredService<SumiClasDbContext>());
+        services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IQueryBus, MediatRQueryBus>();
         services.AddRepositoriesByConvention(typeof(SumiClasDbContext).Assembly);
 

@@ -25,8 +25,8 @@ public static class UserRegister
                 return Result.Failure(registration.Error!);
             }
 
-            var existing = await users.GetByEmailAsync(email.Value, ct);
-            if (existing is not null)
+            var existing = await users.SearchAsync(new UserSpecification(email: email.Value), ct);
+            if (existing.Count > 0)
             {
                 return Result.Failure(UserErrors.EmailAlreadyRegistered);
             }

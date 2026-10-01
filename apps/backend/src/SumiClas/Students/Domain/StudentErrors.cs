@@ -4,6 +4,7 @@ namespace SumiClas.Students.Domain;
 
 public static class StudentErrors
 {
+    public static readonly Error NotFound = new("Student.NotFound", "No se ha encontrado el alumno.");
     public static readonly Error IdRequired = new("Student.IdRequired", "El identificador del alumno no puede estar vacío.");
     public static readonly Error InvalidGuardianRole = new("Student.InvalidGuardianRole", "El rol del tutor no es válido.");
     public static readonly Error NameRequired = new("Student.NameRequired", "El nombre del alumno no puede estar vacío.");

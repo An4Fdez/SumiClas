@@ -24,15 +24,15 @@ public sealed class Enrollment : AggregateRoot
     }
 
     /// <summary>Direct enrollment: a guardian enrolls their child in a class, already confirmed.</summary>
-    public static Result<Enrollment> Create(Guid studentId, Guid classId, IClock clock)
+    public static Result<Enrollment> Create(Guid id, Guid studentId, Guid classId, IClock clock)
     {
-        var validation = Validate(studentId, classId);
+        var validation = Validate(id, studentId, classId);
         if (validation.IsFailure)
         {
             return Result<Enrollment>.Failure(validation.Error!);
         }
 
-        var enrollment = new Enrollment(Guid.NewGuid(), studentId, classId, EnrollmentStatus.Confirmed, clock)
+        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, clock)
         {
             ConfirmedAt = clock.UtcNow,
         };
@@ -40,15 +40,15 @@ public sealed class Enrollment : AggregateRoot
     }
 
     /// <summary>Suggested continuity when a new SchoolYear opens: pending guardian confirmation.</summary>
-    public static Result<Enrollment> CreateSuggested(Guid studentId, Guid classId, IClock clock)
+    public static Result<Enrollment> CreateSuggested(Guid id, Guid studentId, Guid classId, IClock clock)
     {
-        var validation = Validate(studentId, classId);
+        var validation = Validate(id, studentId, classId);
         if (validation.IsFailure)
         {
             return Result<Enrollment>.Failure(validation.Error!);
         }
 
-        var enrollment = new Enrollment(Guid.NewGuid(), studentId, classId, EnrollmentStatus.Suggested, clock);
+        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Suggested, clock);
         return Result<Enrollment>.Success(enrollment);
     }
 
@@ -64,8 +64,12 @@ public sealed class Enrollment : AggregateRoot
         return Result.Success();
     }
 
-    private static Result Validate(Guid studentId, Guid classId)
+    private static Result Validate(Guid id, Guid studentId, Guid classId)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(EnrollmentErrors.IdRequired);
+        }
         if (studentId == Guid.Empty)
         {
             return Result.Failure(EnrollmentErrors.StudentRequired);

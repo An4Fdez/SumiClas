@@ -6,7 +6,7 @@ namespace SumiClas.Users.Domain;
 /// Stateless Domain Service for the invariant "at most N class representatives per class",
 /// which depends on counting OTHER User aggregates and therefore cannot be protected by a
 /// single User instance. The future Application layer resolves currentClassRepresentativeCount
-/// via IUserRepository.CountClassRepresentativesAsync before calling this service.
+/// by searching IUserRepository with UserSpecification (classRole: ClassRepresentative) before calling this service.
 /// </summary>
 public sealed class ClassRepresentativeAssignmentService
 {
