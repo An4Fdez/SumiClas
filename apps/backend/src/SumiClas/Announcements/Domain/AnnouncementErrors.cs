@@ -4,6 +4,9 @@ namespace SumiClas.Announcements.Domain;
 
 public static class AnnouncementErrors
 {
+    public static readonly Error IdRequired = new("Announcement.IdRequired", "El identificador del aviso no puede estar vacío.");
+    public static readonly Error InvalidScope = new("Announcement.InvalidScope", "El alcance del aviso no es válido.");
+    public static readonly Error InvalidPriority = new("Announcement.InvalidPriority", "La prioridad del aviso no es válida.");
     public static readonly Error ClassRequiredForClassScope = new("Announcement.ClassRequiredForClassScope", "Un aviso con alcance de clase debe indicar la clase.");
     public static readonly Error TitleRequired = new("Announcement.TitleRequired", "El título del aviso no puede estar vacío.");
     public static readonly Error BodyRequired = new("Announcement.BodyRequired", "El cuerpo del aviso no puede estar vacío.");

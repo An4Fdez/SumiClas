@@ -44,6 +44,7 @@ public sealed class Announcement : AggregateRoot
     }
 
     public static Result<Announcement> Create(
+        Guid id,
         AnnouncementScope scope,
         Guid? classId,
         string title,
@@ -53,14 +54,14 @@ public sealed class Announcement : AggregateRoot
         Guid? relatedEventId,
         IClock clock)
     {
-        var validation = Validate(scope, classId, title, body, authorId);
+        var validation = Validate(id, scope, classId, title, body, authorId);
         if (validation.IsFailure)
         {
             return Result<Announcement>.Failure(validation.Error!);
         }
 
         var announcement = new Announcement(
-            Guid.NewGuid(),
+            id,
             scope,
             scope == AnnouncementScope.Class ? classId : null,
             title.Trim(),
@@ -73,8 +74,12 @@ public sealed class Announcement : AggregateRoot
         return Result<Announcement>.Success(announcement);
     }
 
-    private static Result Validate(AnnouncementScope scope, Guid? classId, string title, string body, Guid authorId)
+    private static Result Validate(Guid id, AnnouncementScope scope, Guid? classId, string title, string body, Guid authorId)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(AnnouncementErrors.IdRequired);
+        }
         if (scope == AnnouncementScope.Class && (classId is null || classId == Guid.Empty))
         {
             return Result.Failure(AnnouncementErrors.ClassRequiredForClassScope);
