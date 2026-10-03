@@ -43,6 +43,7 @@ public sealed class Assignment : AggregateRoot
     }
 
     public static Result<Assignment> Create(
+        Guid id,
         Guid classId,
         Guid subjectId,
         string title,
@@ -52,14 +53,14 @@ public sealed class Assignment : AggregateRoot
         bool isProposal,
         IClock clock)
     {
-        var validation = Validate(classId, subjectId, title, authorId);
+        var validation = Validate(id, classId, subjectId, title, authorId);
         if (validation.IsFailure)
         {
             return Result<Assignment>.Failure(validation.Error!);
         }
 
         var assignment = new Assignment(
-            Guid.NewGuid(),
+            id,
             classId,
             subjectId,
             title.Trim(),
@@ -72,8 +73,12 @@ public sealed class Assignment : AggregateRoot
         return Result<Assignment>.Success(assignment);
     }
 
-    private static Result Validate(Guid classId, Guid subjectId, string title, Guid authorId)
+    private static Result Validate(Guid id, Guid classId, Guid subjectId, string title, Guid authorId)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(AssignmentErrors.IdRequired);
+        }
         if (classId == Guid.Empty)
         {
             return Result.Failure(AssignmentErrors.ClassRequired);
