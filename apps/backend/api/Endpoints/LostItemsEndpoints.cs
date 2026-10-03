@@ -50,7 +50,7 @@ public sealed class LostItemsEndpoints : IEndpoints
             return result.ToNoContent();
         });
 
-        lostItems.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new LostItemFinderByClass.Query(classId), ct)).ToOk());
+        lostItems.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new LostItemFinderByClass.Query(classId, limit, cursor), ct)).ToOk());
     }
 }

@@ -42,6 +42,7 @@ public sealed class LostItemConfiguration : IEntityTypeConfiguration<LostItem>
         builder.Property(i => i.CreatedAt)
             .IsRequired();
 
+
         builder.Ignore(i => i.DomainEvents);
     }
 }

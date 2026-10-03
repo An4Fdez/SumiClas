@@ -10,26 +10,42 @@ namespace SumiClas.Assignments.Application;
 
 public static class AssignmentFinderByClass
 {
-    /// <summary>The homework of the class with its subject and its comments, ordered by due date.</summary>
-    public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<AssignmentResponse>>>;
+    /// <summary>The homework of the class with its subject and its comments, ordered by due date, one page at a time.</summary>
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AssignmentResponse>>>;
 
     public sealed class Handler(IAssignmentRepository assignmentRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<AssignmentResponse>>>
+        : IRequestHandler<Query, Result<PagedResponse<AssignmentResponse>>>
     {
-        public async Task<Result<IReadOnlyCollection<AssignmentResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<AssignmentResponse>>> Handle(Query query, CancellationToken ct)
         {
+            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            if (pageRequest.IsFailure)
+            {
+                return Result<PagedResponse<AssignmentResponse>>.Failure(pageRequest.Error!);
+            }
+
+            var page = Pagination.ByDate(pageRequest.Value);
+            if (page.IsFailure)
+            {
+                return Result<PagedResponse<AssignmentResponse>>.Failure(page.Error!);
+            }
+
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
             if (schoolClass.IsFailure)
             {
-                return Result<IReadOnlyCollection<AssignmentResponse>>.Failure(schoolClass.Error!);
+                return Result<PagedResponse<AssignmentResponse>>.Failure(schoolClass.Error!);
             }
 
-            var assignments = await assignmentRepository.SearchAsync(new AssignmentSpecification(classId: query.ClassId), ct);
+            var candidates = await assignmentRepository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page.Value), ct);
+            var (assignments, nextCursor) = Pagination.Cut(
+                candidates.OrderBy(assignment => assignment.DueDate).ThenBy(assignment => assignment.Id, Pagination.IdComparer).ToList(),
+                pageRequest.Value.Limit,
+                assignment => Pagination.CursorOf(assignment.DueDate, assignment.Id));
 
             var subjects = await queryBus.Send(new SubjectFinderByClass.Query(query.ClassId), ct);
             if (subjects.IsFailure)
             {
-                return Result<IReadOnlyCollection<AssignmentResponse>>.Failure(subjects.Error!);
+                return Result<PagedResponse<AssignmentResponse>>.Failure(subjects.Error!);
             }
             var subjectLabels = subjects.Value.ToDictionary(subject => subject.Id, subject => subject.Label);
 
@@ -41,9 +57,7 @@ public static class AssignmentFinderByClass
             var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
                 .ToDictionary(author => author.UserId);
 
-            IReadOnlyCollection<AssignmentResponse> response = assignments
-                .OrderBy(assignment => assignment.DueDate)
-                .ThenBy(assignment => assignment.CreatedAt)
+            IReadOnlyCollection<AssignmentResponse> items = assignments
                 .Select(assignment => new AssignmentResponse(
                     assignment.Id,
                     assignment.ClassId,
@@ -69,7 +83,7 @@ public static class AssignmentFinderByClass
                         .ToList()))
                 .ToList();
 
-            return Result<IReadOnlyCollection<AssignmentResponse>>.Success(response);
+            return Result<PagedResponse<AssignmentResponse>>.Success(new PagedResponse<AssignmentResponse>(items, nextCursor));
         }
     }
 }

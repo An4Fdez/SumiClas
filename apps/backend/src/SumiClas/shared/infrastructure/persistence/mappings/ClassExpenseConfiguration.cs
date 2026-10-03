@@ -35,6 +35,7 @@ public sealed class ClassExpenseConfiguration : IEntityTypeConfiguration<ClassEx
         builder.Navigation(e => e.Participants)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+
         builder.Ignore(e => e.DomainEvents);
     }
 }

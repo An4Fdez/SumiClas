@@ -9,4 +9,8 @@ namespace SumiClas.Shared.Domain;
 public interface ISpecification<TEntity>
 {
     Expression<Func<TEntity, bool>> Criteria { get; }
+
+    IReadOnlyList<SpecificationOrder> Orders => [];
+
+    int? Take => null;
 }

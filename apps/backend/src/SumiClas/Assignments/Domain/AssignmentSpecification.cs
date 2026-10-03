@@ -15,7 +15,8 @@ public sealed class AssignmentSpecification : Specification<Assignment>
         Guid? authorId = null,
         bool? isProposal = null,
         DateTimeOffset? createdAt = null,
-        Guid? commentedByUserId = null)
+        Guid? commentedByUserId = null,
+        KeysetPage<DateOnly>? page = null)
     {
         if (id is { } assignmentId) AddCriteria(assignment => assignment.Id == assignmentId);
         if (classId is { } schoolClass) AddCriteria(assignment => assignment.ClassId == schoolClass);
@@ -27,5 +28,6 @@ public sealed class AssignmentSpecification : Specification<Assignment>
         if (isProposal is { } proposal) AddCriteria(assignment => assignment.IsProposal == proposal);
         if (createdAt is { } created) AddCriteria(assignment => assignment.CreatedAt == created);
         if (commentedByUserId is { } commenter) AddCriteria(assignment => assignment.Comments.Any(comment => comment.AuthorId == commenter));
+        if (page is not null) AddKeysetPage(assignment => assignment.DueDate, assignment => assignment.Id, page, descending: false);
     }
 }

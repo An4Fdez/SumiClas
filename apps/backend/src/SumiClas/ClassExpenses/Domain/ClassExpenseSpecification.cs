@@ -15,7 +15,8 @@ public sealed class ClassExpenseSpecification : Specification<ClassExpense>
         Guid? authorId = null,
         DateTimeOffset? createdAt = null,
         Guid? participantId = null,
-        bool? participantHasPaid = null)
+        bool? participantHasPaid = null,
+        KeysetPage<DateTimeOffset>? page = null)
     {
         if (id is { } expenseId) AddCriteria(expense => expense.Id == expenseId);
         if (classId is { } schoolClass) AddCriteria(expense => expense.ClassId == schoolClass);
@@ -30,5 +31,7 @@ public sealed class ClassExpenseSpecification : Specification<ClassExpense>
                 (participantId == null || participant.GuardianId == participantId)
                 && (participantHasPaid == null || participant.HasPaid == participantHasPaid)));
         }
+
+        if (page is not null) AddKeysetPage(expense => expense.CreatedAt, expense => expense.Id, page, descending: true);
     }
 }

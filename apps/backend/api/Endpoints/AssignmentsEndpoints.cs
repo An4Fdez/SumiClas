@@ -43,7 +43,7 @@ public sealed class AssignmentsEndpoints : IEndpoints
             return result.ToCreated();
         });
 
-        assignments.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new AssignmentFinderByClass.Query(classId), ct)).ToOk());
+        assignments.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new AssignmentFinderByClass.Query(classId, limit, cursor), ct)).ToOk());
     }
 }

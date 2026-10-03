@@ -43,7 +43,7 @@ public sealed class AnnouncementsEndpoints : IEndpoints
             return result.ToNoContent();
         });
 
-        announcements.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new AnnouncementFinderByClass.Query(classId), ct)).ToOk());
+        announcements.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new AnnouncementFinderByClass.Query(classId, limit, cursor), ct)).ToOk());
     }
 }

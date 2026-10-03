@@ -9,30 +9,44 @@ namespace SumiClas.LostItems.Application;
 
 public static class LostItemFinderByClass
 {
-    /// <summary>School-wide lost and found items plus the ones of the class, newest first.</summary>
-    public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<LostItemResponse>>>;
+    /// <summary>School-wide lost and found items plus the ones of the class, newest first, one page at a time.</summary>
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<LostItemResponse>>>;
 
     public sealed class Handler(ILostItemRepository lostItemRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<LostItemResponse>>>
+        : IRequestHandler<Query, Result<PagedResponse<LostItemResponse>>>
     {
-        public async Task<Result<IReadOnlyCollection<LostItemResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<LostItemResponse>>> Handle(Query query, CancellationToken ct)
         {
+            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            if (pageRequest.IsFailure)
+            {
+                return Result<PagedResponse<LostItemResponse>>.Failure(pageRequest.Error!);
+            }
+
+            var page = Pagination.ByCreatedAt(pageRequest.Value);
+            if (page.IsFailure)
+            {
+                return Result<PagedResponse<LostItemResponse>>.Failure(page.Error!);
+            }
+
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
             if (schoolClass.IsFailure)
             {
-                return Result<IReadOnlyCollection<LostItemResponse>>.Failure(schoolClass.Error!);
+                return Result<PagedResponse<LostItemResponse>>.Failure(schoolClass.Error!);
             }
 
-            var lostItems = (await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.School), ct))
-                .Concat(await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId), ct))
+            var candidates = (await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.School, page: page.Value), ct))
+                .Concat(await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page.Value), ct))
+                .OrderByDescending(lostItem => lostItem.CreatedAt)
+                .ThenByDescending(lostItem => lostItem.Id, Pagination.IdComparer)
                 .ToList();
+            var (lostItems, nextCursor) = Pagination.Cut(candidates, pageRequest.Value.Limit, lostItem => Pagination.CursorOf(lostItem.CreatedAt, lostItem.Id));
 
             var authorIds = lostItems.Select(lostItem => lostItem.AuthorId).Distinct().ToList();
             var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
                 .ToDictionary(author => author.UserId);
 
-            IReadOnlyCollection<LostItemResponse> response = lostItems
-                .OrderByDescending(lostItem => lostItem.CreatedAt)
+            IReadOnlyCollection<LostItemResponse> items = lostItems
                 .Select(lostItem => new LostItemResponse(
                     lostItem.Id,
                     lostItem.Scope.ToString(),
@@ -47,7 +61,7 @@ public static class LostItemFinderByClass
                     lostItem.CreatedAt))
                 .ToList();
 
-            return Result<IReadOnlyCollection<LostItemResponse>>.Success(response);
+            return Result<PagedResponse<LostItemResponse>>.Success(new PagedResponse<LostItemResponse>(items, nextCursor));
         }
     }
 }

@@ -43,6 +43,7 @@ public sealed class AnnouncementConfiguration : IEntityTypeConfiguration<Announc
         builder.Navigation(a => a.ReadReceipts)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+
         builder.Ignore(a => a.DomainEvents);
     }
 }

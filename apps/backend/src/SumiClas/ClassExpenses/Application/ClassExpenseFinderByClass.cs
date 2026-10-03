@@ -10,21 +10,37 @@ namespace SumiClas.ClassExpenses.Application;
 
 public static class ClassExpenseFinderByClass
 {
-    /// <summary>The expenses of the class with who participates and who has paid, newest first.</summary>
-    public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<ClassExpenseResponse>>>;
+    /// <summary>The expenses of the class with who participates and who has paid, newest first, one page at a time.</summary>
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<ClassExpenseResponse>>>;
 
     public sealed class Handler(IClassExpenseRepository classExpenses, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<ClassExpenseResponse>>>
+        : IRequestHandler<Query, Result<PagedResponse<ClassExpenseResponse>>>
     {
-        public async Task<Result<IReadOnlyCollection<ClassExpenseResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<ClassExpenseResponse>>> Handle(Query query, CancellationToken ct)
         {
+            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            if (pageRequest.IsFailure)
+            {
+                return Result<PagedResponse<ClassExpenseResponse>>.Failure(pageRequest.Error!);
+            }
+
+            var page = Pagination.ByCreatedAt(pageRequest.Value);
+            if (page.IsFailure)
+            {
+                return Result<PagedResponse<ClassExpenseResponse>>.Failure(page.Error!);
+            }
+
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
             if (schoolClass.IsFailure)
             {
-                return Result<IReadOnlyCollection<ClassExpenseResponse>>.Failure(schoolClass.Error!);
+                return Result<PagedResponse<ClassExpenseResponse>>.Failure(schoolClass.Error!);
             }
 
-            var expenses = await classExpenses.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId), ct);
+            var candidates = await classExpenses.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page.Value), ct);
+            var (expenses, nextCursor) = Pagination.Cut(
+                candidates.OrderByDescending(expense => expense.CreatedAt).ThenByDescending(expense => expense.Id, Pagination.IdComparer).ToList(),
+                pageRequest.Value.Limit,
+                expense => Pagination.CursorOf(expense.CreatedAt, expense.Id));
 
             var userIds = expenses
                 .Select(expense => expense.AuthorId)
@@ -39,8 +55,7 @@ public static class ClassExpenseFinderByClass
             var events = (await queryBus.Send(new CalendarEventFinderByIds.Query(eventIds), ct))
                 .ToDictionary(calendarEvent => calendarEvent.Id);
 
-            IReadOnlyCollection<ClassExpenseResponse> response = expenses
-                .OrderByDescending(expense => expense.CreatedAt)
+            IReadOnlyCollection<ClassExpenseResponse> items = expenses
                 .Select(expense => new ClassExpenseResponse(
                     expense.Id,
                     expense.ClassId,
@@ -60,7 +75,7 @@ public static class ClassExpenseFinderByClass
                         .ToList()))
                 .ToList();
 
-            return Result<IReadOnlyCollection<ClassExpenseResponse>>.Success(response);
+            return Result<PagedResponse<ClassExpenseResponse>>.Success(new PagedResponse<ClassExpenseResponse>(items, nextCursor));
         }
     }
 }

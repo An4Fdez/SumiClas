@@ -40,6 +40,7 @@ public sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignmen
         builder.Navigation(a => a.Comments)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+
         builder.Ignore(a => a.DomainEvents);
     }
 }

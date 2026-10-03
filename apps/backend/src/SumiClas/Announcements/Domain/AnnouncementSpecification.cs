@@ -15,7 +15,8 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         Guid? authorId = null,
         Guid? relatedEventId = null,
         DateTimeOffset? createdAt = null,
-        Guid? readByUserId = null)
+        Guid? readByUserId = null,
+        KeysetPage<DateTimeOffset>? page = null)
     {
         if (id is { } announcementId) AddCriteria(announcement => announcement.Id == announcementId);
         if (scope is { } announcementScope) AddCriteria(announcement => announcement.Scope == announcementScope);
@@ -27,5 +28,6 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         if (relatedEventId is { } relatedEvent) AddCriteria(announcement => announcement.RelatedEventId == relatedEvent);
         if (createdAt is { } created) AddCriteria(announcement => announcement.CreatedAt == created);
         if (readByUserId is { } reader) AddCriteria(announcement => announcement.ReadReceipts.Any(receipt => receipt.UserId == reader));
+        if (page is not null) AddKeysetPage(announcement => announcement.CreatedAt, announcement => announcement.Id, page, descending: true);
     }
 }
