@@ -36,7 +36,7 @@ app.UseSwaggerUI(swaggerUiOptions =>
     {
         foreach (var apiVersion in app.DescribeApiVersions().Reverse())
         {
-            swaggerUiOptions.SwaggerEndpoint($"/swagger/{apiVersion.GroupName}.json",
+            swaggerUiOptions.SwaggerEndpoint($"/openapi/{apiVersion.GroupName}.json",
                 apiVersion.GroupName.ToUpperInvariant());
         }
         
