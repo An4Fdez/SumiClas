@@ -52,6 +52,7 @@ public sealed class LostItem : AggregateRoot
     }
 
     public static Result<LostItem> Create(
+        Guid id,
         ItemScope scope,
         Guid? classId,
         ItemStatus status,
@@ -61,14 +62,14 @@ public sealed class LostItem : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = Validate(scope, classId, description, photoUrl, photoPrivacyConfirmed, authorId);
+        var validation = Validate(id, scope, classId, description, photoUrl, photoPrivacyConfirmed, authorId);
         if (validation.IsFailure)
         {
             return Result<LostItem>.Failure(validation.Error!);
         }
 
         var lostItem = new LostItem(
-            Guid.NewGuid(),
+            id,
             scope,
             scope == ItemScope.Class ? classId : null,
             status,
@@ -82,6 +83,7 @@ public sealed class LostItem : AggregateRoot
     }
 
     private static Result Validate(
+        Guid id,
         ItemScope scope,
         Guid? classId,
         string description,
@@ -89,6 +91,10 @@ public sealed class LostItem : AggregateRoot
         bool photoPrivacyConfirmed,
         Guid authorId)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(LostItemErrors.IdRequired);
+        }
         if (scope == ItemScope.Class && (classId is null || classId == Guid.Empty))
         {
             return Result.Failure(LostItemErrors.ClassRequiredForClassScope);

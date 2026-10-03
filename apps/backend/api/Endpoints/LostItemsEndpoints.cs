@@ -1,0 +1,43 @@
+using System.ComponentModel.DataAnnotations;
+using MediatR;
+using SumiClas.Api.Http;
+using SumiClas.LostItems.Application;
+
+namespace SumiClas.Api.Endpoints;
+
+public sealed record LostItemCreateRequest(
+    Guid Id,
+    string Scope,
+    Guid? ClassId,
+    string Status,
+    string Description,
+    [StringLength(2048)] string? PhotoUrl,
+    bool PhotoPrivacyConfirmed,
+    Guid AuthorId);
+
+public sealed class LostItemsEndpoints : IEndpoints
+{
+    public void Map(IEndpointRouteBuilder app)
+    {
+        var lostItems = app.MapGroup("/lost-items");
+
+        lostItems.MapPost("/", async (LostItemCreateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(
+                new LostItemCreate.Command(
+                    request.Id,
+                    request.Scope,
+                    request.ClassId,
+                    request.Status,
+                    request.Description,
+                    request.PhotoUrl,
+                    request.PhotoPrivacyConfirmed,
+                    request.AuthorId),
+                ct);
+
+            return result.IsSuccess
+                ? Results.StatusCode(StatusCodes.Status201Created)
+                : result.ToProblem();
+        });
+    }
+}
