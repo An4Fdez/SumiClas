@@ -10,7 +10,6 @@ public sealed record StudentRegisterRequest(
     [StringLength(100)] string FirstName,
     [StringLength(100)] string FirstSurname,
     [StringLength(100)] string? SecondSurname,
-    Guid FirstGuardianId,
     string FirstGuardianRole);
 
 public sealed class StudentsEndpoints : IEndpoints
@@ -27,7 +26,6 @@ public sealed class StudentsEndpoints : IEndpoints
                     request.FirstName,
                     request.FirstSurname,
                     request.SecondSurname,
-                    request.FirstGuardianId,
                     request.FirstGuardianRole),
                 ct);
 

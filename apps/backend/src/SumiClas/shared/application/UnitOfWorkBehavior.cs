@@ -1,14 +1,16 @@
+using System.Reflection;
 using MediatR;
 using SumiClas.Shared.Domain;
 
 namespace SumiClas.Shared.Application;
 
 /// <summary>
-/// The root command opens a database transaction and commits it only if its <see cref="Result"/> is successful;
-/// nested commands join it and just flush their changes, so later reads in the same request see them.
-/// A failed result or an exception rolls everything back. Use cases never touch the unit of work.
+/// The root command opens a database transaction. Once its <see cref="Result"/> is successful, the domain events
+/// raised by the aggregates are pulled and their handlers run in the same transaction; only if all of them succeed
+/// is everything saved and committed. A failed result, a failed handler or an exception rolls everything back.
+/// Use cases never touch the unit of work.
 /// </summary>
-public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork)
+public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : ICommand, IRequest<TResponse>
     where TResponse : Result
@@ -36,6 +38,13 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
                 return response;
             }
 
+            var dispatch = await dispatcher.DispatchAsync(ct);
+            if (dispatch.IsFailure)
+            {
+                await unitOfWork.RollbackTransactionAsync(ct);
+                return FailedResponse(dispatch.Error!);
+            }
+
             await unitOfWork.SaveChangesAsync(ct);
             await unitOfWork.CommitTransactionAsync(ct);
             return response;
@@ -45,5 +54,19 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
             await unitOfWork.RollbackTransactionAsync(CancellationToken.None);
             throw;
         }
+    }
+
+    private static TResponse FailedResponse(Error error)
+    {
+        if (typeof(TResponse) == typeof(Result))
+        {
+            return (TResponse)(object)Result.Failure(error);
+        }
+
+        var failure = typeof(TResponse).GetMethod(
+            nameof(Result.Failure),
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly,
+            [typeof(Error)])!;
+        return (TResponse)failure.Invoke(null, [error])!;
     }
 }

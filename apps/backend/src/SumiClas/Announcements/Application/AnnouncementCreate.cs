@@ -18,13 +18,20 @@ public static class AnnouncementCreate
         string Title,
         string Body,
         string Priority,
-        Guid AuthorId,
         Guid? RelatedEventId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock)
+    public sealed class UseCase(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var authorId = current.Value;
+
             if (!Enum.TryParse<AnnouncementScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {
                 return Result.Failure(AnnouncementErrors.InvalidScope);
@@ -41,7 +48,7 @@ public static class AnnouncementCreate
                 command.Title,
                 command.Body,
                 priority,
-                command.AuthorId,
+                authorId,
                 command.RelatedEventId,
                 clock);
             if (creation.IsFailure)
@@ -49,7 +56,7 @@ public static class AnnouncementCreate
                 return Result.Failure(creation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(command.AuthorId), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);

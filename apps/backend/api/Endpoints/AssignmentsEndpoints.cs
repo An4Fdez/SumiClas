@@ -11,8 +11,7 @@ public sealed record AssignmentCreateRequest(
     Guid SubjectId,
     [StringLength(200)] string Title,
     string? Description,
-    DateOnly DueDate,
-    Guid AuthorId);
+    DateOnly DueDate);
 
 public sealed class AssignmentsEndpoints : IEndpoints
 {
@@ -29,8 +28,7 @@ public sealed class AssignmentsEndpoints : IEndpoints
                     request.SubjectId,
                     request.Title,
                     request.Description,
-                    request.DueDate,
-                    request.AuthorId),
+                    request.DueDate),
                 ct);
 
             return result.IsSuccess

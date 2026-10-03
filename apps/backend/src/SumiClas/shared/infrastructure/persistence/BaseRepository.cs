@@ -10,8 +10,12 @@ public abstract class BaseRepository<TEntity>(SumiClasDbContext dbContext)
 
     protected DbSet<TEntity> Set => DbContext.Set<TEntity>();
 
-    public Task<TEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        => Set.FirstOrDefaultAsync(entity => entity.Id == id, ct);
+    /// <summary>
+    /// Uses FindAsync on purpose: it looks in the change tracker before the database, so an aggregate added
+    /// earlier in the same request (not saved yet) is found by id.
+    /// </summary>
+    public async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => await Set.FindAsync([id], ct);
 
     public async Task<IReadOnlyCollection<TEntity>> SearchAsync(ISpecification<TEntity> specification, CancellationToken ct = default)
         => await BySpecification(specification).ToListAsync(ct);

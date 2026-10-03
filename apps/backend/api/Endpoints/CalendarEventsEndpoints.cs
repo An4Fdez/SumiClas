@@ -14,16 +14,14 @@ public sealed record CalendarEventCreateRequest(
     DateOnly Date,
     TimeOnly? Time,
     [StringLength(200)] string? Location,
-    [StringLength(100)] string? Cost,
-    Guid AuthorId);
+    [StringLength(100)] string? Cost);
 
 public sealed record CalendarEventBirthdayCreateRequest(
     Guid Id,
     Guid StudentId,
     [StringLength(200)] string Title,
     int Month,
-    int Day,
-    Guid AuthorId);
+    int Day);
 
 public sealed class CalendarEventsEndpoints : IEndpoints
 {
@@ -43,8 +41,7 @@ public sealed class CalendarEventsEndpoints : IEndpoints
                     request.Date,
                     request.Time,
                     request.Location,
-                    request.Cost,
-                    request.AuthorId),
+                    request.Cost),
                 ct);
 
             return result.IsSuccess
@@ -60,8 +57,7 @@ public sealed class CalendarEventsEndpoints : IEndpoints
                     request.StudentId,
                     request.Title,
                     request.Month,
-                    request.Day,
-                    request.AuthorId),
+                    request.Day),
                 ct);
 
             return result.IsSuccess

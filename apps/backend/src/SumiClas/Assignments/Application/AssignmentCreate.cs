@@ -18,24 +18,31 @@ public static class AssignmentCreate
         Guid SubjectId,
         string Title,
         string? Description,
-        DateOnly DueDate,
-        Guid AuthorId) : IRequest<Result>, ICommand;
+        DateOnly DueDate) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock)
+    public sealed class UseCase(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var authorId = current.Value;
+
             // IsProposal depends on a lookup, so the aggregate is built twice: once only to validate the
             // input before any IO (the provisional flag is discarded), and once with the real flag.
             var validation = Assignment.Create(
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
-                command.DueDate, command.AuthorId, isProposal: true, clock);
+                command.DueDate, authorId, isProposal: true, clock);
             if (validation.IsFailure)
             {
                 return Result.Failure(validation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(command.AuthorId), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);
@@ -64,11 +71,11 @@ public static class AssignmentCreate
             }
 
             var isClassRepresentative = await queryBus.Send(
-                new UserIsClassRepresentative.Query(command.AuthorId, command.ClassId), ct);
+                new UserIsClassRepresentative.Query(authorId, command.ClassId), ct);
 
             var creation = Assignment.Create(
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
-                command.DueDate, command.AuthorId, isProposal: !isClassRepresentative, clock);
+                command.DueDate, authorId, isProposal: !isClassRepresentative, clock);
             if (creation.IsFailure)
             {
                 return Result.Failure(creation.Error!);

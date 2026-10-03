@@ -17,13 +17,20 @@ public static class ClassExpenseCreate
         string Item,
         decimal TotalAmount,
         IReadOnlyCollection<Guid> ParticipantIds,
-        Guid? RelatedEventId,
-        Guid AuthorId) : IRequest<Result>, ICommand;
+        Guid? RelatedEventId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IClassExpenseRepository classExpenses, IQueryBus queryBus, IClock clock)
+    public sealed class UseCase(IClassExpenseRepository classExpenses, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var authorId = current.Value;
+
             var creation = ClassExpense.Create(
                 command.Id,
                 command.ClassId,
@@ -31,14 +38,14 @@ public static class ClassExpenseCreate
                 command.TotalAmount,
                 command.ParticipantIds,
                 command.RelatedEventId,
-                command.AuthorId,
+                authorId,
                 clock);
             if (creation.IsFailure)
             {
                 return Result.Failure(creation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(command.AuthorId), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);

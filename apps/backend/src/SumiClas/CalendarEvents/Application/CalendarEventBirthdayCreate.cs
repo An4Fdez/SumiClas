@@ -10,27 +10,35 @@ namespace SumiClas.CalendarEvents.Application;
 public static class CalendarEventBirthdayCreate
 {
     /// <summary>Month and day only: a birth year is never stored (privacy rule for minors).</summary>
-    public sealed record Command(Guid Id, Guid StudentId, string Title, int Month, int Day, Guid AuthorId)
+    public sealed record Command(Guid Id, Guid StudentId, string Title, int Month, int Day)
         : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ICalendarEventRepository calendarEvents, IQueryBus queryBus, IClock clock)
+    public sealed class UseCase(ICalendarEventRepository calendarEvents, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var authorId = current.Value;
+
             var creation = CalendarEvent.CreateBirthday(
                 command.Id,
                 command.StudentId,
                 command.Title,
                 command.Month,
                 command.Day,
-                command.AuthorId,
+                authorId,
                 clock);
             if (creation.IsFailure)
             {
                 return Result.Failure(creation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(command.AuthorId), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);

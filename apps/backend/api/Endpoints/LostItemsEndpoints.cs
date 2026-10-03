@@ -12,8 +12,7 @@ public sealed record LostItemCreateRequest(
     string Status,
     string Description,
     [StringLength(2048)] string? PhotoUrl,
-    bool PhotoPrivacyConfirmed,
-    Guid AuthorId);
+    bool PhotoPrivacyConfirmed);
 
 public sealed class LostItemsEndpoints : IEndpoints
 {
@@ -31,8 +30,7 @@ public sealed class LostItemsEndpoints : IEndpoints
                     request.Status,
                     request.Description,
                     request.PhotoUrl,
-                    request.PhotoPrivacyConfirmed,
-                    request.AuthorId),
+                    request.PhotoPrivacyConfirmed),
                 ct);
 
             return result.IsSuccess

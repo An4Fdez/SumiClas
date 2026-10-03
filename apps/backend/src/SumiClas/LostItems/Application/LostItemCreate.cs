@@ -17,13 +17,20 @@ public static class LostItemCreate
         string Status,
         string Description,
         string? PhotoUrl,
-        bool PhotoPrivacyConfirmed,
-        Guid AuthorId) : IRequest<Result>, ICommand;
+        bool PhotoPrivacyConfirmed) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ILostItemRepository lostItems, IQueryBus queryBus, IClock clock)
+    public sealed class UseCase(ILostItemRepository lostItems, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var authorId = current.Value;
+
             if (!Enum.TryParse<ItemScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {
                 return Result.Failure(LostItemErrors.InvalidScope);
@@ -41,14 +48,14 @@ public static class LostItemCreate
                 command.Description,
                 command.PhotoUrl,
                 command.PhotoPrivacyConfirmed,
-                command.AuthorId,
+                authorId,
                 clock);
             if (creation.IsFailure)
             {
                 return Result.Failure(creation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(command.AuthorId), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);

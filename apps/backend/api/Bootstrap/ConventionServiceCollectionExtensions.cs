@@ -1,4 +1,5 @@
 using System.Reflection;
+using SumiClas.Shared.Application;
 
 namespace SumiClas.Api.Bootstrap;
 
@@ -40,6 +41,28 @@ public static class ConventionServiceCollectionExtensions
         foreach (var domainService in domainServices)
         {
             services.AddScoped(domainService);
+        }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers every concrete class that implements IDomainEventHandler&lt;TEvent&gt; against that interface
+    /// (e.g. UserClassFirstRepresentativeAssignOnClassCreate); a class may handle several events.
+    /// </summary>
+    public static IServiceCollection AddDomainEventHandlersByConvention(this IServiceCollection services, Assembly assembly)
+    {
+        var handlers = assembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false });
+
+        foreach (var handler in handlers)
+        {
+            var contracts = handler.GetInterfaces().Where(contract =>
+                contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>));
+
+            foreach (var contract in contracts)
+            {
+                services.AddScoped(contract, handler);
+            }
         }
 
         return services;

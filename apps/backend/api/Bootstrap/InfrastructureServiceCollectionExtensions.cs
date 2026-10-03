@@ -16,6 +16,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IUnitOfWork>(serviceProvider => serviceProvider.GetRequiredService<SumiClasDbContext>());
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IQueryBus, MediatRQueryBus>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddRepositoriesByConvention(typeof(SumiClasDbContext).Assembly);
 
         return services;

@@ -11,8 +11,7 @@ public sealed record ClassExpenseCreateRequest(
     [StringLength(200)] string Item,
     [Range(0.01, 99999999.99)] decimal TotalAmount,
     [Required] IReadOnlyCollection<Guid> ParticipantIds,
-    Guid? RelatedEventId,
-    Guid AuthorId);
+    Guid? RelatedEventId);
 
 public sealed class ClassExpensesEndpoints : IEndpoints
 {
@@ -29,8 +28,7 @@ public sealed class ClassExpensesEndpoints : IEndpoints
                     request.Item,
                     request.TotalAmount,
                     request.ParticipantIds,
-                    request.RelatedEventId,
-                    request.AuthorId),
+                    request.RelatedEventId),
                 ct);
 
             return result.IsSuccess

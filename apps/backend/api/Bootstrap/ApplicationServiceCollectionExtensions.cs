@@ -16,6 +16,7 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddUseCasesByConvention(assembly);
         services.AddDomainServicesByConvention(assembly);
+        services.AddDomainEventHandlersByConvention(assembly);
 
         return services;
     }

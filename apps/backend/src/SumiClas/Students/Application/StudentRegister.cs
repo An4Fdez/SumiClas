@@ -13,13 +13,19 @@ public static class StudentRegister
         string FirstName,
         string FirstSurname,
         string? SecondSurname,
-        Guid FirstGuardianId,
         string FirstGuardianRole) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IStudentRepository students, IQueryBus queryBus)
+    public sealed class UseCase(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider)
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var guardianId = current.Value;
             if (!Enum.TryParse<GuardianRole>(command.FirstGuardianRole, ignoreCase: true, out var role)
                 || !Enum.IsDefined(role))
             {
@@ -32,13 +38,13 @@ public static class StudentRegister
                 return Result.Failure(name.Error!);
             }
 
-            var registration = Student.Register(command.Id, name.Value, command.FirstGuardianId, role);
+            var registration = Student.Register(command.Id, name.Value, guardianId, role);
             if (registration.IsFailure)
             {
                 return Result.Failure(registration.Error!);
             }
 
-            var guardian = await queryBus.Send(new UserFinderById.Query(command.FirstGuardianId), ct);
+            var guardian = await queryBus.Send(new UserFinderById.Query(guardianId), ct);
             if (guardian.IsFailure)
             {
                 return Result.Failure(guardian.Error!);

@@ -53,13 +53,23 @@ public sealed class User : AggregateRoot
         return Upsert(classId, ClassRoleType.Participant);
     }
 
+    public const int MaxClassRepresentativesPerClass = 3;
+
     /// <summary>
-    /// Protects only the LOCAL invariant. Does NOT validate the global cap of 3
-    /// class representatives (it can't: this instance has no visibility into other
-    /// User aggregates) — see ClassRepresentativeAssignmentService for that check.
+    /// A class has at most <see cref="MaxClassRepresentativesPerClass"/> representatives. This instance cannot see the
+    /// other User aggregates, so the caller (a use case or event handler with the repository) supplies how many
+    /// representatives the class has now. Assigning the role to someone who already holds it is always allowed.
     /// </summary>
-    public Result AssignAsClassRepresentative(Guid classId)
+    public Result AssignAsClassRepresentative(Guid classId, int currentClassRepresentativeCount)
     {
+        var alreadyRepresentative = _classRoles
+            .Any(r => r.ClassId == classId && r.Role == ClassRoleType.ClassRepresentative);
+
+        if (!alreadyRepresentative && currentClassRepresentativeCount >= MaxClassRepresentativesPerClass)
+        {
+            return Result.Failure(UserErrors.MaxClassRepresentativesReached);
+        }
+
         return Upsert(classId, ClassRoleType.ClassRepresentative);
     }
 

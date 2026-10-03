@@ -21,5 +21,27 @@ public sealed class UsersEndpoints : IEndpoints
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
         });
+
+        users.MapPut(
+            "/{userId:guid}/class-representative-roles/{classId:guid}",
+            async (Guid userId, Guid classId, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new UserClassRepresentativeAssign.Command(userId, classId), ct);
+
+                return result.IsSuccess
+                    ? Results.NoContent()
+                    : result.ToProblem();
+            });
+
+        users.MapDelete(
+            "/me/class-representative-roles/{classId:guid}",
+            async (Guid classId, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new UserClassRepresentativeResign.Command(classId), ct);
+
+                return result.IsSuccess
+                    ? Results.NoContent()
+                    : result.ToProblem();
+            });
     }
 }

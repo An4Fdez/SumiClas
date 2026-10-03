@@ -12,7 +12,6 @@ public sealed record AnnouncementCreateRequest(
     [StringLength(200)] string Title,
     string Body,
     string Priority,
-    Guid AuthorId,
     Guid? RelatedEventId);
 
 public sealed class AnnouncementsEndpoints : IEndpoints
@@ -31,7 +30,6 @@ public sealed class AnnouncementsEndpoints : IEndpoints
                     request.Title,
                     request.Body,
                     request.Priority,
-                    request.AuthorId,
                     request.RelatedEventId),
                 ct);
 

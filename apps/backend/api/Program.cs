@@ -16,6 +16,7 @@ builder.Services.AddApiVersioning(versionOptions =>
 
 builder.Services.AddHealthChecks();
 builder.Services.AddValidation();
+builder.Services.AddSumiClasIdentity();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
 

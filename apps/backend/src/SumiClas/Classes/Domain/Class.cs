@@ -1,4 +1,5 @@
 using SumiClas.Shared.Domain;
+using SumiClas.Shared.Domain.Events;
 
 namespace SumiClas.Classes.Domain;
 
@@ -13,19 +14,21 @@ public sealed class Class : AggregateRoot
         Name = name;
     }
 
-    public static Result<Class> Create(Guid id, Guid schoolYearId, string name)
+    /// <param name="creatorId">Not stored in Class: it travels in the <see cref="ClassCreatedDomainEvent"/> so the creator becomes the first delegate.</param>
+    public static Result<Class> Create(Guid id, Guid schoolYearId, string name, Guid creatorId, IClock clock)
     {
-        var validation = Validate(id, schoolYearId, name);
+        var validation = Validate(id, schoolYearId, name, creatorId);
         if (validation.IsFailure)
         {
             return Result<Class>.Failure(validation.Error!);
         }
 
         var schoolClass = new Class(id, schoolYearId, name.Trim());
+        schoolClass.AddDomainEvent(new ClassCreatedDomainEvent(id, schoolYearId, schoolClass.Name, creatorId, clock));
         return Result<Class>.Success(schoolClass);
     }
 
-    private static Result Validate(Guid id, Guid schoolYearId, string name)
+    private static Result Validate(Guid id, Guid schoolYearId, string name, Guid creatorId)
     {
         if (id == Guid.Empty)
         {
@@ -38,6 +41,10 @@ public sealed class Class : AggregateRoot
         if (string.IsNullOrWhiteSpace(name))
         {
             return Result.Failure(ClassErrors.NameRequired);
+        }
+        if (creatorId == Guid.Empty)
+        {
+            return Result.Failure(ClassErrors.CreatorRequired);
         }
         return Result.Success();
     }
