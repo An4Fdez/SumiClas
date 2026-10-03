@@ -10,7 +10,8 @@ public sealed class SchoolYearSpecification : Specification<SchoolYear>
         string? label = null,
         DateOnly? startDate = null,
         DateOnly? endDate = null,
-        SchoolYearStatus? status = null)
+        SchoolYearStatus? status = null,
+        IReadOnlyCollection<Guid>? ids = null)
     {
         if (id is { } schoolYearId) AddCriteria(schoolYear => schoolYear.Id == schoolYearId);
         if (schoolId is { } owner) AddCriteria(schoolYear => schoolYear.SchoolId == owner);
@@ -18,5 +19,10 @@ public sealed class SchoolYearSpecification : Specification<SchoolYear>
         if (startDate is { } start) AddCriteria(schoolYear => schoolYear.StartDate == start);
         if (endDate is { } end) AddCriteria(schoolYear => schoolYear.EndDate == end);
         if (status is { } state) AddCriteria(schoolYear => schoolYear.Status == state);
+        if (ids is not null)
+        {
+            var schoolYearIds = ids.ToArray();
+            AddCriteria(schoolYear => schoolYearIds.Contains(schoolYear.Id));
+        }
     }
 }

@@ -4,6 +4,7 @@ namespace SumiClas.SchoolYears.Domain;
 
 public static class SchoolYearErrors
 {
+    public static readonly Error InvalidStatus = new("SchoolYear.InvalidStatus", "El estado del curso escolar no es válido.");
     public static readonly Error NotFound = new("SchoolYear.NotFound", "No se ha encontrado el curso escolar.");
     public static readonly Error IdRequired = new("SchoolYear.IdRequired", "El identificador del curso escolar no puede estar vacío.");
     public static readonly Error SchoolRequired = new("SchoolYear.SchoolRequired", "El curso escolar debe pertenecer a un colegio.");

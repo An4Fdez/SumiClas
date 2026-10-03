@@ -9,8 +9,6 @@ public static class SubjectFinderById
 {
     public sealed record Query(Guid SubjectId) : IQuery<Result<SubjectResponse>>;
 
-    public sealed record SubjectResponse(Guid Id, Guid ClassId, string Label);
-
     public sealed class Handler(SubjectByIdFinder finder) : IRequestHandler<Query, Result<SubjectResponse>>
     {
         public async Task<Result<SubjectResponse>> Handle(Query query, CancellationToken ct)

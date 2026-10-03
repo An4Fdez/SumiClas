@@ -47,5 +47,8 @@ public sealed class ClassExpensesEndpoints : IEndpoints
 
             return result.ToNoContent();
         });
+
+        classExpenses.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new ClassExpenseFinderByClass.Query(classId), ct)).ToOk());
     }
 }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
+using SumiClas.Students.Application;
 using SumiClas.Users.Application;
 
 namespace SumiClas.Api.Endpoints;
@@ -43,5 +44,11 @@ public sealed class UsersEndpoints : IEndpoints
                     ? Results.NoContent()
                     : result.ToProblem();
             });
+
+        users.MapGet("/me", async (ISender sender, CancellationToken ct) =>
+            (await sender.Send(new UserProfileFinderCurrent.Query(), ct)).ToOk());
+
+        users.MapGet("/me/students", async (ISender sender, CancellationToken ct) =>
+            (await sender.Send(new StudentFinderByCurrentGuardian.Query(), ct)).ToOk());
     }
 }

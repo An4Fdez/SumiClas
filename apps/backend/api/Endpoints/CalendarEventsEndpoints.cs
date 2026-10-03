@@ -64,5 +64,8 @@ public sealed class CalendarEventsEndpoints : IEndpoints
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
         });
+
+        calendarEvents.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)).ToOk());
     }
 }

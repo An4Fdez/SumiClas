@@ -21,7 +21,9 @@ public sealed class CalendarEventSpecification : Specification<CalendarEvent>
         string? location = null,
         string? cost = null,
         Guid? authorId = null,
-        DateTimeOffset? createdAt = null)
+        DateTimeOffset? createdAt = null,
+        IReadOnlyCollection<Guid>? ids = null,
+        IReadOnlyCollection<Guid>? studentIds = null)
     {
         if (id is { } eventId) AddCriteria(calendarEvent => calendarEvent.Id == eventId);
         if (scope is { } eventScope) AddCriteria(calendarEvent => calendarEvent.Scope == eventScope);
@@ -37,5 +39,16 @@ public sealed class CalendarEventSpecification : Specification<CalendarEvent>
         if (cost is not null) AddCriteria(calendarEvent => calendarEvent.Cost == cost);
         if (authorId is { } author) AddCriteria(calendarEvent => calendarEvent.AuthorId == author);
         if (createdAt is { } created) AddCriteria(calendarEvent => calendarEvent.CreatedAt == created);
+        if (ids is not null)
+        {
+            var eventIds = ids.ToArray();
+            AddCriteria(calendarEvent => eventIds.Contains(calendarEvent.Id));
+        }
+
+        if (studentIds is not null)
+        {
+            var students = studentIds.ToArray();
+            AddCriteria(calendarEvent => calendarEvent.StudentId.HasValue && students.Contains(calendarEvent.StudentId.Value));
+        }
     }
 }

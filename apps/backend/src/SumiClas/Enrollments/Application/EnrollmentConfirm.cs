@@ -38,7 +38,7 @@ public static class EnrollmentConfirm
             var schoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct);
             var classIds = schoolYearClasses.Select(c => c.Id).ToList();
             var confirmed = await enrollments.SearchAsync(
-                new ConfirmedEnrollmentsByStudentInClassesSpecification(enrollment.StudentId, classIds), ct);
+                new EnrollmentSpecification(studentId: enrollment.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Any(other => other.Id != enrollment.Id))
             {
                 return Result.Failure(EnrollmentErrors.AlreadyExists);

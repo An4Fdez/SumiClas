@@ -26,5 +26,11 @@ public sealed class SchoolsEndpoints : IEndpoints
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
         });
+
+        schools.MapGet("/{schoolId:guid}", async (Guid schoolId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SchoolFinderById.Query(schoolId), ct)).ToOk());
+
+        schools.MapGet("/", async (string? name, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new SchoolFinderByName.Query(name), ct)));
     }
 }

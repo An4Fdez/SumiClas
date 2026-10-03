@@ -12,6 +12,9 @@ public static class ResultExtensions
     public static IResult ToNoContent(this Result result)
         => result.IsSuccess ? Results.NoContent() : result.ToProblem();
 
+    public static IResult ToOk<T>(this Result<T> result)
+        => result.IsSuccess ? Results.Ok(result.Value) : result.ToProblem();
+
     public static IResult ToCreated(this Result result)
         => result.IsSuccess ? Results.StatusCode(StatusCodes.Status201Created) : result.ToProblem();
 

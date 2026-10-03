@@ -9,8 +9,6 @@ public static class SchoolFinderById
 {
     public sealed record Query(Guid SchoolId) : IQuery<Result<SchoolResponse>>;
 
-    public sealed record SchoolResponse(Guid Id, string Name, string OfficialCode, string? Address);
-
     public sealed class Handler(SchoolFinder finder) : IRequestHandler<Query, Result<SchoolResponse>>
     {
         public async Task<Result<SchoolResponse>> Handle(Query query, CancellationToken ct)

@@ -28,5 +28,11 @@ public sealed class ClassesEndpoints : IEndpoints
 
             return result.ToNoContent();
         });
+
+        classes.MapGet("/{classId:guid}", async (Guid classId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new ClassFinderById.Query(classId), ct)).ToOk());
+
+        classes.MapGet("/", async (Guid schoolYearId, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct)));
     }
 }

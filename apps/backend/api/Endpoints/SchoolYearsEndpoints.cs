@@ -32,5 +32,8 @@ public sealed class SchoolYearsEndpoints : IEndpoints
 
             return result.ToNoContent();
         });
+
+        schoolYears.MapGet("/", async (Guid schoolId, string? status, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SchoolYearFinderBySchool.Query(schoolId, status), ct)).ToOk());
     }
 }

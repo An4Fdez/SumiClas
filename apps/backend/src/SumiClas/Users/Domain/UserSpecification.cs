@@ -11,11 +11,18 @@ public sealed class UserSpecification : Specification<User>
         string? fullName = null,
         Email? email = null,
         Guid? classId = null,
-        ClassRoleType? classRole = null)
+        ClassRoleType? classRole = null,
+        IReadOnlyCollection<Guid>? ids = null)
     {
         if (id is { } userId) AddCriteria(user => user.Id == userId);
         if (fullName is not null) AddCriteria(user => user.FullName == fullName);
         if (email is not null) AddCriteria(user => user.Email.Value == email.Value);
+        if (ids is not null)
+        {
+            var userIds = ids.ToArray();
+            AddCriteria(user => userIds.Contains(user.Id));
+        }
+
         if (classId is not null || classRole is not null)
         {
             AddCriteria(user => user.ClassRoles.Any(role =>

@@ -21,5 +21,8 @@ public sealed class SubjectsEndpoints : IEndpoints
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
         });
+
+        subjects.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new SubjectFinderByClass.Query(classId), ct)).ToOk());
     }
 }
