@@ -4,8 +4,7 @@ export class ClientBase {
         return options_;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected async transformResult(url: string, response: Response, processor: (_response: Response) => Promise<any>): Promise<any> {
+    protected async transformResult<T>(url: string, response: Response, processor: (_response: Response) => Promise<T>): Promise<T> {
         return processor(response);
     }
 }

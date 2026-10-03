@@ -13,8 +13,7 @@ export class ClientBase {
         return options_;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected async transformResult(url: string, response: Response, processor: (_response: Response) => Promise<any>): Promise<any> {
+    protected async transformResult<T>(url: string, response: Response, processor: (_response: Response) => Promise<T>): Promise<T> {
         return processor(response);
     }
 }
@@ -22,209 +21,209 @@ export class ClientBase {
 export interface IGeneratedApiClient {
 
     /**
-     * @return OK
+     * @return Created
      */
-    announcementsPOST(body: AnnouncementCreateRequest): Promise<void>;
+    announcementCreate(body: AnnouncementCreateRequest): Promise<void>;
 
     /**
      * @param limit (optional) 
      * @param cursor (optional) 
      * @return OK
      */
-    announcementsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void>;
+    announcementFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfAnnouncementResponse>;
 
     /**
-     * @return OK
+     * @return No Content
      */
-    read(announcementId: string): Promise<void>;
+    announcementReadMark(announcementId: string): Promise<void>;
 
     /**
-     * @return OK
+     * @return Created
      */
-    assignmentsPOST(body: AssignmentCreateRequest): Promise<void>;
-
-    /**
-     * @param limit (optional) 
-     * @param cursor (optional) 
-     * @return OK
-     */
-    assignmentsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    comments(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    calendarEventsPOST(body: CalendarEventCreateRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    calendarEventsGET(classId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    birthdays(body: CalendarEventBirthdayCreateRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classesPOST(body: ClassCreateRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classesGET(schoolYearId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    name(classId: string, body: ClassRenameRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classesGET2(classId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classExpensesPOST(body: ClassExpenseCreateRequest): Promise<void>;
+    assignmentCreate(body: AssignmentCreateRequest): Promise<void>;
 
     /**
      * @param limit (optional) 
      * @param cursor (optional) 
      * @return OK
      */
-    classExpensesGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void>;
+    assignmentFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfAssignmentResponse>;
+
+    /**
+     * @return Created
+     */
+    assignmentCommentAdd(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    calendarEventCreate(body: CalendarEventCreateRequest): Promise<void>;
 
     /**
      * @return OK
      */
-    paidPUT(classExpenseId: string, guardianId: string): Promise<void>;
+    calendarEventFinderByClass(classId: string): Promise<CalendarEventResponse[]>;
+
+    /**
+     * @return Created
+     */
+    calendarEventBirthdayCreate(body: CalendarEventBirthdayCreateRequest): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    classCreate(body: ClassCreateRequest): Promise<void>;
 
     /**
      * @return OK
      */
-    paidDELETE(classExpenseId: string, guardianId: string): Promise<void>;
+    classFinderBySchoolYear(schoolYearId: string): Promise<ClassResponse[]>;
+
+    /**
+     * @return No Content
+     */
+    classRename(classId: string, body: ClassRenameRequest): Promise<void>;
 
     /**
      * @return OK
      */
-    enrollments(body: EnrollmentCreateRequest): Promise<void>;
+    classFinderById(classId: string): Promise<ClassResponse>;
 
     /**
-     * @return OK
+     * @return Created
      */
-    confirm(enrollmentId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    lostItemsPOST(body: LostItemCreateRequest): Promise<void>;
+    classExpenseCreate(body: ClassExpenseCreateRequest): Promise<void>;
 
     /**
      * @param limit (optional) 
      * @param cursor (optional) 
      * @return OK
      */
-    lostItemsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void>;
+    classExpenseFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfClassExpenseResponse>;
 
     /**
-     * @return OK
+     * @return No Content
      */
-    recoveredPUT(lostItemId: string): Promise<void>;
+    classExpensePaidMark(classExpenseId: string, guardianId: string): Promise<void>;
 
     /**
-     * @return OK
+     * @return No Content
      */
-    recoveredDELETE(lostItemId: string): Promise<void>;
+    classExpenseUnpaidMark(classExpenseId: string, guardianId: string): Promise<void>;
 
     /**
+     * @return Created
+     */
+    enrollmentCreate(body: EnrollmentCreateRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    enrollmentConfirm(enrollmentId: string): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    lostItemCreate(body: LostItemCreateRequest): Promise<void>;
+
+    /**
+     * @param limit (optional) 
+     * @param cursor (optional) 
      * @return OK
      */
-    schoolsPOST(body: SchoolRegisterRequest): Promise<void>;
+    lostItemFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfLostItemResponse>;
+
+    /**
+     * @return No Content
+     */
+    lostItemRecoveredMark(lostItemId: string): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    lostItemNotRecoveredMark(lostItemId: string): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    schoolRegister(body: SchoolRegisterRequest): Promise<void>;
 
     /**
      * @param name (optional) 
      * @return OK
      */
-    schoolsGET(name: string | undefined): Promise<void>;
+    schoolFinderByName(name: string | undefined): Promise<SchoolResponse[]>;
 
     /**
      * @return OK
      */
-    schoolsGET2(schoolId: string): Promise<void>;
+    schoolFinderById(schoolId: string): Promise<SchoolResponse>;
 
     /**
-     * @return OK
+     * @return Created
      */
-    schoolYearsPOST(body: SchoolYearCreateRequest): Promise<void>;
+    schoolYearCreate(body: SchoolYearCreateRequest): Promise<void>;
 
     /**
      * @param status (optional) 
      * @return OK
      */
-    schoolYearsGET(schoolId: string, status: string | undefined): Promise<void>;
+    schoolYearFinderBySchool(schoolId: string, status: string | undefined): Promise<SchoolYearResponse[]>;
+
+    /**
+     * @return No Content
+     */
+    schoolYearArchive(schoolYearId: string): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    studentRegister(body: StudentRegisterRequest): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    studentGuardianAdd(studentId: string, body: StudentGuardianAddRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    studentGuardianRemove(studentId: string, guardianId: string): Promise<void>;
+
+    /**
+     * @return Created
+     */
+    subjectCreate(body: SubjectCreateRequest): Promise<void>;
 
     /**
      * @return OK
      */
-    archive(schoolYearId: string): Promise<void>;
+    subjectFinderByClass(classId: string): Promise<SubjectResponse[]>;
+
+    /**
+     * @return Created
+     */
+    userRegister(body: UserRegisterRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    userClassRepresentativeAssign(userId: string, classId: string): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    userClassRepresentativeResign(classId: string): Promise<void>;
 
     /**
      * @return OK
      */
-    studentsPOST(body: StudentRegisterRequest): Promise<void>;
+    userProfileFinderCurrent(): Promise<UserProfileResponse>;
 
     /**
      * @return OK
      */
-    guardiansPOST(studentId: string, body: StudentGuardianAddRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    guardiansDELETE(studentId: string, guardianId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    subjectsPOST(body: SubjectCreateRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    subjectsGET(classId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    users(body: UserRegisterRequest): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classRepresentativeRolesPUT(userId: string, classId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    classRepresentativeRolesDELETE(classId: string): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    me(): Promise<void>;
-
-    /**
-     * @return OK
-     */
-    studentsGET(): Promise<void>;
+    studentFinderByCurrentGuardian(): Promise<ChildResponse[]>;
 }
 
 export class GeneratedApiClient extends ClientBase implements IGeneratedApiClient {
@@ -239,9 +238,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    announcementsPOST(body: AnnouncementCreateRequest): Promise<void> {
+    announcementCreate(body: AnnouncementCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/announcements";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -258,16 +257,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAnnouncementsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAnnouncementCreate(_response));
         });
     }
 
-    protected processAnnouncementsPOST(response: Response): Promise<void> {
+    protected processAnnouncementCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -282,7 +299,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param cursor (optional) 
      * @return OK
      */
-    announcementsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void> {
+    announcementFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfAnnouncementResponse> {
         let url_ = this.baseUrl + "/announcements?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -301,35 +318,56 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAnnouncementsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAnnouncementFinderByClass(_response));
         });
     }
 
-    protected processAnnouncementsGET(response: Response): Promise<void> {
+    protected processAnnouncementFinderByClass(response: Response): Promise<PagedResponseOfAnnouncementResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PagedResponseOfAnnouncementResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<PagedResponseOfAnnouncementResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    read(announcementId: string): Promise<void> {
+    announcementReadMark(announcementId: string): Promise<void> {
         let url_ = this.baseUrl + "/announcements/{announcementId}/read";
         if (announcementId === undefined || announcementId === null)
             throw new globalThis.Error("The parameter 'announcementId' must be defined.");
@@ -345,16 +383,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processRead(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAnnouncementReadMark(_response));
         });
     }
 
-    protected processRead(response: Response): Promise<void> {
+    protected processAnnouncementReadMark(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -365,9 +421,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    assignmentsPOST(body: AssignmentCreateRequest): Promise<void> {
+    assignmentCreate(body: AssignmentCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/assignments";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -384,16 +440,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentCreate(_response));
         });
     }
 
-    protected processAssignmentsPOST(response: Response): Promise<void> {
+    protected processAssignmentCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -408,7 +482,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param cursor (optional) 
      * @return OK
      */
-    assignmentsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void> {
+    assignmentFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfAssignmentResponse> {
         let url_ = this.baseUrl + "/assignments?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -427,35 +501,50 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentFinderByClass(_response));
         });
     }
 
-    protected processAssignmentsGET(response: Response): Promise<void> {
+    protected processAssignmentFinderByClass(response: Response): Promise<PagedResponseOfAssignmentResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PagedResponseOfAssignmentResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<PagedResponseOfAssignmentResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    comments(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void> {
+    assignmentCommentAdd(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void> {
         let url_ = this.baseUrl + "/assignments/{assignmentId}/comments";
         if (assignmentId === undefined || assignmentId === null)
             throw new globalThis.Error("The parameter 'assignmentId' must be defined.");
@@ -475,16 +564,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processComments(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentCommentAdd(_response));
         });
     }
 
-    protected processComments(response: Response): Promise<void> {
+    protected processAssignmentCommentAdd(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -495,9 +602,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    calendarEventsPOST(body: CalendarEventCreateRequest): Promise<void> {
+    calendarEventCreate(body: CalendarEventCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/calendar-events";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -514,16 +621,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventCreate(_response));
         });
     }
 
-    protected processCalendarEventsPOST(response: Response): Promise<void> {
+    protected processCalendarEventCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -536,7 +661,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    calendarEventsGET(classId: string): Promise<void> {
+    calendarEventFinderByClass(classId: string): Promise<CalendarEventResponse[]> {
         let url_ = this.baseUrl + "/calendar-events?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -547,35 +672,44 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventFinderByClass(_response));
         });
     }
 
-    protected processCalendarEventsGET(response: Response): Promise<void> {
+    protected processCalendarEventFinderByClass(response: Response): Promise<CalendarEventResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CalendarEventResponse[];
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<CalendarEventResponse[]>(null as any);
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    birthdays(body: CalendarEventBirthdayCreateRequest): Promise<void> {
+    calendarEventBirthdayCreate(body: CalendarEventBirthdayCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/calendar-events/birthdays";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -592,16 +726,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processBirthdays(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventBirthdayCreate(_response));
         });
     }
 
-    protected processBirthdays(response: Response): Promise<void> {
+    protected processCalendarEventBirthdayCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -612,9 +764,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    classesPOST(body: ClassCreateRequest): Promise<void> {
+    classCreate(body: ClassCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/classes";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -631,16 +783,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassesPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassCreate(_response));
         });
     }
 
-    protected processClassesPOST(response: Response): Promise<void> {
+    protected processClassCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -653,7 +823,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    classesGET(schoolYearId: string): Promise<void> {
+    classFinderBySchoolYear(schoolYearId: string): Promise<ClassResponse[]> {
         let url_ = this.baseUrl + "/classes?";
         if (schoolYearId === undefined || schoolYearId === null)
             throw new globalThis.Error("The parameter 'schoolYearId' must be defined and cannot be null.");
@@ -664,35 +834,38 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassesGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassFinderBySchoolYear(_response));
         });
     }
 
-    protected processClassesGET(response: Response): Promise<void> {
+    protected processClassFinderBySchoolYear(response: Response): Promise<ClassResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ClassResponse[];
+            return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<ClassResponse[]>(null as any);
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    name(classId: string, body: ClassRenameRequest): Promise<void> {
+    classRename(classId: string, body: ClassRenameRequest): Promise<void> {
         let url_ = this.baseUrl + "/classes/{classId}/name";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined.");
@@ -712,16 +885,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processName(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassRename(_response));
         });
     }
 
-    protected processName(response: Response): Promise<void> {
+    protected processClassRename(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -734,7 +919,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    classesGET2(classId: string): Promise<void> {
+    classFinderById(classId: string): Promise<ClassResponse> {
         let url_ = this.baseUrl + "/classes/{classId}";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined.");
@@ -744,35 +929,44 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassesGET2(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassFinderById(_response));
         });
     }
 
-    protected processClassesGET2(response: Response): Promise<void> {
+    protected processClassFinderById(response: Response): Promise<ClassResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ClassResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<ClassResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    classExpensesPOST(body: ClassExpenseCreateRequest): Promise<void> {
+    classExpenseCreate(body: ClassExpenseCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/class-expenses";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -789,16 +983,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpensesPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpenseCreate(_response));
         });
     }
 
-    protected processClassExpensesPOST(response: Response): Promise<void> {
+    protected processClassExpenseCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -813,7 +1025,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param cursor (optional) 
      * @return OK
      */
-    classExpensesGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void> {
+    classExpenseFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfClassExpenseResponse> {
         let url_ = this.baseUrl + "/class-expenses?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -832,35 +1044,50 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpensesGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpenseFinderByClass(_response));
         });
     }
 
-    protected processClassExpensesGET(response: Response): Promise<void> {
+    protected processClassExpenseFinderByClass(response: Response): Promise<PagedResponseOfClassExpenseResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PagedResponseOfClassExpenseResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<PagedResponseOfClassExpenseResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    paidPUT(classExpenseId: string, guardianId: string): Promise<void> {
+    classExpensePaidMark(classExpenseId: string, guardianId: string): Promise<void> {
         let url_ = this.baseUrl + "/class-expenses/{classExpenseId}/participants/{guardianId}/paid";
         if (classExpenseId === undefined || classExpenseId === null)
             throw new globalThis.Error("The parameter 'classExpenseId' must be defined.");
@@ -879,16 +1106,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processPaidPUT(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpensePaidMark(_response));
         });
     }
 
-    protected processPaidPUT(response: Response): Promise<void> {
+    protected processClassExpensePaidMark(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -899,9 +1138,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    paidDELETE(classExpenseId: string, guardianId: string): Promise<void> {
+    classExpenseUnpaidMark(classExpenseId: string, guardianId: string): Promise<void> {
         let url_ = this.baseUrl + "/class-expenses/{classExpenseId}/participants/{guardianId}/paid";
         if (classExpenseId === undefined || classExpenseId === null)
             throw new globalThis.Error("The parameter 'classExpenseId' must be defined.");
@@ -920,16 +1159,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processPaidDELETE(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpenseUnpaidMark(_response));
         });
     }
 
-    protected processPaidDELETE(response: Response): Promise<void> {
+    protected processClassExpenseUnpaidMark(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -940,9 +1191,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    enrollments(body: EnrollmentCreateRequest): Promise<void> {
+    enrollmentCreate(body: EnrollmentCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/enrollments";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -959,16 +1210,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processEnrollments(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processEnrollmentCreate(_response));
         });
     }
 
-    protected processEnrollments(response: Response): Promise<void> {
+    protected processEnrollmentCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -979,9 +1248,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    confirm(enrollmentId: string): Promise<void> {
+    enrollmentConfirm(enrollmentId: string): Promise<void> {
         let url_ = this.baseUrl + "/enrollments/{enrollmentId}/confirm";
         if (enrollmentId === undefined || enrollmentId === null)
             throw new globalThis.Error("The parameter 'enrollmentId' must be defined.");
@@ -997,16 +1266,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processConfirm(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processEnrollmentConfirm(_response));
         });
     }
 
-    protected processConfirm(response: Response): Promise<void> {
+    protected processEnrollmentConfirm(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1017,9 +1304,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    lostItemsPOST(body: LostItemCreateRequest): Promise<void> {
+    lostItemCreate(body: LostItemCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/lost-items";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1036,16 +1323,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemCreate(_response));
         });
     }
 
-    protected processLostItemsPOST(response: Response): Promise<void> {
+    protected processLostItemCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1060,7 +1365,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param cursor (optional) 
      * @return OK
      */
-    lostItemsGET(classId: string, limit: number | undefined, cursor: string | undefined): Promise<void> {
+    lostItemFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfLostItemResponse> {
         let url_ = this.baseUrl + "/lost-items?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -1079,35 +1384,50 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemFinderByClass(_response));
         });
     }
 
-    protected processLostItemsGET(response: Response): Promise<void> {
+    protected processLostItemFinderByClass(response: Response): Promise<PagedResponseOfLostItemResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PagedResponseOfLostItemResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<PagedResponseOfLostItemResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    recoveredPUT(lostItemId: string): Promise<void> {
+    lostItemRecoveredMark(lostItemId: string): Promise<void> {
         let url_ = this.baseUrl + "/lost-items/{lostItemId}/recovered";
         if (lostItemId === undefined || lostItemId === null)
             throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
@@ -1123,16 +1443,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processRecoveredPUT(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemRecoveredMark(_response));
         });
     }
 
-    protected processRecoveredPUT(response: Response): Promise<void> {
+    protected processLostItemRecoveredMark(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1143,9 +1475,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    recoveredDELETE(lostItemId: string): Promise<void> {
+    lostItemNotRecoveredMark(lostItemId: string): Promise<void> {
         let url_ = this.baseUrl + "/lost-items/{lostItemId}/recovered";
         if (lostItemId === undefined || lostItemId === null)
             throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
@@ -1161,16 +1493,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processRecoveredDELETE(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemNotRecoveredMark(_response));
         });
     }
 
-    protected processRecoveredDELETE(response: Response): Promise<void> {
+    protected processLostItemNotRecoveredMark(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1181,9 +1525,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    schoolsPOST(body: SchoolRegisterRequest): Promise<void> {
+    schoolRegister(body: SchoolRegisterRequest): Promise<void> {
         let url_ = this.baseUrl + "/schools";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1200,16 +1544,22 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolRegister(_response));
         });
     }
 
-    protected processSchoolsPOST(response: Response): Promise<void> {
+    protected processSchoolRegister(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1223,7 +1573,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param name (optional) 
      * @return OK
      */
-    schoolsGET(name: string | undefined): Promise<void> {
+    schoolFinderByName(name: string | undefined): Promise<SchoolResponse[]> {
         let url_ = this.baseUrl + "/schools?";
         if (name === null)
             throw new globalThis.Error("The parameter 'name' cannot be null.");
@@ -1234,35 +1584,38 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolFinderByName(_response));
         });
     }
 
-    protected processSchoolsGET(response: Response): Promise<void> {
+    protected processSchoolFinderByName(response: Response): Promise<SchoolResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolResponse[];
+            return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<SchoolResponse[]>(null as any);
     }
 
     /**
      * @return OK
      */
-    schoolsGET2(schoolId: string): Promise<void> {
+    schoolFinderById(schoolId: string): Promise<SchoolResponse> {
         let url_ = this.baseUrl + "/schools/{schoolId}";
         if (schoolId === undefined || schoolId === null)
             throw new globalThis.Error("The parameter 'schoolId' must be defined.");
@@ -1272,35 +1625,44 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolsGET2(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolFinderById(_response));
         });
     }
 
-    protected processSchoolsGET2(response: Response): Promise<void> {
+    protected processSchoolFinderById(response: Response): Promise<SchoolResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<SchoolResponse>(null as any);
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    schoolYearsPOST(body: SchoolYearCreateRequest): Promise<void> {
+    schoolYearCreate(body: SchoolYearCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/school-years";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1317,16 +1679,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolYearsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolYearCreate(_response));
         });
     }
 
-    protected processSchoolYearsPOST(response: Response): Promise<void> {
+    protected processSchoolYearCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1340,7 +1714,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
      * @param status (optional) 
      * @return OK
      */
-    schoolYearsGET(schoolId: string, status: string | undefined): Promise<void> {
+    schoolYearFinderBySchool(schoolId: string, status: string | undefined): Promise<SchoolYearResponse[]> {
         let url_ = this.baseUrl + "/school-years?";
         if (schoolId === undefined || schoolId === null)
             throw new globalThis.Error("The parameter 'schoolId' must be defined and cannot be null.");
@@ -1355,35 +1729,50 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolYearsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolYearFinderBySchool(_response));
         });
     }
 
-    protected processSchoolYearsGET(response: Response): Promise<void> {
+    protected processSchoolYearFinderBySchool(response: Response): Promise<SchoolYearResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolYearResponse[];
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<SchoolYearResponse[]>(null as any);
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    archive(schoolYearId: string): Promise<void> {
+    schoolYearArchive(schoolYearId: string): Promise<void> {
         let url_ = this.baseUrl + "/school-years/{schoolYearId}/archive";
         if (schoolYearId === undefined || schoolYearId === null)
             throw new globalThis.Error("The parameter 'schoolYearId' must be defined.");
@@ -1399,16 +1788,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processArchive(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolYearArchive(_response));
         });
     }
 
-    protected processArchive(response: Response): Promise<void> {
+    protected processSchoolYearArchive(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1419,9 +1820,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    studentsPOST(body: StudentRegisterRequest): Promise<void> {
+    studentRegister(body: StudentRegisterRequest): Promise<void> {
         let url_ = this.baseUrl + "/students";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1438,16 +1839,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processStudentsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processStudentRegister(_response));
         });
     }
 
-    protected processStudentsPOST(response: Response): Promise<void> {
+    protected processStudentRegister(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1458,9 +1877,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    guardiansPOST(studentId: string, body: StudentGuardianAddRequest): Promise<void> {
+    studentGuardianAdd(studentId: string, body: StudentGuardianAddRequest): Promise<void> {
         let url_ = this.baseUrl + "/students/{studentId}/guardians";
         if (studentId === undefined || studentId === null)
             throw new globalThis.Error("The parameter 'studentId' must be defined.");
@@ -1480,16 +1899,40 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processGuardiansPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processStudentGuardianAdd(_response));
         });
     }
 
-    protected processGuardiansPOST(response: Response): Promise<void> {
+    protected processStudentGuardianAdd(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1500,9 +1943,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    guardiansDELETE(studentId: string, guardianId: string): Promise<void> {
+    studentGuardianRemove(studentId: string, guardianId: string): Promise<void> {
         let url_ = this.baseUrl + "/students/{studentId}/guardians/{guardianId}";
         if (studentId === undefined || studentId === null)
             throw new globalThis.Error("The parameter 'studentId' must be defined.");
@@ -1521,16 +1964,40 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processGuardiansDELETE(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processStudentGuardianRemove(_response));
         });
     }
 
-    protected processGuardiansDELETE(response: Response): Promise<void> {
+    protected processStudentGuardianRemove(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1541,9 +2008,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    subjectsPOST(body: SubjectCreateRequest): Promise<void> {
+    subjectCreate(body: SubjectCreateRequest): Promise<void> {
         let url_ = this.baseUrl + "/subjects";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1560,16 +2027,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSubjectsPOST(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSubjectCreate(_response));
         });
     }
 
-    protected processSubjectsPOST(response: Response): Promise<void> {
+    protected processSubjectCreate(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1582,7 +2061,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    subjectsGET(classId: string): Promise<void> {
+    subjectFinderByClass(classId: string): Promise<SubjectResponse[]> {
         let url_ = this.baseUrl + "/subjects?";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
@@ -1593,35 +2072,44 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSubjectsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSubjectFinderByClass(_response));
         });
     }
 
-    protected processSubjectsGET(response: Response): Promise<void> {
+    protected processSubjectFinderByClass(response: Response): Promise<SubjectResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SubjectResponse[];
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<SubjectResponse[]>(null as any);
     }
 
     /**
-     * @return OK
+     * @return Created
      */
-    users(body: UserRegisterRequest): Promise<void> {
+    userRegister(body: UserRegisterRequest): Promise<void> {
         let url_ = this.baseUrl + "/users";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1638,16 +2126,28 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processUsers(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserRegister(_response));
         });
     }
 
-    protected processUsers(response: Response): Promise<void> {
+    protected processUserRegister(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1658,9 +2158,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    classRepresentativeRolesPUT(userId: string, classId: string): Promise<void> {
+    userClassRepresentativeAssign(userId: string, classId: string): Promise<void> {
         let url_ = this.baseUrl + "/users/{userId}/class-representative-roles/{classId}";
         if (userId === undefined || userId === null)
             throw new globalThis.Error("The parameter 'userId' must be defined.");
@@ -1679,16 +2179,40 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassRepresentativeRolesPUT(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserClassRepresentativeAssign(_response));
         });
     }
 
-    protected processClassRepresentativeRolesPUT(response: Response): Promise<void> {
+    protected processUserClassRepresentativeAssign(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1699,9 +2223,9 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return OK
+     * @return No Content
      */
-    classRepresentativeRolesDELETE(classId: string): Promise<void> {
+    userClassRepresentativeResign(classId: string): Promise<void> {
         let url_ = this.baseUrl + "/users/me/class-representative-roles/{classId}";
         if (classId === undefined || classId === null)
             throw new globalThis.Error("The parameter 'classId' must be defined.");
@@ -1717,16 +2241,34 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processClassRepresentativeRolesDELETE(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserClassRepresentativeResign(_response));
         });
     }
 
-    protected processClassRepresentativeRolesDELETE(response: Response): Promise<void> {
+    protected processUserClassRepresentativeResign(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1739,71 +2281,95 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    me(): Promise<void> {
+    userProfileFinderCurrent(): Promise<UserProfileResponse> {
         let url_ = this.baseUrl + "/users/me";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processMe(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserProfileFinderCurrent(_response));
         });
     }
 
-    protected processMe(response: Response): Promise<void> {
+    protected processUserProfileFinderCurrent(response: Response): Promise<UserProfileResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserProfileResponse;
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<UserProfileResponse>(null as any);
     }
 
     /**
      * @return OK
      */
-    studentsGET(): Promise<void> {
+    studentFinderByCurrentGuardian(): Promise<ChildResponse[]> {
         let url_ = this.baseUrl + "/users/me/students";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
             method: "GET",
             headers: {
+                "Accept": "application/json"
             }
         };
 
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processStudentsGET(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processStudentFinderByCurrentGuardian(_response));
         });
     }
 
-    protected processStudentsGET(response: Response): Promise<void> {
+    protected processStudentFinderByCurrentGuardian(response: Response): Promise<ChildResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ChildResponse[];
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<ChildResponse[]>(null as any);
     }
 }
 
@@ -1819,8 +2385,36 @@ export interface AnnouncementCreateRequest {
     [key: string]: any;
 }
 
+export interface AnnouncementResponse {
+    id: string;
+    scope: string;
+    classId: string | undefined;
+    title: string;
+    body: string;
+    priority: string;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    createdAt: Date;
+    relatedEvent: CalendarEventSummaryResponse | undefined;
+    read: boolean;
+
+    [key: string]: any;
+}
+
 export interface AssignmentCommentAddRequest {
     text: string;
+
+    [key: string]: any;
+}
+
+export interface AssignmentCommentResponse {
+    id: string;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    text: string;
+    createdAt: Date;
 
     [key: string]: any;
 }
@@ -1832,6 +2426,24 @@ export interface AssignmentCreateRequest {
     title: string;
     description: string | undefined;
     dueDate: Date;
+
+    [key: string]: any;
+}
+
+export interface AssignmentResponse {
+    id: string;
+    classId: string;
+    subjectId: string;
+    subjectLabel: string;
+    title: string;
+    description: string | undefined;
+    dueDate: Date;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    isProposal: boolean;
+    createdAt: Date;
+    comments: AssignmentCommentResponse[];
 
     [key: string]: any;
 }
@@ -1860,6 +2472,47 @@ export interface CalendarEventCreateRequest {
     [key: string]: any;
 }
 
+export interface CalendarEventResponse {
+    id: string;
+    scope: string;
+    classId: string | undefined;
+    studentId: string | undefined;
+    type: string;
+    title: string;
+    month: number;
+    day: number;
+    year: number | undefined;
+    time: string | undefined;
+    location: string | undefined;
+    cost: string | undefined;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    createdAt: Date;
+
+    [key: string]: any;
+}
+
+export interface CalendarEventSummaryResponse {
+    id: string;
+    title: string;
+
+    [key: string]: any;
+}
+
+export interface ChildResponse {
+    studentId: string;
+    firstName: string;
+    surnameInitial: string;
+    classId: string | undefined;
+    className: string | undefined;
+    schoolYearId: string | undefined;
+    schoolId: string | undefined;
+    schoolName: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface ClassCreateRequest {
     id: string;
     schoolYearId: string;
@@ -1879,7 +2532,30 @@ export interface ClassExpenseCreateRequest {
     [key: string]: any;
 }
 
+export interface ClassExpenseResponse {
+    id: string;
+    classId: string;
+    item: string;
+    totalAmount: number;
+    relatedEvent: CalendarEventSummaryResponse | undefined;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    createdAt: Date;
+    participants: ExpenseParticipantResponse[];
+
+    [key: string]: any;
+}
+
 export interface ClassRenameRequest {
+    name: string;
+
+    [key: string]: any;
+}
+
+export interface ClassResponse {
+    id: string;
+    schoolYearId: string;
     name: string;
 
     [key: string]: any;
@@ -1889,6 +2565,25 @@ export interface EnrollmentCreateRequest {
     id: string;
     studentId: string;
     classId: string;
+
+    [key: string]: any;
+}
+
+export interface ExpenseParticipantResponse {
+    guardianId: string;
+    fullName: string;
+    hasPaid: boolean;
+
+    [key: string]: any;
+}
+
+export interface HttpValidationProblemDetails {
+    type?: string | undefined;
+    title?: string | undefined;
+    status?: number | undefined;
+    detail?: string | undefined;
+    instance?: string | undefined;
+    errors?: { [key: string]: string[]; };
 
     [key: string]: any;
 }
@@ -1905,7 +2600,70 @@ export interface LostItemCreateRequest {
     [key: string]: any;
 }
 
+export interface LostItemResponse {
+    id: string;
+    scope: string;
+    classId: string | undefined;
+    status: string;
+    recovered: boolean;
+    description: string;
+    photoUrl: string | undefined;
+    authorId: string;
+    authorName: string;
+    authorRole: string | undefined;
+    createdAt: Date;
+
+    [key: string]: any;
+}
+
+export interface PagedResponseOfAnnouncementResponse {
+    items: AnnouncementResponse[];
+    nextCursor: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface PagedResponseOfAssignmentResponse {
+    items: AssignmentResponse[];
+    nextCursor: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface PagedResponseOfClassExpenseResponse {
+    items: ClassExpenseResponse[];
+    nextCursor: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface PagedResponseOfLostItemResponse {
+    items: LostItemResponse[];
+    nextCursor: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface ProblemDetails {
+    type?: string | undefined;
+    title?: string | undefined;
+    status?: number | undefined;
+    detail?: string | undefined;
+    instance?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface SchoolRegisterRequest {
+    id: string;
+    name: string;
+    officialCode: string;
+    address: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface SchoolResponse {
     id: string;
     name: string;
     officialCode: string;
@@ -1920,6 +2678,17 @@ export interface SchoolYearCreateRequest {
     label: string;
     startDate: Date;
     endDate: Date;
+
+    [key: string]: any;
+}
+
+export interface SchoolYearResponse {
+    id: string;
+    schoolId: string;
+    label: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
 
     [key: string]: any;
 }
@@ -1945,6 +2714,30 @@ export interface SubjectCreateRequest {
     id: string;
     classId: string;
     label: string;
+
+    [key: string]: any;
+}
+
+export interface SubjectResponse {
+    id: string;
+    classId: string;
+    label: string;
+
+    [key: string]: any;
+}
+
+export interface UserClassRoleResponse {
+    classId: string;
+    role: string;
+
+    [key: string]: any;
+}
+
+export interface UserProfileResponse {
+    id: string;
+    fullName: string;
+    email: string;
+    classRoles: UserClassRoleResponse[];
 
     [key: string]: any;
 }
