@@ -27,7 +27,7 @@ public sealed class CalendarEventsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var calendarEvents = app.MapGroup("/calendar-events");
+        var calendarEvents = app.MapGroup("/calendar-events").WithTags("CalendarEvents");
 
         calendarEvents.MapPost("/", async (CalendarEventCreateRequest request, ISender sender, CancellationToken ct) =>
         {

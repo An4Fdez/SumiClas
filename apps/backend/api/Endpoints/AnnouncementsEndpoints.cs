@@ -19,7 +19,7 @@ public sealed class AnnouncementsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var announcements = app.MapGroup("/announcements");
+        var announcements = app.MapGroup("/announcements").WithTags("Announcements");
 
         announcements.MapPost("/", async (AnnouncementCreateRequest request, ISender sender, CancellationToken ct) =>
         {

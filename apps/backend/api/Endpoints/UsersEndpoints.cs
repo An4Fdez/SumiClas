@@ -12,7 +12,7 @@ public sealed class UsersEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var users = app.MapGroup("/users");
+        var users = app.MapGroup("/users").WithTags("Users");
 
         users.MapPost("/", async (UserRegisterRequest request, ISender sender, CancellationToken ct) =>
         {

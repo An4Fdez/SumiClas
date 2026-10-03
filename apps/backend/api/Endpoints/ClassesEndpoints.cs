@@ -13,7 +13,7 @@ public sealed class ClassesEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var classes = app.MapGroup("/classes");
+        var classes = app.MapGroup("/classes").WithTags("Classes");
 
         classes.MapPost("/", async (ClassCreateRequest request, ISender sender, CancellationToken ct) =>
         {
