@@ -4,6 +4,10 @@ namespace SumiClas.CalendarEvents.Domain;
 
 public static class CalendarEventErrors
 {
+    public static readonly Error NotFound = new("CalendarEvent.NotFound", "No se ha encontrado el evento.");
+    public static readonly Error IdRequired = new("CalendarEvent.IdRequired", "El identificador del evento no puede estar vacío.");
+    public static readonly Error InvalidScope = new("CalendarEvent.InvalidScope", "El alcance del evento no es válido.");
+    public static readonly Error InvalidType = new("CalendarEvent.InvalidType", "El tipo del evento no es válido.");
     public static readonly Error ClassRequiredForClassScope = new("CalendarEvent.ClassRequiredForClassScope", "Un evento con alcance de clase debe indicar la clase.");
     public static readonly Error TitleRequired = new("CalendarEvent.TitleRequired", "El título del evento no puede estar vacío.");
     public static readonly Error AuthorRequired = new("CalendarEvent.AuthorRequired", "El evento debe tener un autor.");

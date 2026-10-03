@@ -1,5 +1,6 @@
 using MediatR;
 using SumiClas.Announcements.Domain;
+using SumiClas.CalendarEvents.Application;
 using SumiClas.Classes.Application;
 using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
@@ -52,6 +53,15 @@ public static class AnnouncementCreate
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);
+            }
+
+            if (command.RelatedEventId is { } relatedEventId)
+            {
+                var relatedEvent = await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
+                if (relatedEvent.IsFailure)
+                {
+                    return Result.Failure(relatedEvent.Error!);
+                }
             }
 
             if (scope == AnnouncementScope.Class)
