@@ -21,7 +21,11 @@ public sealed class UsersEndpoints : IEndpoints
             return result.IsSuccess
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
-        });
+        })
+            .WithName("UserRegister")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         users.MapPut(
             "/{userId:guid}/class-representative-roles/{classId:guid}",
@@ -32,7 +36,13 @@ public sealed class UsersEndpoints : IEndpoints
                 return result.IsSuccess
                     ? Results.NoContent()
                     : result.ToProblem();
-            });
+            })
+            .WithName("UserClassRepresentativeAssign")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         users.MapDelete(
             "/me/class-representative-roles/{classId:guid}",
@@ -43,12 +53,24 @@ public sealed class UsersEndpoints : IEndpoints
                 return result.IsSuccess
                     ? Results.NoContent()
                     : result.ToProblem();
-            });
+            })
+            .WithName("UserClassRepresentativeResign")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         users.MapGet("/me", async (ISender sender, CancellationToken ct) =>
-            (await sender.Send(new UserProfileFinderCurrent.Query(), ct)).ToOk());
+            (await sender.Send(new UserProfileFinderCurrent.Query(), ct)).ToOk())
+            .WithName("UserProfileFinderCurrent")
+            .Produces<UserProfileResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         users.MapGet("/me/students", async (ISender sender, CancellationToken ct) =>
-            (await sender.Send(new StudentFinderByCurrentGuardian.Query(), ct)).ToOk());
+            (await sender.Send(new StudentFinderByCurrentGuardian.Query(), ct)).ToOk())
+            .WithName("StudentFinderByCurrentGuardian")
+            .Produces<IReadOnlyCollection<ChildResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 }

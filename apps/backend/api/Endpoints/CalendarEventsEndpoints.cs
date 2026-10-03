@@ -47,7 +47,12 @@ public sealed class CalendarEventsEndpoints : IEndpoints
             return result.IsSuccess
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
-        });
+        })
+            .WithName("CalendarEventCreate")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         calendarEvents.MapPost("/birthdays", async (CalendarEventBirthdayCreateRequest request, ISender sender, CancellationToken ct) =>
         {
@@ -63,9 +68,17 @@ public sealed class CalendarEventsEndpoints : IEndpoints
             return result.IsSuccess
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
-        });
+        })
+            .WithName("CalendarEventBirthdayCreate")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         calendarEvents.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)).ToOk());
+            (await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)).ToOk())
+            .WithName("CalendarEventFinderByClass")
+            .Produces<IReadOnlyCollection<CalendarEventResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

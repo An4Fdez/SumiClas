@@ -32,20 +32,37 @@ public sealed class StudentsEndpoints : IEndpoints
                 ct);
 
             return result.ToCreated();
-        });
+        })
+            .WithName("StudentRegister")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new StudentGuardianAdd.Command(studentId, request.GuardianId, request.Role), ct);
 
             return result.ToCreated();
-        });
+        })
+            .WithName("StudentGuardianAdd")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         students.MapDelete("/{studentId:guid}/guardians/{guardianId:guid}", async (Guid studentId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new StudentGuardianRemove.Command(studentId, guardianId), ct);
 
             return result.ToNoContent();
-        });
+        })
+            .WithName("StudentGuardianRemove")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

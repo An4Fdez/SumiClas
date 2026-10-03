@@ -20,9 +20,16 @@ public sealed class SubjectsEndpoints : IEndpoints
             return result.IsSuccess
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
-        });
+        })
+            .WithName("SubjectCreate")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         subjects.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new SubjectFinderByClass.Query(classId), ct)).ToOk());
+            (await sender.Send(new SubjectFinderByClass.Query(classId), ct)).ToOk())
+            .WithName("SubjectFinderByClass")
+            .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }

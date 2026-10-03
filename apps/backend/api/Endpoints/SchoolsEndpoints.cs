@@ -25,12 +25,20 @@ public sealed class SchoolsEndpoints : IEndpoints
             return result.IsSuccess
                 ? Results.StatusCode(StatusCodes.Status201Created)
                 : result.ToProblem();
-        });
+        })
+            .WithName("SchoolRegister")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem();
 
         schools.MapGet("/{schoolId:guid}", async (Guid schoolId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new SchoolFinderById.Query(schoolId), ct)).ToOk());
+            (await sender.Send(new SchoolFinderById.Query(schoolId), ct)).ToOk())
+            .WithName("SchoolFinderById")
+            .Produces<SchoolResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         schools.MapGet("/", async (string? name, ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new SchoolFinderByName.Query(name), ct)));
+            Results.Ok(await sender.Send(new SchoolFinderByName.Query(name), ct)))
+            .WithName("SchoolFinderByName")
+            .Produces<IReadOnlyCollection<SchoolResponse>>(StatusCodes.Status200OK);
     }
 }
