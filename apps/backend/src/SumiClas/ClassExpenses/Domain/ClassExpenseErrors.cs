@@ -4,6 +4,8 @@ namespace SumiClas.ClassExpenses.Domain;
 
 public static class ClassExpenseErrors
 {
+    public static readonly Error IdRequired = new("ClassExpense.IdRequired", "El identificador del gasto no puede estar vacío.");
+    public static readonly Error ParticipantNotFound = new("ClassExpense.ParticipantNotFound", "Alguno de los participantes no existe.");
     public static readonly Error ClassRequired = new("ClassExpense.ClassRequired", "El gasto debe pertenecer a una clase.");
     public static readonly Error ItemRequired = new("ClassExpense.ItemRequired", "El concepto del gasto no puede estar vacío.");
     public static readonly Error TotalAmountMustBePositive = new("ClassExpense.TotalAmountMustBePositive", "El importe total debe ser mayor que cero.");

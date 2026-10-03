@@ -37,6 +37,7 @@ public sealed class ClassExpense : AggregateRoot
     }
 
     public static Result<ClassExpense> Create(
+        Guid id,
         Guid classId,
         string item,
         decimal totalAmount,
@@ -45,15 +46,15 @@ public sealed class ClassExpense : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var distinctParticipantIds = participantIds.Where(id => id != Guid.Empty).Distinct().ToList();
+        var distinctParticipantIds = participantIds.Where(participantId => participantId != Guid.Empty).Distinct().ToList();
 
-        var validation = Validate(classId, item, totalAmount, distinctParticipantIds, authorId);
+        var validation = Validate(id, classId, item, totalAmount, distinctParticipantIds, authorId);
         if (validation.IsFailure)
         {
             return Result<ClassExpense>.Failure(validation.Error!);
         }
 
-        var expense = new ClassExpense(Guid.NewGuid(), classId, item.Trim(), totalAmount, relatedEventId, authorId, clock.UtcNow);
+        var expense = new ClassExpense(id, classId, item.Trim(), totalAmount, relatedEventId, authorId, clock.UtcNow);
         foreach (var guardianId in distinctParticipantIds)
         {
             expense._participants.Add(new ExpenseParticipant(guardianId, false));
@@ -62,8 +63,12 @@ public sealed class ClassExpense : AggregateRoot
         return Result<ClassExpense>.Success(expense);
     }
 
-    private static Result Validate(Guid classId, string item, decimal totalAmount, IReadOnlyCollection<Guid> distinctParticipantIds, Guid authorId)
+    private static Result Validate(Guid id, Guid classId, string item, decimal totalAmount, IReadOnlyCollection<Guid> distinctParticipantIds, Guid authorId)
     {
+        if (id == Guid.Empty)
+        {
+            return Result.Failure(ClassExpenseErrors.IdRequired);
+        }
         if (classId == Guid.Empty)
         {
             return Result.Failure(ClassExpenseErrors.ClassRequired);

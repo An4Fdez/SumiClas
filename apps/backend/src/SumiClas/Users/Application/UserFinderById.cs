@@ -9,9 +9,6 @@ public static class UserFinderById
 {
     public sealed record Query(Guid UserId) : IQuery<Result<UserResponse>>;
 
-    /// <summary>Deliberately minimal (no email): other modules only need to know who the user is.</summary>
-    public sealed record UserResponse(Guid Id, string FullName);
-
     public sealed class Handler(UserFinder finder) : IRequestHandler<Query, Result<UserResponse>>
     {
         public async Task<Result<UserResponse>> Handle(Query query, CancellationToken ct)
