@@ -29,7 +29,5 @@
   <ItemGroup>
     <Folder Include="src\modules\announcements\domain\" />
     <Folder Include="src\modules\announcements\infrastructure\" />
-    <Folder Include="src\modulos\avisos\dominio\" />
-    <Folder Include="src\modulos\avisos\infrastructura\" />
   </ItemGroup>
 </Project>
