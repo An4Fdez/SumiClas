@@ -19,6 +19,10 @@ public sealed class AssignmentCommentConfiguration
 
         builder.HasKey(c => c.Id);
 
+        // The Id is assigned by the Domain, never by the database: without this EF treats a new comment added to a
+        // tracked Assignment as an existing row (non-default key) and issues an UPDATE instead of an INSERT.
+        builder.Property(c => c.Id).ValueGeneratedNever();
+
         builder.Property(c => c.AuthorId)
             .IsRequired();
 

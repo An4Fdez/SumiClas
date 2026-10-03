@@ -33,9 +33,14 @@ public sealed class AnnouncementsEndpoints : IEndpoints
                     request.RelatedEventId),
                 ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        announcements.MapPut("/{announcementId:guid}/read", async (Guid announcementId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new AnnouncementReadMark.Command(announcementId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

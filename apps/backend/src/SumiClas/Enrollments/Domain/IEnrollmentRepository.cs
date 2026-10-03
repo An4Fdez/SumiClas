@@ -4,6 +4,7 @@ namespace SumiClas.Enrollments.Domain;
 
 public interface IEnrollmentRepository
 {
+    Task<Enrollment?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyCollection<Enrollment>> SearchAsync(ISpecification<Enrollment> specification, CancellationToken ct = default);
     Task AddAsync(Enrollment enrollment, CancellationToken ct = default);
 }

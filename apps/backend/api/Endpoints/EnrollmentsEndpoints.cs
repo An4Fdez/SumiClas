@@ -16,9 +16,14 @@ public sealed class EnrollmentsEndpoints : IEndpoints
         {
             var result = await sender.Send(new EnrollmentCreate.Command(request.Id, request.StudentId, request.ClassId), ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        enrollments.MapPost("/{enrollmentId:guid}/confirm", async (Guid enrollmentId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new EnrollmentConfirm.Command(enrollmentId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

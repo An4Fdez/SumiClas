@@ -33,9 +33,21 @@ public sealed class LostItemsEndpoints : IEndpoints
                     request.PhotoPrivacyConfirmed),
                 ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        lostItems.MapPut("/{lostItemId:guid}/recovered", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new LostItemRecoveredMark.Command(lostItemId), ct);
+
+            return result.ToNoContent();
+        });
+
+        lostItems.MapDelete("/{lostItemId:guid}/recovered", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new LostItemNotRecoveredMark.Command(lostItemId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

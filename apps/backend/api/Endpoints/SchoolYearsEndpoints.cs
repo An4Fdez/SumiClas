@@ -23,9 +23,14 @@ public sealed class SchoolYearsEndpoints : IEndpoints
             var result = await sender.Send(
                 new SchoolYearCreate.Command(request.Id, request.SchoolId, request.Label, request.StartDate, request.EndDate), ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        schoolYears.MapPost("/{schoolYearId:guid}/archive", async (Guid schoolYearId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SchoolYearArchive.Command(schoolYearId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

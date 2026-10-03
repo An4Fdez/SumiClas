@@ -19,6 +19,10 @@ public sealed class AnnouncementReadReceiptConfiguration
 
         builder.HasKey(r => r.Id);
 
+        // The Id is assigned by the Domain, never by the database: without this EF treats a new receipt added to a
+        // tracked Announcement as an existing row (non-default key) and issues an UPDATE instead of an INSERT.
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
         builder.Property(r => r.UserId)
             .IsRequired();
 

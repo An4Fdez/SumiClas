@@ -12,6 +12,8 @@ public sealed record StudentRegisterRequest(
     [StringLength(100)] string? SecondSurname,
     string FirstGuardianRole);
 
+public sealed record StudentGuardianAddRequest(Guid GuardianId, string Role);
+
 public sealed class StudentsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -29,9 +31,21 @@ public sealed class StudentsEndpoints : IEndpoints
                     request.FirstGuardianRole),
                 ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new StudentGuardianAdd.Command(studentId, request.GuardianId, request.Role), ct);
+
+            return result.ToCreated();
+        });
+
+        students.MapDelete("/{studentId:guid}/guardians/{guardianId:guid}", async (Guid studentId, Guid guardianId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new StudentGuardianRemove.Command(studentId, guardianId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

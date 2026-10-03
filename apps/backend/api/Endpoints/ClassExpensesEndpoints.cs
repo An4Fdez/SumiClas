@@ -31,9 +31,21 @@ public sealed class ClassExpensesEndpoints : IEndpoints
                     request.RelatedEventId),
                 ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        classExpenses.MapPut("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new ClassExpensePaidMark.Command(classExpenseId, guardianId), ct);
+
+            return result.ToNoContent();
+        });
+
+        classExpenses.MapDelete("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new ClassExpenseUnpaidMark.Command(classExpenseId, guardianId), ct);
+
+            return result.ToNoContent();
         });
     }
 }

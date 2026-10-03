@@ -379,7 +379,6 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.OwnsMany("SumiClas.Announcements.Domain.AnnouncementReadReceipt", "ReadReceipts", b1 =>
                         {
                             b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("uuid");
 
                             b1.Property<Guid>("AnnouncementId")
@@ -409,7 +408,6 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.OwnsMany("SumiClas.Assignments.Domain.AssignmentComment", "Comments", b1 =>
                         {
                             b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("uuid");
 
                             b1.Property<Guid>("AssignmentId")

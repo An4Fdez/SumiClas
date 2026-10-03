@@ -5,6 +5,7 @@ namespace SumiClas.LostItems.Domain;
 public static class LostItemErrors
 {
     public static readonly Error IdRequired = new("LostItem.IdRequired", "El identificador del objeto no puede estar vacío.");
+    public static readonly Error NotFound = new("LostItem.NotFound", "No se ha encontrado el objeto.");
     public static readonly Error InvalidScope = new("LostItem.InvalidScope", "El alcance del objeto no es válido.");
     public static readonly Error InvalidStatus = new("LostItem.InvalidStatus", "El estado del objeto no es válido.");
     public static readonly Error ClassRequiredForClassScope = new("LostItem.ClassRequiredForClassScope", "Un objeto con alcance de clase debe indicar la clase.");

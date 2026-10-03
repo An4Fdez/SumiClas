@@ -13,6 +13,8 @@ public sealed record AssignmentCreateRequest(
     string? Description,
     DateOnly DueDate);
 
+public sealed record AssignmentCommentAddRequest(string Text);
+
 public sealed class AssignmentsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -31,9 +33,14 @@ public sealed class AssignmentsEndpoints : IEndpoints
                     request.DueDate),
                 ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return result.ToCreated();
+        });
+
+        assignments.MapPost("/{assignmentId:guid}/comments", async (Guid assignmentId, AssignmentCommentAddRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new AssignmentCommentAdd.Command(assignmentId, request.Text), ct);
+
+            return result.ToCreated();
         });
     }
 }
