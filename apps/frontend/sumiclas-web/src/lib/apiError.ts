@@ -36,7 +36,11 @@ export function getApiErrorStatus(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined;
 }
 
+/** An error whose message is already written for the user (in Spanish) and is shown as is. */
+export class UserFacingError extends Error {}
+
 export function getApiErrorMessage(error: unknown): string {
+  if (error instanceof UserFacingError) return error.message;
   if (error instanceof TypeError) return NETWORK_MESSAGE;
 
   const shape = asShape(error);

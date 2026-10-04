@@ -10,6 +10,7 @@ import { useOnboardingRepositories } from '@/hooks/useOnboardingRepositories';
 import { useSchoolClasses } from '@/hooks/useSchoolClasses';
 import { useStudentRepository } from '@/hooks/useStudentRepository';
 import { useWizardIds } from '@/hooks/useWizardIds';
+import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { getGuardianInfo } from '@/lib/auth';
 import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
 import type { NewSchool, School } from '@/modules/schools/domain/ISchoolRepository';
@@ -74,7 +75,18 @@ export default function Onboarding() {
   const handleCreateClass = async (name: string) => {
     if (classesState.status !== 'ready') return;
     const id = ids.take('class');
-    await classes.create({ id, schoolYearId: classesState.schoolYear.id, name });
+    try {
+      await classes.create({ id, schoolYearId: classesState.schoolYear.id, name });
+    } catch (error) {
+      if (getApiErrorStatus(error) === 409) {
+        ids.consume('class');
+        reloadClasses();
+        throw new UserFacingError(
+          'Es posible que la clase ya se haya creado. Revisa la lista de clases antes de crear otra.',
+        );
+      }
+      throw error;
+    }
     ids.consume('class');
     setSchoolClass({ id, name });
     setIsNewClass(true);
