@@ -1,16 +1,22 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import type { ChildView } from '@/context/ChildContext';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { monthNames } from '@/lib/date';
-import { eventTypeMeta, type EventType } from '@/data/calendarMock';
+import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import type { EventType } from '@/modules/calendarEvents/domain/EventType';
+import type { OneOffEventType } from '@/modules/calendarEvents/domain/OneOffEventType';
 import { SelectDropdown } from './SelectDropdown';
 import { DatePicker } from './DatePicker';
 import { TimePicker } from './TimePicker';
 
 const allTypes: EventType[] = ['trip', 'meeting', 'activity', 'other', 'birthday'];
 
-export type NewOfficialEvent = {
-  type: 'trip' | 'meeting' | 'activity';
+/** A birthday recurs every year, so 29 February must be selectable. */
+const LEAP_YEAR = 2000;
+
+export type NewOneOffEvent = {
+  type: OneOffEventType;
   title: string;
   date: string;
   time: string;
@@ -18,24 +24,14 @@ export type NewOfficialEvent = {
   cost: string;
 };
 
-export type NewOtherEvent = {
-  type: 'other';
-  scope: 'class' | 'school';
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  cost: string;
-};
-
-export type NewBirthday = {
+export type NewBirthdayInput = {
   type: 'birthday';
   childId: string;
   day: number;
   month: number;
 };
 
-export type NewEvent = NewOfficialEvent | NewOtherEvent | NewBirthday;
+export type NewEvent = NewOneOffEvent | NewBirthdayInput;
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white';
@@ -52,7 +48,7 @@ export function EventForm({
   className: string;
   availableChildren: ChildView[];
   initialChildId: string;
-  onSubmit: (data: NewEvent) => void;
+  onSubmit: (data: NewEvent) => Promise<void>;
   onClose: () => void;
 }) {
   const [type, setType] = useState<EventType>(canPublishOfficial ? 'trip' : 'birthday');
@@ -61,47 +57,45 @@ export function EventForm({
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
   const [cost, setCost] = useState('');
-  const [scope, setScope] = useState<'class' | 'school'>('class');
   const [childId, setChildId] = useState(initialChildId);
   const today = new Date();
   const [birthdayDay, setBirthdayDay] = useState(today.getDate());
   const [birthdayMonth, setBirthdayMonth] = useState(today.getMonth() + 1);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
 
   const isBirthday = type === 'birthday';
-  const canSubmit = isBirthday ? childId.length > 0 : title.trim().length > 0 && date.length > 0;
-  const daysInMonth = new Date(today.getFullYear(), birthdayMonth, 0).getDate();
+  const canSubmit = (isBirthday ? childId.length > 0 : title.trim().length > 0 && date.length > 0) && !submitting;
+  const daysInMonth = new Date(LEAP_YEAR, birthdayMonth, 0).getDate();
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    if (isBirthday) {
-      onSubmit({ type: 'birthday', childId, day: birthdayDay, month: birthdayMonth });
-    } else if (type === 'other') {
-      onSubmit({
-        type: 'other',
-        scope,
-        title: title.trim(),
-        date,
-        time,
-        location: location.trim(),
-        cost: cost.trim(),
-      });
-    } else {
-      onSubmit({
-        type: type as 'trip' | 'meeting' | 'activity',
-        title: title.trim(),
-        date,
-        time,
-        location: location.trim(),
-        cost: cost.trim(),
-      });
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (isBirthday) {
+        await onSubmit({ type: 'birthday', childId, day: birthdayDay, month: birthdayMonth });
+      } else {
+        await onSubmit({
+          type: type as OneOffEventType,
+          title: title.trim(),
+          date,
+          time,
+          location: location.trim(),
+          cost: cost.trim(),
+        });
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setSubmitting(false);
     }
   };
 
   const handleChangeMonth = (newMonth: number) => {
     setBirthdayMonth(newMonth);
-    const max = new Date(today.getFullYear(), newMonth, 0).getDate();
+    const max = new Date(LEAP_YEAR, newMonth, 0).getDate();
     if (birthdayDay > max) setBirthdayDay(max);
   };
 
@@ -136,9 +130,7 @@ export function EventForm({
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {isBirthday
             ? `Se mostrará cada año en el calendario de ${className}, sin guardar el año de nacimiento.`
-            : type === 'other' && scope === 'school'
-              ? 'Se publicará para todo el colegio.'
-              : `Se publicará para ${className}.`}
+            : `Se publicará para ${className}.`}
         </p>
 
         {canPublishOfficial && (
@@ -209,36 +201,6 @@ export function EventForm({
           </>
         ) : (
           <>
-            {type === 'other' && (
-              <fieldset className="mt-4">
-                <legend className="text-sm font-semibold text-slate-700 dark:text-slate-300">Alcance</legend>
-                <div className="mt-1.5 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setScope('class')}
-                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-                      scope === 'class'
-                        ? 'border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20 dark:text-brand-300'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    Su clase
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScope('school')}
-                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-                      scope === 'school'
-                        ? 'border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20 dark:text-brand-300'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    Todo el colegio
-                  </button>
-                </div>
-              </fieldset>
-            )}
-
             <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Título
               <input
@@ -271,6 +233,7 @@ export function EventForm({
               <input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                maxLength={200}
                 className={inputClasses}
                 placeholder="Ej. Museo de la Ciudad"
               />
@@ -281,6 +244,7 @@ export function EventForm({
               <input
                 value={cost}
                 onChange={(e) => setCost(e.target.value)}
+                maxLength={100}
                 className={inputClasses}
                 placeholder="Ej. 5 € por alumno"
               />
@@ -288,12 +252,18 @@ export function EventForm({
           </>
         )}
 
+        {error && (
+          <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isBirthday ? 'Añadir cumpleaños' : 'Publicar evento'}
+          {submitting ? 'Publicando…' : isBirthday ? 'Añadir cumpleaños' : 'Publicar evento'}
         </button>
       </form>
     </div>

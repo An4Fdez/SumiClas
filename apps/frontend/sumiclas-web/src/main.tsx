@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { AnnouncementRepositoryProvider } from '@/context/AnnouncementRepositoryProvider';
 import { ApiClientProvider } from '@/context/ApiClientProvider';
+import { CalendarEventRepositoryProvider } from '@/context/CalendarEventRepositoryProvider';
 import { LostItemRepositoryProvider } from '@/context/LostItemRepositoryProvider';
 import { OnboardingRepositoriesProvider } from '@/context/OnboardingRepositoriesProvider';
 import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
@@ -18,9 +19,11 @@ createRoot(document.getElementById('root')!).render(
           <OnboardingRepositoriesProvider>
             <AnnouncementRepositoryProvider>
               <LostItemRepositoryProvider>
-                <BrowserRouter>
-                  <App />
-                </BrowserRouter>
+                <CalendarEventRepositoryProvider>
+                  <BrowserRouter>
+                    <App />
+                  </BrowserRouter>
+                </CalendarEventRepositoryProvider>
               </LostItemRepositoryProvider>
             </AnnouncementRepositoryProvider>
           </OnboardingRepositoriesProvider>

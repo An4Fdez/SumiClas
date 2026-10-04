@@ -24,18 +24,39 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-/** Year to display an event in: the real one, except for yearly recurring events, which always navigate to the current year. */
-export function visibleYearForEvent(dateISO: string, recurringAnnual: boolean): number {
-  return recurringAnnual ? new Date().getFullYear() : new Date(dateISO).getFullYear();
+/** The date part of an event: month 1-12 and day; `year` is undefined for events that recur every year (birthdays). */
+export type EventDay = { month: number; day: number; year?: number };
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
-/** true if an event occurs on that day; for yearly recurring events (birthdays) compares month+day only. */
-export function eventOccursOnDay(eventDateISO: string, day: Date, recurringAnnual: boolean): boolean {
-  const eventDate = new Date(eventDateISO);
-  if (recurringAnnual) {
-    return eventDate.getMonth() === day.getMonth() && eventDate.getDate() === day.getDate();
+/** The day an event takes place in a given year. A 29 February that recurs falls on 28 February in non-leap years. */
+export function occurrenceInYear(event: EventDay, year: number): Date {
+  const day = event.month === 2 && event.day === 29 && !isLeapYear(year) ? 28 : event.day;
+  return new Date(year, event.month - 1, day);
+}
+
+/** Year to display an event in: its own year, or the current one for events that recur every year. */
+export function visibleYearForEvent(event: EventDay): number {
+  return event.year ?? new Date().getFullYear();
+}
+
+/** true if the event occurs on that day: once for a one-off event, every year for a recurring one. */
+export function eventOccursOnDay(event: EventDay, day: Date): boolean {
+  if (event.year !== undefined) return event.year === day.getFullYear() && isSameCalendarDay(occurrenceInYear(event, event.year), day);
+  return isSameCalendarDay(occurrenceInYear(event, day.getFullYear()), day);
+}
+
+/** The first day on or after `from` (time ignored) the event takes place, or undefined if a one-off event is past. */
+export function nextOccurrence(event: EventDay, from: Date): Date | undefined {
+  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  if (event.year !== undefined) {
+    const date = occurrenceInYear(event, event.year);
+    return date >= start ? date : undefined;
   }
-  return isSameCalendarDay(eventDate, day);
+  const thisYear = occurrenceInYear(event, start.getFullYear());
+  return thisYear >= start ? thisYear : occurrenceInYear(event, start.getFullYear() + 1);
 }
 
 /** Matrix of weeks (Mon-Sun) covering the given month (month: 0-11), padded with adjacent days. */

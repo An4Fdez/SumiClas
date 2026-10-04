@@ -11,15 +11,27 @@ import { EventDetailModal } from '@/components/app/EventDetailModal';
 import { EventAgendaRow } from '@/components/app/EventAgendaRow';
 import { EventForm, type NewEvent } from '@/components/app/EventForm';
 import { EventTypeFilterDropdown } from '@/components/app/EventTypeFilterDropdown';
+import { useCalendarEventRepository } from '@/hooks/useCalendarEventRepository';
 import { useChildContext } from '@/hooks/useChildContext';
+import { useClassCalendarEvents } from '@/hooks/useClassCalendarEvents';
+import { useWizardIds } from '@/hooks/useWizardIds';
+import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { getGuardianInfo } from '@/lib/auth';
-import { roleMeta } from '@/lib/roles';
-import { visibleYearForEvent, isSameCalendarDay, eventOccursOnDay, formatFullDay } from '@/lib/date';
-import { calendarEventsMock, type CalendarEvent, type EventType } from '@/data/calendarMock';
+import {
+  eventOccursOnDay,
+  formatFullDay,
+  isSameCalendarDay,
+  nextOccurrence,
+  occurrenceInYear,
+  visibleYearForEvent,
+} from '@/lib/date';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
+import type { EventType } from '@/modules/calendarEvents/domain/EventType';
 
 type ViewMode = 'day' | 'week' | 'month' | 'list';
 type ScopeFilter = 'all' | 'school' | 'class';
+
+const TRANSIENT_CLIENT_ERRORS = [408, 429];
 
 const viewOrder: ViewMode[] = ['day', 'week', 'month', 'list'];
 const viewLabels: Record<ViewMode, string> = { day: 'Día', week: 'Semana', month: 'Mes', list: 'Lista' };
@@ -32,6 +44,10 @@ const scopeFilters: { value: ScopeFilter; label: string }[] = [
 
 export default function Calendar() {
   const { children, currentChild, currentRole } = useChildContext();
+  const classId = currentChild?.classId;
+  const repository = useCalendarEventRepository();
+  const ids = useWizardIds();
+  const { state, reload } = useClassCalendarEvents(classId);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [view, setView] = useState<ViewMode>('month');
@@ -41,52 +57,27 @@ export default function Calendar() {
   const [openDayModal, setOpenDayModal] = useState<Date | null>(null);
   const [openEvent, setOpenEvent] = useState<CalendarEvent | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [createdEvents, setCreatedEvents] = useState<CalendarEvent[]>([]);
 
-  const classNameByChild = useMemo(
-    () => Object.fromEntries(children.map((c) => [c.id, c.className])),
-    [children]
+  const events = useMemo(() => (state.status === 'ready' ? state.events : []), [state]);
+
+  const visibleEvents = useMemo(
+    () =>
+      events
+        .filter((ev) => scopeFilter === 'all' || ev.scope === scopeFilter)
+        .filter((ev) => typeFilters.size === 0 || typeFilters.has(ev.type)),
+    [events, scopeFilter, typeFilters]
   );
 
-  const allEvents = useMemo(
-    () => [...calendarEventsMock, ...createdEvents],
-    [createdEvents]
-  );
-
-  const visibleEvents = useMemo(() => {
-    const myChildIds = new Set(children.map((c) => c.id));
-    return allEvents
-      .filter((ev) => {
-        if (scopeFilter === 'school') return ev.scope === 'school';
-        if (scopeFilter === 'class') return ev.scope === 'class' && !!ev.childId && myChildIds.has(ev.childId);
-        if (ev.scope === 'school') return true;
-        return !!ev.childId && myChildIds.has(ev.childId);
-      })
-      .filter((ev) => (typeFilters.size === 0 ? true : typeFilters.has(ev.type)));
-  }, [allEvents, scopeFilter, typeFilters, children]);
-
-  const eventsForDay = (day: Date): CalendarEvent[] =>
-    visibleEvents.filter((ev) => eventOccursOnDay(ev.date, day, ev.type === 'birthday'));
+  const eventsForDay = (day: Date): CalendarEvent[] => visibleEvents.filter((ev) => eventOccursOnDay(ev, day));
 
   const classNameForEvent = (event: CalendarEvent) =>
-    event.childId ? classNameByChild[event.childId] : undefined;
+    event.scope === 'school' ? undefined : currentChild?.className;
 
   const listGroups = useMemo(() => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const withEffectiveDate = visibleEvents.map((ev) => {
-      if (ev.type === 'birthday') {
-        const base = new Date(ev.date);
-        let candidate = new Date(todayStart.getFullYear(), base.getMonth(), base.getDate());
-        if (candidate < todayStart) candidate = new Date(todayStart.getFullYear() + 1, base.getMonth(), base.getDate());
-        return { event: ev, effectiveDate: candidate };
-      }
-      return { event: ev, effectiveDate: new Date(ev.date) };
-    });
-
-    const upcoming = withEffectiveDate
-      .filter(({ effectiveDate }) => effectiveDate >= todayStart)
+    const today = new Date();
+    const upcoming = visibleEvents
+      .map((event) => ({ event, effectiveDate: nextOccurrence(event, today) }))
+      .filter((entry): entry is { event: CalendarEvent; effectiveDate: Date } => entry.effectiveDate !== undefined)
       .sort((a, b) => a.effectiveDate.getTime() - b.effectiveDate.getTime());
 
     const groups: { date: Date; events: CalendarEvent[] }[] = [];
@@ -101,18 +92,14 @@ export default function Calendar() {
   useEffect(() => {
     const eventId = searchParams.get('event');
     if (!eventId) return;
-    const event = allEvents.find((ev) => ev.id === eventId);
+    const event = events.find((ev) => ev.id === eventId);
     if (!event) return;
 
-    const eventDate = new Date(event.date);
-    const targetYear = visibleYearForEvent(event.date, event.type === 'birthday');
-
     setView('month');
-    setReferenceDate(new Date(targetYear, eventDate.getMonth(), eventDate.getDate()));
+    setReferenceDate(occurrenceInYear(event, visibleYearForEvent(event)));
     setOpenEvent(event);
     setSearchParams({}, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, events, setSearchParams]);
 
   const changeDate = (delta: number) => {
     setReferenceDate((prev) => {
@@ -130,67 +117,57 @@ export default function Calendar() {
     setView((v) => viewOrder[(viewOrder.indexOf(v) + 1) % viewOrder.length]);
 
   const canPublishOfficial = currentRole === 'classRepresentative';
-  const canCreate = !!currentChild;
+  const canCreate = !!classId;
 
-  const handleCreateEvent = (data: NewEvent) => {
-    if (!currentChild) return;
-
-    let createdEvent: CalendarEvent;
-    if (data.type === 'birthday') {
-      const child = children.find((c) => c.id === data.childId) ?? currentChild;
-      createdEvent = {
-        id: `local-${Date.now()}`,
-        scope: 'class',
-        childId: child.id,
-        type: 'birthday',
-        title: `Cumpleaños de ${child.studentName}`,
-        date: new Date(1900, data.month - 1, data.day).toISOString(),
-        authorName: getGuardianInfo()?.name ?? 'Tú',
-        authorRole: 'Familia',
-      };
-    } else if (data.type === 'other') {
-      const [y, m, d] = data.date.split('-').map(Number);
-      const [h, min] = data.time ? data.time.split(':').map(Number) : [0, 0];
-      const eventDate = new Date(y, m - 1, d, h, min);
-      createdEvent = {
-        id: `local-${Date.now()}`,
-        scope: data.scope,
-        childId: data.scope === 'class' ? currentChild.id : undefined,
-        type: 'other',
-        title: data.title,
-        date: eventDate.toISOString(),
-        time: data.time || undefined,
-        location: data.location || undefined,
-        cost: data.cost || undefined,
-        authorName: getGuardianInfo()?.name ?? 'Tú',
-        authorRole: roleMeta.classRepresentative.label,
-      };
-    } else {
-      const [y, m, d] = data.date.split('-').map(Number);
-      const [h, min] = data.time ? data.time.split(':').map(Number) : [0, 0];
-      const eventDate = new Date(y, m - 1, d, h, min);
-      createdEvent = {
-        id: `local-${Date.now()}`,
-        scope: 'class',
-        childId: currentChild.id,
-        type: data.type,
-        title: data.title,
-        date: eventDate.toISOString(),
-        time: data.time || undefined,
-        location: data.location || undefined,
-        cost: data.cost || undefined,
-        authorName: getGuardianInfo()?.name ?? 'Tú',
-        authorRole: roleMeta.classRepresentative.label,
-      };
+  const handleCreateEvent = async (data: NewEvent) => {
+    if (!currentChild || !classId) return;
+    const key = `calendar:${classId}:${JSON.stringify(data)}`;
+    let id: string;
+    try {
+      id = ids.take(key);
+    } catch {
+      throw new UserFacingError('Tu navegador no permite crear entradas fuera de una conexión segura (HTTPS).');
     }
-
-    setCreatedEvents((prev) => [...prev, createdEvent]);
+    let shownDate: Date;
+    try {
+      if (data.type === 'birthday') {
+        const child = children.find((c) => c.id === data.childId) ?? currentChild;
+        await repository.createBirthday({
+          id,
+          studentId: child.id,
+          title: `Cumpleaños de ${child.studentName}`,
+          month: data.month,
+          day: data.day,
+        });
+        shownDate = occurrenceInYear({ month: data.month, day: data.day }, new Date().getFullYear());
+      } else {
+        const [year, month, day] = data.date.split('-').map(Number);
+        shownDate = new Date(year, month - 1, day);
+        await repository.create({
+          id,
+          classId,
+          type: data.type,
+          title: data.title,
+          date: shownDate,
+          time: data.time || undefined,
+          location: data.location || undefined,
+          cost: data.cost || undefined,
+        });
+      }
+    } catch (error) {
+      const status = getApiErrorStatus(error);
+      if (status !== undefined && status < 500 && !TRANSIENT_CLIENT_ERRORS.includes(status)) ids.consume(key);
+      if (status === 409) {
+        reload();
+        throw new UserFacingError('Es posible que el evento ya se haya creado. Revisa el calendario antes de crear otro.');
+      }
+      throw error;
+    }
+    ids.consume(key);
     setFormOpen(false);
-
-    const targetYear = visibleYearForEvent(createdEvent.date, createdEvent.type === 'birthday');
-    const newDate = new Date(createdEvent.date);
+    reload();
     setView('month');
-    setReferenceDate(new Date(targetYear, newDate.getMonth(), newDate.getDate()));
+    setReferenceDate(shownDate);
   };
 
   return (
@@ -254,6 +231,28 @@ export default function Calendar() {
         </button>
       </div>
 
+      {!classId ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+          Tu hijo/a todavía no está en ninguna clase, así que no hay calendario que mostrar.
+        </div>
+      ) : state.status === 'error' ? (
+        <div
+          role="alert"
+          className="mt-8 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-700/40 dark:bg-rose-900/15"
+        >
+          <p className="text-sm text-slate-700 dark:text-slate-300">{state.message}</p>
+          <button
+            type="button"
+            onClick={reload}
+            className="mt-3 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : state.status !== 'ready' ? (
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">Cargando el calendario…</p>
+      ) : (
+        <>
       {view === 'month' && (
         <Reveal className="mt-6">
           <CalendarGrid
@@ -327,6 +326,9 @@ export default function Calendar() {
             </div>
           )}
         </div>
+      )}
+
+        </>
       )}
 
       {openDayModal && (

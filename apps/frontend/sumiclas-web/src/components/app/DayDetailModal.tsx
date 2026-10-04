@@ -1,7 +1,7 @@
 import { useRef, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import { CalendarDayAgenda } from '@/components/app/CalendarDayAgenda';
-import type { CalendarEvent } from '@/data/calendarMock';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 export function DayDetailModal({
   day,

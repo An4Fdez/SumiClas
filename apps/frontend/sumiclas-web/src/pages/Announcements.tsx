@@ -7,9 +7,11 @@ import { AnnouncementForm } from '@/components/app/AnnouncementForm';
 import { useAnnouncementRepository } from '@/hooks/useAnnouncementRepository';
 import { useChildContext } from '@/hooks/useChildContext';
 import { useClassAnnouncements } from '@/hooks/useClassAnnouncements';
+import { useClassCalendarEvents } from '@/hooks/useClassCalendarEvents';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { getApiErrorStatus } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
+import { nextOccurrence } from '@/lib/date';
 import type { Announcement } from '@/modules/announcements/domain/Announcement';
 import type { Priority } from '@/modules/announcements/domain/Priority';
 
@@ -28,6 +30,14 @@ export default function Announcements() {
   const repository = useAnnouncementRepository();
   const ids = useWizardIds();
   const { state, reload, loadMore, loadingMore, loadMoreError, markRead } = useClassAnnouncements(classId);
+  const { state: calendarState } = useClassCalendarEvents(classId);
+  const relatedEventOptions = useMemo(() => {
+    if (calendarState.status !== 'ready') return undefined;
+    const today = new Date();
+    return calendarState.events
+      .filter((ev) => ev.type !== 'birthday' && nextOccurrence(ev, today) !== undefined)
+      .map((ev) => ({ id: ev.id, title: ev.title }));
+  }, [calendarState]);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [onlyUrgent, setOnlyUrgent] = useState(false);
   const [readFilter, setReadFilter] = useState<ReadFilter>(null);
@@ -233,6 +243,7 @@ export default function Announcements() {
       {formOpen && currentChild && (
         <AnnouncementForm
           className={currentChild.className}
+          events={relatedEventOptions}
           onSubmit={handleCreateAnnouncement}
           onClose={() => setFormOpen(false)}
         />

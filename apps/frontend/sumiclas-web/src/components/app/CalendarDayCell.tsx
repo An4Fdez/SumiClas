@@ -1,6 +1,7 @@
 import { badgeColorClasses } from '@/lib/colorClasses';
 import type { CalendarDay } from '@/lib/date';
-import { eventTypeMeta, type CalendarEvent } from '@/data/calendarMock';
+import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 export function CalendarDayCell({
   day,

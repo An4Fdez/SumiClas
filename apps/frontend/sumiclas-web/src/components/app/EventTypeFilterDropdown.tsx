@@ -1,6 +1,7 @@
 import { useState, type FocusEvent } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { eventTypeMeta, type EventType } from '@/data/calendarMock';
+import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import type { EventType } from '@/modules/calendarEvents/domain/EventType';
 
 const allTypes: EventType[] = ['trip', 'meeting', 'activity', 'other', 'birthday'];
 

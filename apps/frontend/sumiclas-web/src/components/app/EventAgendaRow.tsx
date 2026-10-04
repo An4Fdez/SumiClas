@@ -1,5 +1,6 @@
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { eventTypeMeta, type CalendarEvent } from '@/data/calendarMock';
+import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 export function EventAgendaRow({
   event,

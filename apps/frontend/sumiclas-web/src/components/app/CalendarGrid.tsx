@@ -1,7 +1,7 @@
 import { formatMonthYear, generateMonthMatrix } from '@/lib/date';
 import { CalendarDayCell } from '@/components/app/CalendarDayCell';
 import { CalendarNavHeader } from '@/components/app/CalendarNavHeader';
-import type { CalendarEvent } from '@/data/calendarMock';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 

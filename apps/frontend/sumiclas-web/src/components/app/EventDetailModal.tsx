@@ -1,8 +1,10 @@
 import { useRef, type MouseEvent } from 'react';
 import { Coins, MapPin, X } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { formatFullDay } from '@/lib/date';
-import { eventTypeMeta, type CalendarEvent } from '@/data/calendarMock';
+import { formatFullDay, monthNames, occurrenceInYear } from '@/lib/date';
+import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import { roleLabel } from '@/lib/roles';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 export function EventDetailModal({
   event,
@@ -19,11 +21,10 @@ export function EventDetailModal({
   const scopeLabel = event.scope === 'school' ? 'Colegio' : (className ?? 'Clase');
   const mouseDownOnBackdrop = useRef(false);
 
-  const isBirthday = event.type === 'birthday';
-  const eventDate = new Date(event.date);
-  const dateText = isBirthday
-    ? `${eventDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })} (cada año)`
-    : formatFullDay(eventDate);
+  const dateText =
+    event.year === undefined
+      ? `${event.day} de ${monthNames[event.month - 1].toLowerCase()} (cada año)`
+      : formatFullDay(occurrenceInYear(event, event.year));
 
   return (
     <div
@@ -58,7 +59,7 @@ export function EventDetailModal({
 
         <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{event.title}</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {event.authorName} · {event.authorRole} · {scopeLabel}
+          {[event.authorName, roleLabel(event.authorRole), scopeLabel].filter(Boolean).join(' · ')}
         </p>
 
         <div className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">

@@ -1,6 +1,3 @@
-import { Bus, Cake, MoreHorizontal, Star, Users, type LucideIcon } from 'lucide-react';
-import type { PaletteColor } from '@/lib/colorClasses';
-
 export type EventType = 'trip' | 'meeting' | 'activity' | 'birthday' | 'other';
 export type EventScope = 'school' | 'class';
 
@@ -26,14 +23,6 @@ export type CalendarEvent = {
 };
 
 export type RelatedEvent = Pick<CalendarEvent, 'id' | 'title'>;
-
-export const eventTypeMeta: Record<EventType, { label: string; color: PaletteColor; icon: LucideIcon }> = {
-  trip: { label: 'Excursión', color: 'mint', icon: Bus },
-  meeting: { label: 'Reunión', color: 'violet', icon: Users },
-  activity: { label: 'Actividad', color: 'sun', icon: Star },
-  birthday: { label: 'Cumpleaños', color: 'rose', icon: Cake },
-  other: { label: 'Otros', color: 'orange', icon: MoreHorizontal },
-};
 
 const now = new Date();
 const inDays = (d: number, time?: { h: number; m: number }) => {

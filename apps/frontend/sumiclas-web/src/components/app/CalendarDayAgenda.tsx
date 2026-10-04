@@ -1,6 +1,6 @@
 import { formatFullDay } from '@/lib/date';
 import { EventAgendaRow } from '@/components/app/EventAgendaRow';
-import type { CalendarEvent } from '@/data/calendarMock';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 
 export function CalendarDayAgenda({
   day,
