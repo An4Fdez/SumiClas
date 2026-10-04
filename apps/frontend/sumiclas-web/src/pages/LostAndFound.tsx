@@ -6,10 +6,11 @@ import { ItemDetailModal } from '@/components/app/ItemDetailModal';
 import { ItemForm, type NewItem } from '@/components/app/ItemForm';
 import { ItemStatusFilterDropdown, type ItemStatusFilter } from '@/components/app/ItemStatusFilterDropdown';
 import { useChildContext } from '@/hooks/useChildContext';
+import { useClassLostItems } from '@/hooks/useClassLostItems';
+import { useLostItemRepository } from '@/hooks/useLostItemRepository';
+import { useWizardIds } from '@/hooks/useWizardIds';
+import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { getGuardianInfo } from '@/lib/auth';
-import { roleMeta } from '@/lib/roles';
-import { lostAndFoundMock, type LostItem } from '@/data/lostAndFoundMock';
 
 type ScopeFilter = 'all' | 'school' | 'class';
 
@@ -19,71 +20,75 @@ const scopeFilters: { value: ScopeFilter; label: string }[] = [
   { value: 'class', label: 'Mi clase' },
 ];
 
-export default function LostAndFound() {
-  const { children, currentChild, currentRole } = useChildContext();
+const TRANSIENT_CLIENT_ERRORS = [408, 429];
 
-  const [createdItems, setCreatedItems] = useState<LostItem[]>([]);
-  const [toggledRecovered, setToggledRecovered] = useState<Set<string>>(new Set());
+export default function LostAndFound() {
+  const { currentChild } = useChildContext();
+  const classId = currentChild?.classId;
+  const repository = useLostItemRepository();
+  const ids = useWizardIds();
+  const { state, reload, loadMore, loadingMore, loadMoreError, setRecovered, toggleError } = useClassLostItems(classId);
+
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<ItemStatusFilter>('active');
-  const [openItem, setOpenItem] = useState<LostItem | null>(null);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const classNameByChild = useMemo(
-    () => Object.fromEntries(children.map((c) => [c.id, c.className])),
-    [children]
+  const loadedItems = useMemo(() => (state.status === 'ready' ? state.items : []), [state]);
+  const hasMore = state.status === 'ready' && !!state.nextCursor;
+  const openItem = loadedItems.find((i) => i.id === openItemId) ?? null;
+
+  const visibleItems = useMemo(
+    () =>
+      loadedItems
+        .filter((i) => scopeFilter === 'all' || i.scope === scopeFilter)
+        .filter((i) => {
+          if (statusFilter === 'recovered') return i.recovered;
+          if (statusFilter === 'lost') return i.status === 'lost' && !i.recovered;
+          if (statusFilter === 'found') return i.status === 'found' && !i.recovered;
+          return !i.recovered;
+        }),
+    [loadedItems, scopeFilter, statusFilter],
   );
 
-  const isRecovered = (item: LostItem) =>
-    toggledRecovered.has(item.id) ? !item.recovered : item.recovered;
+  const canCreate = !!classId;
 
-  const visibleItems = useMemo(() => {
-    const myChildIds = new Set(children.map((c) => c.id));
-    return [...lostAndFoundMock, ...createdItems]
-      .filter((i) => {
-        if (scopeFilter === 'school') return i.scope === 'school';
-        if (scopeFilter === 'class') return i.scope === 'class' && !!i.childId && myChildIds.has(i.childId);
-        if (i.scope === 'school') return true;
-        return !!i.childId && myChildIds.has(i.childId);
-      })
-      .filter((i) => {
-        const recovered = isRecovered(i);
-        if (statusFilter === 'recovered') return recovered;
-        if (statusFilter === 'lost') return i.status === 'lost' && !recovered;
-        if (statusFilter === 'found') return i.status === 'found' && !recovered;
-        return !recovered;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, createdItems, scopeFilter, statusFilter, toggledRecovered]);
-
-  const toggleRecovered = (id: string) =>
-    setToggledRecovered((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const canCreate = !!currentChild;
-
-  const handleCreateItem = (data: NewItem) => {
-    if (!currentChild) return;
-    const created: LostItem = {
-      id: `local-${Date.now()}`,
-      scope: data.scope,
-      childId: data.scope === 'class' ? currentChild.id : undefined,
-      status: data.status,
-      recovered: false,
-      description: data.description,
-      photoUrl: data.photoUrl,
-      date: new Date().toISOString(),
-      authorName: getGuardianInfo()?.name ?? 'Tú',
-      authorRole: currentRole === 'classRepresentative' ? roleMeta.classRepresentative.label : 'Familia',
-    };
-    setCreatedItems((prev) => [...prev, created]);
+  const handleCreateItem = async (data: NewItem) => {
+    if (!classId) return;
+    let id: string;
+    try {
+      id = ids.take('lostItem');
+    } catch {
+      throw new UserFacingError('Tu navegador no permite crear entradas fuera de una conexión segura (HTTPS).');
+    }
+    try {
+      await repository.create({
+        id,
+        scope: 'class',
+        classId,
+        status: data.status,
+        description: data.description,
+        photoPrivacyConfirmed: false,
+      });
+    } catch (error) {
+      const status = getApiErrorStatus(error);
+      if (status !== undefined && status < 500 && !TRANSIENT_CLIENT_ERRORS.includes(status)) ids.consume('lostItem');
+      if (status === 409) {
+        reload();
+        throw new UserFacingError('Es posible que la entrada ya se haya creado. Revisa la lista antes de crear otra.');
+      }
+      throw error;
+    }
+    ids.consume('lostItem');
     setFormOpen(false);
+    reload();
   };
+
+  const emptyMessage = hasMore
+    ? 'Ningún objeto de los cargados coincide con los filtros. Pulsa «Cargar más» para buscar en más.'
+    : statusFilter === 'recovered'
+      ? 'No hay objetos recuperados todavía.'
+      : 'No hay objetos por ahora.';
 
   return (
     <div>
@@ -135,9 +140,32 @@ export default function LostAndFound() {
         <ItemStatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
       </div>
 
-      {visibleItems.length === 0 ? (
+      {toggleError && (
+        <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+          {toggleError}
+        </p>
+      )}
+
+      {!classId ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
-          {statusFilter === 'recovered' ? 'No hay objetos recuperados todavía.' : 'No hay objetos por ahora.'}
+          Tu hijo/a todavía no está en ninguna clase, así que no hay objetos que mostrar.
+        </div>
+      ) : state.status === 'loading' || state.status === 'idle' ? (
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">Cargando los objetos…</p>
+      ) : state.status === 'error' ? (
+        <div role="alert" className="mt-8 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-700/40 dark:bg-rose-900/15">
+          <p className="text-sm text-slate-700 dark:text-slate-300">{state.message}</p>
+          <button
+            type="button"
+            onClick={reload}
+            className="mt-3 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : visibleItems.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+          {emptyMessage}
         </div>
       ) : (
         <div className="mt-6 space-y-3">
@@ -145,32 +173,46 @@ export default function LostAndFound() {
             <Reveal key={item.id}>
               <ItemCard
                 item={item}
-                className={item.childId ? classNameByChild[item.childId] : undefined}
-                recovered={isRecovered(item)}
-                onOpen={() => setOpenItem(item)}
-                onToggleRecovered={() => toggleRecovered(item.id)}
+                className={item.classId ? currentChild?.className : undefined}
+                recovered={item.recovered}
+                onOpen={() => setOpenItemId(item.id)}
+                onToggleRecovered={() => setRecovered(item.id, !item.recovered)}
               />
             </Reveal>
           ))}
         </div>
       )}
 
+      {hasMore && (
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-60 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            {loadingMore ? 'Cargando…' : 'Cargar más'}
+          </button>
+          {loadMoreError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+              {loadMoreError}
+            </p>
+          )}
+        </div>
+      )}
+
       {openItem && (
         <ItemDetailModal
           item={openItem}
-          className={openItem.childId ? classNameByChild[openItem.childId] : undefined}
-          recovered={isRecovered(openItem)}
-          onToggleRecovered={() => toggleRecovered(openItem.id)}
-          onClose={() => setOpenItem(null)}
+          className={openItem.classId ? currentChild?.className : undefined}
+          recovered={openItem.recovered}
+          onToggleRecovered={() => setRecovered(openItem.id, !openItem.recovered)}
+          onClose={() => setOpenItemId(null)}
         />
       )}
 
       {formOpen && currentChild && (
-        <ItemForm
-          className={currentChild.className}
-          onSubmit={handleCreateItem}
-          onClose={() => setFormOpen(false)}
-        />
+        <ItemForm className={currentChild.className} onSubmit={handleCreateItem} onClose={() => setFormOpen(false)} />
       )}
     </div>
   );

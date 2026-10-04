@@ -1,7 +1,9 @@
 import { Check } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
-import { itemStatusMeta, type LostItem } from '@/data/lostAndFoundMock';
+import { itemStatusMeta } from '@/lib/itemStatusMeta';
+import { roleLabel } from '@/lib/roles';
+import type { LostItem } from '@/modules/lostItems/domain/ILostItemRepository';
 
 export function ItemCard({
   item,
@@ -67,10 +69,8 @@ export function ItemCard({
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>
-              {item.authorName} · {item.authorRole}
-            </span>
-            <span>{formatRelativeDate(item.date)}</span>
+            <span>{[item.authorName, roleLabel(item.authorRole)].filter(Boolean).join(' · ')}</span>
+            <span>{formatRelativeDate(item.createdAt)}</span>
           </div>
         </div>
       </button>

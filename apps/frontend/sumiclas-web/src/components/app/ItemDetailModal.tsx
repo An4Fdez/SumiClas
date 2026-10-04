@@ -2,7 +2,9 @@ import { useRef, type MouseEvent } from 'react';
 import { Check, X } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
-import { itemStatusMeta, type LostItem } from '@/data/lostAndFoundMock';
+import { itemStatusMeta } from '@/lib/itemStatusMeta';
+import { roleLabel } from '@/lib/roles';
+import type { LostItem } from '@/modules/lostItems/domain/ILostItemRepository';
 
 export function ItemDetailModal({
   item,
@@ -61,7 +63,7 @@ export function ItemDetailModal({
           {item.description}
         </p>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {item.authorName} · {item.authorRole} · {formatRelativeDate(item.date)}
+          {[item.authorName, roleLabel(item.authorRole), formatRelativeDate(item.createdAt)].filter(Boolean).join(' · ')}
         </p>
 
         <button

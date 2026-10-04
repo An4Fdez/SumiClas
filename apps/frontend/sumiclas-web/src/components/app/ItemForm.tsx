@@ -1,12 +1,12 @@
-import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent } from 'react';
-import { ImagePlus, X } from 'lucide-react';
-import { itemStatusMeta, type ItemScope, type ItemStatus } from '@/data/lostAndFoundMock';
+import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { X } from 'lucide-react';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { itemStatusMeta } from '@/lib/itemStatusMeta';
+import type { ItemStatus } from '@/modules/lostItems/domain/ILostItemRepository';
 
 export type NewItem = {
   status: ItemStatus;
-  scope: ItemScope;
   description: string;
-  photoUrl?: string;
 };
 
 const allStatuses: ItemStatus[] = ['lost', 'found'];
@@ -20,40 +20,28 @@ export function ItemForm({
   onClose,
 }: {
   className: string;
-  onSubmit: (data: NewItem) => void;
+  onSubmit: (data: NewItem) => Promise<void>;
   onClose: () => void;
 }) {
   const [status, setStatus] = useState<ItemStatus>('lost');
-  const [scope, setScope] = useState<ItemScope>('class');
   const [description, setDescription] = useState('');
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [photoConfirmed, setPhotoConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
 
-  const canSubmit = description.trim().length > 0 && (!photoUrl || photoConfirmed);
+  const canSubmit = description.trim().length > 0 && !submitting;
 
-  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPhotoUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return url;
-    });
-    setPhotoConfirmed(false);
-    e.target.value = '';
-  };
-
-  const removePhoto = () => {
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
-    setPhotoUrl(null);
-    setPhotoConfirmed(false);
-  };
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    onSubmit({ status, scope, description: description.trim(), photoUrl: photoUrl ?? undefined });
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({ status, description: description.trim() });
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,9 +72,7 @@ export function ItemForm({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {scope === 'school' ? 'Se publicará para todo el colegio.' : `Se publicará para ${className}.`}
-        </p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Se publicará para {className}.</p>
 
         <fieldset className="mt-5">
           <legend className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tipo</legend>
@@ -108,34 +94,6 @@ export function ItemForm({
           </div>
         </fieldset>
 
-        <fieldset className="mt-4">
-          <legend className="text-sm font-semibold text-slate-700 dark:text-slate-300">Alcance</legend>
-          <div className="mt-1.5 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setScope('class')}
-              className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-                scope === 'class'
-                  ? 'border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20 dark:text-brand-300'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              }`}
-            >
-              Su clase
-            </button>
-            <button
-              type="button"
-              onClick={() => setScope('school')}
-              className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-                scope === 'school'
-                  ? 'border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20 dark:text-brand-300'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              }`}
-            >
-              Todo el colegio
-            </button>
-          </div>
-        </fieldset>
-
         <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
           Descripción
           <textarea
@@ -148,47 +106,18 @@ export function ItemForm({
           />
         </label>
 
-        <div className="mt-4">
-          <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Foto (opcional)</span>
-
-          {photoUrl ? (
-            <div className="mt-1.5 flex items-start gap-3">
-              <img src={photoUrl} alt="" className="h-20 w-20 rounded-xl object-cover" />
-              <div className="flex-1">
-                <label className="flex items-start gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={photoConfirmed}
-                    onChange={(e) => setPhotoConfirmed(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 dark:border-slate-600"
-                  />
-                  Confirmo que esta foto no muestra a ningún menor.
-                </label>
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Quitar foto
-                </button>
-              </div>
-            </div>
-          ) : (
-            <label className="mt-1.5 inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800">
-              <ImagePlus className="h-4 w-4" />
-              Añadir foto
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-            </label>
-          )}
-        </div>
+        {error && (
+          <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Publicar
+          {submitting ? 'Publicando…' : 'Publicar'}
         </button>
       </form>
     </div>
