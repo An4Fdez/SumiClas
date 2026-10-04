@@ -6,7 +6,7 @@ Aplica a `apps/frontend/sumiclas-web/**`. Ver también el `AGENTS.md` de la raí
 
 Vite + React 18 + TypeScript + Tailwind CSS v3.4 + React Router v7. El documento de arquitectura (`docs/arquitectura-app-coordinacion-escolar.md`) recomendaba React + Next.js como PWA; **esa recomendación queda descartada para el frontend real**: Vite + React es el stack oficial, confirmado con el usuario. No propongas migrar a Next.js, añadir SSR ni configurar PWA/service worker por iniciativa propia.
 
-Hoy no hay backend conectado: todos los datos vienen de mocks en `src/data/*.ts`. Ver la sección "Datos y backend real" más abajo para cómo se conectará.
+El frontend se está conectando al backend por tareas (plan en `odd/tasks/frontend-api-integration.md`): el registro, el perfil del usuario y sus alumnos ya usan la API real; el resto de pantallas siguen con mocks de `src/data/*.ts` hasta que se migren. Ver la sección "Datos y backend real" más abajo.
 
 ## Idioma del código (cambio reciente, aplica retroactivamente)
 
@@ -31,10 +31,8 @@ src/
   modules/
     <module>/      → capa de datos de un módulo (announcements, calendar, homework, expenses, lostAndFound...), sin UI
       domain/       → interfaz/contrato del repositorio + tipos de dominio del módulo
-      infrastructure/ → implementación concreta del repositorio (usa el cliente compartido de shared/infrastructure/sumiclas-client)
-  shared/
-    infrastructure/
-      sumiclas-client/  → cliente HTTP generado con NSwag Studio a partir del OpenAPI del backend (compartido por todos los módulos, ver más abajo)
+      infrastructure/ → implementación concreta del repositorio (usa el cliente compartido de modules/Shared/Infrastructure)
+  modules/Shared/Infrastructure/  → cliente HTTP generado con NSwag (GeneratedApiClient.ts, configuración .nswag y ClientBase.ts) más el plumbing propio (ApiClient.ts, apiDate.ts); compartido por todos los módulos, ver más abajo
 ```
 
 `components/app/` no se reorganiza por módulo: la UI (formularios, tarjetas, modales) se queda donde está hoy. Solo la capa de datos (sin UI) vive en `modules/<module>/`, como carpeta de primer nivel — no anidada dentro de `components/`, porque `Domain`/`Infrastructure` no son componentes React. Esto además mantiene el frontend consistente con la estructura del backend (`SumiClas/<Module>/{Domain,Application,Infrastructure}` también como carpetas de primer nivel).
@@ -47,15 +45,23 @@ No añadas una carpeta `application/` en `modules/<module>/` sin que se pida exp
 
 ## Datos y backend real
 
-- **Hoy**: todo son mocks en `src/data/*.ts`, sin llamadas de red.
-- **Cliente HTTP**: generado por **NSwag Studio** a partir del OpenAPI del backend (ya expuesto por `Program.cs`), vive en `src/shared/infrastructure/sumiclas-client` y es compartido por todos los módulos. No escribas `fetch`/`axios` a mano contra los endpoints — usa el cliente NSwag.
+- **Hoy**: ya usan la API real el registro, el perfil del usuario y sus alumnos (`ChildProvider`). Siguen con mocks en `src/data/*.ts`: avisos, calendario, deberes, gastos, objetos perdidos, el onboarding (colegios, clases y alta del alumno), el resumen del dashboard (`aiSummaryByChild`) y `otherGuardiansByChild` (gastos).
+- **Cliente HTTP**: generado por **NSwag** a partir del OpenAPI del backend (`/openapi/v1.json`, solo en Development). Vive en `src/modules/Shared/Infrastructure` (`GeneratedApiClient.ts` + `GeneratedApiClient.nswag` + `ClientBase.ts`) y es compartido por todos los módulos. No escribas `fetch`/`axios` a mano contra los endpoints — usa el cliente NSwag. Hoy el cliente generado **se comitea** y se regenera con `pnpm generate:client` (levanta una API temporal con el código actual, necesita PostgreSQL arriba; ver `Readme.md`). No se edita `GeneratedApiClient.ts` a mano.
+- **Plumbing del cliente (`ApiClient.ts`, `apiDate.ts`)**: `createApiClient()` construye el cliente con `baseUrl` **`/api`** (sin barra final: el cliente concatena `baseUrl + "/ruta"`). En desarrollo, Vite reenvía `/api` a la API **quitando el prefijo** (`vite.config.ts`: destino `API_PROXY_TARGET`, por defecto `https://localhost:7064`, `secure: false` por el certificado de desarrollo). El navegador solo habla con el origen de Vite, así que hoy no hace falta CORS. El cliente se obtiene con `useApiClient()` (`ApiClientProvider` en `main.tsx`); no instancies `GeneratedApiClient` a mano.
+- **Identidad provisional**: la API no tiene login; identifica al usuario por la cabecera `X-User-Id`. El cliente la envía en cada petición si hay un id guardado (`getUserId()` / `setUserId()` en `src/lib/auth.ts`, clave `sumiclas-user-id`), leyéndolo en el momento de la petición. El registro genera el id en el cliente (`crypto.randomUUID()`). La página de Login no es funcional hasta que haya autenticación real, y la contraseña no se envía a ningún sitio. Cuando llegue JWT, el único sitio a cambiar es el `identityHttp` de `ApiClient.ts` (`Authorization: Bearer`). Pendientes anotados en el `AGENTS.md` del backend: CORS y JWT.
+- **Fechas**: los DTO generados tipan las fechas como `Date` pero `JSON.parse` deja texto. `ApiClient` sobrescribe `jsonParseReviver` y convierte solo las claves conocidas (`createdAt` como fecha-hora; `dueDate`, `date`, `startDate`, `endDate` como fecha sin hora, a medianoche **local** para que no cambie de día con la zona horaria); un texto libre con forma de fecha no se toca. Al **enviar** un campo de solo fecha, envuélvelo con `toApiDateOnly(date)`: la API espera `yyyy-MM-dd` y un `Date` normal se serializa como fecha-hora UTC. Si el DTO generado añade otra clave de fecha, añádela a las listas de `ApiClient.ts`.
+- **Errores del cliente generado**: cuando la respuesta de error trae cuerpo (los 400, 401, 403, 404 y 409 de la API lo traen), el cliente **lanza el propio objeto `ProblemDetails`** (con `status`, `title` y el `code` del error de dominio), **no** una `ApiException`. `ApiException` solo se lanza para respuestas sin cuerpo o con un estado no declarado. Quien capture errores debe tratar ambos casos.
+- **Mensajes de error en la UI**: `getApiErrorMessage(error)` (`src/lib/apiError.ts`) convierte lo que lanza el cliente (`ProblemDetails` con `code`, `ApiException` o el `TypeError` de un fallo de red) en un mensaje en español: usa el texto propio de los códigos conocidos (`User.EmailAlreadyRegistered`...), el `detail` en español de los demás errores de dominio y, si no hay, uno genérico por estado. `getApiErrorStatus(error)` devuelve el estado HTTP.
+- **Repositorios ya creados**: `modules/users` (`UserRepository`: `register`, `getCurrent`) y `modules/students` (`StudentRepository`: `listMine`), cada uno con su implementación `*Http`. Se inyectan con `UserRepositoryProvider` y `StudentRepositoryProvider` (montados en `main.tsx`, dentro de `ApiClientProvider`) y se usan con `useUserRepository()` y `useStudentRepository()`. La capa `infrastructure` traduce los enums de la API (PascalCase) a los de la UI (`ClassRepresentative` → `classRepresentative`) y los `null` de la API a `undefined`.
+- **Sesión**: `isAuthenticated()` significa que hay un id de usuario guardado, y `clearSession()` cierra la sesión (borra el id y los datos del tutor). `RequireSession` redirige a `/login` en las rutas privadas (todo `AppLayout` y `/onboarding`). La página de **Login** no es funcional: muestra un aviso en español y tiene el formulario desactivado; si ya hay sesión, redirige a `/home`. El **Registro** genera el id (`crypto.randomUUID()`), llama a `userRepository.register`, guarda el id y el rol de tutor (`sumiclas-guardian`, lo necesitará el alta de alumno) y sigue a `/onboarding`; la contraseña se valida en el formulario pero no se envía ni se guarda; un email repetido muestra el error en español y deja el formulario usable.
+- **`ChildProvider`**: al montarse carga `studentRepository.listMine()` y `userRepository.getCurrent()`, y expone `loading`, `error`, `errorStatus` y `reload`; `AppLayout` muestra "Cargando tu información…" o el error con "Reintentar" y "Cerrar sesión" (necesario si el id guardado ya no existe en la API: responde 404). `currentRole` sale de `classRoles` buscando el `classId` del hijo (sin clase, `null`). Un hijo sin matrícula confirmada en un curso activo se muestra como "Sin clase". El nombre del alumno es `firstName + surnameInitial`: la API ya manda la inicial con su punto ("P."), no se añade otro. Siguen provisionales hasta T4: `currentSummary` (contadores a cero), `otherGuardians` (vacío) y las acciones de delegados (no hacen nada), porque la API no tiene resumen del dashboard ni listado de miembros de clase.
 - **Patrón repositorio**, en `src/modules/<module>/`:
   - `domain/` — interfaz/contrato del repositorio (ej. `AnnouncementRepository`) + tipos de dominio propios del módulo. No depende de `infrastructure` ni del cliente NSwag.
-  - `infrastructure/` — implementación concreta del repositorio (ej. `AnnouncementRepositoryHttp`) que usa el cliente compartido de `shared/infrastructure/sumiclas-client` para hacer las llamadas reales.
+  - `infrastructure/` — implementación concreta del repositorio (ej. `AnnouncementRepositoryHttp`) que usa el cliente compartido de `modules/Shared/Infrastructure` para hacer las llamadas reales.
   - No se usa TanStack Query ni ninguna librería de caché de peticiones para esto.
 - **Inyección de la implementación**: mediante un Contexto de React (mismo patrón que `ChildContext`/`ChildProvider`), no como singleton importado directamente ni instanciado a mano en el componente. Esto permite sustituir la implementación por un mock en los tests de `apps/test/frontend`. Componentes y hooks (en `components/app/`) consumen el repositorio a través de un hook propio (p. ej. `useAnnouncementRepository()`), nunca instanciando `AnnouncementRepositoryHttp` directamente.
 - Los mocks actuales de `src/data/*.ts` se sustituyen por `modules/<module>/` **módulo a módulo**, no todos a la vez.
-- **Pendiente de decidir**: si el archivo del cliente NSwag generado se comitea en git (regenerado a mano con NSwag Studio cuando cambia el contrato) o se regenera en cada build; y cómo se gestionan los estados de carga/error de cada llamada al repositorio (a mano con `useState`, alguna utilidad propia, u otra cosa). No asumas ninguna de las dos cosas sin confirmarlo primero.
+- **Pendiente de decidir**: si el cliente NSwag generado se sigue comiteando (hoy sí) o pasa a generarse en cada build; y si los estados de carga/error de las llamadas a los repositorios, hoy a mano con `useState` (`ChildProvider`, `Register`), merecen una utilidad común cuando haya más pantallas migradas. No asumas ninguna de las dos cosas sin confirmarlo primero.
 
 ## Patrones de UI ya establecidos (síguelos, no los reinventes)
 
@@ -96,6 +102,6 @@ Ambos deben pasar sin errores. Si la tarea es una feature de UI y hay forma de p
 
 ## Pendiente de decidir (no asumas nada aquí sin preguntar)
 
-- Versionado del cliente NSwag generado: ¿comiteado y regenerado a mano, o generado en build?
-- Gestión de estados de carga/error de las llamadas a los repositorios (a mano con `useState`, utilidad propia, u otra cosa).
+- Versionado del cliente NSwag generado: hoy comiteado y regenerado con `pnpm generate:client`; ¿se mantiene o pasa a generarse en build?
+- Gestión de estados de carga/error de las llamadas a los repositorios: hoy a mano con `useState`; valorar una utilidad común cuando haya más pantallas migradas.
 - Nomenclatura exacta de interfaz vs. implementación del repositorio (se usa `AnnouncementRepository` / `AnnouncementRepositoryHttp` como ejemplo ilustrativo, no como convención ya fijada).
