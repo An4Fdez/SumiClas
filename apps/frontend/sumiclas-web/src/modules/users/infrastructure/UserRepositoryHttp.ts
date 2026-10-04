@@ -1,12 +1,12 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { ClassRole } from '@/lib/roles';
-import type { Profile, UserRegistration, UserRepository } from '../domain/UserRepository';
+import type { Profile, UserRegistration, IUserRepository } from '../domain/IUserRepository';
 
 function toClassRole(role: string): ClassRole {
   return role.toLowerCase() === 'classrepresentative' ? 'classRepresentative' : 'participant';
 }
 
-export class UserRepositoryHttp implements UserRepository {
+export class UserRepositoryHttp implements IUserRepository {
   constructor(private readonly client: ApiClient) {}
 
   async register(user: UserRegistration): Promise<void> {

@@ -18,7 +18,7 @@ export type UserRegistration = {
   email: string;
 };
 
-export interface UserRepository {
+export interface IUserRepository {
   register(user: UserRegistration): Promise<void>;
   getCurrent(): Promise<Profile>;
 }

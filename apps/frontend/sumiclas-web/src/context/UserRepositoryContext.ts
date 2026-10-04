@@ -1,4 +1,4 @@
 import { createContext } from 'react';
-import type { UserRepository } from '@/modules/users/domain/UserRepository';
+import type { IUserRepository } from '@/modules/users/domain/IUserRepository';
 
-export const UserRepositoryContext = createContext<UserRepository | null>(null);
+export const UserRepositoryContext = createContext<IUserRepository | null>(null);

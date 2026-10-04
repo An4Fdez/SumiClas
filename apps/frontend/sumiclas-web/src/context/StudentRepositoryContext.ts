@@ -1,4 +1,4 @@
 import { createContext } from 'react';
-import type { StudentRepository } from '@/modules/students/domain/StudentRepository';
+import type { IStudentRepository } from '@/modules/students/domain/IStudentRepository';
 
-export const StudentRepositoryContext = createContext<StudentRepository | null>(null);
+export const StudentRepositoryContext = createContext<IStudentRepository | null>(null);

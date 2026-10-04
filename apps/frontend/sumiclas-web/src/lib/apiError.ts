@@ -7,6 +7,7 @@ type ApiErrorShape = {
 const MESSAGE_BY_CODE: Record<string, string> = {
   'User.EmailAlreadyRegistered': 'Ya existe una cuenta con este correo electrónico.',
   'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Vuelve a crear tu cuenta.',
+  'Enrollment.AlreadyExists': 'Tu hijo/a ya está matriculado/a en una clase de este curso.',
   'User.NotFound': 'No encontramos tu cuenta. Vuelve a crear tu cuenta.',
 };
 

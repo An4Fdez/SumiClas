@@ -1,6 +1,6 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { Child } from '../domain/Child';
-import type { StudentRepository } from '../domain/StudentRepository';
+import type { NewStudent, IStudentRepository } from '../domain/IStudentRepository';
 
 /** The API already sends the initial with its dot ("P."); only add it if it is missing. */
 function formatStudentName(firstName: string, surnameInitial: string): string {
@@ -8,7 +8,9 @@ function formatStudentName(firstName: string, surnameInitial: string): string {
   return `${firstName} ${initial}`;
 }
 
-export class StudentRepositoryHttp implements StudentRepository {
+const GUARDIAN_ROLE_BY_UI_ROLE = { father: 'Father', mother: 'Mother', guardian: 'Guardian' } as const;
+
+export class StudentRepositoryHttp implements IStudentRepository {
   constructor(private readonly client: ApiClient) {}
 
   async listMine(): Promise<Child[]> {
@@ -22,5 +24,15 @@ export class StudentRepositoryHttp implements StudentRepository {
       schoolId: student.schoolId ?? undefined,
       schoolName: student.schoolName ?? undefined,
     }));
+  }
+
+  async register(student: NewStudent): Promise<void> {
+    await this.client.studentRegister({
+      id: student.id,
+      firstName: student.firstName,
+      firstSurname: student.firstSurname,
+      secondSurname: student.secondSurname,
+      firstGuardianRole: GUARDIAN_ROLE_BY_UI_ROLE[student.guardianRole],
+    });
   }
 }
