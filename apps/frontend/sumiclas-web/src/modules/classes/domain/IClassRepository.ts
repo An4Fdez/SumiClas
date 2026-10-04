@@ -1,13 +1,5 @@
-export type SchoolClass = {
-  id: string;
-  name: string;
-};
-
-export type NewSchoolClass = {
-  id: string;
-  schoolYearId: string;
-  name: string;
-};
+import type { NewSchoolClass } from './NewSchoolClass';
+import type { SchoolClass } from './SchoolClass';
 
 export interface IClassRepository {
   listBySchoolYear(schoolYearId: string): Promise<SchoolClass[]>;

@@ -1,41 +1,6 @@
-import type { ClassRole } from '@/lib/roles';
-
-export type ItemStatus = 'lost' | 'found';
-export type ItemScope = 'school' | 'class';
-
-export type LostItem = {
-  id: string;
-  scope: ItemScope;
-  classId?: string;
-  status: ItemStatus;
-  recovered: boolean;
-  description: string;
-  photoUrl?: string;
-  authorId: string;
-  authorName: string;
-  authorRole?: ClassRole;
-  createdAt: Date;
-};
-
-export type LostItemPage = {
-  items: LostItem[];
-  nextCursor?: string;
-};
-
-export type PageRequest = {
-  limit?: number;
-  cursor?: string;
-};
-
-export type NewLostItem = {
-  id: string;
-  scope: ItemScope;
-  classId?: string;
-  status: ItemStatus;
-  description: string;
-  photoUrl?: string;
-  photoPrivacyConfirmed: boolean;
-};
+import type { PageRequest } from '@/modules/Shared/domain/PageRequest';
+import type { LostItemPage } from './LostItemPage';
+import type { NewLostItem } from './NewLostItem';
 
 export interface ILostItemRepository {
   listByClass(classId: string, page?: PageRequest): Promise<LostItemPage>;

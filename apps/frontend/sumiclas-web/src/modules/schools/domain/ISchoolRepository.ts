@@ -1,15 +1,5 @@
-export type School = {
-  id: string;
-  name: string;
-  address?: string;
-};
-
-export type NewSchool = {
-  id: string;
-  name: string;
-  officialCode: string;
-  address?: string;
-};
+import type { NewSchool } from './NewSchool';
+import type { School } from './School';
 
 export interface ISchoolRepository {
   searchByName(name: string): Promise<School[]>;
