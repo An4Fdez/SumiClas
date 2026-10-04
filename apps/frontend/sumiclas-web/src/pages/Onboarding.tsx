@@ -5,8 +5,14 @@ import { Reveal } from '@/components/layout/Reveal';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';
-import { StudentStep } from '@/components/onboarding/StudentStep';
-import { schoolsMock, schoolClassesMock, registeredStudentsMock, type School, type SchoolClass } from '@/data/onboardingMock';
+import { StudentStep, type StudentData } from '@/components/onboarding/StudentStep';
+import { useOnboardingRepositories } from '@/hooks/useOnboardingRepositories';
+import { useSchoolClasses } from '@/hooks/useSchoolClasses';
+import { useStudentRepository } from '@/hooks/useStudentRepository';
+import { useWizardIds } from '@/hooks/useWizardIds';
+import { getGuardianInfo } from '@/lib/auth';
+import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
+import type { NewSchool, School } from '@/modules/schools/domain/ISchoolRepository';
 
 const stepMeta = [
   {
@@ -25,22 +31,27 @@ const stepMeta = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const ids = useWizardIds();
+  const { schools, classes, enrollments } = useOnboardingRepositories();
+  const studentRepository = useStudentRepository();
   const [step, setStep] = useState(1);
   const [school, setSchool] = useState<School | null>(null);
   const [schoolClass, setSchoolClass] = useState<SchoolClass | null>(null);
-  const [customSchoolClasses, setCustomSchoolClasses] = useState<SchoolClass[]>([]);
   const [isNewClass, setIsNewClass] = useState(false);
-
-  const schoolClassesForSchool = school
-    ? [...schoolClassesMock, ...customSchoolClasses].filter((c) => c.schoolId === school.id)
-    : [];
-
-  const studentsInClass = schoolClass ? registeredStudentsMock.filter((a) => a.classId === schoolClass.id) : [];
+  const [registeredStudent, setRegisteredStudent] = useState<{ id: string; label: string } | null>(null);
+  const { state: classesState, reload: reloadClasses } = useSchoolClasses(school?.id, ids);
 
   const handleSelectSchool = (s: School) => {
     setSchool(s);
     setSchoolClass(null);
     setStep(2);
+  };
+
+  const handleRegisterSchool = async (data: Omit<NewSchool, 'id'>) => {
+    const id = ids.take('school');
+    await schools.register({ id, ...data });
+    ids.consume('school');
+    handleSelectSchool({ id, name: data.name, address: data.address });
   };
 
   const handleChangeSchool = () => {
@@ -60,26 +71,35 @@ export default function Onboarding() {
     setStep(2);
   };
 
-  const handleCreateClass = (name: string) => {
-    if (!school) return;
-    const created: SchoolClass = { id: `custom-${Date.now()}`, schoolId: school.id, name };
-    setCustomSchoolClasses((prev) => [...prev, created]);
-    setSchoolClass(created);
+  const handleCreateClass = async (name: string) => {
+    if (classesState.status !== 'ready') return;
+    const id = ids.take('class');
+    await classes.create({ id, schoolYearId: classesState.schoolYear.id, name });
+    ids.consume('class');
+    setSchoolClass({ id, name });
     setIsNewClass(true);
     setStep(3);
+    reloadClasses();
   };
 
-  const handleConfirmStudent = (data: {
-    name: string;
-    lastName: string;
-    joinAsSecondGuardian: boolean;
-  }) => {
+  const handleConfirmStudent = async (data: StudentData) => {
+    if (!schoolClass) return;
+    let student = registeredStudent;
+    if (!student) {
+      const id = ids.take('student');
+      await studentRepository.register({ ...data, id, guardianRole: getGuardianInfo()?.role ?? 'guardian' });
+      ids.consume('student');
+      student = { id, label: `${data.firstName} ${data.firstSurname.charAt(0)}.` };
+      setRegisteredStudent(student);
+    }
+    const enrollmentId = ids.take('enrollment');
+    await enrollments.create({ id: enrollmentId, studentId: student.id, classId: schoolClass.id });
+    ids.consume('enrollment');
     navigate('/home', {
       state: {
         school: school?.name,
-        schoolClass: schoolClass?.name,
-        student: `${data.name} ${data.lastName.charAt(0)}.`,
-        secondGuardian: data.joinAsSecondGuardian,
+        schoolClass: schoolClass.name,
+        student: student.label,
         assignedRole: isNewClass ? 'classRepresentative' : 'participant',
       },
     });
@@ -116,7 +136,7 @@ export default function Onboarding() {
               <SelectionSummary
                 icon={MapPin}
                 title={school.name}
-                subtitle={`${school.address}, ${school.city}`}
+                subtitle={school.address}
                 color="brand"
                 onChange={handleChangeSchool}
               />
@@ -137,11 +157,18 @@ export default function Onboarding() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{stepMeta[step - 1].text}</p>
 
             <div className="mt-6">
-              {step === 1 && <SchoolSearchStep schools={schoolsMock} onSelect={handleSelectSchool} />}
+              {step === 1 && <SchoolSearchStep onSelect={handleSelectSchool} onRegister={handleRegisterSchool} />}
               {step === 2 && (
-                <ClassStep schoolClasses={schoolClassesForSchool} onSelect={handleSelectClass} onCreate={handleCreateClass} />
+                <ClassStep
+                  schoolClasses={classesState.status === 'ready' ? classesState.classes : []}
+                  loading={classesState.status === 'loading'}
+                  error={classesState.status === 'error' ? classesState.message : null}
+                  onRetry={reloadClasses}
+                  onSelect={handleSelectClass}
+                  onCreate={handleCreateClass}
+                />
               )}
-              {step === 3 && <StudentStep studentsInClass={studentsInClass} onConfirm={handleConfirmStudent} />}
+              {step === 3 && <StudentStep registeredStudent={registeredStudent?.label ?? null} onConfirm={handleConfirmStudent} />}
             </div>
           </div>
         </Reveal>

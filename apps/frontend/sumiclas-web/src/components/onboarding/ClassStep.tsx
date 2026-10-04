@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { LayoutGrid, Plus, ArrowRight } from 'lucide-react';
-import type { SchoolClass } from '@/data/onboardingMock';
+import { getApiErrorMessage } from '@/lib/apiError';
+import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
 
 const cardColors = ['brand', 'mint', 'rose', 'sun', 'violet', 'orange'] as const;
 type CardColor = (typeof cardColors)[number];
@@ -19,24 +20,58 @@ const colorClasses: Record<CardColor, string> = {
 
 export function ClassStep({
   schoolClasses,
+  loading,
+  error,
+  onRetry,
   onSelect,
   onCreate,
 }: {
   schoolClasses: SchoolClass[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onSelect: (schoolClass: SchoolClass) => void;
-  onCreate: (name: string) => void;
+  onCreate: (name: string) => Promise<void>;
 }) {
   const [creating, setCreating] = useState(false);
   const [gradeLevel, setGradeLevel] = useState('');
   const [letterSuffix, setLetterSuffix] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-  const handleCreate = (e: FormEvent) => {
+  const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     const trimmedGrade = gradeLevel.trim();
     const trimmedLetter = letterSuffix.trim().toUpperCase();
     if (!trimmedGrade || !trimmedLetter) return;
-    onCreate(`${trimmedGrade}${trimmedLetter}`);
+    setSubmitting(true);
+    setCreateError(null);
+    try {
+      await onCreate(`${trimmedGrade}${trimmedLetter}`);
+    } catch (err) {
+      setCreateError(getApiErrorMessage(err));
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return <p className="text-sm text-slate-500 dark:text-slate-400">Cargando las clases del colegio…</p>;
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-700/40 dark:bg-rose-900/15">
+        <p className="text-sm text-slate-700 dark:text-slate-300">{error}</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-3 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -101,12 +136,18 @@ export function ClassStep({
               className="w-1/3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             />
           </div>
+          {createError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+              {createError}
+            </p>
+          )}
           <div className="mt-3 flex items-center gap-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.02] active:scale-95"
+              disabled={submitting}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
             >
-              Crear clase
+              {submitting ? 'Creando…' : 'Crear clase'}
               <ArrowRight className="h-4 w-4" />
             </button>
             <button
