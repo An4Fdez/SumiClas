@@ -23,7 +23,7 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export class AnnouncementRepositoryHttp implements IAnnouncementRepository {
+export class NSwagAnnouncementRepository implements IAnnouncementRepository {
   constructor(private readonly client: ApiClient) {}
 
   async listByClass(classId: string, page?: PageRequest): Promise<AnnouncementPage> {

@@ -1,7 +1,7 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { NewSchool, School, ISchoolRepository } from '../domain/ISchoolRepository';
 
-export class SchoolRepositoryHttp implements ISchoolRepository {
+export class NSwagSchoolRepository implements ISchoolRepository {
   constructor(private readonly client: ApiClient) {}
 
   async searchByName(name: string): Promise<School[]> {

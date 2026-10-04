@@ -6,7 +6,7 @@ function toClassRole(role: string): ClassRole {
   return role.toLowerCase() === 'classrepresentative' ? 'classRepresentative' : 'participant';
 }
 
-export class UserRepositoryHttp implements IUserRepository {
+export class NSwagUserRepository implements IUserRepository {
   constructor(private readonly client: ApiClient) {}
 
   async register(user: UserRegistration): Promise<void> {

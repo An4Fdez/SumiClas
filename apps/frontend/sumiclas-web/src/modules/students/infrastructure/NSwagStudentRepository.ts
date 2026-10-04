@@ -10,7 +10,7 @@ function formatStudentName(firstName: string, surnameInitial: string): string {
 
 const GUARDIAN_ROLE_BY_UI_ROLE = { father: 'Father', mother: 'Mother', guardian: 'Guardian' } as const;
 
-export class StudentRepositoryHttp implements IStudentRepository {
+export class NSwagStudentRepository implements IStudentRepository {
   constructor(private readonly client: ApiClient) {}
 
   async listMine(): Promise<Child[]> {

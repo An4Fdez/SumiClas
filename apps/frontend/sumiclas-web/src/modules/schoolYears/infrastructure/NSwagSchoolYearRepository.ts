@@ -2,7 +2,7 @@ import { toApiDateOnly } from '@/modules/Shared/Infrastructure/apiDate';
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { NewSchoolYear, SchoolYear, ISchoolYearRepository } from '../domain/ISchoolYearRepository';
 
-export class SchoolYearRepositoryHttp implements ISchoolYearRepository {
+export class NSwagSchoolYearRepository implements ISchoolYearRepository {
   constructor(private readonly client: ApiClient) {}
 
   async listActive(schoolId: string): Promise<SchoolYear[]> {

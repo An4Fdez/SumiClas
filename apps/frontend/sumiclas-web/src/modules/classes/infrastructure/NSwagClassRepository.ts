@@ -1,7 +1,7 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { IClassRepository, NewSchoolClass, SchoolClass } from '../domain/IClassRepository';
 
-export class ClassRepositoryHttp implements IClassRepository {
+export class NSwagClassRepository implements IClassRepository {
   constructor(private readonly client: ApiClient) {}
 
   async listBySchoolYear(schoolYearId: string): Promise<SchoolClass[]> {
