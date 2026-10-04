@@ -1,5 +1,6 @@
 const AUTH_KEY = 'sumiclas-auth';
 const GUARDIAN_KEY = 'sumiclas-guardian';
+const USER_ID_KEY = 'sumiclas-user-id';
 
 export type GuardianRole = 'father' | 'mother' | 'guardian';
 
@@ -7,6 +8,23 @@ export type GuardianInfo = {
   name: string;
   role: GuardianRole;
 };
+
+/** Provisional identity: the backend trusts this id (sent as X-User-Id) until JWT authentication exists. */
+export function getUserId(): string | null {
+  try {
+    return localStorage.getItem(USER_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setUserId(id: string) {
+  try {
+    localStorage.setItem(USER_ID_KEY, id);
+  } catch {
+    // localStorage unavailable — ignored
+  }
+}
 
 /** Backend-less prototype: the session is simulated with a flag in localStorage. */
 export function isAuthenticated(): boolean {
@@ -23,6 +41,7 @@ export function setAuthenticated(value: boolean) {
       localStorage.setItem(AUTH_KEY, 'true');
     } else {
       localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem(USER_ID_KEY);
       localStorage.removeItem(GUARDIAN_KEY);
     }
   } catch {
