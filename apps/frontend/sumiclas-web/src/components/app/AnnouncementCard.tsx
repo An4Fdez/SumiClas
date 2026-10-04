@@ -1,7 +1,8 @@
 import { AlertCircle, ArrowUpRight, Circle } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
-import type { Announcement } from '@/data/announcementsMock';
+import { roleLabel } from '@/lib/roles';
+import type { Announcement } from '@/modules/announcements/domain/IAnnouncementRepository';
 
 const priorityStyle: Record<Announcement['priority'], string> = {
   high: 'ring-1 ring-rose-200 dark:ring-rose-900/50',
@@ -13,12 +14,10 @@ export function AnnouncementCard({
   announcement,
   className,
   onOpen,
-  onToggleRead,
 }: {
   announcement: Announcement;
   className?: string;
   onOpen: () => void;
-  onToggleRead: () => void;
 }) {
   const scopeColor = announcement.scope === 'school' ? badgeColorClasses.brand : badgeColorClasses.violet;
   const scopeLabel = announcement.scope === 'school' ? 'Colegio' : className ?? 'Clase';
@@ -27,22 +26,11 @@ export function AnnouncementCard({
     <div
       className={`relative w-full rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 ${priorityStyle[announcement.priority]}`}
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleRead();
-        }}
-        aria-label={announcement.read ? 'Marcar como no leído' : 'Marcar como leído'}
-        title={announcement.read ? 'Marcar como no leído' : 'Marcar como leído'}
-        className="absolute right-3 top-3 z-10 rounded-full p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-      >
-        {announcement.read ? (
-          <Circle className="h-4 w-4 text-slate-300 dark:text-slate-600" />
-        ) : (
+      {!announcement.read && (
+        <span role="img" aria-label="No leído" title="No leído" className="absolute right-4 top-4 z-10">
           <Circle className="h-4 w-4 fill-brand-500 text-brand-500" />
-        )}
-      </button>
+        </span>
+      )}
 
       <button type="button" onClick={onOpen} className="w-full p-4 pr-11 text-left">
         <div className="flex flex-wrap items-center gap-2">
@@ -62,9 +50,9 @@ export function AnnouncementCard({
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            {announcement.authorName} · {announcement.authorRole}
+            {[announcement.authorName, roleLabel(announcement.authorRole)].filter(Boolean).join(' · ')}
           </span>
-          <span>{formatRelativeDate(announcement.date)}</span>
+          <span>{formatRelativeDate(announcement.createdAt)}</span>
         </div>
 
         {announcement.relatedEvent && (

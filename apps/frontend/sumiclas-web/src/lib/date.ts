@@ -1,6 +1,6 @@
 const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
 
-export function formatRelativeDate(dateISO: string): string {
+export function formatRelativeDate(dateISO: string | Date): string {
   const date = new Date(dateISO);
   const diffMs = date.getTime() - Date.now();
   const diffMin = Math.round(diffMs / 60_000);

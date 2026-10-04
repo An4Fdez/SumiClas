@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
+import { AnnouncementRepositoryProvider } from '@/context/AnnouncementRepositoryProvider';
 import { ApiClientProvider } from '@/context/ApiClientProvider';
 import { OnboardingRepositoriesProvider } from '@/context/OnboardingRepositoriesProvider';
 import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
@@ -14,9 +15,11 @@ createRoot(document.getElementById('root')!).render(
       <UserRepositoryProvider>
         <StudentRepositoryProvider>
           <OnboardingRepositoriesProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <AnnouncementRepositoryProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </AnnouncementRepositoryProvider>
           </OnboardingRepositoriesProvider>
         </StudentRepositoryProvider>
       </UserRepositoryProvider>

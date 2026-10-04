@@ -4,12 +4,13 @@ import { Reveal } from '@/components/layout/Reveal';
 import { AnnouncementCard } from '@/components/app/AnnouncementCard';
 import { AnnouncementDetailModal } from '@/components/app/AnnouncementDetailModal';
 import { AnnouncementForm } from '@/components/app/AnnouncementForm';
+import { useAnnouncementRepository } from '@/hooks/useAnnouncementRepository';
 import { useChildContext } from '@/hooks/useChildContext';
+import { useClassAnnouncements } from '@/hooks/useClassAnnouncements';
+import { useWizardIds } from '@/hooks/useWizardIds';
+import { getApiErrorStatus } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { getGuardianInfo } from '@/lib/auth';
-import { roleMeta } from '@/lib/roles';
-import { classAnnouncementsByChild, schoolAnnouncementsMock, type Announcement, type Priority } from '@/data/announcementsMock';
-import { calendarEventsMock } from '@/data/calendarMock';
+import type { Announcement, Priority } from '@/modules/announcements/domain/IAnnouncementRepository';
 
 type ScopeFilter = 'all' | 'school' | 'class';
 type ReadFilter = 'unread' | 'read' | null;
@@ -20,91 +21,64 @@ const scopeFilters: { value: ScopeFilter; label: string }[] = [
   { value: 'class', label: 'Mi clase' },
 ];
 
-const priorityWeight: Record<Priority, number> = { high: 0, normal: 1, low: 2 };
-
 export default function Announcements() {
-  const { children, currentChild, currentRole } = useChildContext();
-  const [createdAnnouncements, setCreatedAnnouncements] = useState<Announcement[]>([]);
-  const [read, setRead] = useState<Set<string>>(new Set());
+  const { currentChild, currentRole } = useChildContext();
+  const classId = currentChild?.classId;
+  const repository = useAnnouncementRepository();
+  const ids = useWizardIds();
+  const { state, reload, loadMore, loadingMore, loadMoreError, markRead } = useClassAnnouncements(classId);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [onlyUrgent, setOnlyUrgent] = useState(false);
   const [readFilter, setReadFilter] = useState<ReadFilter>(null);
   const [openAnnouncement, setOpenAnnouncement] = useState<Announcement | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const classNameByChild = useMemo(
-    () => Object.fromEntries(children.map((c) => [c.id, c.className])),
-    [children]
+  const announcements = useMemo(
+    () =>
+      (state.status === 'ready' ? state.items : [])
+        .filter((a) => scopeFilter === 'all' || a.scope === scopeFilter)
+        .filter((a) => (onlyUrgent ? a.priority === 'high' : true))
+        .filter((a) => {
+          if (readFilter === 'unread') return !a.read;
+          if (readFilter === 'read') return a.read;
+          return true;
+        }),
+    [state, scopeFilter, onlyUrgent, readFilter],
   );
 
-  const allClassAnnouncements = useMemo(
-    () => [...children.flatMap((c) => classAnnouncementsByChild[c.id] ?? []), ...createdAnnouncements],
-    [children, createdAnnouncements]
-  );
+  const canCreate = currentRole === 'classRepresentative' && !!classId;
 
-  const isRead = (announcement: Announcement) => (read.has(announcement.id) ? !announcement.read : announcement.read);
+  const handleOpen = (announcement: Announcement) => {
+    setOpenAnnouncement(announcement);
+    if (!announcement.read) markRead(announcement.id);
+  };
 
-  const announcements = useMemo(() => {
-    const combined =
-      scopeFilter === 'school'
-        ? schoolAnnouncementsMock
-        : scopeFilter === 'class'
-          ? allClassAnnouncements
-          : [...schoolAnnouncementsMock, ...allClassAnnouncements];
-
-    const filtered = combined
-      .filter((a) => (onlyUrgent ? a.priority === 'high' : true))
-      .filter((a) => {
-        if (readFilter === 'unread') return !isRead(a);
-        if (readFilter === 'read') return isRead(a);
-        return true;
-      });
-
-    return [...filtered].sort((a, b) => {
-      if (priorityWeight[a.priority] !== priorityWeight[b.priority]) {
-        return priorityWeight[a.priority] - priorityWeight[b.priority];
-      }
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scopeFilter, onlyUrgent, readFilter, read, allClassAnnouncements]);
-
-  const canCreate = currentRole === 'classRepresentative' && !!currentChild;
-
-  const toggleRead = (id: string) =>
-    setRead((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-
-  const handleCreateAnnouncement = (data: {
+  const handleCreateAnnouncement = async (data: {
     title: string;
     body: string;
     priority: Priority;
     eventId: string | null;
   }) => {
-    if (!currentChild) return;
-    const event = calendarEventsMock.find((ev) => ev.id === data.eventId);
-    const created: Announcement = {
-      id: `local-${Date.now()}`,
-      scope: 'class',
-      childId: currentChild.id,
-      title: data.title,
-      body: data.body,
-      priority: data.priority,
-      authorName: getGuardianInfo()?.name ?? 'Tú',
-      authorRole: roleMeta.classRepresentative.label,
-      date: new Date().toISOString(),
-      relatedEvent: event,
-      read: true,
-    };
-    setCreatedAnnouncements((prev) => [created, ...prev]);
+    if (!classId) return;
+    const id = ids.take('announcement');
+    try {
+      await repository.create({
+        id,
+        scope: 'class',
+        classId,
+        title: data.title,
+        body: data.body,
+        priority: data.priority,
+        relatedEventId: data.eventId ?? undefined,
+      });
+    } catch (error) {
+      const status = getApiErrorStatus(error);
+      if (status !== undefined && status < 500) ids.consume('announcement');
+      throw error;
+    }
+    ids.consume('announcement');
     setFormOpen(false);
+    reload();
   };
 
   return (
@@ -120,7 +94,7 @@ export default function Announcements() {
             Avisos
           </h1>
           <p className="mt-2 truncate text-slate-600 dark:text-slate-400">
-            Los avisos del colegio y de tu clase, ordenados por fecha y con lo prioritario destacado arriba.
+            Los avisos del colegio y de tu clase, del más reciente al más antiguo.
           </p>
         </div>
 
@@ -194,7 +168,24 @@ export default function Announcements() {
         </div>
       </div>
 
-      {announcements.length === 0 ? (
+      {!classId ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+          Tu hijo/a todavía no está en ninguna clase, así que no hay avisos que mostrar.
+        </div>
+      ) : state.status === 'loading' || state.status === 'idle' ? (
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">Cargando los avisos…</p>
+      ) : state.status === 'error' ? (
+        <div role="alert" className="mt-8 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-700/40 dark:bg-rose-900/15">
+          <p className="text-sm text-slate-700 dark:text-slate-300">{state.message}</p>
+          <button
+            type="button"
+            onClick={reload}
+            className="mt-3 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : announcements.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
           No hay avisos por ahora.
         </div>
@@ -203,20 +194,37 @@ export default function Announcements() {
           {announcements.map((announcement) => (
             <Reveal key={announcement.id}>
               <AnnouncementCard
-                announcement={{ ...announcement, read: isRead(announcement) }}
-                className={announcement.childId ? classNameByChild[announcement.childId] : undefined}
-                onOpen={() => setOpenAnnouncement(announcement)}
-                onToggleRead={() => toggleRead(announcement.id)}
+                announcement={announcement}
+                className={announcement.classId ? currentChild?.className : undefined}
+                onOpen={() => handleOpen(announcement)}
               />
             </Reveal>
           ))}
         </div>
       )}
 
+      {state.status === 'ready' && state.nextCursor && (
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-60 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            {loadingMore ? 'Cargando…' : 'Cargar más'}
+          </button>
+          {loadMoreError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+              {loadMoreError}
+            </p>
+          )}
+        </div>
+      )}
+
       {openAnnouncement && (
         <AnnouncementDetailModal
           announcement={openAnnouncement}
-          className={openAnnouncement.childId ? classNameByChild[openAnnouncement.childId] : undefined}
+          className={openAnnouncement.classId ? currentChild?.className : undefined}
           onClose={() => setOpenAnnouncement(null)}
         />
       )}
@@ -224,7 +232,6 @@ export default function Announcements() {
       {formOpen && currentChild && (
         <AnnouncementForm
           className={currentChild.className}
-          events={calendarEventsMock}
           onSubmit={handleCreateAnnouncement}
           onClose={() => setFormOpen(false)}
         />

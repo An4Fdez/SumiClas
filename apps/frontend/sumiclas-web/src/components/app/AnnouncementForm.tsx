@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
-import type { Priority, RelatedEvent } from '@/data/announcementsMock';
+import { getApiErrorMessage } from '@/lib/apiError';
+import type { Priority, RelatedEvent } from '@/modules/announcements/domain/IAnnouncementRepository';
 import { SelectDropdown } from './SelectDropdown';
 
 const priorityOptions: { value: Priority; label: string }[] = [
@@ -16,22 +17,31 @@ export function AnnouncementForm({
   onClose,
 }: {
   className: string;
-  events: RelatedEvent[];
-  onSubmit: (data: { title: string; body: string; priority: Priority; eventId: string | null }) => void;
+  events?: RelatedEvent[];
+  onSubmit: (data: { title: string; body: string; priority: Priority; eventId: string | null }) => Promise<void>;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<Priority>('normal');
   const [eventId, setEventId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
 
-  const canSubmit = title.trim().length > 0 && body.trim().length > 0;
+  const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !submitting;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    onSubmit({ title: title.trim(), body: body.trim(), priority, eventId: eventId || null });
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({ title: title.trim(), body: body.trim(), priority, eventId: eventId || null });
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -111,7 +121,7 @@ export function AnnouncementForm({
           )}
         </fieldset>
 
-        {events.length > 0 && (
+        {events && events.length > 0 && (
           <div className="mt-4">
             <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Evento relacionado (opcional)
@@ -127,12 +137,18 @@ export function AnnouncementForm({
           </div>
         )}
 
+        {error && (
+          <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Publicar aviso
+          {submitting ? 'Publicando…' : 'Publicar aviso'}
         </button>
       </form>
     </div>

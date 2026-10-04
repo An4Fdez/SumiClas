@@ -3,7 +3,8 @@ import { AlertCircle, ArrowUpRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
-import type { Announcement } from '@/data/announcementsMock';
+import { roleLabel } from '@/lib/roles';
+import type { Announcement } from '@/modules/announcements/domain/IAnnouncementRepository';
 
 export function AnnouncementDetailModal({
   announcement,
@@ -56,7 +57,9 @@ export function AnnouncementDetailModal({
 
         <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{announcement.title}</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {announcement.authorName} · {announcement.authorRole} · {formatRelativeDate(announcement.date)}
+          {[announcement.authorName, roleLabel(announcement.authorRole), formatRelativeDate(announcement.createdAt)]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
 
         <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-300">

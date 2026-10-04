@@ -17,6 +17,10 @@ export const roleMeta: Record<ClassRole, { label: string; description: string; c
   },
 };
 
+export function roleLabel(role: ClassRole | undefined): string | undefined {
+  return role ? roleMeta[role].label : undefined;
+}
+
 export function canManageClassRepresentatives(role: ClassRole | null): boolean {
   return role === 'classRepresentative';
 }
