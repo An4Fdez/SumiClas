@@ -1,13 +1,11 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { ClassRole } from '@/lib/roles';
-import type {
-  Announcement,
-  AnnouncementPage,
-  IAnnouncementRepository,
-  NewAnnouncement,
-  PageRequest,
-  Priority,
-} from '../domain/IAnnouncementRepository';
+import type { IAnnouncementRepository } from '../domain/IAnnouncementRepository';
+import type { Announcement } from '../domain/Announcement';
+import type { AnnouncementPage } from '../domain/AnnouncementPage';
+import type { NewAnnouncement } from '../domain/NewAnnouncement';
+import type { PageRequest } from '@/modules/Shared/domain/PageRequest';
+import type { Priority } from '../domain/Priority';
 
 function toPriority(value: string): Priority {
   const priority = value.toLowerCase();

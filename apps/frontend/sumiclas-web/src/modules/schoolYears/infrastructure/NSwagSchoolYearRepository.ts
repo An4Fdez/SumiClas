@@ -1,6 +1,8 @@
 import { toApiDateOnly } from '@/modules/Shared/Infrastructure/apiDate';
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
-import type { NewSchoolYear, SchoolYear, ISchoolYearRepository } from '../domain/ISchoolYearRepository';
+import type { ISchoolYearRepository } from '../domain/ISchoolYearRepository';
+import type { NewSchoolYear } from '../domain/NewSchoolYear';
+import type { SchoolYear } from '../domain/SchoolYear';
 
 export class NSwagSchoolYearRepository implements ISchoolYearRepository {
   constructor(private readonly client: ApiClient) {}

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { LayoutGrid, Plus, ArrowRight } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
-import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
+import type { SchoolClass } from '@/modules/classes/domain/SchoolClass';
 
 const cardColors = ['brand', 'mint', 'rose', 'sun', 'violet', 'orange'] as const;
 type CardColor = (typeof cardColors)[number];

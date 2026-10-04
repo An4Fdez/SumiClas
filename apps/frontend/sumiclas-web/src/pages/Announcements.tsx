@@ -10,7 +10,8 @@ import { useClassAnnouncements } from '@/hooks/useClassAnnouncements';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { getApiErrorStatus } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import type { Announcement, Priority } from '@/modules/announcements/domain/IAnnouncementRepository';
+import type { Announcement } from '@/modules/announcements/domain/Announcement';
+import type { Priority } from '@/modules/announcements/domain/Priority';
 
 type ScopeFilter = 'all' | 'school' | 'class';
 type ReadFilter = 'unread' | 'read' | null;

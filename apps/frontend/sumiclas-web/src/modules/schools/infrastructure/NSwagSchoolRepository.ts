@@ -1,5 +1,7 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
-import type { NewSchool, School, ISchoolRepository } from '../domain/ISchoolRepository';
+import type { ISchoolRepository } from '../domain/ISchoolRepository';
+import type { NewSchool } from '../domain/NewSchool';
+import type { School } from '../domain/School';
 
 export class NSwagSchoolRepository implements ISchoolRepository {
   constructor(private readonly client: ApiClient) {}

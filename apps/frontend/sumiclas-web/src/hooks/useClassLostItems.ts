@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLostItemRepository } from '@/hooks/useLostItemRepository';
 import { getApiErrorMessage } from '@/lib/apiError';
-import type { LostItem } from '@/modules/lostItems/domain/ILostItemRepository';
+import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 type State =
   | { status: 'idle' }

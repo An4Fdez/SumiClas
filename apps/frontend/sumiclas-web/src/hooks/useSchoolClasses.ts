@@ -3,8 +3,8 @@ import type { WizardIds } from '@/hooks/useWizardIds';
 import { useOnboardingRepositories } from '@/hooks/useOnboardingRepositories';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { currentSchoolYear } from '@/lib/schoolYear';
-import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
-import type { SchoolYear } from '@/modules/schoolYears/domain/ISchoolYearRepository';
+import type { SchoolClass } from '@/modules/classes/domain/SchoolClass';
+import type { SchoolYear } from '@/modules/schoolYears/domain/SchoolYear';
 
 type State =
   | { status: 'loading' }

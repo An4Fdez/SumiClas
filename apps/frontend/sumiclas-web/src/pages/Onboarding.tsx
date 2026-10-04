@@ -12,8 +12,9 @@ import { useStudentRepository } from '@/hooks/useStudentRepository';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { getGuardianInfo } from '@/lib/auth';
-import type { SchoolClass } from '@/modules/classes/domain/IClassRepository';
-import type { NewSchool, School } from '@/modules/schools/domain/ISchoolRepository';
+import type { SchoolClass } from '@/modules/classes/domain/SchoolClass';
+import type { NewSchool } from '@/modules/schools/domain/NewSchool';
+import type { School } from '@/modules/schools/domain/School';
 
 const stepMeta = [
   {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAnnouncementRepository } from '@/hooks/useAnnouncementRepository';
 import { getApiErrorMessage } from '@/lib/apiError';
-import type { Announcement } from '@/modules/announcements/domain/IAnnouncementRepository';
+import type { Announcement } from '@/modules/announcements/domain/Announcement';
 
 type State =
   | { status: 'idle' }

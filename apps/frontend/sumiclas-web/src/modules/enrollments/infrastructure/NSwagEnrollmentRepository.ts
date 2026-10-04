@@ -1,5 +1,6 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
-import type { IEnrollmentRepository, NewEnrollment } from '../domain/IEnrollmentRepository';
+import type { IEnrollmentRepository } from '../domain/IEnrollmentRepository';
+import type { NewEnrollment } from '../domain/NewEnrollment';
 
 export class NSwagEnrollmentRepository implements IEnrollmentRepository {
   constructor(private readonly client: ApiClient) {}

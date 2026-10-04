@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Search, ChevronRight, Plus, ArrowRight } from 'lucide-react';
 import { useOnboardingRepositories } from '@/hooks/useOnboardingRepositories';
 import { getApiErrorMessage } from '@/lib/apiError';
-import type { NewSchool, School } from '@/modules/schools/domain/ISchoolRepository';
+import type { NewSchool } from '@/modules/schools/domain/NewSchool';
+import type { School } from '@/modules/schools/domain/School';
 
 const MAX_DROPDOWN_RESULTS = 8;
 const DEBOUNCE_MS = 300;

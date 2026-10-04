@@ -1,6 +1,7 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { Child } from '../domain/Child';
-import type { NewStudent, IStudentRepository } from '../domain/IStudentRepository';
+import type { IStudentRepository } from '../domain/IStudentRepository';
+import type { NewStudent } from '../domain/NewStudent';
 
 /** The API already sends the initial with its dot ("P."); only add it if it is missing. */
 function formatStudentName(firstName: string, surnameInitial: string): string {

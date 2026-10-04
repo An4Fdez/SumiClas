@@ -5,7 +5,7 @@ import { useUserRepository } from '@/hooks/useUserRepository';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
 import type { ClassRole } from '@/lib/roles';
 import type { Child } from '@/modules/students/domain/Child';
-import type { Profile } from '@/modules/users/domain/IUserRepository';
+import type { Profile } from '@/modules/users/domain/Profile';
 import { ChildContext, NO_CLASS_LABEL, type ChildContextValue, type ChildView } from './ChildContext';
 
 type LoadState =

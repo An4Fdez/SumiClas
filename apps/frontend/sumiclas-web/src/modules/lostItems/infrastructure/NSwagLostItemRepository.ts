@@ -1,13 +1,11 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { ClassRole } from '@/lib/roles';
-import type {
-  ILostItemRepository,
-  ItemStatus,
-  LostItem,
-  LostItemPage,
-  NewLostItem,
-  PageRequest,
-} from '../domain/ILostItemRepository';
+import type { ILostItemRepository } from '../domain/ILostItemRepository';
+import type { ItemStatus } from '../domain/ItemStatus';
+import type { LostItem } from '../domain/LostItem';
+import type { LostItemPage } from '../domain/LostItemPage';
+import type { NewLostItem } from '../domain/NewLostItem';
+import type { PageRequest } from '@/modules/Shared/domain/PageRequest';
 
 function toStatus(value: string): ItemStatus {
   return value.toLowerCase() === 'found' ? 'found' : 'lost';

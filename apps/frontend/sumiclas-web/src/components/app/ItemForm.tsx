@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
-import type { ItemStatus } from '@/modules/lostItems/domain/ILostItemRepository';
+import type { ItemStatus } from '@/modules/lostItems/domain/ItemStatus';
 
 export type NewItem = {
   status: ItemStatus;

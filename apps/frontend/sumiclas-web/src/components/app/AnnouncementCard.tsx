@@ -2,7 +2,7 @@ import { AlertCircle, ArrowUpRight, Circle } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
-import type { Announcement } from '@/modules/announcements/domain/IAnnouncementRepository';
+import type { Announcement } from '@/modules/announcements/domain/Announcement';
 
 const priorityStyle: Record<Announcement['priority'], string> = {
   high: 'ring-1 ring-rose-200 dark:ring-rose-900/50',

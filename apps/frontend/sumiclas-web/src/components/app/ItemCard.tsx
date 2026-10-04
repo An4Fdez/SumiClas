@@ -3,7 +3,7 @@ import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
-import type { LostItem } from '@/modules/lostItems/domain/ILostItemRepository';
+import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 export function ItemCard({
   item,

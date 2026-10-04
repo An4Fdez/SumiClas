@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
-import type { Priority, RelatedEvent } from '@/modules/announcements/domain/IAnnouncementRepository';
+import type { Priority } from '@/modules/announcements/domain/Priority';
+import type { RelatedEvent } from '@/modules/announcements/domain/RelatedEvent';
 import { SelectDropdown } from './SelectDropdown';
 
 const priorityOptions: { value: Priority; label: string }[] = [

@@ -1,6 +1,6 @@
 import { PackageCheck, Search, type LucideIcon } from 'lucide-react';
 import type { PaletteColor } from '@/lib/colorClasses';
-import type { ItemStatus } from '@/modules/lostItems/domain/ILostItemRepository';
+import type { ItemStatus } from '@/modules/lostItems/domain/ItemStatus';
 
 export const itemStatusMeta: Record<ItemStatus, { label: string; color: PaletteColor; icon: LucideIcon }> = {
   lost: { label: 'Busco', color: 'rose', icon: Search },

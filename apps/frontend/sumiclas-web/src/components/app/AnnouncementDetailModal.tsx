@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
-import type { Announcement } from '@/modules/announcements/domain/IAnnouncementRepository';
+import type { Announcement } from '@/modules/announcements/domain/Announcement';
 
 export function AnnouncementDetailModal({
   announcement,

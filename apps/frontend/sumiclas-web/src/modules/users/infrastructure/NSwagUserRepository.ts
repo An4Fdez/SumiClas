@@ -1,6 +1,8 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { ClassRole } from '@/lib/roles';
-import type { Profile, UserRegistration, IUserRepository } from '../domain/IUserRepository';
+import type { IUserRepository } from '../domain/IUserRepository';
+import type { Profile } from '../domain/Profile';
+import type { UserRegistration } from '../domain/UserRegistration';
 
 function toClassRole(role: string): ClassRole {
   return role.toLowerCase() === 'classrepresentative' ? 'classRepresentative' : 'participant';
