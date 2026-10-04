@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { RequireSession } from '@/components/layout/RequireSession';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -25,18 +26,22 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route element={<RequireSession />}>
+          <Route path="/onboarding" element={<Onboarding />} />
+        </Route>
       </Route>
 
-      <Route element={<AppLayout />}>
-        <Route path="/home" element={<Dashboard />} />
-        <Route path="/announcements" element={<Announcements />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/homework" element={<Homework />} />
-        <Route path="/expenses" element={<Expenses />} />
-        <Route path="/lost-and-found" element={<LostAndFound />} />
-        <Route path="/more" element={<More />} />
-        <Route path="/more/class-role" element={<MyClassRole />} />
+      <Route element={<RequireSession />}>
+        <Route element={<AppLayout />}>
+          <Route path="/home" element={<Dashboard />} />
+          <Route path="/announcements" element={<Announcements />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/homework" element={<Homework />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/lost-and-found" element={<LostAndFound />} />
+          <Route path="/more" element={<More />} />
+          <Route path="/more/class-role" element={<MyClassRole />} />
+        </Route>
       </Route>
     </Routes>
   );

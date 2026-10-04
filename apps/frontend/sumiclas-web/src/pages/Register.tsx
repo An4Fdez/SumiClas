@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, UserRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { setAuthenticated, setGuardianInfo, type GuardianRole } from '@/lib/auth';
+import { setGuardianInfo, setUserId, type GuardianRole } from '@/lib/auth';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { useUserRepository } from '@/hooks/useUserRepository';
 import { isValidEmail, isPasswordPwned, MIN_PASSWORD_LENGTH, RECOMMENDED_PASSWORD_LENGTH } from '@/lib/validation';
 
 const roleOptions: { value: GuardianRole; label: string }[] = [
@@ -13,6 +15,7 @@ const roleOptions: { value: GuardianRole; label: string }[] = [
 
 export default function Register() {
   const navigate = useNavigate();
+  const userRepository = useUserRepository();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,6 +27,8 @@ export default function Register() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [checking, setChecking] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const emailValid = isValidEmail(email);
   const lengthOk = password.length >= MIN_PASSWORD_LENGTH;
@@ -57,9 +62,24 @@ export default function Register() {
     }
 
     setErrors({});
+    setSubmitError(null);
+    setSubmitting(true);
+    const userId = crypto.randomUUID();
+    try {
+      await userRepository.register({
+        id: userId,
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        email: email.trim(),
+      });
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error));
+      setSubmitting(false);
+      return;
+    }
+
     const firstLastName = lastName.trim().split(/\s+/)[0] ?? '';
+    setUserId(userId);
     setGuardianInfo({ name: `${firstName.trim()} ${firstLastName}`.trim(), role: role as GuardianRole });
-    setAuthenticated(true);
     navigate('/onboarding');
   };
 
@@ -266,13 +286,22 @@ export default function Register() {
               {errors.terms && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.terms}</p>}
             </div>
 
+            {submitError && (
+              <p
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300"
+              >
+                {submitError}
+              </p>
+            )}
+
             <button
               type="submit"
-              disabled={checking}
+              disabled={checking || submitting}
               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
             >
-              {checking ? 'Comprobando contraseña…' : 'Crear cuenta'}
-              {!checking && <ArrowRight className="h-4 w-4" />}
+              {checking ? 'Comprobando contraseña…' : submitting ? 'Creando tu cuenta…' : 'Crear cuenta'}
+              {!checking && !submitting && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 

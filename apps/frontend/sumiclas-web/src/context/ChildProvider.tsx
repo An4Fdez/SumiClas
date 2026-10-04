@@ -1,72 +1,84 @@
-import { useState, type ReactNode } from 'react';
-import {
-  childrenMock,
-  summaryByChild,
-  classRoleByChild as classRoleByChildMock,
-  otherGuardiansByChild as otherGuardiansByChildMock,
-  type OtherGuardian,
-} from '@/data/appMock';
-import { ChildContext, type ChildContextValue } from './ChildContext';
-import { canManageClassRepresentatives, MAX_CLASS_REPRESENTATIVES, type ClassRole } from '@/lib/roles';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { DashboardSummary } from '@/data/appMock';
+import { useStudentRepository } from '@/hooks/useStudentRepository';
+import { useUserRepository } from '@/hooks/useUserRepository';
+import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
+import type { ClassRole } from '@/lib/roles';
+import type { Child } from '@/modules/students/domain/Child';
+import type { Profile } from '@/modules/users/domain/UserRepository';
+import { ChildContext, NO_CLASS_LABEL, type ChildContextValue, type ChildView } from './ChildContext';
+
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'ready'; students: Child[]; profile: Profile }
+  | { status: 'error'; message: string; httpStatus: number | undefined };
+
+/** The API has no dashboard summary yet (T4), so every counter starts empty. */
+const EMPTY_SUMMARY: DashboardSummary = {
+  announcements: { new: 0, urgent: false },
+  calendar: { next: null, daysUntil: null },
+  homework: { pending: 0, nextDueDate: null },
+  expenses: { pending: false },
+  lostAndFound: { hasUpdates: false },
+};
+
+const noop = () => {};
+
+function toView(child: Child): ChildView {
+  return {
+    ...child,
+    className: child.className ?? NO_CLASS_LABEL,
+    schoolName: child.schoolName ?? '',
+  };
+}
 
 export function ChildProvider({ children }: { children: ReactNode }) {
-  const [currentChildId, setCurrentChildId] = useState(childrenMock[0]?.id ?? '');
-  const [classRoleByChild, setClassRoleByChild] = useState<Record<string, ClassRole>>(classRoleByChildMock);
-  const [otherGuardiansByChild, setOtherGuardiansByChild] = useState<Record<string, OtherGuardian[]>>(
-    otherGuardiansByChildMock
-  );
+  const studentRepository = useStudentRepository();
+  const userRepository = useUserRepository();
+  const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const [reloadKey, setReloadKey] = useState(0);
+  const [selectedChildId, setSelectedChildId] = useState('');
 
-  const currentChild = childrenMock.find((c) => c.id === currentChildId);
-  const currentRole = classRoleByChild[currentChildId] ?? null;
-  const otherGuardians = otherGuardiansByChild[currentChildId] ?? [];
+  useEffect(() => {
+    let cancelled = false;
+    setState({ status: 'loading' });
+    Promise.all([studentRepository.listMine(), userRepository.getCurrent()])
+      .then(([students, profile]) => {
+        if (!cancelled) setState({ status: 'ready', students, profile });
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setState({ status: 'error', message: getApiErrorMessage(error), httpStatus: getApiErrorStatus(error) });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [studentRepository, userRepository, reloadKey]);
 
-  const transferClassRepresentative = (guardianId: string) => {
-    if (classRoleByChild[currentChildId] !== 'classRepresentative') return;
-    setClassRoleByChild((prev) => ({ ...prev, [currentChildId]: 'participant' }));
-    setOtherGuardiansByChild((prev) => ({
-      ...prev,
-      [currentChildId]: (prev[currentChildId] ?? []).map((g) =>
-        g.id === guardianId ? { ...g, role: 'classRepresentative' } : g
-      ),
-    }));
-  };
+  const childViews = useMemo(() => (state.status === 'ready' ? state.students.map(toView) : []), [state]);
+  const currentChild = childViews.find((c) => c.id === selectedChildId) ?? childViews[0];
 
-  const resignClassRepresentative = () => {
-    const guardians = otherGuardiansByChild[currentChildId] ?? [];
-    const otherRepresentatives = guardians.filter((g) => g.role === 'classRepresentative').length;
-    if (classRoleByChild[currentChildId] !== 'classRepresentative' || otherRepresentatives < 1) return;
-    setClassRoleByChild((prev) => ({ ...prev, [currentChildId]: 'participant' }));
-  };
-
-  const assignClassRepresentative = (guardianId: string) => {
-    const guardians = otherGuardiansByChild[currentChildId] ?? [];
-    const representativeCount =
-      guardians.filter((g) => g.role === 'classRepresentative').length +
-      (classRoleByChild[currentChildId] === 'classRepresentative' ? 1 : 0);
-    if (
-      !canManageClassRepresentatives(classRoleByChild[currentChildId] ?? null) ||
-      representativeCount >= MAX_CLASS_REPRESENTATIVES
-    )
-      return;
-    setOtherGuardiansByChild((prev) => ({
-      ...prev,
-      [currentChildId]: (prev[currentChildId] ?? []).map((g) =>
-        g.id === guardianId ? { ...g, role: 'classRepresentative' } : g
-      ),
-    }));
-  };
+  let currentRole: ClassRole | null = null;
+  if (state.status === 'ready' && currentChild?.classId) {
+    currentRole = state.profile.classRoles.find((r) => r.classId === currentChild.classId)?.role ?? 'participant';
+  }
 
   const value: ChildContextValue = {
-    children: childrenMock,
-    currentChildId,
-    setCurrentChildId,
+    children: childViews,
+    loading: state.status === 'loading',
+    error: state.status === 'error' ? state.message : null,
+    errorStatus: state.status === 'error' ? state.httpStatus : undefined,
+    reload: () => setReloadKey((k) => k + 1),
+    currentChildId: currentChild?.id ?? '',
+    setCurrentChildId: setSelectedChildId,
     currentChild,
-    currentSummary: currentChild ? summaryByChild[currentChild.id] : undefined,
+    currentSummary: currentChild ? EMPTY_SUMMARY : undefined,
     currentRole,
-    otherGuardians,
-    transferClassRepresentative,
-    assignClassRepresentative,
-    resignClassRepresentative,
+    otherGuardians: [],
+    transferClassRepresentative: noop,
+    assignClassRepresentative: noop,
+    resignClassRepresentative: noop,
   };
 
   return <ChildContext.Provider value={value}>{children}</ChildContext.Provider>;

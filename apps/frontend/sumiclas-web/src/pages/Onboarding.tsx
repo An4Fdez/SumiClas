@@ -7,7 +7,6 @@ import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';
 import { StudentStep } from '@/components/onboarding/StudentStep';
 import { schoolsMock, schoolClassesMock, registeredStudentsMock, type School, type SchoolClass } from '@/data/onboardingMock';
-import { setAuthenticated } from '@/lib/auth';
 
 const stepMeta = [
   {
@@ -75,9 +74,6 @@ export default function Onboarding() {
     lastName: string;
     joinAsSecondGuardian: boolean;
   }) => {
-    // Already authenticated with the guardian's data saved from /register; this is
-    // defensive in case this is reached with a session already started (e.g. from the landing page).
-    setAuthenticated(true);
     navigate('/home', {
       state: {
         school: school?.name,

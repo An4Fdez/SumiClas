@@ -1,6 +1,6 @@
-const AUTH_KEY = 'sumiclas-auth';
 const GUARDIAN_KEY = 'sumiclas-guardian';
 const USER_ID_KEY = 'sumiclas-user-id';
+const LEGACY_AUTH_KEY = 'sumiclas-auth';
 
 export type GuardianRole = 'father' | 'mother' | 'guardian';
 
@@ -26,26 +26,18 @@ export function setUserId(id: string) {
   }
 }
 
-/** Backend-less prototype: the session is simulated with a flag in localStorage. */
+/** A session exists while a user id is stored. */
 export function isAuthenticated(): boolean {
-  try {
-    return localStorage.getItem(AUTH_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return getUserId() !== null;
 }
 
-export function setAuthenticated(value: boolean) {
+export function clearSession() {
   try {
-    if (value) {
-      localStorage.setItem(AUTH_KEY, 'true');
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-      localStorage.removeItem(USER_ID_KEY);
-      localStorage.removeItem(GUARDIAN_KEY);
-    }
+    localStorage.removeItem(USER_ID_KEY);
+    localStorage.removeItem(GUARDIAN_KEY);
+    localStorage.removeItem(LEGACY_AUTH_KEY);
   } catch {
-    // localStorage unavailable (private mode, etc.) — ignored
+    // localStorage unavailable — ignored
   }
 }
 

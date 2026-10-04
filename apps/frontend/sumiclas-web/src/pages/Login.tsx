@@ -1,17 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Link, Navigate } from 'react-router-dom';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Info } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { setAuthenticated } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
 
 export default function Login() {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
+  if (isAuthenticated()) return <Navigate to="/home" replace />;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setAuthenticated(true);
-    navigate('/home');
   };
 
   return (
@@ -43,7 +42,22 @@ export default function Login() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          <div
+            role="status"
+            className="mt-6 flex items-start gap-2.5 rounded-xl border border-sun-200 bg-sun-50 px-3.5 py-3 text-sm text-sun-900 dark:border-sun-700/40 dark:bg-sun-900/20 dark:text-sun-100"
+          >
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              El inicio de sesión estará disponible cuando se active la autenticación. Mientras tanto, las cuentas se
+              crean desde{' '}
+              <Link to="/register" className="font-semibold underline underline-offset-2">
+                Registro
+              </Link>
+              .
+            </p>
+          </div>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div>
               <label
                 htmlFor="email"
@@ -57,7 +71,7 @@ export default function Login() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  required
+                  disabled
                   placeholder="tu@email.com"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
@@ -85,7 +99,7 @@ export default function Login() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  required
+                  disabled
                   placeholder="••••••••"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
@@ -102,7 +116,8 @@ export default function Login() {
 
             <button
               type="submit"
-              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-transform hover:scale-[1.02] active:scale-95"
+              disabled
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
               Iniciar sesión
               <ArrowRight className="h-4 w-4" />

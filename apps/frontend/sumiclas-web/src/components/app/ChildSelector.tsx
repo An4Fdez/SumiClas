@@ -4,6 +4,10 @@ import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { roleMeta } from '@/lib/roles';
 
+function placeLabel(schoolName: string, className: string) {
+  return [schoolName, className].filter(Boolean).join(', ');
+}
+
 function Avatar({ name }: { name: string }) {
   return (
     <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-400 via-mint-400 to-rose-400 font-display text-xs font-bold text-white">
@@ -35,7 +39,7 @@ export function ChildSelector() {
       Viendo:{' '}
       <span className="font-semibold text-slate-900 dark:text-white">{currentChild.studentName}</span>
       {' — '}
-      {currentChild.schoolName}, {currentChild.className}
+      {placeLabel(currentChild.schoolName, currentChild.className)}
     </span>
   );
 
@@ -88,7 +92,7 @@ export function ChildSelector() {
                   {c.studentName}
                 </span>
                 <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                  {c.schoolName}, {c.className}
+                  {placeLabel(c.schoolName, c.className)}
                 </span>
               </span>
             </button>

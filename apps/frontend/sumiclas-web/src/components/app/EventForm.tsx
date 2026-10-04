@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
-import type { Child } from '@/data/appMock';
+import type { ChildView } from '@/context/ChildContext';
 import { monthNames } from '@/lib/date';
 import { eventTypeMeta, type EventType } from '@/data/calendarMock';
 import { SelectDropdown } from './SelectDropdown';
@@ -50,7 +50,7 @@ export function EventForm({
 }: {
   canPublishOfficial: boolean;
   className: string;
-  availableChildren: Child[];
+  availableChildren: ChildView[];
   initialChildId: string;
   onSubmit: (data: NewEvent) => void;
   onClose: () => void;

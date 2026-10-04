@@ -3,14 +3,20 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { ApiClientProvider } from '@/context/ApiClientProvider';
+import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
+import { UserRepositoryProvider } from '@/context/UserRepositoryProvider';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ApiClientProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <UserRepositoryProvider>
+        <StudentRepositoryProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </StudentRepositoryProvider>
+      </UserRepositoryProvider>
     </ApiClientProvider>
   </StrictMode>
 );
