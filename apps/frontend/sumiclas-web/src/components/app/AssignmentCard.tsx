@@ -1,24 +1,23 @@
 import { Check, MessageCircle } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { formatRelativeDate } from '@/lib/date';
-import type { SubjectInfo, Assignment } from '@/data/homeworkMock';
+import { formatDueDate } from '@/lib/date';
+import { roleLabel } from '@/lib/roles';
+import { subjectColor } from '@/lib/subjectColor';
+import type { Assignment } from '@/modules/assignments/domain/Assignment';
 
 export function AssignmentCard({
   assignment,
-  subject,
   done,
-  commentCount,
   onOpen,
   onToggleDone,
 }: {
   assignment: Assignment;
-  subject: SubjectInfo;
   done: boolean;
-  commentCount: number;
   onOpen: () => void;
   onToggleDone: () => void;
 }) {
-  const c = badgeColorClasses[subject.color];
+  const c = badgeColorClasses[subjectColor(assignment.subjectId)];
+  const commentCount = assignment.comments.length;
 
   return (
     <div
@@ -46,7 +45,7 @@ export function AssignmentCard({
       <button type="button" onClick={onOpen} className="w-full p-4 pr-11 text-left">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${c.bg} ${c.text}`}>
-            {subject.label}
+            {assignment.subjectLabel}
           </span>
           {assignment.isProposal && (
             <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
@@ -65,7 +64,7 @@ export function AssignmentCard({
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            {assignment.authorName} · {assignment.authorRole}
+            {[assignment.authorName, roleLabel(assignment.authorRole)].filter(Boolean).join(' · ')}
           </span>
           <span className="flex items-center gap-2">
             {commentCount > 0 && (
@@ -74,7 +73,7 @@ export function AssignmentCard({
                 {commentCount}
               </span>
             )}
-            {formatRelativeDate(assignment.dueDate)}
+            {formatDueDate(assignment.dueDate)}
           </span>
         </div>
       </button>

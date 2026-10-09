@@ -1,36 +1,46 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { Check, Send, X } from 'lucide-react';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatFullDay, formatRelativeDate } from '@/lib/date';
-import type { SubjectInfo, AssignmentComment, Assignment } from '@/data/homeworkMock';
+import { roleLabel } from '@/lib/roles';
+import { subjectColor } from '@/lib/subjectColor';
+import type { Assignment } from '@/modules/assignments/domain/Assignment';
 
 export function AssignmentDetailModal({
   assignment,
-  subject,
-  comments,
   done,
   onToggleDone,
   onAddComment,
   onClose,
 }: {
   assignment: Assignment;
-  subject: SubjectInfo;
-  comments: AssignmentComment[];
   done: boolean;
   onToggleDone: () => void;
-  onAddComment: (text: string) => void;
+  onAddComment: (text: string) => Promise<void>;
   onClose: () => void;
 }) {
-  const c = badgeColorClasses[subject.color];
+  const c = badgeColorClasses[subjectColor(assignment.subjectId)];
+  const comments = assignment.comments;
   const mouseDownOnBackdrop = useRef(false);
   const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const clean = text.trim();
-    if (!clean) return;
-    onAddComment(clean);
-    setText('');
+    if (!clean || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      await onAddComment(clean);
+      setText('');
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -51,7 +61,7 @@ export function AssignmentDetailModal({
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${c.bg} ${c.text}`}>
-                {subject.label}
+                {assignment.subjectLabel}
               </span>
               {assignment.isProposal && (
                 <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
@@ -71,7 +81,7 @@ export function AssignmentDetailModal({
 
           <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{assignment.title}</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {assignment.authorName} · {assignment.authorRole} · Entrega: {formatFullDay(new Date(assignment.dueDate))}
+            {[assignment.authorName, roleLabel(assignment.authorRole)].filter(Boolean).join(' · ')} · Entrega: {formatFullDay(assignment.dueDate)}
           </p>
 
           {assignment.description && (
@@ -102,7 +112,7 @@ export function AssignmentDetailModal({
                 {comments.map((com) => (
                   <div key={com.id} className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {com.authorName} · {com.authorRole} · {formatRelativeDate(com.date)}
+                      {[com.authorName, roleLabel(com.authorRole)].filter(Boolean).join(' · ')} · {formatRelativeDate(com.createdAt)}
                     </p>
                     <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{com.text}</p>
                   </div>
@@ -112,6 +122,11 @@ export function AssignmentDetailModal({
           </div>
         </div>
 
+        {error && (
+          <p role="alert" className="border-t border-slate-200 px-4 pt-2 text-xs font-semibold text-rose-600 dark:border-slate-700 dark:text-rose-400">
+            {error}
+          </p>
+        )}
         <form
           onSubmit={handleSubmit}
           className="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-slate-700"
@@ -125,7 +140,7 @@ export function AssignmentDetailModal({
           />
           <button
             type="submit"
-            disabled={!text.trim()}
+            disabled={!text.trim() || sending}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Enviar comentario"
           >

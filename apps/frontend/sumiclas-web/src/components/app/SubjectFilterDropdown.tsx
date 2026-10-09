@@ -1,13 +1,13 @@
 import { useState, type FocusEvent } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import type { SubjectInfo } from '@/data/homeworkMock';
+import type { Subject } from '@/modules/subjects/domain/Subject';
 
 export function SubjectFilterDropdown({
   subjects,
   selected,
   onChange,
 }: {
-  subjects: SubjectInfo[];
+  subjects: Subject[];
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
 }) {

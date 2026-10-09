@@ -143,3 +143,30 @@ export function formatFullDay(date: Date): string {
   const text = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+function daysFromToday(date: Date): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  return Math.round((day.getTime() - today.getTime()) / 86_400_000);
+}
+
+/** Short label of a day-granular date (due dates have no time): Hoy, Mañana, Ayer or "5 oct". */
+export function formatDueDate(date: Date): string {
+  const diff = daysFromToday(date);
+  if (diff === 0) return 'Hoy';
+  if (diff === 1) return 'Mañana';
+  if (diff === -1) return 'Ayer';
+  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+/** Heading of a day group: Hoy, Mañana, Ayer, "Atrasado · <day>" or the full day. */
+export function formatDayHeading(date: Date): string {
+  const diff = daysFromToday(date);
+  if (diff === 0) return 'Hoy';
+  if (diff === 1) return 'Mañana';
+  if (diff === -1) return 'Ayer';
+  if (diff < 0) return `Atrasado · ${formatFullDay(date)}`;
+  return formatFullDay(date);
+}
