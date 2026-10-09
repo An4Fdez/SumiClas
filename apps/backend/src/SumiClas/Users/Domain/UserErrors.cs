@@ -15,5 +15,6 @@ public static class UserErrors
     public static readonly Error AssignForbidden = new("User.AssignForbidden", "Solo un delegado de la clase puede asignar el rol de delegado.");
     public static readonly Error ClassRepresentativeAlreadyExists = new("User.ClassRepresentativeAlreadyExists", "Esta clase ya tiene delegado.");
     public static readonly Error LastClassRepresentativeCannotResign = new("User.LastClassRepresentativeCannotResign", "El último delegado no puede renunciar: antes hay que asignar a otro.");
+    public static readonly Error ClassMembersForbidden = new("User.ClassMembersForbidden", "Solo los miembros de la clase pueden ver quién forma parte de ella.");
     public static readonly Error MaxClassRepresentativesReached = new("User.MaxClassRepresentativesReached", "Esta clase ya tiene el número máximo de delegados.");
 }

@@ -72,5 +72,14 @@ public sealed class UsersEndpoints : IEndpoints
             .WithName("StudentFinderByCurrentGuardian")
             .Produces<IReadOnlyCollection<ChildResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        app.MapGet("/classes/{classId:guid}/members", async (Guid classId, ISender sender, CancellationToken ct) =>
+            (await sender.Send(new UserClassMemberFinderByClass.Query(classId), ct)).ToOk())
+            .WithTags("Users")
+            .WithName("UserClassMemberFinderByClass")
+            .Produces<IReadOnlyCollection<UserClassMemberResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }
