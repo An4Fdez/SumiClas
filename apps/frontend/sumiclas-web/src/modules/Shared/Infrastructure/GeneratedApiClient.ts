@@ -26,6 +26,11 @@ export interface IGeneratedApiClient {
     enrollmentSuggestedCreate(classId: string, body: EnrollmentSuggestedCreateRequest): Promise<EnrollmentSuggestedCreateResponse>;
 
     /**
+     * @return OK
+     */
+    userClassMemberFinderByClass(classId: string): Promise<UserClassMemberResponse[]>;
+
+    /**
      * @return Created
      */
     announcementCreate(body: AnnouncementCreateRequest): Promise<void>;
@@ -309,6 +314,65 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             });
         }
         return Promise.resolve<EnrollmentSuggestedCreateResponse>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    userClassMemberFinderByClass(classId: string): Promise<UserClassMemberResponse[]> {
+        let url_ = this.baseUrl + "/classes/{classId}/members";
+        if (classId === undefined || classId === null)
+            throw new globalThis.Error("The parameter 'classId' must be defined.");
+        url_ = url_.replace("{classId}", encodeURIComponent("" + classId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserClassMemberFinderByClass(_response));
+        });
+    }
+
+    protected processUserClassMemberFinderByClass(response: Response): Promise<UserClassMemberResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserClassMemberResponse[];
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserClassMemberResponse[]>(null as any);
     }
 
     /**
@@ -2809,6 +2873,14 @@ export interface SubjectResponse {
     id: string;
     classId: string;
     label: string;
+
+    [key: string]: any;
+}
+
+export interface UserClassMemberResponse {
+    userId: string;
+    fullName: string;
+    classRole: string | undefined;
 
     [key: string]: any;
 }

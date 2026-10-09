@@ -22,12 +22,12 @@ Replace the mocks of `apps/frontend/sumiclas-web` with the real backend API, in 
   - [x] T4.2 Lost and found (list with cursor pagination, recovered mark/unmark, create as class scope; photo upload is a known gap and the photo field is hidden). Verified 41/41 on the real stack.
   - [x] T4.3 Calendar (month/day/year model replaces the 1900 birthday sentinel; one-off class events and recurring birthdays; re-enables the related-event selector of T4.1). Verified 49/49 on the real stack.
   - [x] T4.4 Homework (list with cursor pagination by due date, subjects per class created by the delegate, official assignments vs proposals decided by the server, comments with optimistic append, device-only "hecho"; no approve endpoint). Verified 52/52 on the real stack.
-  - [ ] T4.5 Expenses (blocked by the missing class-members endpoint).
-  - [ ] T4.6 Class role page (same blocker).
+  - [ ] T4.5 Expenses (unblocked: `GET /classes/{classId}/members` now exists in the backend; the frontend still has to call it through the regenerated client).
+  - [ ] T4.6 Class role page (unblocked by the same endpoint; assign/resign already exist in the client).
   - [ ] T4.7 Dashboard (no API: derive from the lists or keep it provisional).
 
 ## Known gaps (not solved by this feature)
-- No endpoint to list class members (blocks expense participants and the class role page).
+- RESOLVED in the backend: `GET /classes/{classId}/members` (client method `userClassMemberFinderByClass`, already in the regenerated `GeneratedApiClient.ts`; returns `{userId, fullName, classRole}`; the requester must be a member of the class, otherwise 403; verified 18/18 on the real stack). The frontend does not call it yet: that is T4.5 and T4.6.
 - No photo upload for lost items (the UI uses device-local `blob:` URLs).
 - No dashboard summary, no school city, no teacher/AMPA roles.
 - Creates return no body and ids are client-generated; the client must keep the ids it needs later (the wizard keeps them in `useWizardIds`). `enrollmentCreate` already creates a Confirmed enrollment, so there is no confirm step.
@@ -96,7 +96,7 @@ Replace the mocks of `apps/frontend/sumiclas-web` with the real backend API, in 
 - Still mock after T4.4: expenses (`calendarMock.ts` kept for them), the dashboard summary (`currentSummary` zeros), `otherGuardians` and the representative actions.
 
 ## Next step
-T4.5 (expenses) and T4.6 (class-role page) are blocked by the missing class-members endpoint: cover it in the backend first (a read use case that lists a class's members with name and role only, never data of minors). T4.7 (dashboard) has no API.
+T4.5 (expenses) and T4.6 (class-role page) were blocked by the missing class-members endpoint, now available in the backend (commit 526d221, `GET /classes/{classId}/members`: user id, full name and role only, never data of minors; only a member can call it) and in the regenerated client (`userClassMemberFinderByClass`). Next: build T4.5 and T4.6 on it in the frontend, using the repository pattern. T4.7 (dashboard) has no API. Known limit: the members list has no pagination (see `odd/tasks/class-members-endpoint.md`).
 
 ## Review follow-ups (non-blocking findings from the native reviews, NOT done yet)
 Source: the advisory findings of the approved reviews of commits 3f6c3ff, 17b62a4, 17b38cd, 02e5e80, f2d166c and 5ede840. None blocked a commit; fix them in a dedicated pass (or when the code is touched again). Do not re-review old commits for them.
@@ -120,7 +120,7 @@ Backend gaps seen from the frontend
 - Repeating the id of an already saved lost item (lost response and retry) answers 500 instead of 409 (verified in T4.2); other client-generated-id creates probably do the same.
 - Two schools with the same official code or name are accepted and the wizard does not warn.
 - It is not known which backend rule returns the 409 for a repeated class id (no duplicate check found in the `Classes` module); class names are not validated for duplicates within a school year.
-- No endpoint lists the members of a class (blocks T4.5 expenses and T4.6 class-role page) or the students of a class (blocks "join as second guardian").
+- The class-members endpoint now exists (see above); still no endpoint lists the students of a class (blocks "join as second guardian").
 
 Tests
 - The frontend has no tests (`apps/test/frontend` does not exist). Candidates, by value: `currentSchoolYear` boundaries, `getApiErrorMessage` priority, role/name mapping in the repositories, the wizard id take/consume policy, `RequireSession`, pagination with de-duplication and the stale-class guard, the optimistic mark-as-read that reverts on failure.
