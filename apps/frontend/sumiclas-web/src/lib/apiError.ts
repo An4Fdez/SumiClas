@@ -6,6 +6,8 @@ type ApiErrorShape = {
 
 const MESSAGE_BY_CODE: Record<string, string> = {
   'User.EmailAlreadyRegistered': 'Ya existe una cuenta con este correo electrónico.',
+  'Authentication.InvalidCredentials': 'Correo o contraseña incorrectos.',
+  'Authentication.PasswordTooWeak': 'La contraseña no cumple los requisitos: debe tener entre 8 y 128 caracteres.',
   'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Vuelve a crear tu cuenta.',
   'Enrollment.AlreadyExists': 'Tu hijo/a ya está matriculado/a en una clase de este curso.',
   'User.NotFound': 'No encontramos tu cuenta. Vuelve a crear tu cuenta.',
@@ -22,6 +24,7 @@ const MESSAGE_BY_STATUS: Record<number, string> = {
   403: 'No tienes permiso para hacer esto.',
   404: 'No hemos encontrado lo que buscas.',
   409: 'Esta operación entra en conflicto con datos que ya existen.',
+  429: 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',
 };
 
 const NETWORK_MESSAGE = 'No hemos podido conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.';

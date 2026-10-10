@@ -1,16 +1,47 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, Info } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { isAuthenticated } from '@/lib/auth';
+import { useAuthenticationRepository } from '@/hooks/useAuthenticationRepository';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { isAuthenticated, setGuardianInfo, setUserId } from '@/lib/auth';
+import { isValidEmail } from '@/lib/validation';
+
+// The login response only has the full name: show the first two words (name and first surname), like Register.
+function displayName(fullName: string) {
+  return fullName.trim().split(/\s+/).slice(0, 2).join(' ');
+}
 
 export default function Login() {
+  const navigate = useNavigate();
+  const authentication = useAuthenticationRepository();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (isAuthenticated()) return <Navigate to="/home" replace />;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    if (!isValidEmail(email) || !password) {
+      setError('Introduce tu correo electrónico y tu contraseña.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const account = await authentication.login({ email: email.trim(), password });
+      setUserId(account.userId);
+      // The role is only asked at sign-up and the API does not return it: fall back to the generic one.
+      setGuardianInfo({ name: displayName(account.fullName), role: 'guardian' });
+      navigate('/home');
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -42,22 +73,7 @@ export default function Login() {
             </p>
           </div>
 
-          <div
-            role="status"
-            className="mt-6 flex items-start gap-2.5 rounded-xl border border-sun-200 bg-sun-50 px-3.5 py-3 text-sm text-sun-900 dark:border-sun-700/40 dark:bg-sun-900/20 dark:text-sun-100"
-          >
-            <Info className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              El inicio de sesión estará disponible cuando se active la autenticación. Mientras tanto, las cuentas se
-              crean desde{' '}
-              <Link to="/register" className="font-semibold underline underline-offset-2">
-                Registro
-              </Link>
-              .
-            </p>
-          </div>
-
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
             <div>
               <label
                 htmlFor="email"
@@ -71,7 +87,8 @@ export default function Login() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  disabled
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
@@ -99,7 +116,8 @@ export default function Login() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  disabled
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
@@ -114,13 +132,22 @@ export default function Login() {
               </div>
             </div>
 
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300"
+              >
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              disabled
-              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+              disabled={submitting}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
             >
-              Iniciar sesión
-              <ArrowRight className="h-4 w-4" />
+              {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
+              {!submitting && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 
