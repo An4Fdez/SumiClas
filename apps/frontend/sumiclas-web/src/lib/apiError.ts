@@ -9,6 +9,11 @@ const MESSAGE_BY_CODE: Record<string, string> = {
   'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Vuelve a crear tu cuenta.',
   'Enrollment.AlreadyExists': 'Tu hijo/a ya está matriculado/a en una clase de este curso.',
   'User.NotFound': 'No encontramos tu cuenta. Vuelve a crear tu cuenta.',
+  'User.AssignForbidden': 'Solo un delegado/a de la clase puede nombrar a otro delegado/a.',
+  'User.MaxClassRepresentativesReached': 'La clase ya tiene el máximo de 3 delegados.',
+  'User.LastClassRepresentativeCannotResign': 'Eres el único delegado/a de la clase: nombra antes a otra persona.',
+  'User.NotClassRepresentative': 'Esa persona no es delegado/a de esta clase.',
+  'User.ClassMembersForbidden': 'Solo las familias de esta clase pueden ver quién forma parte de ella.',
 };
 
 const MESSAGE_BY_STATUS: Record<number, string> = {

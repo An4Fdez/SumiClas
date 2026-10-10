@@ -37,4 +37,12 @@ export class NSwagUserRepository implements IUserRepository {
       role: parseClassRole(member.classRole),
     }));
   }
+
+  async assignClassRepresentative(userId: string, classId: string): Promise<void> {
+    await this.client.userClassRepresentativeAssign(userId, classId);
+  }
+
+  async resignClassRepresentative(classId: string): Promise<void> {
+    await this.client.userClassRepresentativeResign(classId);
+  }
 }

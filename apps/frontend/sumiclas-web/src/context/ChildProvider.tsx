@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { DashboardSummary } from '@/data/appMock';
 import { useStudentRepository } from '@/hooks/useStudentRepository';
 import { useUserRepository } from '@/hooks/useUserRepository';
@@ -56,6 +56,15 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     };
   }, [studentRepository, userRepository, reloadKey]);
 
+  const refresh = useCallback(async () => {
+    try {
+      const [students, profile] = await Promise.all([studentRepository.listMine(), userRepository.getCurrent()]);
+      setState((previous) => (previous.status === 'ready' ? { status: 'ready', students, profile } : previous));
+    } catch {
+      // A failed silent refresh keeps the data already on screen.
+    }
+  }, [studentRepository, userRepository]);
+
   const childViews = useMemo(() => (state.status === 'ready' ? state.students.map(toView) : []), [state]);
   const currentChild = childViews.find((c) => c.id === selectedChildId) ?? childViews[0];
 
@@ -70,6 +79,7 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     error: state.status === 'error' ? state.message : null,
     errorStatus: state.status === 'error' ? state.httpStatus : undefined,
     reload: () => setReloadKey((k) => k + 1),
+    refresh,
     currentChildId: currentChild?.id ?? '',
     setCurrentChildId: setSelectedChildId,
     currentChild,

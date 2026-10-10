@@ -17,6 +17,7 @@ export type ChildContextValue = {
   error: string | null;
   errorStatus: number | undefined;
   reload: () => void;
+  refresh: () => Promise<void>;
   currentChildId: string;
   setCurrentChildId: (id: string) => void;
   currentChild: ChildView | undefined;
