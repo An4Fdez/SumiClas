@@ -101,6 +101,28 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("Assignments", (string)null);
                 });
 
+            modelBuilder.Entity("SumiClas.Authentication.Domain.UserCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserCredentials", (string)null);
+                });
+
             modelBuilder.Entity("SumiClas.CalendarEvents.Domain.CalendarEvent", b =>
                 {
                     b.Property<Guid>("Id")
