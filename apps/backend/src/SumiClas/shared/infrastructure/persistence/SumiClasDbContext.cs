@@ -5,7 +5,10 @@ using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Domain;
 using SumiClas.ClassExpenses.Domain;
 using SumiClas.Enrollments.Domain;
+using SumiClas.Localities.Domain;
 using SumiClas.LostItems.Domain;
+using SumiClas.PostalCodes.Domain;
+using SumiClas.Provinces.Domain;
 using SumiClas.Schools.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.SchoolYears.Domain;
@@ -21,6 +24,9 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
     {
     }
 
+    public DbSet<Province> Provinces => Set<Province>();
+    public DbSet<Locality> Localities => Set<Locality>();
+    public DbSet<PostalCode> PostalCodes => Set<PostalCode>();
     public DbSet<School> Schools => Set<School>();
     public DbSet<SchoolYear> SchoolYears => Set<SchoolYear>();
     public DbSet<Class> Classes => Set<Class>();
