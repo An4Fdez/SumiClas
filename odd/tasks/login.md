@@ -17,8 +17,8 @@ Real email + password sign-up and login, with credentials in a separate `Authent
 ## Tasks
 - [x] T1 (done, not committed yet) Domain + port + hasher + persistence + migration `Authentication` (UserCredential, AuthenticationErrors additions, IPasswordHasher, PasswordHasher<T> implementation with Microsoft.Extensions.Identity.Core, UserCredentialConfiguration, repository, tests).
 - [x] T2 (done, not committed yet) `UserCredentialCreatedDomainEvent`, handler in Users, `AccountRegister` (`POST /auth/register`), `AccountLogin` (`POST /auth/login`), `UserFinderByEmail`, endpoints, rate limiter, remove `POST /users` and `UserRegister`, tests.
-- [ ] T3 Regenerate NSwag client + frontend module `authentication`.
-- [ ] T4 Pages Register and Login + apiError messages + real-browser verification.
+- [x] T3 (done, not committed yet) Regenerate NSwag client + frontend module `authentication`.
+- [x] T4 (done, not committed yet) Pages Register and Login + apiError messages + real-browser verification.
 - [ ] T5 Docs (both AGENTS.md) and Engram mirror.
 
 ## Acceptance criteria
@@ -32,6 +32,9 @@ T1 and T2 done (backend), not committed. Route: delegated direct (writer fork).
 - Cleanup: test rows deleted; Users has only the owner row (Ana Fernández Muñoz, no credential, left untouched; to log in with it the user must delete it and register again).
 - Frontend that now breaks (T3/T4, not touched): `src/modules/users/infrastructure/NSwagUserRepository.ts` calls `client.userRegister(...)` (the generated client still has it until it is regenerated).
 - Not done on purpose: JWT, HeaderUserProvider, frontend, NSwag client.
+- T3 done: `pnpm generate:client` (only GeneratedApiClient.ts changed, CRLF kept; `userRegister` gone, `accountRegister`/`accountLogin`/`AccountResponse` added). Module `modules/authentication` (`IAuthenticationRepository`, `AccountRegistration`, `Credentials`, `Account`, `NSwagAuthenticationRepository`), Context + Provider + hook, provider mounted in main.tsx. Removed `IUserRepository.register`, `NSwagUserRepository.register` and `UserRegistration` (the rest of the users repository is still used by the profile and class members).
+- T4 done: Register sends the password through `authentication.register` and keeps its validations; the id comes from `useWizardIds` and is discarded after success or a 409. Login is functional (client check, loading/error states, `setUserId` + guardian info, `/home`). apiError: `Authentication.InvalidCredentials`, `Authentication.PasswordTooWeak` and status 429. Known limitation: login does not return the guardian role, so it is stored as `guardian`; the "¿La olvidaste?" link still points to a missing route.
+- T3/T4 evidence: `pnpm typecheck` and `pnpm lint` 0 errors; real stack (API 5099 on the dev DB, Vite 4010, headless Chrome via CDP with real clicks): 19/19 checks: empty login form shows a client message without request; short password rejected client side without request; register -> /onboarding, session and guardian info stored, hash (84 chars) does not contain the password, Users row created with the client id; logout clears the session; wrong password and unknown email both show "Correo o contraseña incorrectos." and the form stays usable; duplicate email (other case) shows the 409 message and creates no second user; correct login -> /home with the same user id; /login with a session redirects; only 401/409 expected responses, no page exceptions or console errors; 5 auth requests in total (well under the 60/min limit). Cleanup: the test user and its credential were deleted; Users holds only the owner row and UserCredentials is empty (the owner's student/class/enrollment rows were already there and were not touched).
 
 ## Next step
-T3: regenerate the NSwag client (userRegister disappears, accountRegister/accountLogin appear) and add the frontend `authentication` module; fix NSwagUserRepository.
+T5: docs (backend and frontend AGENTS.md final pass) and the Engram mirror; then the JWT plan.
