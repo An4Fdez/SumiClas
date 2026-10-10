@@ -23,6 +23,8 @@ public abstract class Specification<TEntity> : ISpecification<TEntity>
         Criteria = Expression.Lambda<Func<TEntity, bool>>(Expression.AndAlso(Criteria.Body, right), parameter);
     }
 
+    protected void AddTake(int count) => Take = count;
+
     protected void AddOrder<TKey>(Expression<Func<TEntity, TKey>> key, bool descending = false)
         => _orders.Add(new SpecificationOrder(key, descending));
 

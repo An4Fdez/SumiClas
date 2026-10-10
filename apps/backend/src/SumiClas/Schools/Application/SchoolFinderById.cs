@@ -9,7 +9,7 @@ public static class SchoolFinderById
 {
     public sealed record Query(Guid SchoolId) : IQuery<Result<SchoolResponse>>;
 
-    public sealed class Handler(SchoolFinder finder) : IRequestHandler<Query, Result<SchoolResponse>>
+    public sealed class Handler(SchoolFinder finder, IQueryBus queryBus) : IRequestHandler<Query, Result<SchoolResponse>>
     {
         public async Task<Result<SchoolResponse>> Handle(Query query, CancellationToken ct)
         {
@@ -19,9 +19,8 @@ public static class SchoolFinderById
                 return Result<SchoolResponse>.Failure(found.Error!);
             }
 
-            var school = found.Value;
-            return Result<SchoolResponse>.Success(
-                new SchoolResponse(school.Id, school.Name, school.OfficialCode, school.LocalityId, school.PostalCodeId, school.Address, school.Phone));
+            var responses = await SchoolResponseFactory.CreateAsync(queryBus, [found.Value], ct);
+            return Result<SchoolResponse>.Success(responses.Single());
         }
     }
 }
