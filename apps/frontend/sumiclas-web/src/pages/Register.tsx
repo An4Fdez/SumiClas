@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, UserRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
 import { setGuardianInfo, setUserId, type GuardianRole } from '@/lib/auth';
-import { getApiErrorMessage } from '@/lib/apiError';
-import { useUserRepository } from '@/hooks/useUserRepository';
+import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
+import { useAuthenticationRepository } from '@/hooks/useAuthenticationRepository';
+import { useWizardIds } from '@/hooks/useWizardIds';
 import { isValidEmail, isPasswordPwned, MIN_PASSWORD_LENGTH, RECOMMENDED_PASSWORD_LENGTH } from '@/lib/validation';
 
 const roleOptions: { value: GuardianRole; label: string }[] = [
@@ -15,7 +16,8 @@ const roleOptions: { value: GuardianRole; label: string }[] = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const userRepository = useUserRepository();
+  const authentication = useAuthenticationRepository();
+  const ids = useWizardIds();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,14 +66,19 @@ export default function Register() {
     setErrors({});
     setSubmitError(null);
     setSubmitting(true);
-    const userId = crypto.randomUUID();
+    let userId: string;
     try {
-      await userRepository.register({
+      userId = ids.take('account');
+      await authentication.register({
         id: userId,
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
+        password,
       });
+      ids.consume('account');
     } catch (error) {
+      // A 409 means the id or the email already exists: retrying with the same id would only repeat it.
+      if (getApiErrorStatus(error) === 409) ids.consume('account');
       setSubmitError(getApiErrorMessage(error));
       setSubmitting(false);
       return;

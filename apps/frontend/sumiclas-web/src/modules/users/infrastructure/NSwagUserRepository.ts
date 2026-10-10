@@ -3,7 +3,6 @@ import { parseClassRole, type ClassRole } from '@/lib/roles';
 import type { ClassMember } from '../domain/ClassMember';
 import type { IUserRepository } from '../domain/IUserRepository';
 import type { Profile } from '../domain/Profile';
-import type { UserRegistration } from '../domain/UserRegistration';
 
 function toClassRole(role: string): ClassRole {
   return role.toLowerCase() === 'classrepresentative' ? 'classRepresentative' : 'participant';
@@ -11,10 +10,6 @@ function toClassRole(role: string): ClassRole {
 
 export class NSwagUserRepository implements IUserRepository {
   constructor(private readonly client: ApiClient) {}
-
-  async register(user: UserRegistration): Promise<void> {
-    await this.client.userRegister({ id: user.id, fullName: user.fullName, email: user.email });
-  }
 
   async getCurrent(): Promise<Profile> {
     const profile = await this.client.userProfileFinderCurrent();

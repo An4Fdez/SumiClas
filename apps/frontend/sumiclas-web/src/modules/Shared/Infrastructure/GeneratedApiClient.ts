@@ -67,6 +67,16 @@ export interface IGeneratedApiClient {
     /**
      * @return Created
      */
+    accountRegister(body: AccountRegisterRequest): Promise<void>;
+
+    /**
+     * @return OK
+     */
+    accountLogin(body: AccountLoginRequest): Promise<AccountResponse>;
+
+    /**
+     * @return Created
+     */
     calendarEventCreate(body: CalendarEventCreateRequest): Promise<void>;
 
     /**
@@ -216,11 +226,6 @@ export interface IGeneratedApiClient {
      * @return OK
      */
     subjectFinderByClass(classId: string): Promise<SubjectResponse[]>;
-
-    /**
-     * @return Created
-     */
-    userRegister(body: UserRegisterRequest): Promise<void>;
 
     /**
      * @return No Content
@@ -756,6 +761,123 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             });
         }
         return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return Created
+     */
+    accountRegister(body: AccountRegisterRequest): Promise<void> {
+        let url_ = this.baseUrl + "/auth/register";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAccountRegister(_response));
+        });
+    }
+
+    protected processAccountRegister(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 201) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
+            });
+        } else if (status === 429) {
+            return response.text().then((_responseText) => {
+            let result429: any = null;
+            result429 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Too Many Requests", status, _responseText, _headers, result429);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    accountLogin(body: AccountLoginRequest): Promise<AccountResponse> {
+        let url_ = this.baseUrl + "/auth/login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAccountLogin(_response));
+        });
+    }
+
+    protected processAccountLogin(response: Response): Promise<AccountResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 429) {
+            return response.text().then((_responseText) => {
+            let result429: any = null;
+            result429 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Too Many Requests", status, _responseText, _headers, result429);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AccountResponse>(null as any);
     }
 
     /**
@@ -2362,57 +2484,6 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return Created
-     */
-    userRegister(body: UserRegisterRequest): Promise<void> {
-        let url_ = this.baseUrl + "/users";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processUserRegister(_response));
-        });
-    }
-
-    protected processUserRegister(response: Response): Promise<void> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 201) {
-            return response.text().then((_responseText) => {
-            return;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
-        } else if (status === 409) {
-            return response.text().then((_responseText) => {
-            let result409: any = null;
-            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Conflict", status, _responseText, _headers, result409);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<void>(null as any);
-    }
-
-    /**
      * @return No Content
      */
     userClassRepresentativeAssign(userId: string, classId: string): Promise<void> {
@@ -2626,6 +2697,29 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         }
         return Promise.resolve<ChildResponse[]>(null as any);
     }
+}
+
+export interface AccountLoginRequest {
+    email: string;
+    password: string;
+
+    [key: string]: any;
+}
+
+export interface AccountRegisterRequest {
+    id: string;
+    fullName: string;
+    email: string;
+    password: string;
+
+    [key: string]: any;
+}
+
+export interface AccountResponse {
+    userId: string;
+    fullName: string;
+
+    [key: string]: any;
 }
 
 export interface AnnouncementCreateRequest {
@@ -3027,14 +3121,6 @@ export interface UserProfileResponse {
     fullName: string;
     email: string;
     classRoles: UserClassRoleResponse[];
-
-    [key: string]: any;
-}
-
-export interface UserRegisterRequest {
-    id: string;
-    fullName: string;
-    email: string;
 
     [key: string]: any;
 }

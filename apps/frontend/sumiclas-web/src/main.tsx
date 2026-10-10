@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { AnnouncementRepositoryProvider } from '@/context/AnnouncementRepositoryProvider';
 import { ApiClientProvider } from '@/context/ApiClientProvider';
+import { AuthenticationRepositoryProvider } from '@/context/AuthenticationRepositoryProvider';
 import { CalendarEventRepositoryProvider } from '@/context/CalendarEventRepositoryProvider';
 import { ClassExpenseRepositoryProvider } from '@/context/ClassExpenseRepositoryProvider';
 import { HomeworkRepositoriesProvider } from '@/context/HomeworkRepositoriesProvider';
@@ -18,6 +19,7 @@ import './index.css';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ApiClientProvider>
+      <AuthenticationRepositoryProvider>
       <UserRepositoryProvider>
         <StudentRepositoryProvider>
           <ProvinceRepositoryProvider>
@@ -41,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
           </ProvinceRepositoryProvider>
         </StudentRepositoryProvider>
       </UserRepositoryProvider>
+      </AuthenticationRepositoryProvider>
     </ApiClientProvider>
   </StrictMode>
 );
