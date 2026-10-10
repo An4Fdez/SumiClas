@@ -36,6 +36,18 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
 
     public bool HasActiveTransaction => Database.CurrentTransaction is not null;
 
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateException exception) when (UniqueViolationDetector.TryGetConstraintName(exception, out var constraintName))
+        {
+            throw new DuplicateKeyException(constraintName, exception);
+        }
+    }
+
     public async Task BeginTransactionAsync(CancellationToken ct = default)
         => await Database.BeginTransactionAsync(ct);
 

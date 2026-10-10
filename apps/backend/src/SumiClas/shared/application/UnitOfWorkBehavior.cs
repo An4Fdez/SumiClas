@@ -8,6 +8,8 @@ namespace SumiClas.Shared.Application;
 /// The root command opens a database transaction. Once its <see cref="Result"/> is successful, the domain events
 /// raised by the aggregates are pulled and their handlers run in the same transaction; only if all of them succeed
 /// is everything saved and committed. A failed result, a failed handler or an exception rolls everything back.
+/// A unique-key violation (<see cref="DuplicateKeyException"/>) also rolls back, but becomes the failed result
+/// <see cref="SharedErrors.AlreadyExists"/> (HTTP 409) instead of an exception.
 /// Use cases never touch the unit of work.
 /// </summary>
 public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
@@ -48,6 +50,11 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
             await unitOfWork.SaveChangesAsync(ct);
             await unitOfWork.CommitTransactionAsync(ct);
             return response;
+        }
+        catch (DuplicateKeyException)
+        {
+            await unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+            return FailedResponse(SharedErrors.AlreadyExists);
         }
         catch
         {
