@@ -132,6 +132,12 @@ export interface IGeneratedApiClient {
     enrollmentConfirm(enrollmentId: string): Promise<void>;
 
     /**
+     * @param name (optional) 
+     * @return OK
+     */
+    localityFinderByProvince(provinceId: string, name: string | undefined): Promise<LocalityResponse[]>;
+
+    /**
      * @return Created
      */
     lostItemCreate(body: LostItemCreateRequest): Promise<void>;
@@ -154,20 +160,21 @@ export interface IGeneratedApiClient {
     lostItemNotRecoveredMark(lostItemId: string): Promise<void>;
 
     /**
-     * @return Created
-     */
-    schoolRegister(body: SchoolRegisterRequest): Promise<void>;
-
-    /**
-     * @param name (optional) 
      * @return OK
      */
-    schoolFinderByName(name: string | undefined): Promise<SchoolResponse[]>;
+    provinceFinderAll(): Promise<ProvinceResponse[]>;
 
     /**
      * @return OK
      */
     schoolFinderById(schoolId: string): Promise<SchoolResponse>;
+
+    /**
+     * @param localityId (optional) 
+     * @param name (optional) 
+     * @return OK
+     */
+    schoolFinderByLocality(localityId: string | undefined, name: string | undefined): Promise<SchoolResponse[]>;
 
     /**
      * @return Created
@@ -1478,6 +1485,52 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
+     * @param name (optional) 
+     * @return OK
+     */
+    localityFinderByProvince(provinceId: string, name: string | undefined): Promise<LocalityResponse[]> {
+        let url_ = this.baseUrl + "/provinces/{provinceId}/localities?";
+        if (provinceId === undefined || provinceId === null)
+            throw new globalThis.Error("The parameter 'provinceId' must be defined.");
+        url_ = url_.replace("{provinceId}", encodeURIComponent("" + provinceId));
+        if (name === null)
+            throw new globalThis.Error("The parameter 'name' cannot be null.");
+        else if (name !== undefined)
+            url_ += "name=" + encodeURIComponent("" + name) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLocalityFinderByProvince(_response));
+        });
+    }
+
+    protected processLocalityFinderByProvince(response: Response): Promise<LocalityResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LocalityResponse[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LocalityResponse[]>(null as any);
+    }
+
+    /**
      * @return Created
      */
     lostItemCreate(body: LostItemCreateRequest): Promise<void> {
@@ -1705,66 +1758,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
-     * @return Created
-     */
-    schoolRegister(body: SchoolRegisterRequest): Promise<void> {
-        let url_ = this.baseUrl + "/schools";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolRegister(_response));
-        });
-    }
-
-    protected processSchoolRegister(response: Response): Promise<void> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 201) {
-            return response.text().then((_responseText) => {
-            return;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
-        } else if (status === 409) {
-            return response.text().then((_responseText) => {
-            let result409: any = null;
-            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Conflict", status, _responseText, _headers, result409);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<void>(null as any);
-    }
-
-    /**
-     * @param name (optional) 
      * @return OK
      */
-    schoolFinderByName(name: string | undefined): Promise<SchoolResponse[]> {
-        let url_ = this.baseUrl + "/schools?";
-        if (name === null)
-            throw new globalThis.Error("The parameter 'name' cannot be null.");
-        else if (name !== undefined)
-            url_ += "name=" + encodeURIComponent("" + name) + "&";
+    provinceFinderAll(): Promise<ProvinceResponse[]> {
+        let url_ = this.baseUrl + "/provinces";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1777,17 +1774,17 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolFinderByName(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processProvinceFinderAll(_response));
         });
     }
 
-    protected processSchoolFinderByName(response: Response): Promise<SchoolResponse[]> {
+    protected processProvinceFinderAll(response: Response): Promise<ProvinceResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolResponse[];
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProvinceResponse[];
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -1795,7 +1792,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<SchoolResponse[]>(null as any);
+        return Promise.resolve<ProvinceResponse[]>(null as any);
     }
 
     /**
@@ -1843,6 +1840,60 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             });
         }
         return Promise.resolve<SchoolResponse>(null as any);
+    }
+
+    /**
+     * @param localityId (optional) 
+     * @param name (optional) 
+     * @return OK
+     */
+    schoolFinderByLocality(localityId: string | undefined, name: string | undefined): Promise<SchoolResponse[]> {
+        let url_ = this.baseUrl + "/schools?";
+        if (localityId === null)
+            throw new globalThis.Error("The parameter 'localityId' cannot be null.");
+        else if (localityId !== undefined)
+            url_ += "localityId=" + encodeURIComponent("" + localityId) + "&";
+        if (name === null)
+            throw new globalThis.Error("The parameter 'name' cannot be null.");
+        else if (name !== undefined)
+            url_ += "name=" + encodeURIComponent("" + name) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processSchoolFinderByLocality(_response));
+        });
+    }
+
+    protected processSchoolFinderByLocality(response: Response): Promise<SchoolResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolResponse[];
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<SchoolResponse[]>(null as any);
     }
 
     /**
@@ -2805,6 +2856,14 @@ export interface HttpValidationProblemDetails {
     [key: string]: any;
 }
 
+export interface LocalityResponse {
+    id: string;
+    provinceId: string;
+    name: string;
+
+    [key: string]: any;
+}
+
 export interface LostItemCreateRequest {
     id: string;
     scope: string;
@@ -2871,11 +2930,9 @@ export interface ProblemDetails {
     [key: string]: any;
 }
 
-export interface SchoolRegisterRequest {
+export interface ProvinceResponse {
     id: string;
     name: string;
-    officialCode: string;
-    address: string | undefined;
 
     [key: string]: any;
 }
@@ -2884,7 +2941,14 @@ export interface SchoolResponse {
     id: string;
     name: string;
     officialCode: string;
+    provinceId: string;
+    provinceName: string;
+    localityId: string;
+    localityName: string;
+    postalCodeId: string | undefined;
+    postalCode: string | undefined;
     address: string | undefined;
+    phone: string | undefined;
 
     [key: string]: any;
 }
