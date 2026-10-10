@@ -1,5 +1,3 @@
-import type { ClassRole } from '@/lib/roles';
-
 export type DashboardSummary = {
   announcements: { new: number; urgent: boolean };
   calendar: { next: string | null; daysUntil: number | null };
@@ -26,10 +24,4 @@ export const aiSummaryByChild: Record<string, AISummary> = {
     date: '18 oct',
     points: ['Sin avisos nuevos esta semana.', 'El 25 de octubre hay reunión de padres a las 17:00.'],
   },
-};
-
-export type OtherGuardian = {
-  id: string;
-  name: string;
-  role: ClassRole;
 };

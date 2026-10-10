@@ -22,8 +22,6 @@ const EMPTY_SUMMARY: DashboardSummary = {
   lostAndFound: { hasUpdates: false },
 };
 
-const noop = () => {};
-
 function toView(child: Child): ChildView {
   return {
     ...child,
@@ -86,10 +84,6 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     currentSummary: currentChild ? EMPTY_SUMMARY : undefined,
     currentRole,
     currentUserId: state.status === 'ready' ? state.profile.id : undefined,
-    otherGuardians: [],
-    transferClassRepresentative: noop,
-    assignClassRepresentative: noop,
-    resignClassRepresentative: noop,
   };
 
   return <ChildContext.Provider value={value}>{children}</ChildContext.Provider>;

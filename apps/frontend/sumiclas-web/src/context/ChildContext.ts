@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { DashboardSummary, OtherGuardian } from '@/data/appMock';
+import type { DashboardSummary } from '@/data/appMock';
 import type { ClassRole } from '@/lib/roles';
 import type { Child } from '@/modules/students/domain/Child';
 
@@ -24,10 +24,6 @@ export type ChildContextValue = {
   currentSummary: DashboardSummary | undefined;
   currentRole: ClassRole | null;
   currentUserId: string | undefined;
-  otherGuardians: OtherGuardian[];
-  transferClassRepresentative: (guardianId: string) => void;
-  assignClassRepresentative: (guardianId: string) => void;
-  resignClassRepresentative: () => void;
 };
 
 export const ChildContext = createContext<ChildContextValue | null>(null);
