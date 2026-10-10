@@ -13,13 +13,12 @@ import { useWizardIds } from '@/hooks/useWizardIds';
 import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { getGuardianInfo } from '@/lib/auth';
 import type { SchoolClass } from '@/modules/classes/domain/SchoolClass';
-import type { NewSchool } from '@/modules/schools/domain/NewSchool';
 import type { School } from '@/modules/schools/domain/School';
 
 const stepMeta = [
   {
     title: 'Busca tu colegio',
-    text: 'Selecciónalo del listado oficial de centros para verificarlo automáticamente.',
+    text: 'Elige tu provincia y tu población y busca el colegio en el listado oficial de centros.',
   },
   {
     title: 'Elige tu clase',
@@ -34,7 +33,7 @@ const stepMeta = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const ids = useWizardIds();
-  const { schools, classes, enrollments } = useOnboardingRepositories();
+  const { classes, enrollments } = useOnboardingRepositories();
   const studentRepository = useStudentRepository();
   const [step, setStep] = useState(1);
   const [school, setSchool] = useState<School | null>(null);
@@ -47,13 +46,6 @@ export default function Onboarding() {
     setSchool(s);
     setSchoolClass(null);
     setStep(2);
-  };
-
-  const handleRegisterSchool = async (data: Omit<NewSchool, 'id'>) => {
-    const id = ids.take('school');
-    await schools.register({ id, ...data });
-    ids.consume('school');
-    handleSelectSchool({ id, name: data.name, address: data.address });
   };
 
   const handleChangeSchool = () => {
@@ -149,7 +141,7 @@ export default function Onboarding() {
               <SelectionSummary
                 icon={MapPin}
                 title={school.name}
-                subtitle={school.address}
+                subtitle={schoolSummary(school)}
                 color="brand"
                 onChange={handleChangeSchool}
               />
@@ -170,7 +162,7 @@ export default function Onboarding() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{stepMeta[step - 1].text}</p>
 
             <div className="mt-6">
-              {step === 1 && <SchoolSearchStep onSelect={handleSelectSchool} onRegister={handleRegisterSchool} />}
+              {step === 1 && <SchoolSearchStep onSelect={handleSelectSchool} />}
               {step === 2 && (
                 <ClassStep
                   schoolClasses={classesState.status === 'ready' ? classesState.classes : []}
@@ -188,6 +180,10 @@ export default function Onboarding() {
       </div>
     </section>
   );
+}
+
+function schoolSummary(school: School) {
+  return [school.address, [school.postalCode, school.localityName].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
 }
 
 function SelectionSummary({
