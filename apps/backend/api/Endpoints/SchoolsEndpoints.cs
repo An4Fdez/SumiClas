@@ -1,15 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Schools.Application;
+using SumiClas.Schools.Domain;
+using SumiClas.Shared.Domain;
 
 namespace SumiClas.Api.Endpoints;
-
-public sealed record SchoolRegisterRequest(
-    Guid Id,
-    [StringLength(200)] string Name,
-    [StringLength(50)] string OfficialCode,
-    [StringLength(300)] string? Address);
 
 public sealed class SchoolsEndpoints : IEndpoints
 {
@@ -17,29 +12,18 @@ public sealed class SchoolsEndpoints : IEndpoints
     {
         var schools = app.MapGroup("/schools").WithTags("Schools");
 
-        schools.MapPost("/", async (SchoolRegisterRequest request, ISender sender, CancellationToken ct) =>
-        {
-            var result = await sender.Send(
-                new SchoolRegister.Command(request.Id, request.Name, request.OfficialCode, request.Address), ct);
-
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
-        })
-            .WithName("SchoolRegister")
-            .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status409Conflict);
-
         schools.MapGet("/{schoolId:guid}", async (Guid schoolId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SchoolFinderById.Query(schoolId), ct)).ToOk())
             .WithName("SchoolFinderById")
             .Produces<SchoolResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        schools.MapGet("/", async (string? name, ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new SchoolFinderByName.Query(name), ct)))
-            .WithName("SchoolFinderByName")
-            .Produces<IReadOnlyCollection<SchoolResponse>>(StatusCodes.Status200OK);
+        schools.MapGet("/", async (Guid? localityId, string? name, ISender sender, CancellationToken ct) =>
+            localityId is null || localityId == Guid.Empty
+                ? Result.Failure(SchoolErrors.LocalityFilterRequired).ToProblem()
+                : Results.Ok(await sender.Send(new SchoolFinderByLocality.Query(localityId.Value, name), ct)))
+            .WithName("SchoolFinderByLocality")
+            .Produces<IReadOnlyCollection<SchoolResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

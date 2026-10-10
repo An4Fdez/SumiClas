@@ -15,7 +15,7 @@ public static class SchoolFinderByIds
         {
             var schools = await schoolRepository.SearchAsync(new SchoolSpecification(ids: query.SchoolIds), ct);
             return schools
-                .Select(school => new SchoolResponse(school.Id, school.Name, school.OfficialCode, school.Address))
+                .Select(school => new SchoolResponse(school.Id, school.Name, school.OfficialCode, school.LocalityId, school.PostalCodeId, school.Address, school.Phone))
                 .ToList();
         }
     }

@@ -69,7 +69,7 @@ public static class ConventionServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers every public nested class named "UseCase" declared inside a static class (e.g. SchoolRegister.UseCase).
+    /// Registers every public nested class named "UseCase" declared inside a static class (e.g. SchoolYearCreate.UseCase).
     /// </summary>
     public static IServiceCollection AddUseCasesByConvention(this IServiceCollection services, Assembly assembly)
     {

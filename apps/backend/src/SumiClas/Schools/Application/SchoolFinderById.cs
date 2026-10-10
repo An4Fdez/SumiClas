@@ -21,7 +21,7 @@ public static class SchoolFinderById
 
             var school = found.Value;
             return Result<SchoolResponse>.Success(
-                new SchoolResponse(school.Id, school.Name, school.OfficialCode, school.Address));
+                new SchoolResponse(school.Id, school.Name, school.OfficialCode, school.LocalityId, school.PostalCodeId, school.Address, school.Phone));
         }
     }
 }
