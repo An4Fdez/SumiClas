@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SumiClas.Announcements.Domain;
+using SumiClas.Authentication.Domain;
 using SumiClas.Assignments.Domain;
 using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Domain;
@@ -33,6 +34,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<Subject> Subjects => Set<Subject>();

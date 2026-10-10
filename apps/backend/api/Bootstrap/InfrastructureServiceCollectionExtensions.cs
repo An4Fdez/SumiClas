@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using SumiClas.Authentication.Application;
+using SumiClas.Authentication.Infrastructure;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Shared.Infrastructure;
@@ -15,6 +17,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<IUnitOfWork>(serviceProvider => serviceProvider.GetRequiredService<SumiClasDbContext>());
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddScoped<IQueryBus, MediatRQueryBus>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddRepositoriesByConvention(typeof(SumiClasDbContext).Assembly);
