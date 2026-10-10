@@ -21,6 +21,14 @@ export function roleLabel(role: ClassRole | undefined): string | undefined {
   return role ? roleMeta[role].label : undefined;
 }
 
+/** Maps the API role name to the UI union; an unknown or missing role stays `undefined` instead of being guessed. */
+export function parseClassRole(value: string | null | undefined): ClassRole | undefined {
+  const normalized = value?.toLowerCase();
+  if (normalized === 'classrepresentative') return 'classRepresentative';
+  if (normalized === 'participant') return 'participant';
+  return undefined;
+}
+
 export function canManageClassRepresentatives(role: ClassRole | null): boolean {
   return role === 'classRepresentative';
 }

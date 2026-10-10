@@ -1,5 +1,6 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
-import type { ClassRole } from '@/lib/roles';
+import { parseClassRole, type ClassRole } from '@/lib/roles';
+import type { ClassMember } from '../domain/ClassMember';
 import type { IUserRepository } from '../domain/IUserRepository';
 import type { Profile } from '../domain/Profile';
 import type { UserRegistration } from '../domain/UserRegistration';
@@ -26,5 +27,14 @@ export class NSwagUserRepository implements IUserRepository {
         role: toClassRole(assignment.role),
       })),
     };
+  }
+
+  async listClassMembers(classId: string): Promise<ClassMember[]> {
+    const members = await this.client.userClassMemberFinderByClass(classId);
+    return (members ?? []).map((member) => ({
+      userId: member.userId,
+      fullName: member.fullName,
+      role: parseClassRole(member.classRole),
+    }));
   }
 }
