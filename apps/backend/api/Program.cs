@@ -19,6 +19,7 @@ builder.Services.AddValidation();
 builder.Services.AddSumiClasIdentity();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
+builder.Services.AddSumiClasRateLimiting(builder.Configuration);
 
 
 var app = builder.Build();
@@ -44,6 +45,7 @@ app.UseSwaggerUI(swaggerUiOptions =>
 
 });
 
+app.UseRateLimiter();
 app.MapHealthChecks("/healthy");
 app.MapEndpoints();
 app.UseHttpsRedirection();
