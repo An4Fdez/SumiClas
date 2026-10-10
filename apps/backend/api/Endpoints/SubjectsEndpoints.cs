@@ -24,7 +24,8 @@ public sealed class SubjectsEndpoints : IEndpoints
             .WithName("SubjectCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         subjects.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SubjectFinderByClass.Query(classId), ct)).ToOk())

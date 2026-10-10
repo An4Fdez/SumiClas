@@ -52,7 +52,8 @@ public sealed class CalendarEventsEndpoints : IEndpoints
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         calendarEvents.MapPost("/birthdays", async (CalendarEventBirthdayCreateRequest request, ISender sender, CancellationToken ct) =>
         {
@@ -73,7 +74,8 @@ public sealed class CalendarEventsEndpoints : IEndpoints
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         calendarEvents.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)).ToOk())

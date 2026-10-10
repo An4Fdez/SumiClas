@@ -28,7 +28,8 @@ public sealed class SchoolsEndpoints : IEndpoints
         })
             .WithName("SchoolRegister")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem();
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         schools.MapGet("/{schoolId:guid}", async (Guid schoolId, ISender sender, CancellationToken ct) =>
             (await sender.Send(new SchoolFinderById.Query(schoolId), ct)).ToOk())

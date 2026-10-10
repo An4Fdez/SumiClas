@@ -37,7 +37,8 @@ public sealed class StudentsEndpoints : IEndpoints
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>
         {
