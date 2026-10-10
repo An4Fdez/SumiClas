@@ -229,6 +229,33 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("Enrollments", (string)null);
                 });
 
+            modelBuilder.Entity("SumiClas.Localities.Domain.Locality", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid>("ProvinceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProvinceId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Localities", (string)null);
+                });
+
             modelBuilder.Entity("SumiClas.LostItems.Domain.LostItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -273,6 +300,53 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("LostItems", (string)null);
                 });
 
+            modelBuilder.Entity("SumiClas.PostalCodes.Domain.PostalCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character(5)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("LocalityId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocalityId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("PostalCodes", (string)null);
+                });
+
+            modelBuilder.Entity("SumiClas.Provinces.Domain.Province", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Provinces", (string)null);
+                });
+
             modelBuilder.Entity("SumiClas.SchoolYears.Domain.SchoolYear", b =>
                 {
                     b.Property<Guid>("Id")
@@ -313,7 +387,15 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<Guid>("LocalityId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -323,7 +405,19 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("PostalCodeId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("OfficialCode")
+                        .IsUnique();
+
+                    b.HasIndex("LocalityId", "NormalizedName");
 
                     b.ToTable("Schools", (string)null);
                 });
