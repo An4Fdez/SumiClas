@@ -14,12 +14,13 @@ public sealed partial class Email : ValueObject
 
     public static Result<Email> Create(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || !EmailFormat().IsMatch(value))
+        var trimmed = value?.Trim();
+        if (string.IsNullOrEmpty(trimmed) || !EmailFormat().IsMatch(trimmed))
         {
             return Result<Email>.Failure(UserErrors.InvalidEmailFormat);
         }
 
-        return Result<Email>.Success(new Email(value.Trim().ToLowerInvariant()));
+        return Result<Email>.Success(new Email(trimmed.ToLowerInvariant()));
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()
