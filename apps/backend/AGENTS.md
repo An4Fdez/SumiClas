@@ -190,6 +190,8 @@ Los colegios **no se registran a mano**: salen del listado oficial de centros y 
 
 `GET /schools` exige `localityId` (400 `School.LocalityFilterRequired` si falta) y admite `name` como filtro opcional; una población desconocida devuelve 200 con lista vacía. No hay alta libre de colegios (`POST /schools` y `SchoolRegister` se eliminaron). La migración `TerritorialCatalog` añade las columnas obligatorias a `Schools` con un valor por defecto vacío: solo es segura con la tabla `Schools` vacía (es el caso de la base de desarrollo); con colegios ya guardados habría que rellenarlos antes.
 
+**Importador temporal** (`apps/backend/tools/SumiClas.Tools.SchoolCatalogImporter`, en `SumiClas.slnx`): proyecto de consola de un solo uso que carga el catálogo desde los tres Excel (`listado_centros_*.xls`, que nunca se commitean) usando las fábricas de dominio. Es idempotente (casa por clave natural) y se **eliminará** cuando la base esté cargada: no añadas lógica de la aplicación que dependa de él. Ejecución: `dotnet run --project apps/backend/tools/SumiClas.Tools.SchoolCatalogImporter -- [carpetaConLosXls] [cadenaDeConexion]` (por defecto `C:\Users\anusk\Desktop`, y la conexión sale de `SUMICLAS_DB` o de `appsettings.Development.json`).
+
 ### Consultas con Specification (patrón acordado)
 
 - **Las búsquedas por campos se hacen con especificaciones**, no con un método por consulta en cada repositorio. `ISpecification<TEntity>` (`shared/domain/`) expone `Expression<Func<TEntity, bool>> Criteria` y, de forma opcional, `Orders` y `Take` (usados por la paginación por cursor, ver "Paginación por cursor"): dominio puro, sin EF.

@@ -14,6 +14,9 @@
   <Folder Name="/apps/backend/src/">
     <Project Path="apps/backend/src/SumiClas/SumiClas.csproj" />
   </Folder>
+  <Folder Name="/apps/backend/tools/">
+    <Project Path="apps/backend/tools/SumiClas.Tools.SchoolCatalogImporter/SumiClas.Tools.SchoolCatalogImporter.csproj" />
+  </Folder>
   <Folder Name="/apps/frontend/">
     <File Path="apps/frontend/AGENTS.md" />
     <Project Path="apps/frontend/sumiclas-web/sumiClas-web.esproj">
