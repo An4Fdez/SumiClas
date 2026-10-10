@@ -5,6 +5,7 @@ import App from './App.tsx';
 import { AnnouncementRepositoryProvider } from '@/context/AnnouncementRepositoryProvider';
 import { ApiClientProvider } from '@/context/ApiClientProvider';
 import { CalendarEventRepositoryProvider } from '@/context/CalendarEventRepositoryProvider';
+import { ClassExpenseRepositoryProvider } from '@/context/ClassExpenseRepositoryProvider';
 import { HomeworkRepositoriesProvider } from '@/context/HomeworkRepositoriesProvider';
 import { LostItemRepositoryProvider } from '@/context/LostItemRepositoryProvider';
 import { OnboardingRepositoriesProvider } from '@/context/OnboardingRepositoriesProvider';
@@ -22,9 +23,11 @@ createRoot(document.getElementById('root')!).render(
               <LostItemRepositoryProvider>
                 <CalendarEventRepositoryProvider>
                   <HomeworkRepositoriesProvider>
-                    <BrowserRouter>
-                      <App />
-                    </BrowserRouter>
+                    <ClassExpenseRepositoryProvider>
+                      <BrowserRouter>
+                        <App />
+                      </BrowserRouter>
+                    </ClassExpenseRepositoryProvider>
                   </HomeworkRepositoriesProvider>
                 </CalendarEventRepositoryProvider>
               </LostItemRepositoryProvider>

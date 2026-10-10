@@ -2,7 +2,9 @@ import { useRef, type MouseEvent } from 'react';
 import { ArrowUpRight, Check, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatRelativeDate } from '@/lib/date';
-import type { ClassExpense } from '@/data/expensesMock';
+import { formatEuros } from '@/lib/money';
+import { roleLabel } from '@/lib/roles';
+import type { ClassExpense } from '@/modules/classExpenses/domain/ClassExpense';
 
 export type ParticipantStatus = {
   id: string;
@@ -53,12 +55,14 @@ export function ExpenseDetailModal({
           </button>
         </div>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {expense.authorName} · {expense.authorRole} · {formatRelativeDate(expense.date)}
+          {[expense.authorName, roleLabel(expense.authorRole), formatRelativeDate(expense.createdAt)]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
 
         <div className="mt-4 space-y-1 text-sm text-slate-700 dark:text-slate-300">
-          <p>Importe total: {expense.totalAmount.toFixed(2)} €</p>
-          <p>Por familia: {amountPerFamily.toFixed(2)} €</p>
+          <p>Importe total: {formatEuros(expense.totalAmount)}</p>
+          <p>Por familia: {formatEuros(amountPerFamily)}</p>
         </div>
 
         {expense.relatedEvent && (

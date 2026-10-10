@@ -33,11 +33,3 @@ export type OtherGuardian = {
   name: string;
   role: ClassRole;
 };
-
-export const otherGuardiansByChild: Record<string, OtherGuardian[]> = {
-  h1: [
-    { id: 't1', name: 'Carlos Gómez', role: 'participant' },
-    { id: 't2', name: 'Laura Sáez', role: 'participant' },
-  ],
-  h2: [{ id: 't3', name: 'Marta Ibáñez', role: 'classRepresentative' }],
-};

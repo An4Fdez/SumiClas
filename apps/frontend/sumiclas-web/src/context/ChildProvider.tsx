@@ -75,6 +75,7 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     currentChild,
     currentSummary: currentChild ? EMPTY_SUMMARY : undefined,
     currentRole,
+    currentUserId: state.status === 'ready' ? state.profile.id : undefined,
     otherGuardians: [],
     transferClassRepresentative: noop,
     assignClassRepresentative: noop,

@@ -22,6 +22,7 @@ export type ChildContextValue = {
   currentChild: ChildView | undefined;
   currentSummary: DashboardSummary | undefined;
   currentRole: ClassRole | null;
+  currentUserId: string | undefined;
   otherGuardians: OtherGuardian[];
   transferClassRepresentative: (guardianId: string) => void;
   assignClassRepresentative: (guardianId: string) => void;

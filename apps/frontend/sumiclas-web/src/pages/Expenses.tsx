@@ -5,92 +5,122 @@ import { ExpenseCard } from '@/components/app/ExpenseCard';
 import { ExpenseDetailModal, type ParticipantStatus } from '@/components/app/ExpenseDetailModal';
 import { ExpenseForm, type NewExpense } from '@/components/app/ExpenseForm';
 import { useChildContext } from '@/hooks/useChildContext';
+import { useClassExpenseRepository } from '@/hooks/useClassExpenseRepository';
+import { useClassExpenses } from '@/hooks/useClassExpenses';
+import { useClassMembers } from '@/hooks/useClassMembers';
+import { useUpcomingEventOptions } from '@/hooks/useUpcomingEventOptions';
+import { useWizardIds } from '@/hooks/useWizardIds';
+import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { getGuardianInfo } from '@/lib/auth';
-import { roleMeta } from '@/lib/roles';
-import { otherGuardiansByChild } from '@/data/appMock';
-import { calendarEventsMock } from '@/data/calendarMock';
-import { classExpensesMock, type ClassExpense } from '@/data/expensesMock';
+import type { ClassExpense } from '@/modules/classExpenses/domain/ClassExpense';
 
 type StatusFilter = 'pending' | 'paid' | null;
 
-function participantName(id: string, childId: string): string {
-  if (id === 'me') return getGuardianInfo()?.name ?? 'Tú';
-  return otherGuardiansByChild[childId]?.find((t) => t.id === id)?.name ?? id;
-}
+const TRANSIENT_CLIENT_ERRORS = [408, 429];
+const NO_CLASS_ERROR = 'Este alumno todavía no está en ninguna clase.';
+const SECURE_CONTEXT_ERROR = 'Tu navegador no permite crear entradas fuera de una conexión segura (HTTPS).';
+
+const filterButtonClasses = (active: boolean) =>
+  `rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+    active
+      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+  }`;
 
 export default function Expenses() {
-  const { children, currentChild, currentRole, otherGuardians } = useChildContext();
+  const { currentChild, currentRole, currentUserId } = useChildContext();
+  const classId = currentChild?.classId;
+  const repository = useClassExpenseRepository();
+  const ids = useWizardIds();
+  const { state, reload, loadMore, loadingMore, loadMoreError, setPaid, paymentError } = useClassExpenses(classId);
 
-  const [createdExpenses, setCreatedExpenses] = useState<ClassExpense[]>([]);
-  const [toggledPayments, setToggledPayments] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
-  const [openExpense, setOpenExpense] = useState<ClassExpense | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const [openExpenseId, setOpenExpenseId] = useState<string | null>(null);
+  const [formForClass, setFormForClass] = useState<string | null>(null);
 
-  const iHavePaid = (expense: ClassExpense) => {
-    const base = expense.paidBy.includes('me');
-    return toggledPayments.has(expense.id) ? !base : base;
-  };
+  const formOpen = !!classId && formForClass === classId;
+  const members = useClassMembers(formOpen ? classId : undefined);
+  const eventOptions = useUpcomingEventOptions(formOpen ? classId : undefined);
 
-  const countPaid = (expense: ClassExpense) => {
-    const paid = new Set(expense.paidBy);
-    if (expense.participantIds.includes('me')) {
-      if (iHavePaid(expense)) paid.add('me');
-      else paid.delete('me');
-    }
-    return paid.size;
-  };
+  const loaded = useMemo(() => (state.status === 'ready' ? state.items : []), [state]);
+  const hasMore = state.status === 'ready' && !!state.nextCursor;
+  const openExpense = loaded.find((e) => e.id === openExpenseId) ?? null;
 
-  const visibleExpenses = useMemo(() => {
-    const myChildIds = new Set(children.map((c) => c.id));
-    return [...classExpensesMock, ...createdExpenses]
-      .filter((e) => myChildIds.has(e.childId))
-      .filter((e) => {
-        if (statusFilter === 'pending') return !iHavePaid(e);
-        if (statusFilter === 'paid') return iHavePaid(e);
+  const myShare = (expense: ClassExpense) => expense.participants.find((p) => p.guardianId === currentUserId);
+  const iHavePaid = (expense: ClassExpense) => myShare(expense)?.hasPaid ?? false;
+  const paidCount = (expense: ClassExpense) => expense.participants.filter((p) => p.hasPaid).length;
+  const amountPerFamily = (expense: ClassExpense) => expense.totalAmount / Math.max(expense.participants.length, 1);
+
+  const visibleExpenses = useMemo(
+    () =>
+      loaded.filter((expense) => {
+        const paid = expense.participants.find((p) => p.guardianId === currentUserId)?.hasPaid ?? false;
+        if (statusFilter === 'pending') return !paid;
+        if (statusFilter === 'paid') return paid;
         return true;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, createdExpenses, statusFilter, toggledPayments]);
+      }),
+    [loaded, statusFilter, currentUserId],
+  );
 
-  const togglePaid = (id: string) =>
-    setToggledPayments((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const canCreate = currentRole === 'classRepresentative' && !!classId;
 
-  const canCreate = currentRole === 'classRepresentative' && !!currentChild;
+  const handleTogglePaid = (expense: ClassExpense) => {
+    if (!currentUserId || !myShare(expense)) return;
+    setPaid(expense.id, currentUserId, !iHavePaid(expense));
+  };
 
-  const handleCreateExpense = (data: NewExpense) => {
-    if (!currentChild) return;
-    const event = data.eventId ? calendarEventsMock.find((ev) => ev.id === data.eventId) : undefined;
-    const created: ClassExpense = {
-      id: `local-${Date.now()}`,
-      childId: currentChild.id,
-      item: data.item,
-      totalAmount: data.totalAmount,
-      participantIds: data.participantIds,
-      paidBy: [],
-      relatedEvent: event ? { id: event.id, title: event.title } : undefined,
-      date: new Date().toISOString(),
-      authorName: getGuardianInfo()?.name ?? 'Tú',
-      authorRole: roleMeta.classRepresentative.label,
-    };
-    setCreatedExpenses((prev) => [...prev, created]);
-    setFormOpen(false);
+  const takeId = (key: string) => {
+    try {
+      return ids.take(key);
+    } catch {
+      throw new UserFacingError(SECURE_CONTEXT_ERROR);
+    }
+  };
+
+  const settleId = (key: string, error: unknown) => {
+    const status = getApiErrorStatus(error);
+    if (status !== undefined && status < 500 && !TRANSIENT_CLIENT_ERRORS.includes(status)) ids.consume(key);
+    return status;
+  };
+
+  const handleCreateExpense = async (data: NewExpense) => {
+    if (!classId) throw new UserFacingError(NO_CLASS_ERROR);
+    const key = `expense:${classId}:${JSON.stringify(data)}`;
+    const id = takeId(key);
+    try {
+      await repository.create({
+        id,
+        classId,
+        item: data.item,
+        totalAmount: data.totalAmount,
+        participantIds: data.participantIds,
+        relatedEventId: data.eventId ?? undefined,
+      });
+    } catch (error) {
+      if (settleId(key, error) === 409) {
+        reload();
+        throw new UserFacingError('Es posible que el gasto ya se haya creado. Revisa la lista antes de crear otro.');
+      }
+      throw error;
+    }
+    ids.consume(key);
+    setFormForClass(null);
+    reload();
   };
 
   const participantsForExpense = (expense: ClassExpense): ParticipantStatus[] =>
-    expense.participantIds.map((id) => ({
-      id,
-      name: participantName(id, expense.childId),
-      paid: id === 'me' ? iHavePaid(expense) : expense.paidBy.includes(id),
-      isMe: id === 'me',
+    expense.participants.map((p) => ({
+      id: p.guardianId,
+      name: p.fullName,
+      paid: p.hasPaid,
+      isMe: p.guardianId === currentUserId,
     }));
+
+  const emptyMessage = hasMore
+    ? 'Ningún gasto de los cargados coincide con los filtros. Pulsa «Cargar más» para buscar en más.'
+    : loaded.length > 0
+      ? 'Ningún gasto coincide con los filtros.'
+      : 'No hay gastos de clase por ahora.';
 
   return (
     <div>
@@ -112,7 +142,7 @@ export default function Expenses() {
         {canCreate && (
           <button
             type="button"
-            onClick={() => setFormOpen(true)}
+            onClick={() => setFormForClass(classId ?? null)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25"
           >
             <Plus className="h-4 w-4" />
@@ -125,30 +155,45 @@ export default function Expenses() {
         <button
           type="button"
           onClick={() => setStatusFilter((v) => (v === 'pending' ? null : 'pending'))}
-          className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-            statusFilter === 'pending'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-          }`}
+          className={filterButtonClasses(statusFilter === 'pending')}
         >
           Pendientes
         </button>
         <button
           type="button"
           onClick={() => setStatusFilter((v) => (v === 'paid' ? null : 'paid'))}
-          className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-            statusFilter === 'paid'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-          }`}
+          className={filterButtonClasses(statusFilter === 'paid')}
         >
           Pagados
         </button>
       </div>
 
-      {visibleExpenses.length === 0 ? (
+      {paymentError && (
+        <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+          {paymentError}
+        </p>
+      )}
+
+      {!classId ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
-          No hay gastos de clase por ahora.
+          Tu hijo/a todavía no está en ninguna clase, así que no hay gastos que mostrar.
+        </div>
+      ) : state.status === 'loading' || state.status === 'idle' ? (
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">Cargando los gastos…</p>
+      ) : state.status === 'error' ? (
+        <div role="alert" className="mt-8 rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-700/40 dark:bg-rose-900/15">
+          <p className="text-sm text-slate-700 dark:text-slate-300">{state.message}</p>
+          <button
+            type="button"
+            onClick={reload}
+            className="mt-3 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : visibleExpenses.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+          {emptyMessage}
         </div>
       ) : (
         <div className="mt-6 space-y-3">
@@ -156,38 +201,54 @@ export default function Expenses() {
             <Reveal key={expense.id}>
               <ExpenseCard
                 expense={expense}
-                iParticipate={expense.participantIds.includes('me')}
+                iParticipate={!!myShare(expense)}
                 iHavePaid={iHavePaid(expense)}
-                paidCount={countPaid(expense)}
-                amountPerFamily={expense.totalAmount / expense.participantIds.length}
-                onOpen={() => setOpenExpense(expense)}
-                onTogglePaid={() => togglePaid(expense.id)}
+                paidCount={paidCount(expense)}
+                amountPerFamily={amountPerFamily(expense)}
+                onOpen={() => setOpenExpenseId(expense.id)}
+                onTogglePaid={() => handleTogglePaid(expense)}
               />
             </Reveal>
           ))}
         </div>
       )}
 
+      {hasMore && (
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-60 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            {loadingMore ? 'Cargando…' : 'Cargar más'}
+          </button>
+          {loadMoreError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+              {loadMoreError}
+            </p>
+          )}
+        </div>
+      )}
+
       {openExpense && (
         <ExpenseDetailModal
           expense={openExpense}
-          amountPerFamily={openExpense.totalAmount / openExpense.participantIds.length}
+          amountPerFamily={amountPerFamily(openExpense)}
           participants={participantsForExpense(openExpense)}
-          onTogglePaid={() => togglePaid(openExpense.id)}
-          onClose={() => setOpenExpense(null)}
+          onTogglePaid={() => handleTogglePaid(openExpense)}
+          onClose={() => setOpenExpenseId(null)}
         />
       )}
 
       {formOpen && currentChild && (
         <ExpenseForm
           className={currentChild.className}
-          events={calendarEventsMock}
-          availableParticipants={[
-            { id: 'me', name: getGuardianInfo()?.name ?? 'Tú' },
-            ...otherGuardians.map((t) => ({ id: t.id, name: t.name })),
-          ]}
+          events={eventOptions}
+          members={members.state}
+          onRetryMembers={members.reload}
           onSubmit={handleCreateExpense}
-          onClose={() => setFormOpen(false)}
+          onClose={() => setFormForClass(null)}
         />
       )}
     </div>

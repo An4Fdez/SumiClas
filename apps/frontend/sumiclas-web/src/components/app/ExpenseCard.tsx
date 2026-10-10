@@ -1,6 +1,8 @@
 import { ArrowUpRight, Check } from 'lucide-react';
 import { formatRelativeDate } from '@/lib/date';
-import type { ClassExpense } from '@/data/expensesMock';
+import { formatEuros } from '@/lib/money';
+import { roleLabel } from '@/lib/roles';
+import type { ClassExpense } from '@/modules/classExpenses/domain/ClassExpense';
 
 export function ExpenseCard({
   expense,
@@ -43,14 +45,12 @@ export function ExpenseCard({
       <button type="button" onClick={onOpen} className="w-full p-4 pr-11 text-left">
         <h3 className="font-display text-base font-bold text-slate-900 dark:text-white">{expense.item}</h3>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {paidCount}/{expense.participantIds.length} han pagado · {amountPerFamily.toFixed(2)} € por familia
+          {paidCount}/{expense.participants.length} han pagado · {formatEuros(amountPerFamily)} por familia
         </p>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>
-            {expense.authorName} · {expense.authorRole}
-          </span>
-          <span>{formatRelativeDate(expense.date)}</span>
+          <span>{[expense.authorName, roleLabel(expense.authorRole)].filter(Boolean).join(' · ')}</span>
+          <span>{formatRelativeDate(expense.createdAt)}</span>
         </div>
 
         {expense.relatedEvent && (
