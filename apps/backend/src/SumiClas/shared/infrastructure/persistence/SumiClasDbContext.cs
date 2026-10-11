@@ -35,6 +35,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
     public DbSet<Student> Students => Set<Student>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<Subject> Subjects => Set<Subject>();
