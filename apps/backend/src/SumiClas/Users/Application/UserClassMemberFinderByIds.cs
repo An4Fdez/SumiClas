@@ -10,10 +10,9 @@ public static class UserClassMemberFinderByIds
     public sealed record Query(Guid ClassId, IReadOnlyCollection<Guid> UserIds)
         : IQuery<IReadOnlyCollection<UserClassMemberResponse>>;
 
-    public sealed class Handler(IUserRepository userRepository)
-        : IRequestHandler<Query, IReadOnlyCollection<UserClassMemberResponse>>
+    public sealed class Finder(IUserRepository userRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<UserClassMemberResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<UserClassMemberResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var users = await userRepository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
             return users
@@ -23,5 +22,11 @@ public static class UserClassMemberFinderByIds
                     user.ClassRoles.FirstOrDefault(role => role.ClassId == query.ClassId)?.Role.ToString()))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<UserClassMemberResponse>>
+    {
+        public Task<IReadOnlyCollection<UserClassMemberResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

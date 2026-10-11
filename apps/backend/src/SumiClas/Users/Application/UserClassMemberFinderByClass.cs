@@ -18,10 +18,9 @@ public static class UserClassMemberFinderByClass
     /// </summary>
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<UserClassMemberResponse>>>;
 
-    public sealed class Handler(IUserRepository userRepository, IQueryBus queryBus, IUserProvider userProvider)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<UserClassMemberResponse>>>
+    public sealed class Finder(IUserRepository userRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -66,5 +65,11 @@ public static class UserClassMemberFinderByClass
 
             return Result<IReadOnlyCollection<UserClassMemberResponse>>.Success(members);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<UserClassMemberResponse>>>
+    {
+        public Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

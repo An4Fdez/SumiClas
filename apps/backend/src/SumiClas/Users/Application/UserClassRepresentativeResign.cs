@@ -11,7 +11,7 @@ public static class UserClassRepresentativeResign
 {
     public sealed record Command(Guid ClassId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IUserRepository users, IQueryBus queryBus, IUserProvider userProvider)
+    public sealed class Resign(IUserRepository users, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -51,9 +51,9 @@ public static class UserClassRepresentativeResign
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Resign resign) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => resign.ExecuteAsync(command, ct);
     }
 }

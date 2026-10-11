@@ -9,9 +9,9 @@ public static class UserFinderById
 {
     public sealed record Query(Guid UserId) : IQuery<Result<UserResponse>>;
 
-    public sealed class Handler(UserFinder finder) : IRequestHandler<Query, Result<UserResponse>>
+    public sealed class Finder(UserFinder finder) : IUseCase
     {
-        public async Task<Result<UserResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<UserResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var found = await finder.FindByIdAsync(query.UserId, ct);
             if (found.IsFailure)
@@ -22,5 +22,11 @@ public static class UserFinderById
             var user = found.Value;
             return Result<UserResponse>.Success(new UserResponse(user.Id, user.FullName));
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<UserResponse>>
+    {
+        public Task<Result<UserResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

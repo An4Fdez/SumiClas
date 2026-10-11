@@ -12,10 +12,10 @@ public static class UserClassRepresentativeAssign
     /// <summary>Only a current delegate of the class (the current user) can give the role to <paramref name="UserId"/>.</summary>
     public sealed record Command(Guid UserId, Guid ClassId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(
+    public sealed class Assign(
         IUserRepository users,
         IQueryBus queryBus,
-        IUserProvider userProvider)
+        IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -58,9 +58,9 @@ public static class UserClassRepresentativeAssign
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Assign assign) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => assign.ExecuteAsync(command, ct);
     }
 }

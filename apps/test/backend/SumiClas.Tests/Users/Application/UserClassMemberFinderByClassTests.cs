@@ -23,7 +23,7 @@ public class UserClassMemberFinderByClassTests
     private Dictionary<Guid, List<Guid>> _guardiansByStudent = null!;
     private Result<ClassResponse> _classResult = null!;
     private Guid _currentUserId;
-    private UserClassMemberFinderByClass.Handler _handler = null!;
+    private UserClassMemberFinderByClass.Finder _useCase = null!;
 
     [SetUp]
     public void SetUp()
@@ -63,7 +63,7 @@ public class UserClassMemberFinderByClassTests
                 return Task.FromResult(guardianIds);
             });
 
-        _handler = new UserClassMemberFinderByClass.Handler(_users.Object, _queryBus.Object, _userProvider.Object);
+        _useCase = new UserClassMemberFinderByClass.Finder(_users.Object, _queryBus.Object, _userProvider.Object);
     }
 
     private User AddUser(string fullName, bool representative = false)
@@ -88,10 +88,10 @@ public class UserClassMemberFinderByClassTests
     }
 
     private Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> Ask()
-        => _handler.Handle(new UserClassMemberFinderByClass.Query(ClassId), CancellationToken.None);
+        => _useCase.ExecuteAsync(new UserClassMemberFinderByClass.Query(ClassId), CancellationToken.None);
 
     [Test]
-    public async Task Handle_ReturnsGuardiansAndDelegates_DelegatesFirstThenByName()
+    public async Task UseCase_ReturnsGuardiansAndDelegates_DelegatesFirstThenByName()
     {
         var zoe = AddUser("zoe Pérez");
         var ana = AddUser("Ana Gil");
@@ -110,7 +110,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_GuardianOfTwoChildren_AppearsOnce()
+    public async Task UseCase_GuardianOfTwoChildren_AppearsOnce()
     {
         var parent = AddUser("Lucía Soto");
         AddEnrollment("Confirmed", parent.Id);
@@ -124,7 +124,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_GuardianOfASuggestedEnrollment_IsNotAMember()
+    public async Task UseCase_GuardianOfASuggestedEnrollment_IsNotAMember()
     {
         var confirmedParent = AddUser("Ana Gil");
         var suggestedParent = AddUser("Pedro Mora");
@@ -138,7 +138,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_DelegateWithoutChildren_IsIncludedAndListedFirst()
+    public async Task UseCase_DelegateWithoutChildren_IsIncludedAndListedFirst()
     {
         var parent = AddUser("Ana Gil");
         var delegateUser = AddUser("Zacarías Vega", representative: true);
@@ -154,7 +154,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WhenRequesterIsNotAMember_ReturnsClassMembersForbidden()
+    public async Task UseCase_WhenRequesterIsNotAMember_ReturnsClassMembersForbidden()
     {
         var parent = AddUser("Ana Gil");
         var outsider = AddUser("Carlos Ibáñez");
@@ -168,7 +168,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WhenRequesterOnlyHasASuggestedEnrollment_ReturnsClassMembersForbidden()
+    public async Task UseCase_WhenRequesterOnlyHasASuggestedEnrollment_ReturnsClassMembersForbidden()
     {
         var parent = AddUser("Ana Gil");
         var suggestedParent = AddUser("Pedro Mora");
@@ -182,7 +182,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WhenClassDoesNotExist_ReturnsNotFoundWithoutReadingEnrollments()
+    public async Task UseCase_WhenClassDoesNotExist_ReturnsNotFoundWithoutReadingEnrollments()
     {
         var parent = AddUser("Ana Gil");
         _currentUserId = parent.Id;
@@ -197,7 +197,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WhenThereIsNoCurrentUser_ReturnsUnauthenticatedWithoutAnyRead()
+    public async Task UseCase_WhenThereIsNoCurrentUser_ReturnsUnauthenticatedWithoutAnyRead()
     {
         _userProvider.Setup(provider => provider.GetCurrentUserId())
             .Returns(Result<Guid>.Failure(AuthenticationErrors.Unauthenticated));
@@ -212,7 +212,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_SkipsGuardianIdsThatNoLongerExist()
+    public async Task UseCase_SkipsGuardianIdsThatNoLongerExist()
     {
         var parent = AddUser("Ana Gil");
         var deletedGuardianId = Guid.NewGuid();
@@ -226,7 +226,7 @@ public class UserClassMemberFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_ReadsOnlyGuardianIdsOfConfirmedStudents()
+    public async Task UseCase_ReadsOnlyGuardianIdsOfConfirmedStudents()
     {
         var parent = AddUser("Ana Gil");
         var confirmedStudent = AddEnrollment("Confirmed", parent.Id);
@@ -249,5 +249,18 @@ public class UserClassMemberFinderByClassTests
         var properties = typeof(UserClassMemberResponse).GetProperties().Select(property => property.Name);
 
         Assert.That(properties, Is.EquivalentTo(new[] { "UserId", "FullName", "ClassRole" }));
+    }
+
+    [Test]
+    public async Task Handler_DelegatesToTheUseCase()
+    {
+        var parent = AddUser("Ana Gil");
+        AddEnrollment("Confirmed", parent.Id);
+        _currentUserId = parent.Id;
+        var handler = new UserClassMemberFinderByClass.Handler(_useCase);
+
+        var result = await handler.Handle(new UserClassMemberFinderByClass.Query(ClassId), CancellationToken.None);
+
+        Assert.That(result.Value.Select(member => member.UserId), Is.EqualTo(new[] { parent.Id }));
     }
 }
