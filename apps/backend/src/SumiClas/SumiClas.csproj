@@ -17,6 +17,7 @@
       <!-- Npgsql.EntityFrameworkCore.PostgreSQL 10.0.3 pins Relational to 10.0.4, older than the 10.0.12 above; forced up explicitly to avoid a FileNotFoundException at runtime from the version mismatch. -->
       <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
       <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.12" />
+      <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
         <PrivateAssets>all</PrivateAssets>

@@ -20,6 +20,7 @@ builder.Services.AddSumiClasIdentity();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
 builder.Services.AddSumiClasRateLimiting(builder.Configuration);
+builder.Services.AddSumiClasJwt(builder.Configuration);
 
 
 var app = builder.Build();

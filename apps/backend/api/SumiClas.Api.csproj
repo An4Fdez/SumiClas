@@ -8,6 +8,7 @@
         <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
         <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
         <Nullable>enable</Nullable>
+        <UserSecretsId>7f3c1e52-9b4a-4d6e-8a21-5c0d9e3b7a64</UserSecretsId>
         <SpaRoot>..\..\frontend\sumiclas-web\</SpaRoot>
         <SpaProxyServerUrl>https://localhost:4004</SpaProxyServerUrl>
         <SpaProxyLaunchCommand>pnpm run dev -- --m $(Configuration.toLower())</SpaProxyLaunchCommand>
@@ -17,6 +18,7 @@
         <PackageReference Include="Asp.Versioning.Http" Version="10.2.3" />
         <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
         <PackageReference Include="Asp.Versioning.OpenApi" Version="10.2.3" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
         <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.12" />
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
