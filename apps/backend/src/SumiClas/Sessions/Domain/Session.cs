@@ -23,6 +23,9 @@ public sealed class Session : AggregateRoot
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
 
+    /// <summary>Set on every successful rotation so the root row changes and the optimistic concurrency token is checked; otherwise only child rows would change.</summary>
+    public DateTimeOffset? LastRotatedAt { get; private set; }
+
     private Session()
     {
     }
@@ -112,6 +115,7 @@ public sealed class Session : AggregateRoot
         var successor = RefreshToken.Create(newTokenHash, clock);
         current.ReplaceWith(successor.Id, clock);
         _refreshTokens.Add(successor);
+        LastRotatedAt = clock.UtcNow;
         Prune(clock, current.Id, successor.Id);
         return Done(new SessionRotation.Rotated(successor));
     }

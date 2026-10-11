@@ -54,6 +54,10 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
         {
             throw new DuplicateKeyException(constraintName, exception);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new ConcurrencyConflictException(exception);
+        }
     }
 
     public async Task BeginTransactionAsync(CancellationToken ct = default)

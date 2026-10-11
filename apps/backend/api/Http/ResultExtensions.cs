@@ -6,7 +6,7 @@ public static class ResultExtensions
 {
     /// <summary>
     /// Maps a failed <see cref="Result"/> to a standard ProblemDetails response.
-    /// Codes ending in "NotFound" map to 404, codes ending in "AlreadyRegistered", "AlreadyExists" or "AlreadyConfirmed" map to 409,
+    /// Codes ending in "NotFound" map to 404, codes ending in "AlreadyRegistered", "AlreadyExists", "AlreadyConfirmed" or "ConcurrencyConflict" map to 409,
     /// codes ending in "Unauthenticated", "InvalidCredentials" or "RefreshTokenInvalid" map to 401, codes ending in "Forbidden" map to 403, and every other domain error is a validation failure (400).
     /// </summary>
     public static IResult ToNoContent(this Result result)
@@ -27,7 +27,8 @@ public static class ResultExtensions
             var code when code.EndsWith("NotFound", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
             var code when code.EndsWith("AlreadyRegistered", StringComparison.Ordinal)
                 || code.EndsWith("AlreadyExists", StringComparison.Ordinal)
-                || code.EndsWith("AlreadyConfirmed", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
+                || code.EndsWith("AlreadyConfirmed", StringComparison.Ordinal)
+                || code.EndsWith("ConcurrencyConflict", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
             var code when code.EndsWith("Unauthenticated", StringComparison.Ordinal)
                 || code.EndsWith("InvalidCredentials", StringComparison.Ordinal)
                 || code.EndsWith("RefreshTokenInvalid", StringComparison.Ordinal) => StatusCodes.Status401Unauthorized,

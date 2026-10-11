@@ -22,6 +22,8 @@ public sealed class SessionConfiguration : IEntityTypeConfiguration<Session>
 
         builder.Property(s => s.RevokedAt);
 
+        builder.Property(s => s.LastRotatedAt);
+
         builder.Property<uint>("xmin")
             .HasColumnName("xmin")
             .HasColumnType("xid")

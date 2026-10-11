@@ -139,6 +139,52 @@ public class UnitOfWorkBehaviorTests
     }
 
     [Test]
+    public async Task Handle_WhenSavingLosesAConcurrencyRace_RollsBackAndReturnsTheSharedConcurrencyConflictError()
+    {
+        _unitOfWork
+            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ConcurrencyConflictException(new InvalidOperationException("inner")));
+
+        var response = await ValueBehavior().Handle(new ValueCommand(), _ => Task.FromResult(Result<int>.Success(7)), CancellationToken.None);
+
+        Assert.That(response, Is.InstanceOf<Result<int>>());
+        Assert.That(response.IsFailure, Is.True);
+        Assert.That(response.Error, Is.EqualTo(SharedErrors.ConcurrencyConflict));
+        Assert.That(response.Error!.Code, Is.EqualTo("Shared.ConcurrencyConflict"));
+        VerifyRolledBackOnce();
+        VerifyNeverCommitted();
+    }
+
+    [Test]
+    public async Task Handle_WhenTheHandlerRaisesAConcurrencyConflict_RollsBackAndReturnsTheSharedError()
+    {
+        var response = await PlainBehavior().Handle(
+            new PlainCommand(),
+            _ => throw new ConcurrencyConflictException(new InvalidOperationException("inner")),
+            CancellationToken.None);
+
+        Assert.That(response.Error, Is.EqualTo(SharedErrors.ConcurrencyConflict));
+        VerifyRolledBackOnce();
+        VerifyNeverCommitted();
+        _dispatcher.Verify(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_WhenDispatchingEventsLosesAConcurrencyRace_RollsBackAndReturnsTheSharedError()
+    {
+        _dispatcher
+            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ConcurrencyConflictException(new InvalidOperationException("inner")));
+
+        var response = await PlainBehavior().Handle(new PlainCommand(), _ => Task.FromResult(Result.Success()), CancellationToken.None);
+
+        Assert.That(response.Error, Is.EqualTo(SharedErrors.ConcurrencyConflict));
+        VerifyRolledBackOnce();
+        VerifyNeverCommitted();
+        _unitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
     public void Handle_WhenSavingThrowsAnotherException_RollsBackAndPropagatesIt()
     {
         _unitOfWork

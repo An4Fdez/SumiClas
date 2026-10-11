@@ -10,6 +10,8 @@ namespace SumiClas.Shared.Application;
 /// is everything saved and committed. A failed result, a failed handler or an exception rolls everything back.
 /// A unique-key violation (<see cref="DuplicateKeyException"/>) also rolls back, but becomes the failed result
 /// <see cref="SharedErrors.AlreadyExists"/> (HTTP 409) instead of an exception.
+/// A lost optimistic-concurrency race (<see cref="ConcurrencyConflictException"/>) behaves the same way and becomes
+/// <see cref="SharedErrors.ConcurrencyConflict"/> (HTTP 409).
 /// Use cases never touch the unit of work.
 /// </summary>
 public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
@@ -55,6 +57,11 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
         {
             await unitOfWork.RollbackTransactionAsync(CancellationToken.None);
             return FailedResponse(SharedErrors.AlreadyExists);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            await unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+            return FailedResponse(SharedErrors.ConcurrencyConflict);
         }
         catch
         {

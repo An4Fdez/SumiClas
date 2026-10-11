@@ -227,6 +227,62 @@ public class SessionTests
     }
 
     [Test]
+    public void Rotate_OnARotation_SetsLastRotatedAtToTheClockTime()
+    {
+        var session = NewSession();
+        Assert.That(session.LastRotatedAt, Is.Null);
+        Advance(TimeSpan.FromMinutes(5));
+
+        Rotate(session, "hash-1", "hash-2");
+
+        Assert.That(session.LastRotatedAt, Is.EqualTo(Now + TimeSpan.FromMinutes(5)));
+    }
+
+    [Test]
+    public void Rotate_OnSuccessiveRotations_UpdatesLastRotatedAtEachTime()
+    {
+        var session = NewSession();
+        Advance(TimeSpan.FromMinutes(5));
+        Rotate(session, "hash-1", "hash-2");
+        Advance(TimeSpan.FromMinutes(10));
+
+        Rotate(session, "hash-2", "hash-3");
+
+        Assert.That(session.LastRotatedAt, Is.EqualTo(Now + TimeSpan.FromMinutes(10)));
+    }
+
+    [Test]
+    public void Rotate_WhenInvalid_LeavesLastRotatedAtUnchanged()
+    {
+        var session = NewSession();
+
+        Rotate(session, "unknown", "hash-2");
+        Assert.That(session.LastRotatedAt, Is.Null);
+
+        Advance(TimeSpan.FromMinutes(5));
+        Rotate(session, "hash-1", "hash-2");
+        var rotatedAt = session.LastRotatedAt;
+        Advance(Grace / 2 + TimeSpan.FromMinutes(5));
+        Rotate(session, "hash-1", "hash-3");
+
+        Assert.That(session.LastRotatedAt, Is.EqualTo(rotatedAt));
+    }
+
+    [Test]
+    public void Rotate_WhenReused_LeavesLastRotatedAtUnchanged()
+    {
+        var session = NewSession();
+        Rotate(session, "hash-1", "hash-2");
+        var rotatedAt = session.LastRotatedAt;
+        Advance(PastGrace);
+
+        var result = Rotate(session, "hash-1", "hash-3");
+
+        Assert.That(result.Value, Is.TypeOf<SessionRotation.Reused>());
+        Assert.That(session.LastRotatedAt, Is.EqualTo(rotatedAt));
+    }
+
+    [Test]
     public void Rotate_PrunesTokensReplacedLongAgo_ButKeepsTheCurrentAndTheJustReplacedOnes()
     {
         var session = NewSession();
