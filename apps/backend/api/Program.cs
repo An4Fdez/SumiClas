@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using SumiClas.Api.Bootstrap;
+using SumiClas.Api.Configuration;
 using SumiClas.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);

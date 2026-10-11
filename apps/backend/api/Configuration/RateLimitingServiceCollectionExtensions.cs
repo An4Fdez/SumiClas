@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Threading.RateLimiting;
 
-namespace SumiClas.Api.Bootstrap;
+namespace SumiClas.Api.Configuration;
 
 public static class RateLimitingServiceCollectionExtensions
 {

@@ -6,7 +6,7 @@ using SumiClas.Shared.Domain;
 using SumiClas.Shared.Infrastructure;
 using SumiClas.Shared.Infrastructure.Persistence;
 
-namespace SumiClas.Api.Bootstrap;
+namespace SumiClas.Api.Configuration;
 
 public static class InfrastructureServiceCollectionExtensions
 {

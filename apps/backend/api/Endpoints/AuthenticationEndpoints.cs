@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
-using SumiClas.Api.Bootstrap;
+using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Sessions.Application;
 using SumiClas.Users.Application;

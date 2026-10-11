@@ -1,7 +1,7 @@
 using System.Reflection;
 using SumiClas.Shared.Application;
 
-namespace SumiClas.Api.Bootstrap;
+namespace SumiClas.Api.Configuration;
 
 public static class ConventionServiceCollectionExtensions
 {

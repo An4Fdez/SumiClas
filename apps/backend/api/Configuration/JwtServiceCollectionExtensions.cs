@@ -3,7 +3,7 @@ using SumiClas.Api.Http;
 using SumiClas.Sessions.Domain;
 using SumiClas.Sessions.Infrastructure;
 
-namespace SumiClas.Api.Bootstrap;
+namespace SumiClas.Api.Configuration;
 
 public static class JwtServiceCollectionExtensions
 {
