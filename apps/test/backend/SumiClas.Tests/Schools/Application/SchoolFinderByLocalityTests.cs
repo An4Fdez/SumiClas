@@ -19,6 +19,7 @@ public class SchoolFinderByLocalityTests
     private static readonly Guid MalagaPostalCode = Guid.Parse("c0000000-0000-4000-8000-000000000001");
 
     private List<School> _store = null!;
+    private Mock<ISchoolRepository> _schools = null!;
     private Mock<IQueryBus> _queryBus = null!;
     private SchoolFinderByLocality.Finder _useCase = null!;
 
@@ -26,8 +27,8 @@ public class SchoolFinderByLocalityTests
     public void SetUp()
     {
         _store = [];
-        var schools = new Mock<ISchoolRepository>();
-        schools
+        _schools = new Mock<ISchoolRepository>();
+        _schools
             .Setup(repository => repository.SearchAsync(It.IsAny<ISpecification<School>>(), It.IsAny<CancellationToken>()))
             .Returns<ISpecification<School>, CancellationToken>((specification, _) =>
                 Task.FromResult<IReadOnlyCollection<School>>(
@@ -45,7 +46,7 @@ public class SchoolFinderByLocalityTests
             .Setup(bus => bus.Send(It.IsAny<PostalCodeFinderByIds.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyCollection<PostalCodeResponse>) [new PostalCodeResponse(MalagaPostalCode, Malaga, "29640")]);
 
-        _useCase = new SchoolFinderByLocality.Finder(schools.Object, _queryBus.Object);
+        _useCase = new SchoolFinderByLocality.Finder(_schools.Object, _queryBus.Object);
     }
 
     private School AddSchool(string name, Guid localityId, Guid? postalCodeId = null)
@@ -61,7 +62,7 @@ public class SchoolFinderByLocalityTests
         var inMalaga = AddSchool("CEIP Sumi", Malaga);
         AddSchool("CEIP Sumi", Madrid);
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Value;
 
         Assert.That(result.Select(school => school.Id), Is.EqualTo(new[] { inMalaga.Id }));
         Assert.That(result.Single().LocalityId, Is.EqualTo(Malaga));
@@ -72,7 +73,7 @@ public class SchoolFinderByLocalityTests
     {
         AddSchool("CEIP Sumi", Malaga, MalagaPostalCode);
 
-        var school = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Single();
+        var school = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Value.Single();
 
         Assert.That(school.ProvinceId, Is.EqualTo(MalagaProvince));
         Assert.That(school.ProvinceName, Is.EqualTo("Málaga"));
@@ -86,7 +87,7 @@ public class SchoolFinderByLocalityTests
     {
         AddSchool("CEIP Sumi", Malaga);
 
-        var school = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Single();
+        var school = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Value.Single();
 
         Assert.That(school.PostalCodeId, Is.Null);
         Assert.That(school.PostalCode, Is.Null);
@@ -114,7 +115,7 @@ public class SchoolFinderByLocalityTests
         var match = AddSchool("CEIP Peña Blanca", Malaga);
         AddSchool("IES Los Álamos", Malaga);
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "  PENA bla "), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "  PENA bla "), CancellationToken.None)).Value;
 
         Assert.That(result.Select(school => school.Id), Is.EqualTo(new[] { match.Id }));
     }
@@ -124,7 +125,7 @@ public class SchoolFinderByLocalityTests
     {
         var match = AddSchool("CEIP Alamos", Malaga);
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "Álamos"), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "Álamos"), CancellationToken.None)).Value;
 
         Assert.That(result.Select(school => school.Id), Is.EqualTo(new[] { match.Id }));
     }
@@ -135,7 +136,7 @@ public class SchoolFinderByLocalityTests
         AddSchool("IES Zeta", Malaga);
         AddSchool("CEIP Alfa", Malaga);
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "  "), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, "  "), CancellationToken.None)).Value;
 
         Assert.That(result.Select(school => school.Name), Is.EqualTo(new[] { "CEIP Alfa", "IES Zeta" }));
     }
@@ -145,7 +146,7 @@ public class SchoolFinderByLocalityTests
     {
         AddSchool("CEIP Sumi", Malaga);
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Guid.NewGuid(), null), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Guid.NewGuid(), null), CancellationToken.None)).Value;
 
         Assert.That(result, Is.Empty);
         _queryBus.Verify(bus => bus.Send(It.IsAny<LocalityFinderByIds.Query>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -159,13 +160,27 @@ public class SchoolFinderByLocalityTests
             AddSchool($"CEIP {i:000}", Malaga);
         }
 
-        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None);
+        var result = (await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Value;
 
         Assert.That(result, Has.Count.EqualTo(SchoolFinderByLocality.MaxResults));
         Assert.That(result.First().Name, Is.EqualTo("CEIP 000"));
         Assert.That(result.Last().Name, Is.EqualTo($"CEIP {SchoolFinderByLocality.MaxResults - 1:000}"));
     }
 
+
+    [TestCase(null)]
+    [TestCase("00000000-0000-0000-0000-000000000000")]
+    public async Task UseCase_WithoutLocality_FailsWithoutTouchingRepositoryOrBus(string? localityId)
+    {
+        Guid? id = localityId is null ? null : Guid.Parse(localityId);
+
+        var result = await _useCase.ExecuteAsync(new SchoolFinderByLocality.Query(id, null), CancellationToken.None);
+
+        Assert.That(result.IsFailure, Is.True);
+        Assert.That(result.Error, Is.EqualTo(SchoolErrors.LocalityFilterRequired));
+        _schools.Verify(repository => repository.SearchAsync(It.IsAny<ISpecification<School>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _queryBus.VerifyNoOtherCalls();
+    }
     [Test]
     public async Task Handler_DelegatesToTheUseCase()
     {
@@ -173,7 +188,7 @@ public class SchoolFinderByLocalityTests
         AddSchool("CEIP Sumi", Madrid);
         var handler = new SchoolFinderByLocality.Handler(_useCase);
 
-        var result = await handler.Handle(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None);
+        var result = (await handler.Handle(new SchoolFinderByLocality.Query(Malaga, null), CancellationToken.None)).Value;
 
         Assert.That(result.Select(school => school.Id), Is.EqualTo(new[] { inMalaga.Id }));
     }
