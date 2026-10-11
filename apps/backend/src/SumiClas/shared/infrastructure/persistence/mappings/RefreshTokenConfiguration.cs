@@ -1,24 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SumiClas.RefreshTokens.Domain;
+using SumiClas.Sessions.Domain;
 
 namespace SumiClas.Shared.Infrastructure.Persistence.Mappings;
 
-public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
+/// <summary>
+/// Not an IEntityTypeConfiguration&lt;T&gt; on purpose: RefreshToken only exists owned by Session, so it must never be
+/// auto-applied via ApplyConfigurationsFromAssembly (that would register it as an independent entity type and conflict
+/// with OwnsMany).
+/// </summary>
+public sealed class RefreshTokenConfiguration
 {
-    public void Configure(EntityTypeBuilder<RefreshToken> builder)
+    public void Configure(OwnedNavigationBuilder<Session, RefreshToken> builder)
     {
         builder.ToTable("RefreshTokens");
 
+        builder.WithOwner().HasForeignKey("SessionId");
+
         builder.HasKey(t => t.Id);
-        builder.Property(t => t.Id)
-            .ValueGeneratedNever();
 
-        builder.Property(t => t.UserId)
-            .IsRequired();
-
-        builder.Property(t => t.FamilyId)
-            .IsRequired();
+        builder.Property(t => t.Id).ValueGeneratedNever();
 
         builder.Property(t => t.TokenHash)
             .IsRequired()
@@ -30,13 +31,11 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         builder.Property(t => t.ExpiresAt)
             .IsRequired();
 
-        builder.HasIndex(t => t.FamilyId)
-            .HasDatabaseName("IX_RefreshTokens_FamilyId");
+        builder.HasIndex("SessionId")
+            .HasDatabaseName("IX_RefreshTokens_SessionId");
 
         builder.HasIndex(t => t.TokenHash)
             .IsUnique()
             .HasDatabaseName("IX_RefreshTokens_TokenHash");
-
-        builder.Ignore(t => t.DomainEvents);
     }
 }

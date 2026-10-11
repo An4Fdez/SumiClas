@@ -1,6 +1,6 @@
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.RefreshTokens.Domain;
+namespace SumiClas.Sessions.Domain;
 
 public static class AccessTokenErrors
 {

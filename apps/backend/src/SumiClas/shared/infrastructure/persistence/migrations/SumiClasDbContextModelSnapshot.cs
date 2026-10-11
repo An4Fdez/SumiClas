@@ -347,49 +347,6 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("Provinces", (string)null);
                 });
 
-            modelBuilder.Entity("SumiClas.RefreshTokens.Domain.RefreshToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FamilyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ReplacedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ReplacedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FamilyId")
-                        .HasDatabaseName("IX_RefreshTokens_FamilyId");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique()
-                        .HasDatabaseName("IX_RefreshTokens_TokenHash");
-
-                    b.ToTable("RefreshTokens", (string)null);
-                });
-
             modelBuilder.Entity("SumiClas.SchoolYears.Domain.SchoolYear", b =>
                 {
                     b.Property<Guid>("Id")
@@ -463,6 +420,34 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.HasIndex("LocalityId", "NormalizedName");
 
                     b.ToTable("Schools", (string)null);
+                });
+
+            modelBuilder.Entity("SumiClas.Sessions.Domain.Session", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Sessions_UserId");
+
+                    b.ToTable("Sessions", (string)null);
                 });
 
             modelBuilder.Entity("SumiClas.Students.Domain.Student", b =>
@@ -635,6 +620,51 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("SumiClas.Sessions.Domain.Session", b =>
+                {
+                    b.OwnsMany("SumiClas.Sessions.Domain.RefreshToken", "RefreshTokens", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTimeOffset>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTimeOffset>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTimeOffset?>("ReplacedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Guid?>("ReplacedById")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("SessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("TokenHash")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SessionId")
+                                .HasDatabaseName("IX_RefreshTokens_SessionId");
+
+                            b1.HasIndex("TokenHash")
+                                .IsUnique()
+                                .HasDatabaseName("IX_RefreshTokens_TokenHash");
+
+                            b1.ToTable("RefreshTokens", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SessionId");
+                        });
+
+                    b.Navigation("RefreshTokens");
                 });
 
             modelBuilder.Entity("SumiClas.Students.Domain.Student", b =>

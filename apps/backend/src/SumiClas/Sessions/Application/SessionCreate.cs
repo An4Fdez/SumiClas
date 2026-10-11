@@ -1,24 +1,25 @@
 using MediatR;
 using Microsoft.Extensions.Options;
-using SumiClas.RefreshTokens.Domain;
+using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
 
-namespace SumiClas.RefreshTokens.Application;
+namespace SumiClas.Sessions.Application;
 
 /// <summary>
-/// Opens a session: checks the credentials through <see cref="UserPasswordVerify.Query"/>, starts a new refresh token
-/// family and issues the first access token. A command, because the credential check may store a stronger hash.
+/// Opens a session (login): checks the credentials through <see cref="UserPasswordVerify.Query"/>, starts a new session
+/// with its first refresh token and issues the first access token. A command, because the credential check may store a
+/// stronger hash.
 /// </summary>
-public static class RefreshTokenCreate
+public static class SessionCreate
 {
     public sealed record Command(string Email, string Password) : IRequest<Result<SessionResponse>>, ICommand;
 
     public sealed class Create(
         IQueryBus queryBus,
         IRefreshTokenGenerator refreshTokenGenerator,
-        IRefreshTokenRepository refreshTokens,
+        ISessionRepository repository,
         IAccessTokenGenerator accessTokenGenerator,
         IClock clock,
         IOptions<JwtOptions> jwtOptions) : IUseCase
@@ -31,15 +32,17 @@ public static class RefreshTokenCreate
                 return Result<SessionResponse>.Failure(user.Error!);
             }
 
-            var (raw, hash) = refreshTokenGenerator.Generate();
-            var refreshToken = RefreshToken.Create(
-                Guid.NewGuid(), user.Value.Id, Guid.NewGuid(), hash, clock, TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays));
-            if (refreshToken.IsFailure)
+            var refreshToken = refreshTokenGenerator.Generate();
+            var session = Session.Create(
+                user.Value.Id, refreshTokenGenerator.Hash(refreshToken), clock,
+                TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays));
+            
+            if (session.IsFailure)
             {
-                return Result<SessionResponse>.Failure(refreshToken.Error!);
+                return Result<SessionResponse>.Failure(session.Error!);
             }
 
-            await refreshTokens.AddAsync(refreshToken.Value, ct);
+            await repository.AddAsync(session.Value, ct);
 
             var accessToken = accessTokenGenerator.Generate(user.Value.Id);
             if (accessToken.IsFailure)
@@ -48,7 +51,8 @@ public static class RefreshTokenCreate
             }
 
             return Result<SessionResponse>.Success(
-                new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Value.Id, user.Value.FullName, raw));
+                new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Value.Id,
+                    user.Value.FullName, refreshToken));
         }
     }
 

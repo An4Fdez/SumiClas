@@ -1,4 +1,4 @@
-namespace SumiClas.RefreshTokens.Domain;
+namespace SumiClas.Sessions.Domain;
 
 public sealed class JwtOptions
 {

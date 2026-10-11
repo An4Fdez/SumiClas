@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Bootstrap;
 using SumiClas.Api.Http;
-using SumiClas.RefreshTokens.Application;
+using SumiClas.Sessions.Application;
 using SumiClas.Users.Application;
 
 namespace SumiClas.Api.Endpoints;
@@ -36,12 +36,12 @@ public sealed class AuthenticationEndpoints : IEndpoints
 
         authentication.MapPost("/login", async (AccountLoginRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new RefreshTokenCreate.Command(request.Email, request.Password), ct);
+            var result = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
             return result.IsSuccess
                 ? Results.Ok(new AccountResponse(result.Value.UserId, result.Value.FullName))
                 : result.ToProblem();
         })
-            .WithName("RefreshTokenCreate")
+            .WithName("SessionCreate")
             .Produces<AccountResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)

@@ -2,10 +2,10 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using SumiClas.RefreshTokens.Domain;
+using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.RefreshTokens.Infrastructure;
+namespace SumiClas.Sessions.Infrastructure;
 
 public sealed class JwtAccessTokenGenerator : IAccessTokenGenerator
 {

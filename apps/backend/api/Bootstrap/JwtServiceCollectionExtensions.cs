@@ -1,7 +1,7 @@
 using System.Text;
 using SumiClas.Api.Http;
-using SumiClas.RefreshTokens.Domain;
-using SumiClas.RefreshTokens.Infrastructure;
+using SumiClas.Sessions.Domain;
+using SumiClas.Sessions.Infrastructure;
 
 namespace SumiClas.Api.Bootstrap;
 

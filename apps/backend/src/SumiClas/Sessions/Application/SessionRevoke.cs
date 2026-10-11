@@ -1,16 +1,16 @@
 using MediatR;
-using SumiClas.RefreshTokens.Domain;
+using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.RefreshTokens.Application;
+namespace SumiClas.Sessions.Application;
 
-/// <summary>Closes the whole session family of a refresh token. Always succeeds: logging out twice, or with garbage, is harmless.</summary>
-public static class RefreshTokenRevoke
+/// <summary>Closes the session of a refresh token. Always succeeds: logging out twice, or with garbage, is harmless.</summary>
+public static class SessionRevoke
 {
     public sealed record Command(string? RawRefreshToken) : IRequest<Result>, ICommand;
 
-    public sealed class Revoke(IRefreshTokenRepository refreshTokens, IRefreshTokenGenerator refreshTokenGenerator, IClock clock) : IUseCase
+    public sealed class Revoke(ISessionRepository repository, IRefreshTokenGenerator refreshTokenGenerator, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -20,12 +20,8 @@ public static class RefreshTokenRevoke
             }
 
             var hash = refreshTokenGenerator.Hash(command.RawRefreshToken);
-            var found = await refreshTokens.SearchAsync(new RefreshTokenSpecification(tokenHash: hash), ct);
-            var current = found.FirstOrDefault();
-            if (current is not null)
-            {
-                await RefreshTokenRotate.Rotate.RevokeFamilyAsync(current.FamilyId, clock, refreshTokens, ct);
-            }
+            var found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
+            found.FirstOrDefault()?.Revoke(clock);
 
             return Result.Success();
         }
