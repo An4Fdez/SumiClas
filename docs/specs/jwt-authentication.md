@@ -8,7 +8,7 @@ Formato **Spec-Driven Development**: primero la especificación completa (qué d
 
 ## 0. Contexto y alcance
 
-**Problema.** Ya existe login con email y contraseña (módulo `Authentication`), pero la sesión es falsificable: el backend toma al usuario de la cabecera `X-User-Id` (`api/Http/HeaderUserProvider.cs`), que el cliente elige libremente, y ningún endpoint exige autenticación. La app maneja datos de menores, así que esto debe cerrarse antes de cualquier uso fuera de desarrollo.
+**Problema.** Ya existe login con email y contraseña (en `Users`), pero la sesión es falsificable: el backend toma al usuario de la cabecera `X-User-Id` (`api/Http/HeaderUserProvider.cs`), que el cliente elige libremente, y ningún endpoint exige autenticación. La app maneja datos de menores, así que esto debe cerrarse antes de cualquier uso fuera de desarrollo.
 
 **Objetivo.** Identidad real y verificable en cada petición (JWT firmado), sesión larga y revocable (refresh token rotatorio en cookie httpOnly), cierre de sesión efectivo y CORS restrictivo.
 
@@ -66,7 +66,7 @@ En este proyecto, en producción, la web y la API se sirven **desde el mismo dom
 
 ### Qué cambia para cada parte
 - **Para la persona usuaria**: prácticamente nada. Inicia sesión una vez, la sesión dura hasta 14 días sin volver a pedir la contraseña (mientras use la app) y «Cerrar sesión» cierra de verdad.
-- **Backend**: un nuevo agregado `RefreshToken` con su tabla, tres casos de uso (`AccountLogin` ampliado, `AccountTokenRefresh`, `AccountLogout`), validación del JWT en cada petición y un `JwtUserProvider` que lee el id del token. Los casos de uso que hoy piden «quién es el usuario actual» **no cambian**: solo cambia de dónde sale ese dato. Desaparecen `HeaderUserProvider` y la cabecera `X-User-Id`.
+- **Backend**: un nuevo módulo `RefreshTokens` con su agregado `RefreshToken` y su tabla, tres casos de uso (`RefreshTokenCreate`, `RefreshTokenRotate`, `RefreshTokenRevoke`; el login consulta `UserPasswordVerify` de `Users`), validación del JWT en cada petición y un `JwtUserProvider` que lee el id del token. Los casos de uso que hoy piden «quién es el usuario actual» **no cambian**: solo cambia de dónde sale ese dato. Desaparecen `HeaderUserProvider` y la cabecera `X-User-Id`.
 - **Frontend**: el id deja de guardarse en `localStorage`; un almacén en memoria guarda el access token, un envoltorio de las peticiones lo añade y se encarga del refresco transparente, y un contexto de sesión decide si mostrar la app o llevar a `/login`.
 
 ### Qué NO resuelve este plan (importante)
@@ -152,7 +152,7 @@ Palabras clave: DEBE (obligatorio), DEBERÍA (recomendado).
 - `expiresAt`: fecha-hora UTC ISO-8601 de caducidad del access (`ApiClient` ya revive `createdAt`; añadir `expiresAt` a `DATE_TIME_KEYS`).
 - Cookie: `sumiclas_refresh=<valor>; Path=/api/auth; Max-Age=1209600; HttpOnly; Secure; SameSite=Strict`.
 - 401/403 de middleware: `ProblemDetails` con `type`, `title`, `status`, `code` (misma forma que `ToProblem`).
-- Endpoints nuevos: `WithName` = `AccountTokenRefresh` / `AccountLogout`, `WithTags("Authentication")`, `Produces*` y `ProducesProblem` completos; esquema de seguridad Bearer declarado en el OpenAPI.
+- Endpoints nuevos: `WithName` = `RefreshTokenRotate` / `RefreshTokenRevoke` (el login pasa a `RefreshTokenCreate`), `WithTags("Authentication")`, `Produces*` y `ProducesProblem` completos; esquema de seguridad Bearer declarado en el OpenAPI.
 
 ## 5. Modelo de datos
 
@@ -240,25 +240,29 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 
 ### 9.1 Backend (convenciones de `apps/backend/AGENTS.md`)
 
-**Dominio** (`Authentication/Domain`): agregado `RefreshToken : AggregateRoot`
+**Módulos.** Un módulo = una raíz de agregado, y un caso de uso solo usa el repositorio de su propio módulo (entre módulos, `IQueryBus` o eventos). `User` lleva el hash de la contraseña (`UserCredential` y el módulo `Authentication` se eliminaron en J1e; `IPasswordHasher`, el value object `Password` y `PasswordVerification` viven en `Users/Domain`) y `Users` expone la query `UserPasswordVerify`. Los puertos que implementa `Infrastructure` viven en `Domain`.
+
+**Dominio** (`RefreshTokens/Domain`): agregado `RefreshToken : AggregateRoot`
 - `Create(id, userId, familyId, tokenHash, IClock clock, TimeSpan lifetime)` → `Result<RefreshToken>` (valida ids y hash no vacío; errores `RefreshToken.IdRequired`, `RefreshToken.UserRequired`, `RefreshToken.HashRequired`).
 - `IsActive(clock)` = no revocado, no reemplazado y no caducado.
 - `MarkReplaced(successorId, clock)`, `Revoke(clock)`, `WasReplacedWithin(clock, grace)`.
 - `IRefreshTokenRepository` (`GetByIdAsync`, `SearchAsync(ISpecification)`, `AddAsync`) + `RefreshTokenSpecification(tokenHash?, familyId?)` base con un parámetro por campo.
+- Value object `AccessToken` (`Create(value, expiresAt)` → `Result<AccessToken>`; errores `AccessToken.ValueRequired` y `AccessToken.ExpiryRequired`; igualdad por componentes).
 
-**Puertos** (`Authentication/Application`): `IAccessTokenIssuer.Issue(userId)` → `AccessToken(Value, ExpiresAt)`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`.
-**Infraestructura** (`Authentication/Infrastructure`): `JwtAccessTokenIssuer` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `RefreshTokenRepository`. `JwtOptions` (con validación `IValidateOptions`) y `RefreshCookieOptions` en `Authentication/Application` o `api/Bootstrap` según dependan de ASP.NET.
+**Puertos** (`RefreshTokens/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. `JwtOptions` (configuración plana) también vive en `Domain`.
+**Infraestructura** (`RefreshTokens/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `RefreshTokenRepository`. `JwtOptions` se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
 
-**Casos de uso** (clase estática con `Command`/`UseCase`/`Handler`):
-- `AccountLogin` (modificado): tras verificar contraseña → genera refresh, crea `RefreshToken` (familia nueva), emite access; devuelve `Result<AccountSession>` con `AccessToken`, `ExpiresAt`, `UserId`, `FullName` y `RefreshTokenRaw` (el endpoint pone la cookie y **no** lo serializa).
-- `AccountTokenRefresh.Command(RawRefreshToken?)` → `Result<RefreshOutcome>` **siempre exitoso** salvo error técnico: `Issued(AccountSession+raw)`, `Invalid` o `Reused`. Flujo: hash → buscar; no encontrado/caducado/revocado → `Invalid`; reemplazado: dentro de gracia → `Invalid` sin tocar, fuera → revocar familia y `Reused`; activo → comprobar que el usuario existe (`IQueryBus` + `UserFinderById`, si no → `Invalid`), `MarkReplaced`, crear sucesor, emitir access. El endpoint traduce `Invalid`/`Reused` a 401 + borrado de cookie (así el `UnitOfWorkBehavior` confirma la revocación).
-- `AccountLogout.Command(RawRefreshToken?)` → `Result` siempre éxito: si encuentra el token revoca la familia entera.
+**Casos de uso**:
+- `UserPasswordVerify` (`Users/Application`, `Query`/`Verify`/`Handler`): `Query(Email, Password)` → `Result<UserResponse>`; mismo `Authentication.InvalidCredentials` para email desconocido o contraseña errónea, y el hasher se ejecuta siempre. Si el hasher pide rehash, el `Verify` reemplaza el hash del usuario rastreado (`User.ReplacePasswordHash`) y lo persiste el `UnitOfWorkBehavior` del comando raíz (compromiso: una query con un efecto lateral acotado).
+- `RefreshTokenCreate` (login; clase estática con `Command`/`Create`/`Handler`): `Command(Email, Password)`; envía `UserPasswordVerify.Query` por `IQueryBus`, genera refresh, crea `RefreshToken` (familia nueva), emite access; devuelve `Result<SessionResponse>` con `AccessToken`, `ExpiresAt`, `UserId`, `FullName` y `RefreshTokenRaw` (el endpoint pone la cookie y **no** lo serializa).
+- `RefreshTokenRotate.Command(RawRefreshToken?)` → `Result<RefreshOutcome>` **siempre exitoso** salvo error técnico: `Rotated(SessionResponse+raw)`, `Invalid` o `Reused`. Flujo: hash → buscar; no encontrado/caducado/revocado → `Invalid`; reemplazado: dentro de gracia → `Invalid` sin tocar, fuera → revocar familia y `Reused`; activo → comprobar que el usuario existe (`IQueryBus` + `UserFinderById`, si no → `Invalid`), `MarkReplaced`, crear sucesor, emitir access. El endpoint traduce `Invalid`/`Reused` a 401 + borrado de cookie (así el `UnitOfWorkBehavior` confirma la revocación).
+- `RefreshTokenRevoke.Command(RawRefreshToken?)` → `Result` siempre éxito: si encuentra el token revoca la familia entera.
 
 **API** (`api/`): `AddJwtBearer` (`MapInboundClaims=false`, `ValidateIssuer/Audience/Lifetime/IssuerSigningKey`, `ClockSkew` 30 s, `RequireSignedTokens`), `AddAuthorizationBuilder().SetFallbackPolicy(RequireAuthenticatedUser)`, `.AllowAnonymous()` en la lista de §4/RF-11, `AddProblemDetails`, eventos `OnChallenge`/`OnForbidden` que escriben `ProblemDetails` con `code`; `JwtUserProvider` (lee `sub`; ausente o no-Guid → `Authentication.Unauthenticated`) sustituye a `HeaderUserProvider` (se borra); `CorsServiceCollectionExtensions` (política única desde `Cors:AllowedOrigins`; si la lista está vacía no se registra `UseCors`); `RateLimitingServiceCollectionExtensions` añade la política `auth-refresh`. Orden del pipeline: `UseRateLimiter` → `UseCors` → `UseAuthentication` → `UseAuthorization` → `MapEndpoints`. Helper `RefreshCookie.Write/Clear` en `api/Http` (único sitio que toca la cookie).
 
 **Secuencias.**
 - *Login*: cliente → `POST /auth/login` → verificar contraseña → crear familia + `RefreshToken` → `Set-Cookie` + cuerpo `{accessToken,…}`.
-- *Refresco*: cliente → `POST /auth/refresh` (cookie) → `AccountTokenRefresh` → ramas `Issued` (200 + cookie rotada) / `Invalid` / `Reused` (401 + borrar cookie; en `Reused` la revocación ya está confirmada).
+- *Refresco*: cliente → `POST /auth/refresh` (cookie) → `RefreshTokenRotate` → ramas `Rotated` (200 + cookie rotada) / `Invalid` / `Reused` (401 + borrar cookie; en `Reused` la revocación ya está confirmada).
 - *401 con reintento*: petición con access caducado → 401 → single-flight refresh → repetir una vez → OK; o fallo → limpiar sesión → `/login`.
 
 ### 9.2 Frontend (`apps/frontend/sumiclas-web/src`)
@@ -281,9 +285,11 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 |---|---|---|---|---|
 | **J0** | Guardar este documento en `docs/specs/jwt-authentication.md`, crear `odd/tasks/jwt.md` + espejo Engram, actualizar los puntos de «REVISIÓN COMPLETA PENDIENTE» que dependan de esto (solo marcar «en curso»). | — | — | docs |
 | **J1a** | Dominio `RefreshToken`, `RefreshTokenSpecification`, `IRefreshTokenRepository`, errores, `RefreshTokenInvalid` en `ResultExtensions` + tests unitarios (RED→GREEN). | J0 | S-04/07/08 (dominio) | ~250 líneas |
-| **J1b** | `JwtOptions` + validación, `IAccessTokenIssuer` + `JwtAccessTokenIssuer`, `IRefreshTokenGenerator` + implementación, paquete JwtBearer y `UserSecretsId` en `SumiClas.Api.csproj` (requiere permiso del usuario para tocar el `.csproj`), claves no secretas en `appsettings*.json` y la clave de firma solo en User Secrets/entorno + tests (claims, `typ`, caducidad, hash, validación de opciones). | J1a | S-01 (parcial), S-02, S-20 | ~350 líneas |
+| **J1b** | `JwtOptions` + validación, `IAccessTokenGenerator` + `JwtAccessTokenGenerator`, `IRefreshTokenGenerator` + implementación, paquete JwtBearer y `UserSecretsId` en `SumiClas.Api.csproj` (requiere permiso del usuario para tocar el `.csproj`), claves no secretas en `appsettings*.json` y la clave de firma solo en User Secrets/entorno + tests (claims, `typ`, caducidad, hash, validación de opciones). | J1a | S-01 (parcial), S-02, S-20 | ~350 líneas |
 | **J1c** | Mapeo EF + `DbSet` + `RefreshTokenRepository` + migración `RefreshTokens` (pieza propia por el `Designer`). | J1a | S-01 (BD) | ~800 líneas generadas |
-| **J2a** | Casos de uso `AccountLogin` (sesión+refresh), `AccountTokenRefresh`, `AccountLogout` + tests con Moq/`IClock` falso (rotación, reutilización con y sin gracia, caducado, usuario inexistente, idempotencia). | J1b, J1c | S-01, S-03..S-10 | ~500 líneas |
+| **J1d** | Reorganización por módulos: `RefreshToken` y sus piezas pasan a un módulo propio `RefreshTokens`; `Authentication` queda solo con `UserCredential` y expone `AccountCredentialVerify` (query; sustituido en J1e) para el login; `AccessToken` como value object de dominio (`Result<AccessToken>`); puertos en `Domain`; `RefreshCookieOptions` pasa a `api/Http`; sin migración nueva (solo cambia el nombre CLR en el snapshot y el `Designer`). | J1b, J1c | S-01, S-03..S-10 (sin cambio de comportamiento) | refactor + ~12 tests |
+| **J1e** | Unificar `User` y `UserCredential` (1:1, mismo ciclo de vida) en un solo agregado y una sola tabla: `User` lleva `PasswordHash`/`PasswordChangedAt`; `UserRegister` (sustituye a `AccountRegister`, sin evento de dominio) y `UserPasswordVerify` (sustituye a `AccountCredentialVerify`) viven en `Users`; `IPasswordHasher`, `Password` y `IdentityPasswordHasher` pasan a `Users`; se elimina el módulo `Authentication`; migración `MergeUserCredentialsIntoUsers` que copia los hashes y borra `UserCredentials`. `RefreshTokens` solo cambia el nombre de la query. | J1d | S-01, S-02 (sin cambio de comportamiento) | refactor + tests movidos |
+| **J2a** | Casos de uso `RefreshTokenCreate` (sesión+refresh), `RefreshTokenRotate`, `RefreshTokenRevoke` + tests con Moq/`IClock` falso (rotación, reutilización con y sin gracia, caducado, usuario inexistente, idempotencia). | J1b, J1c, J1d | S-01, S-03..S-10 | ~500 líneas |
 | **J2b** | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, CORS, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`. | J2a | S-11..S-19 | ~550 líneas |
 | **J3a** | Regenerar cliente NSwag; `tokenStore`, `authHttp` (single-flight, locks, reintento), `IAuthenticationRepository.refresh/logout`, `Session`; retirar `X-User-Id`. | J2b | S-21, S-24..S-26 | ~450 líneas |
 | **J3b** | `AuthContext`/`AuthProvider`/`useAuth`, `RequireSession`, `Login`, `Register` (register→login), logout en `AppLayout`/`More`, mensajes. | J3a | S-22, S-23, S-27, S-28 | ~450 líneas |
