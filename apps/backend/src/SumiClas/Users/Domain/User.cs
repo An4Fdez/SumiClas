@@ -10,10 +10,16 @@ public sealed class User : AggregateRoot
     public string FullName { get; private set; }
     public Email Email { get; private set; }
 
-    private User(Guid id, string fullName, Email email) : base(id)
+    /// <summary>Only the hash is kept, never the password.</summary>
+    public string PasswordHash { get; private set; }
+    public DateTimeOffset PasswordChangedAt { get; private set; }
+
+    private User(Guid id, string fullName, Email email, string passwordHash, DateTimeOffset passwordChangedAt) : base(id)
     {
         FullName = fullName;
         Email = email;
+        PasswordHash = passwordHash;
+        PasswordChangedAt = passwordChangedAt;
     }
 
     /// <summary>EF Core materialization only — constructor parameters can never bind to an owned-type navigation (Email), even when named to match.</summary>
@@ -21,20 +27,21 @@ public sealed class User : AggregateRoot
     {
         FullName = null!;
         Email = null!;
+        PasswordHash = null!;
     }
 
-    public static Result<User> Register(Guid id, string fullName, Email email)
+    public static Result<User> Register(Guid id, string fullName, Email email, string passwordHash, IClock clock)
     {
-        var validation = Validate(id, fullName);
+        var validation = Validate(id, fullName, passwordHash);
         if (validation.IsFailure)
         {
             return Result<User>.Failure(validation.Error!);
         }
 
-        return Result<User>.Success(new User(id, fullName.Trim(), email));
+        return Result<User>.Success(new User(id, fullName.Trim(), email, passwordHash, clock.UtcNow));
     }
 
-    private static Result Validate(Guid id, string fullName)
+    private static Result Validate(Guid id, string fullName, string passwordHash)
     {
         if (id == Guid.Empty)
         {
@@ -44,6 +51,23 @@ public sealed class User : AggregateRoot
         {
             return Result.Failure(UserErrors.FullNameRequired);
         }
+        if (string.IsNullOrWhiteSpace(passwordHash))
+        {
+            return Result.Failure(UserErrors.PasswordHashRequired);
+        }
+        return Result.Success();
+    }
+
+    /// <summary>Stores a newer hash of the same password (the hasher asks for it when its parameters have been strengthened).</summary>
+    public Result ReplacePasswordHash(string newHash, IClock clock)
+    {
+        if (string.IsNullOrWhiteSpace(newHash))
+        {
+            return Result.Failure(UserErrors.PasswordHashRequired);
+        }
+
+        PasswordHash = newHash;
+        PasswordChangedAt = clock.UtcNow;
         return Result.Success();
     }
 

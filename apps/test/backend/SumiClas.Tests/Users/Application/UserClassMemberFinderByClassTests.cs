@@ -69,7 +69,7 @@ public class UserClassMemberFinderByClassTests
     private User AddUser(string fullName, bool representative = false)
     {
         var id = Guid.NewGuid();
-        var user = User.Register(id, fullName, Email.Create($"{id:N}@example.com").Value).Value;
+        var user = User.Register(id, fullName, Email.Create($"{id:N}@example.com").Value, "hash", new Mock<IClock>().Object).Value;
         if (representative)
         {
             user.AssignAsClassRepresentative(ClassId, 0);

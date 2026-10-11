@@ -1,4 +1,4 @@
-namespace SumiClas.Authentication.Application;
+namespace SumiClas.Users.Domain;
 
 public enum PasswordVerification
 {

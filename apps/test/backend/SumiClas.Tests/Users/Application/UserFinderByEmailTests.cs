@@ -28,7 +28,7 @@ public class UserFinderByEmailTests
     [Test]
     public async Task Handle_FindsTheUserIgnoringCaseAndSpacesAndReturnsOnlyIdAndName()
     {
-        var user = User.Register(Guid.NewGuid(), "Ana Perez", Email.Create("ana@example.com").Value).Value;
+        var user = User.Register(Guid.NewGuid(), "Ana Perez", Email.Create("ana@example.com").Value, "hash", new Mock<IClock>().Object).Value;
         _store.Add(user);
 
         var result = await _handler.Handle(new UserFinderByEmail.Query("  ANA@Example.com "), CancellationToken.None);

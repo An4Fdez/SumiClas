@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using SumiClas.Authentication.Application;
-using SumiClas.Authentication.Infrastructure;
+using SumiClas.Users.Domain;
+using SumiClas.Users.Infrastructure;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Shared.Infrastructure;

@@ -1,22 +1,21 @@
 using Microsoft.AspNetCore.Identity;
-using SumiClas.Authentication.Application;
-using SumiClas.Authentication.Domain;
+using SumiClas.Users.Domain;
 
-namespace SumiClas.Authentication.Infrastructure;
+namespace SumiClas.Users.Infrastructure;
 
 /// <summary>PBKDF2 with a random salt in the versioned format of ASP.NET Core Identity. Thread-safe: register it as a singleton.</summary>
 public sealed class IdentityPasswordHasher : IPasswordHasher
 {
-    private readonly PasswordHasher<UserCredential> _hasher = new();
+    private readonly PasswordHasher<User> _hasher = new();
     private readonly string _throwawayHash;
 
     public IdentityPasswordHasher()
     {
-        _throwawayHash = Hash(Guid.NewGuid().ToString("N"));
+        _throwawayHash = Generate(Password.Create(Guid.NewGuid().ToString("N")).Value);
     }
 
     // The Identity hasher never reads the user it is given, so none is passed.
-    public string Hash(string password) => _hasher.HashPassword(null!, password);
+    public string Generate(Password password) => _hasher.HashPassword(null!, password.Value);
 
     public PasswordVerification Verify(string? hash, string password)
     {
