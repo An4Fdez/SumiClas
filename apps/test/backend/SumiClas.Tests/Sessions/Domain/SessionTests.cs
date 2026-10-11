@@ -9,8 +9,9 @@ public class SessionTests
 {
     private static readonly Guid UserId = Guid.Parse("3f2b1c7e-8d4a-4c1e-9b5f-0a6d2e7c9b10");
     private static readonly DateTimeOffset Now = new(2026, 10, 10, 12, 0, 0, TimeSpan.Zero);
-    private static readonly TimeSpan Lifetime = TimeSpan.FromDays(14);
-    private static readonly TimeSpan Grace = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan Lifetime = RefreshToken.Lifetime;
+    private static readonly TimeSpan Grace = Session.RefreshGrace;
+    private static readonly TimeSpan PastGrace = Grace + TimeSpan.FromSeconds(50);
 
     private Mock<IClock> _clock = null!;
 
@@ -21,20 +22,32 @@ public class SessionTests
         _clock.Setup(clock => clock.UtcNow).Returns(Now);
     }
 
-    private Session NewSession(TimeSpan? lifetime = null)
-        => Session.Create(UserId, "hash-1", _clock.Object, lifetime ?? Lifetime).Value;
+    private Session NewSession()
+        => Session.Create(UserId, "hash-1", _clock.Object).Value;
 
     private void Advance(TimeSpan time) => _clock.Setup(clock => clock.UtcNow).Returns(Now + time);
 
     private static RefreshToken TokenOf(Session session, string hash) => session.RefreshTokens.Single(token => token.TokenHash == hash);
 
-    private Result<SessionRotation> Rotate(Session session, string hash, string newHash, TimeSpan? lifetime = null)
-        => session.Rotate(hash, newHash, _clock.Object, lifetime ?? Lifetime, Grace);
+    private Result<SessionRotation> Rotate(Session session, string hash, string newHash)
+        => session.Rotate(hash, newHash, _clock.Object);
+
+    [Test]
+    public void RefreshGrace_Is10Seconds()
+    {
+        Assert.That(Session.RefreshGrace, Is.EqualTo(TimeSpan.FromSeconds(10)));
+    }
+
+    [Test]
+    public void RefreshTokenLifetime_Is14Days()
+    {
+        Assert.That(RefreshToken.Lifetime, Is.EqualTo(TimeSpan.FromDays(14)));
+    }
 
     [Test]
     public void Start_WithValidData_KeepsTheFieldsAndCreatesTheFirstToken()
     {
-        var result = Session.Create(UserId, "hash-1", _clock.Object, Lifetime);
+        var result = Session.Create(UserId, "hash-1", _clock.Object);
 
         Assert.That(result.IsSuccess, Is.True);
         var session = result.Value;
@@ -55,8 +68,8 @@ public class SessionTests
     [Test]
     public void Start_AssignsADifferentIdOnEachCall()
     {
-        var first = Session.Create(UserId, "hash-1", _clock.Object, Lifetime).Value;
-        var second = Session.Create(UserId, "hash-1", _clock.Object, Lifetime).Value;
+        var first = Session.Create(UserId, "hash-1", _clock.Object).Value;
+        var second = Session.Create(UserId, "hash-1", _clock.Object).Value;
 
         Assert.That(first.Id, Is.Not.EqualTo(Guid.Empty));
         Assert.That(second.Id, Is.Not.EqualTo(first.Id));
@@ -65,7 +78,7 @@ public class SessionTests
     [Test]
     public void Start_WithEmptyUser_ReturnsUserRequired()
     {
-        var result = Session.Create(Guid.Empty, "hash-1", _clock.Object, Lifetime);
+        var result = Session.Create(Guid.Empty, "hash-1", _clock.Object);
 
         Assert.That(result.Error, Is.EqualTo(SessionErrors.UserRequired));
     }
@@ -74,18 +87,9 @@ public class SessionTests
     [TestCase("   ")]
     public void Start_WithBlankHash_ReturnsTokenHashRequired(string hash)
     {
-        var result = Session.Create(UserId, hash, _clock.Object, Lifetime);
+        var result = Session.Create(UserId, hash, _clock.Object);
 
         Assert.That(result.Error, Is.EqualTo(SessionErrors.TokenHashRequired));
-    }
-
-    [TestCase(0)]
-    [TestCase(-1)]
-    public void Start_WithNonPositiveLifetime_ReturnsLifetimeInvalid(int days)
-    {
-        var result = Session.Create(UserId, "hash-1", _clock.Object, TimeSpan.FromDays(days));
-
-        Assert.That(result.Error, Is.EqualTo(SessionErrors.LifetimeInvalid));
     }
 
     [Test]
@@ -125,17 +129,6 @@ public class SessionTests
     }
 
     [Test]
-    public void Rotate_WithANonPositiveLifetime_ReturnsLifetimeInvalid()
-    {
-        var session = NewSession();
-
-        var result = Rotate(session, "hash-1", "hash-2", TimeSpan.Zero);
-
-        Assert.That(result.Error, Is.EqualTo(SessionErrors.LifetimeInvalid));
-        Assert.That(session.RefreshTokens, Has.Count.EqualTo(1));
-    }
-
-    [Test]
     public void Rotate_WithAnUnknownHash_IsInvalidAndChangesNothing()
     {
         var session = NewSession();
@@ -151,8 +144,8 @@ public class SessionTests
     [Test]
     public void Rotate_WithAnExpiredToken_IsInvalidAndChangesNothing()
     {
-        var session = NewSession(TimeSpan.FromDays(1));
-        Advance(TimeSpan.FromDays(2));
+        var session = NewSession();
+        Advance(Lifetime + TimeSpan.FromSeconds(1));
 
         var result = Rotate(session, "hash-1", "hash-2");
 
@@ -167,7 +160,7 @@ public class SessionTests
     {
         var session = NewSession();
         Rotate(session, "hash-1", "hash-2");
-        Advance(TimeSpan.FromSeconds(5));
+        Advance(Grace / 2);
 
         var result = Rotate(session, "hash-1", "hash-3");
 
@@ -195,13 +188,13 @@ public class SessionTests
     {
         var session = NewSession();
         Rotate(session, "hash-1", "hash-2");
-        Advance(TimeSpan.FromSeconds(60));
+        Advance(PastGrace);
 
         var result = Rotate(session, "hash-1", "hash-3");
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value, Is.TypeOf<SessionRotation.Reused>());
-        Assert.That(session.RevokedAt, Is.EqualTo(Now + TimeSpan.FromSeconds(60)));
+        Assert.That(session.RevokedAt, Is.EqualTo(Now + PastGrace));
         Assert.That(session.IsActive(_clock.Object), Is.False);
         Assert.That(session.RefreshTokens, Has.Count.EqualTo(2));
     }
@@ -211,7 +204,7 @@ public class SessionTests
     {
         var session = NewSession();
         Rotate(session, "hash-1", "hash-2");
-        Advance(TimeSpan.FromSeconds(60));
+        Advance(PastGrace);
         Rotate(session, "hash-1", "hash-3");
 
         var result = Rotate(session, "hash-2", "hash-4");
@@ -263,10 +256,10 @@ public class SessionTests
     [Test]
     public void Rotate_PrunesExpiredTokens()
     {
-        var session = NewSession(TimeSpan.FromHours(1));
-        Advance(TimeSpan.FromMinutes(30));
+        var session = NewSession();
+        Advance(Lifetime - TimeSpan.FromHours(1));
         Rotate(session, "hash-1", "hash-2");
-        Advance(TimeSpan.FromMinutes(90));
+        Advance(Lifetime + TimeSpan.FromHours(1));
 
         var result = Rotate(session, "hash-2", "hash-3");
 
@@ -358,7 +351,7 @@ public class SessionTests
         Advance(TimeSpan.FromSeconds(3));
         Assert.That(old.WasReplacedWithin(_clock.Object, Grace), Is.True);
 
-        Advance(TimeSpan.FromSeconds(60));
+        Advance(PastGrace);
         Assert.That(old.WasReplacedWithin(_clock.Object, Grace), Is.False);
     }
 
@@ -366,7 +359,7 @@ public class SessionTests
     public void Specification_FiltersByIdUserAndTokenHash_AndNullMeansNoFilter()
     {
         var session = NewSession();
-        var other = Session.Create(Guid.NewGuid(), "other-hash", _clock.Object, Lifetime).Value;
+        var other = Session.Create(Guid.NewGuid(), "other-hash", _clock.Object).Value;
         Rotate(session, "hash-1", "hash-2");
         var sessions = new[] { session, other };
 

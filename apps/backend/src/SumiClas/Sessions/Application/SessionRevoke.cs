@@ -8,18 +8,18 @@ namespace SumiClas.Sessions.Application;
 /// <summary>Closes the session of a refresh token. Always succeeds: logging out twice, or with garbage, is harmless.</summary>
 public static class SessionRevoke
 {
-    public sealed record Command(string? RawRefreshToken) : IRequest<Result>, ICommand;
+    public sealed record Command(string? RefreshToken) : IRequest<Result>, ICommand;
 
     public sealed class Revoke(ISessionRepository repository, IRefreshTokenGenerator refreshTokenGenerator, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(command.RawRefreshToken))
+            if (string.IsNullOrWhiteSpace(command.RefreshToken))
             {
                 return Result.Success();
             }
 
-            var hash = refreshTokenGenerator.Hash(command.RawRefreshToken);
+            var hash = refreshTokenGenerator.Hash(command.RefreshToken);
             var found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
             found.FirstOrDefault()?.Revoke(clock);
 

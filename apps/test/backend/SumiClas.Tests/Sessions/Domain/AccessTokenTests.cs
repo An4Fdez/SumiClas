@@ -8,6 +8,12 @@ public class AccessTokenTests
     private static readonly DateTimeOffset ExpiresAt = new(2026, 10, 11, 12, 15, 0, TimeSpan.Zero);
 
     [Test]
+    public void Lifetime_Is15Minutes()
+    {
+        Assert.That(AccessToken.Lifetime, Is.EqualTo(TimeSpan.FromMinutes(15)));
+    }
+
+    [Test]
     public void Create_WithValueAndExpiry_Succeeds()
     {
         var result = AccessToken.Create("jwt", ExpiresAt);

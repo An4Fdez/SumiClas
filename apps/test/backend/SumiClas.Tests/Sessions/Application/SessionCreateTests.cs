@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Moq;
 using SumiClas.Sessions.Application;
 using SumiClas.Sessions.Domain;
@@ -39,11 +38,10 @@ public class SessionCreateTests
         _accessTokenGenerator = new Mock<IAccessTokenGenerator>();
         _accessTokenGenerator
             .Setup(generator => generator.Generate(UserId))
-            .Returns(Result<AccessToken>.Success(AccessToken.Create("jwt", Now.AddMinutes(15)).Value));
-        var options = Options.Create(new JwtOptions { RefreshTokenDays = 30, RefreshGraceSeconds = 10 });
+            .Returns(Result<AccessToken>.Success(AccessToken.Create("jwt", Now + AccessToken.Lifetime).Value));
 
         _useCase = new SessionCreate.Create(
-            _queryBus.Object, _generator.Object, _sessions.Object, _accessTokenGenerator.Object, _clock.Object, options);
+            _queryBus.Object, _generator.Object, _sessions.Object, _accessTokenGenerator.Object, _clock.Object);
     }
 
     [Test]
@@ -52,7 +50,7 @@ public class SessionCreateTests
         var result = await _useCase.ExecuteAsync(new SessionCreate.Command("ana@example.com", "right-password"));
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.Value, Is.EqualTo(new SessionResponse("jwt", Now.AddMinutes(15), UserId, "Ana Perez", "raw-refresh")));
+        Assert.That(result.Value, Is.EqualTo(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "raw-refresh")));
         _queryBus.Verify(bus => bus.Send(
             It.Is<UserPasswordVerify.Query>(query => query.Email == "ana@example.com" && query.Password == "right-password"),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -65,7 +63,7 @@ public class SessionCreateTests
                 && session.RefreshTokens.Single().Id != Guid.Empty
                 && session.RefreshTokens.Single().Id != session.Id
                 && session.RefreshTokens.Single().TokenHash == "hash-of-raw-refresh"
-                && session.RefreshTokens.Single().ExpiresAt == Now.AddDays(30)),
+                && session.RefreshTokens.Single().ExpiresAt == Now + RefreshToken.Lifetime),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

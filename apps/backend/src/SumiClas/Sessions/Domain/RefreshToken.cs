@@ -7,6 +7,8 @@ namespace SumiClas.Sessions.Domain;
 /// </summary>
 public sealed class RefreshToken : Entity
 {
+    public static readonly TimeSpan Lifetime = TimeSpan.FromDays(14);
+
     public string TokenHash { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
@@ -20,10 +22,10 @@ public sealed class RefreshToken : Entity
         ExpiresAt = expiresAt;
     }
 
-    internal static RefreshToken Create(string tokenHash, IClock clock, TimeSpan lifetime)
+    internal static RefreshToken Create(string tokenHash, IClock clock)
     {
         var now = clock.UtcNow;
-        return new RefreshToken(Guid.NewGuid(), tokenHash, now, now + lifetime);
+        return new RefreshToken(Guid.NewGuid(), tokenHash, now, now + Lifetime);
     }
 
     public bool IsActive(IClock clock)

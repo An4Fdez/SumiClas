@@ -6,5 +6,4 @@ public static class SessionErrors
 {
     public static readonly Error UserRequired = new("Session.UserRequired", "La sesión necesita un usuario.");
     public static readonly Error TokenHashRequired = new("Session.TokenHashRequired", "El token de sesión necesita su huella.");
-    public static readonly Error LifetimeInvalid = new("Session.LifetimeInvalid", "La duración del token de sesión debe ser mayor que cero.");
 }

@@ -95,8 +95,8 @@ Palabras clave: DEBE (obligatorio), DEBERÍA (recomendado).
 
 **Emisión de sesión**
 - **RF-01** `POST /auth/login` correcto DEBE devolver 200 con `{ accessToken, expiresAt, userId, fullName }` y DEBE establecer la cookie de refresh. Credenciales incorrectas DEBEN seguir dando el mismo 401 idéntico (`Authentication.InvalidCredentials`), sin cookie.
-- **RF-02** El access token DEBE ser un JWT HS256 con cabecera `typ: at+jwt` y claims `sub` (id de usuario, Guid), `jti` (Guid), `iat`, `nbf`, `exp`, `iss`, `aud`. NO DEBE contener email, nombre ni datos de menores. Caduca a los `AccessTokenMinutes` (15).
-- **RF-03** La cookie de refresh DEBE ser `HttpOnly; Secure; SameSite=Strict`, con `Path` configurable (por defecto `/api/auth`, la ruta que ve el navegador tras el proxy), `Max-Age` = `RefreshTokenDays` días (14), nombre `sumiclas_refresh` (configurable) y sin atributo `Domain`. Su valor NUNCA DEBE aparecer en cuerpos de respuesta ni en logs.
+- **RF-02** El access token DEBE ser un JWT HS256 con cabecera `typ: at+jwt` y claims `sub` (id de usuario, Guid), `jti` (Guid), `iat`, `nbf`, `exp`, `iss`, `aud`. NO DEBE contener email, nombre ni datos de menores. Caduca a los 15 minutos (constante `AccessToken.Lifetime`).
+- **RF-03** La cookie de refresh DEBE ser `HttpOnly; Secure; SameSite=Strict`, con `Path` configurable (por defecto `/api/auth`, la ruta que ve el navegador tras el proxy), `Max-Age` = 14 días (constante `RefreshToken.Lifetime`), nombre `sumiclas_refresh` (configurable) y sin atributo `Domain`. Su valor NUNCA DEBE aparecer en cuerpos de respuesta ni en logs.
 - **RF-04** Cada login DEBE crear una familia nueva y un `RefreshToken` activo; en BD solo se guarda `TokenHash` (SHA-256 hex del valor).
 
 **Refresco y rotación**
@@ -119,7 +119,7 @@ Palabras clave: DEBE (obligatorio), DEBERÍA (recomendado).
 - **RF-15** `/auth/refresh` y `/auth/logout` DEBEN tener su propio limitador por IP (30 peticiones / 60 s; configurable); `/auth/login` y `/auth/register` mantienen 10/60 s (60/60 en Development). Superado → 429 `ProblemDetails` con `Retry-After`.
 
 **Configuración**
-- **RF-16** Claves `Jwt` DEBEN validarse al arrancar: `SigningKey` ≥ 32 bytes, `Issuer`, `Audience`, `AccessTokenMinutes` 1–60, `RefreshTokenDays` 1–90. En ningún entorno la API DEBE arrancar sin `Jwt:SigningKey`, y el mensaje de error DEBE indicar cómo definirla. La clave NUNCA se escribe en un `appsettings*.json` del repositorio: en desarrollo se guarda con User Secrets (`dotnet user-secrets set "Jwt:SigningKey" "<clave>"`, con `UserSecretsId` en `SumiClas.Api.csproj`) y en los demás entornos con la variable de entorno `Jwt__SigningKey` o el gestor de secretos del hosting.
+- **RF-16** Claves `Jwt` DEBEN validarse al arrancar: `SigningKey` ≥ 32 bytes, `Issuer` y `Audience`. En ningún entorno la API DEBE arrancar sin `Jwt:SigningKey`, y el mensaje de error DEBE indicar cómo definirla. La clave NUNCA se escribe en un `appsettings*.json` del repositorio: en desarrollo se guarda con User Secrets (`dotnet user-secrets set "Jwt:SigningKey" "<clave>"`, con `UserSecretsId` en `SumiClas.Api.csproj`) y en los demás entornos con la variable de entorno `Jwt__SigningKey` o el gestor de secretos del hosting.
 
 **Frontend**
 - **RF-17** El access token DEBE guardarse solo en memoria; NO DEBE escribirse en `localStorage`/`sessionStorage`. El antiguo `sumiclas-user-id` DEBE borrarse si existe. Se conserva `sumiclas-guardian` (no sensible).
@@ -178,7 +178,7 @@ Tabla `RefreshTokens` (hija de `Sessions`):
 | `SessionId` | uuid not null | FK a `Sessions.Id` con borrado en cascada; índice `IX_RefreshTokens_SessionId` |
 | `TokenHash` | varchar(64) not null | SHA-256 hex; índice único `IX_RefreshTokens_TokenHash` |
 | `CreatedAt` | timestamptz not null | `IClock` |
-| `ExpiresAt` | timestamptz not null | `CreatedAt + RefreshTokenDays` |
+| `ExpiresAt` | timestamptz not null | `CreatedAt + RefreshToken.Lifetime` (14 días) |
 | `ReplacedAt` | timestamptz null | cuándo fue reemplazado (ventana de gracia) |
 | `ReplacedById` | uuid null | siguiente de la cadena |
 
@@ -190,9 +190,6 @@ La sesión poda en cada rotación los tokens reemplazados hace más de 24 h o ca
 Jwt:Issuer              "sumiclas-api"
 Jwt:Audience            "sumiclas-web"
 Jwt:SigningKey          (≥32 bytes; NO va en ningún appsettings del repo. Development: User Secrets; otros entornos: Jwt__SigningKey. Obligatoria en todos)
-Jwt:AccessTokenMinutes  15
-Jwt:RefreshTokenDays    14
-Jwt:RefreshGraceSeconds 10
 Jwt:RefreshCookie:Name     "sumiclas_refresh"
 Jwt:RefreshCookie:Path     "/api/auth"
 Jwt:RefreshCookie:Secure   true
@@ -201,6 +198,8 @@ Cors:AllowedOrigins     []   (Development: https://localhost:4004 para probar si
 RateLimiting:Auth:PermitLimit / WindowSeconds                 10 / 60   (Development 60 / 60)
 RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 ```
+
+Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación 10 s) no se configuran: son constantes de `AccessToken`, `RefreshToken` y `Session` (política de negocio de las entidades), no valores de despliegue.
 
 ## 7. Catálogo de errores
 
@@ -231,7 +230,7 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 | S-10 | `/auth/logout` sin cookie → 204 | RF-09 |
 | S-11 | Cualquier endpoint protegido (p. ej. `GET /users/me`) sin `Authorization` → 401 `ProblemDetails` con `code` `Authentication.Unauthenticated` | RF-10 |
 | S-12 | Con access válido, `GET /users/me` → 200 con el perfil de `sub` | RF-10, 12 |
-| S-13 | Access caducado (reloj +20 min o `AccessTokenMinutes` bajo) → 401 | RF-10 |
+| S-13 | Access caducado (JWT ya caducado, fabricado en la prueba con la clave de firma de desarrollo) → 401 | RF-10 |
 | S-14 | Access con firma alterada, `iss` o `aud` distintos → 401 | RF-10 |
 | S-15 | Petición con `X-User-Id` válido y sin Bearer → 401 | RF-12 |
 | S-16 | Con Bearer de A y `X-User-Id` de B, el usuario actual es A | RF-12 |
@@ -257,15 +256,15 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 **Módulos.** Un módulo = una raíz de agregado, y un caso de uso solo usa el repositorio de su propio módulo (entre módulos, `IQueryBus` o eventos). `User` lleva el hash de la contraseña (`UserCredential` y el módulo `Authentication` se eliminaron en J1e; `IPasswordHasher`, el value object `Password` y `PasswordVerification` viven en `Users/Domain`) y `Users` expone la query `UserPasswordVerify`. Los puertos que implementa `Infrastructure` viven en `Domain`.
 
 **Dominio** (`Sessions/Domain`, J1g): agregado `Session : AggregateRoot` (la raíz es la sesión; `RefreshToken : Entity` es su entidad hija, sin repositorio propio)
-- `Create(userId, tokenHash, IClock clock, TimeSpan lifetime)` → `Result<Session>` (genera el id de la sesión con `Guid.NewGuid()`, valida el usuario, hash no vacío y duración positiva; el id del primer refresh token (entidad hija) lo genera el propio agregado con `Guid.NewGuid()`; errores `Session.UserRequired`, `Session.TokenHashRequired`, `Session.LifetimeInvalid`).
-- `Rotate(tokenHash, newTokenHash, clock, lifetime, grace)` → `Result<SessionRotation>` (`Rotated(NewToken) | Invalid | Reused`; el id del sucesor lo genera el propio agregado; solo falla con argumentos inválidos). La detección de reutilización es comportamiento del agregado: sesión revocada → `Invalid`; huella desconocida → `Invalid`; token ya reemplazado dentro de la gracia → `Invalid` sin cambios, fuera de la gracia → revoca la sesión y `Reused`; caducado → `Invalid`; en otro caso marca el token como reemplazado y añade el sucesor. En cada rotación correcta poda los tokens reemplazados hace más de `Session.ReplacedTokenRetention` (24 h) o caducados (compromiso: acota las filas por sesión; la repetición de un token más antiguo que eso es `Invalid`, no `Reused`).
+- `Create(userId, tokenHash, IClock clock)` → `Result<Session>` (genera el id de la sesión con `Guid.NewGuid()`, valida el usuario y el hash no vacío; la caducidad del primer refresh token es `RefreshToken.Lifetime`; el id del primer refresh token (entidad hija) lo genera el propio agregado con `Guid.NewGuid()`; errores `Session.UserRequired`, `Session.TokenHashRequired`).
+- `Rotate(tokenHash, newTokenHash, clock)` → `Result<SessionRotation>` (`Rotated(NewToken) | Invalid | Reused`; el id del sucesor lo genera el propio agregado; solo falla con argumentos inválidos). La detección de reutilización es comportamiento del agregado: sesión revocada → `Invalid`; huella desconocida → `Invalid`; token ya reemplazado dentro de la gracia (`Session.RefreshGrace`, 10 s) → `Invalid` sin cambios, fuera de la gracia → revoca la sesión y `Reused`; caducado → `Invalid`; en otro caso marca el token como reemplazado y añade el sucesor. En cada rotación correcta poda los tokens reemplazados hace más de `Session.ReplacedTokenRetention` (24 h) o caducados (compromiso: acota las filas por sesión; la repetición de un token más antiguo que eso es `Invalid`, no `Reused`).
 - `Revoke(clock)` idempotente, `IsActive(clock)`, `HasToken(tokenHash)`. `RefreshToken.IsActive(clock)` = no reemplazado y no caducado; `WasReplacedWithin(clock, grace)`.
 - Concurrencia: token optimista con la columna `xmin` de PostgreSQL como propiedad sombra en el mapeo (el Domain no conoce Npgsql), con la intención de que dos refrescos simultáneos no creen dos sucesores activos. **No está verificado**: una rotación solo cambia filas de `RefreshTokens`, así que puede que EF no emita ningún `UPDATE` sobre `Sessions` y el token nunca se compruebe (seguimiento en la ficha de la tarea).
 - `ISessionRepository` (`GetByIdAsync`, `SearchAsync(ISpecification)`, `AddAsync`) + `SessionSpecification(id?, userId?, tokenHash?)` base con un parámetro por campo (`tokenHash` filtra las sesiones con algún refresh token con esa huella).
 - Value object `AccessToken` (`Create(value, expiresAt)` → `Result<AccessToken>`; errores `AccessToken.ValueRequired` y `AccessToken.ExpiryRequired`; igualdad por componentes).
 
-**Puertos** (`Sessions/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. `JwtOptions` (configuración plana) también vive en `Domain`.
-**Infraestructura** (`Sessions/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `SessionRepository`. `JwtOptions` se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
+**Puertos** (`Sessions/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. Las duraciones son política de negocio y viven como constantes en las entidades: `RefreshToken.Lifetime` (14 días), `Session.RefreshGrace` (10 s) y `AccessToken.Lifetime` (15 min); no se configuran.
+**Infraestructura** (`Sessions/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `SessionRepository`. `JwtOptions` (`Sessions/Infrastructure`, solo `Issuer`, `Audience` y `SigningKey`) se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
 
 **Casos de uso**:
 - `UserPasswordVerify` (`Users/Application`, `Query`/`Verify`/`Handler`): `Query(Email, Password)` → `Result<UserResponse>`; mismo `Authentication.InvalidCredentials` para email desconocido o contraseña errónea, y el hasher se ejecuta siempre. Si el hasher pide rehash, el `Verify` reemplaza el hash del usuario rastreado (`User.ReplacePasswordHash`) y lo persiste el `UnitOfWorkBehavior` del comando raíz (compromiso: una query con un efecto lateral acotado).
@@ -309,7 +308,7 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 | **J2b** | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, CORS, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`. | J2a | S-11..S-19 | ~550 líneas |
 | **J3a** | Regenerar cliente NSwag; `tokenStore`, `authHttp` (single-flight, locks, reintento), `IAuthenticationRepository.refresh/logout`, `Session`; retirar `X-User-Id`. | J2b | S-21, S-24..S-26 | ~450 líneas |
 | **J3b** | `AuthContext`/`AuthProvider`/`useAuth`, `RequireSession`, `Login`, `Register` (register→login), logout en `AppLayout`/`More`, mensajes. | J3a | S-22, S-23, S-27, S-28 | ~450 líneas |
-| **J4** | Verificación E2E real (API temporal + Postgres: S-01..S-20 con `curl`/script; navegador CDP: S-21..S-28, con `AccessTokenMinutes` bajo en la prueba para forzar el refresco), limpieza de datos, docs finales (ambos `AGENTS.md`: quitar «identidad provisional» y `X-User-Id`; `odd/tasks/jwt.md` con evidencia; espejo Engram). | J3b | todos | docs + evidencia |
+| **J4** | Verificación E2E real (API temporal + Postgres: S-01..S-20 con `curl`/script; navegador CDP: S-21..S-28, forzando el refresco con un token inválido en el almacén en memoria del frontend para disparar el flujo 401→refresh), limpieza de datos, docs finales (ambos `AGENTS.md`: quitar «identidad provisional» y `X-User-Id`; `odd/tasks/jwt.md` con evidencia; espejo Engram). | J3b | todos | docs + evidencia |
 
 **Definición de hecho por tarea**: build y `dotnet test` / `pnpm typecheck` + `pnpm lint` limpios; los escenarios de la tarea comprobados y anotados con su evidencia en `odd/tasks/jwt.md`; revisión nativa aprobada por pieza; sin atribución de IA en commits; cada commit compila por sí solo (se comprueba en copia aislada).
 

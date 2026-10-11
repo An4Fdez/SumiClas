@@ -14,6 +14,8 @@ public sealed class Session : AggregateRoot
     /// </summary>
     public static readonly TimeSpan ReplacedTokenRetention = TimeSpan.FromHours(24);
 
+    public static readonly TimeSpan RefreshGrace = TimeSpan.FromSeconds(10);
+
     private readonly List<RefreshToken> _refreshTokens = new();
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
@@ -31,33 +33,29 @@ public sealed class Session : AggregateRoot
         CreatedAt = createdAt;
     }
 
-    public static Result<Session> Create(Guid userId, string tokenHash, IClock clock, TimeSpan lifetime)
+    public static Result<Session> Create(Guid userId, string tokenHash, IClock clock)
     {
         if (userId == Guid.Empty)
         {
             return Result<Session>.Failure(SessionErrors.UserRequired);
         }
 
-        var validation = Validate(tokenHash, lifetime);
+        var validation = Validate(tokenHash);
         if (validation.IsFailure)
         {
             return Result<Session>.Failure(validation.Error!);
         }
 
         var session = new Session(Guid.NewGuid(), userId, clock.UtcNow);
-        session._refreshTokens.Add(RefreshToken.Create(tokenHash, clock, lifetime));
+        session._refreshTokens.Add(RefreshToken.Create(tokenHash, clock));
         return Result<Session>.Success(session);
     }
 
-    private static Result Validate(string tokenHash, TimeSpan lifetime)
+    private static Result Validate(string tokenHash)
     {
         if (string.IsNullOrWhiteSpace(tokenHash))
         {
             return Result.Failure(SessionErrors.TokenHashRequired);
-        }
-        if (lifetime <= TimeSpan.Zero)
-        {
-            return Result.Failure(SessionErrors.LifetimeInvalid);
         }
         return Result.Success();
     }
@@ -72,9 +70,9 @@ public sealed class Session : AggregateRoot
         RevokedAt ??= clock.UtcNow;
     }
 
-    public Result<SessionRotation> Rotate(string tokenHash, string newTokenHash, IClock clock, TimeSpan lifetime, TimeSpan grace)
+    public Result<SessionRotation> Rotate(string tokenHash, string newTokenHash, IClock clock)
     {
-        var validation = Validate(newTokenHash, lifetime);
+        var validation = Validate(newTokenHash);
         if (validation.IsFailure)
         {
             return Result<SessionRotation>.Failure(validation.Error!);
@@ -97,7 +95,7 @@ public sealed class Session : AggregateRoot
 
         if (current.ReplacedAt is not null)
         {
-            if (current.WasReplacedWithin(clock, grace))
+            if (current.WasReplacedWithin(clock, RefreshGrace))
             {
                 return Done(new SessionRotation.Invalid());
             }
@@ -111,7 +109,7 @@ public sealed class Session : AggregateRoot
             return Done(new SessionRotation.Invalid());
         }
 
-        var successor = RefreshToken.Create(newTokenHash, clock, lifetime);
+        var successor = RefreshToken.Create(newTokenHash, clock);
         current.ReplaceWith(successor.Id, clock);
         _refreshTokens.Add(successor);
         Prune(clock, current.Id, successor.Id);

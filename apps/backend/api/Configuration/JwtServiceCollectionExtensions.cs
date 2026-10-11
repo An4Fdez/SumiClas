@@ -25,9 +25,6 @@ public static class JwtServiceCollectionExtensions
                 $"Jwt:SigningKey debe tener al menos {MinimumSigningKeyBytes} bytes (32 caracteres). {SigningKeyHelp}")
             .Validate(o => !string.IsNullOrWhiteSpace(o.Issuer), "Jwt:Issuer es obligatorio.")
             .Validate(o => !string.IsNullOrWhiteSpace(o.Audience), "Jwt:Audience es obligatorio.")
-            .Validate(o => o.AccessTokenMinutes is >= 1 and <= 60, "Jwt:AccessTokenMinutes debe estar entre 1 y 60.")
-            .Validate(o => o.RefreshTokenDays is >= 1 and <= 90, "Jwt:RefreshTokenDays debe estar entre 1 y 90.")
-            .Validate(o => o.RefreshGraceSeconds is >= 0 and <= 60, "Jwt:RefreshGraceSeconds debe estar entre 0 y 60.")
             .ValidateOnStart();
         services.AddOptions<RefreshCookieOptions>()
             .Bind(configuration.GetSection(RefreshCookieOptions.SectionName));

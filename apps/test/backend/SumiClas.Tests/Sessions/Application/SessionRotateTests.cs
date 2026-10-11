@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Moq;
 using SumiClas.Sessions.Application;
 using SumiClas.Sessions.Domain;
@@ -48,17 +47,15 @@ public class SessionRotateTests
                 (IReadOnlyCollection<Session>)_stored.Where(specification.Criteria.Compile()).ToList());
 
         _accessTokenGenerator = new Mock<IAccessTokenGenerator>();
-        _accessTokenGenerator.Setup(generator => generator.Generate(UserId)).Returns(Result<AccessToken>.Success(AccessToken.Create("jwt", Now.AddMinutes(15)).Value));
+        _accessTokenGenerator.Setup(generator => generator.Generate(UserId)).Returns(Result<AccessToken>.Success(AccessToken.Create("jwt", Now + AccessToken.Lifetime).Value));
 
         _useCase = new SessionRotate.Rotate(
-            _repository.Object, _generator.Object, _accessTokenGenerator.Object, _queryBus.Object, _clock.Object,
-            Options.Create(new JwtOptions { RefreshTokenDays = 30, RefreshGraceSeconds = 10 }));
+            _repository.Object, _generator.Object, _accessTokenGenerator.Object, _queryBus.Object, _clock.Object);
     }
 
-    private Session GivenASession(string raw, int lifetimeDays = 30)
+    private Session GivenASession(string raw)
     {
-        var session = Session.Create(
-            UserId, "hash-of-" + raw, _clock.Object, TimeSpan.FromDays(lifetimeDays)).Value;
+        var session = Session.Create(UserId, "hash-of-" + raw, _clock.Object).Value;
         _stored.Add(session);
         return session;
     }
@@ -87,12 +84,12 @@ public class SessionRotateTests
         var result = await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.Value, Is.EqualTo(new SessionRotateOutcome.Rotated(new SessionResponse("jwt", Now.AddMinutes(15), UserId, "Ana Perez", "new-raw"))));
+        Assert.That(result.Value, Is.EqualTo(new SessionRotateOutcome.Rotated(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "new-raw"))));
         var old = TokenOf(session, "old-raw");
         var successor = TokenOf(session, "new-raw");
         Assert.That(session.RefreshTokens, Has.Count.EqualTo(2));
         Assert.That(successor.TokenHash, Is.EqualTo("hash-of-new-raw"));
-        Assert.That(successor.ExpiresAt, Is.EqualTo(Now.AddDays(30)));
+        Assert.That(successor.ExpiresAt, Is.EqualTo(Now + RefreshToken.Lifetime));
         Assert.That(successor.Id, Is.Not.EqualTo(Guid.Empty));
         Assert.That(successor.Id, Is.Not.EqualTo(session.Id));
         Assert.That(successor.Id, Is.Not.EqualTo(old.Id));
@@ -127,8 +124,8 @@ public class SessionRotateTests
     [Test]
     public async Task UseCase_WithAnExpiredToken_IsInvalidAndChangesNothing()
     {
-        var session = GivenASession("old-raw", lifetimeDays: 1);
-        TimePasses(TimeSpan.FromDays(2));
+        var session = GivenASession("old-raw");
+        TimePasses(RefreshToken.Lifetime + TimeSpan.FromSeconds(1));
 
         var result = await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
 
@@ -158,7 +155,7 @@ public class SessionRotateTests
         var session = GivenASession("old-raw");
         var unrelated = GivenASession("unrelated-raw");
         await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
-        TimePasses(TimeSpan.FromSeconds(11));
+        TimePasses(Session.RefreshGrace + TimeSpan.FromSeconds(1));
 
         var result = await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
 
@@ -174,7 +171,7 @@ public class SessionRotateTests
     {
         var session = GivenASession("old-raw");
         await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
-        TimePasses(TimeSpan.FromSeconds(5));
+        TimePasses(Session.RefreshGrace / 2);
 
         var result = await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
 

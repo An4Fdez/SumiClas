@@ -38,7 +38,7 @@ public class SessionRevokeTests
 
     private Session GivenASession(string raw)
     {
-        var session = Session.Create(UserId, "hash-of-" + raw, _clock.Object, TimeSpan.FromDays(30)).Value;
+        var session = Session.Create(UserId, "hash-of-" + raw, _clock.Object).Value;
         _stored.Add(session);
         return session;
     }
@@ -60,7 +60,7 @@ public class SessionRevokeTests
     public async Task UseCase_WithATokenAlreadyReplaced_StillRevokesTheSession()
     {
         var session = GivenASession("old-raw");
-        session.Rotate("hash-of-old-raw", "hash-of-new-raw", _clock.Object, TimeSpan.FromDays(30), TimeSpan.FromSeconds(10));
+        session.Rotate("hash-of-old-raw", "hash-of-new-raw", _clock.Object);
 
         var result = await _useCase.ExecuteAsync(new SessionRevoke.Command("old-raw"));
 

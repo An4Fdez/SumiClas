@@ -26,7 +26,7 @@ public sealed class JwtAccessTokenGenerator : IAccessTokenGenerator
     public Result<AccessToken> Generate(Guid userId)
     {
         var now = _clock.UtcNow;
-        var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
+        var expiresAt = now.Add(AccessToken.Lifetime);
 
         var descriptor = new SecurityTokenDescriptor
         {

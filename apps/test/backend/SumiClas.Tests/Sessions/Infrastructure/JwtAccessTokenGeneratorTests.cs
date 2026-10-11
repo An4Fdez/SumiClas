@@ -27,9 +27,6 @@ public class JwtAccessTokenGeneratorTests
             Issuer = "sumiclas-api",
             Audience = "sumiclas-web",
             SigningKey = Key,
-            AccessTokenMinutes = 15,
-            RefreshTokenDays = 14,
-            RefreshGraceSeconds = 10,
         };
         var clock = new Mock<IClock>();
         clock.Setup(c => c.UtcNow).Returns(Now);
@@ -49,7 +46,7 @@ public class JwtAccessTokenGeneratorTests
         Assert.That(token.Audiences, Is.EqualTo(new[] { "sumiclas-web" }));
         Assert.That(token.IssuedAt, Is.EqualTo(Now.UtcDateTime));
         Assert.That(token.ValidFrom, Is.EqualTo(Now.UtcDateTime));
-        Assert.That(token.ValidTo, Is.EqualTo(Now.AddMinutes(15).UtcDateTime));
+        Assert.That(token.ValidTo, Is.EqualTo((Now + AccessToken.Lifetime).UtcDateTime));
     }
 
     [Test]
@@ -58,13 +55,13 @@ public class JwtAccessTokenGeneratorTests
         var result = _generator.Generate(_userId);
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.Value, Is.EqualTo(AccessToken.Create(result.Value.Value, Now.AddMinutes(15)).Value));
+        Assert.That(result.Value, Is.EqualTo(AccessToken.Create(result.Value.Value, Now + AccessToken.Lifetime).Value));
     }
 
     [Test]
-    public void Issue_ReturnsTheExpiryFromTheClockAndTheConfiguredLifetime()
+    public void Issue_ReturnsTheExpiryFromTheClockAndTheAccessTokenLifetime()
     {
-        Assert.That(_generator.Generate(_userId).Value.ExpiresAt, Is.EqualTo(Now.AddMinutes(15)));
+        Assert.That(_generator.Generate(_userId).Value.ExpiresAt, Is.EqualTo(Now + AccessToken.Lifetime));
     }
 
     [Test]

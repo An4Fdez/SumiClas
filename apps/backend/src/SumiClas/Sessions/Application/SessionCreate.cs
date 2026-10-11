@@ -1,5 +1,4 @@
 using MediatR;
-using Microsoft.Extensions.Options;
 using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
@@ -21,8 +20,7 @@ public static class SessionCreate
         IRefreshTokenGenerator refreshTokenGenerator,
         ISessionRepository repository,
         IAccessTokenGenerator accessTokenGenerator,
-        IClock clock,
-        IOptions<JwtOptions> jwtOptions) : IUseCase
+        IClock clock) : IUseCase
     {
         public async Task<Result<SessionResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -33,10 +31,8 @@ public static class SessionCreate
             }
 
             var refreshToken = refreshTokenGenerator.Generate();
-            var session = Session.Create(
-                user.Value.Id, refreshTokenGenerator.Hash(refreshToken), clock,
-                TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays));
-            
+            var session = Session.Create(user.Value.Id, refreshTokenGenerator.Hash(refreshToken), clock);
+
             if (session.IsFailure)
             {
                 return Result<SessionResponse>.Failure(session.Error!);

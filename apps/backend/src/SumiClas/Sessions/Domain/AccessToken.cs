@@ -4,6 +4,8 @@ namespace SumiClas.Sessions.Domain;
 
 public sealed class AccessToken : ValueObject
 {
+    public static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(15);
+
     public string Value { get; }
     public DateTimeOffset ExpiresAt { get; }
 
