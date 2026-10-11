@@ -9,11 +9,11 @@ public static class ProvinceFinderAll
     /// <summary>Every province, by name. There are only 52, so there is no pagination.</summary>
     public sealed record Query : IQuery<IReadOnlyCollection<ProvinceResponse>>;
 
-    public sealed class Finder(IProvinceRepository provinceRepository) : IUseCase
+    public sealed class Finder(IProvinceRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<ProvinceResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var provinces = await provinceRepository.SearchAsync(new ProvinceSpecification(), ct);
+            var provinces = await repository.SearchAsync(new ProvinceSpecification(), ct);
             return provinces
                 .OrderBy(province => province.NormalizedName, StringComparer.Ordinal)
                 .Select(province => new ProvinceResponse(province.Id, province.Name))

@@ -11,11 +11,11 @@ public static class EnrollmentConfirm
 {
     public sealed record Command(Guid EnrollmentId) : IRequest<Result>, ICommand;
 
-    public sealed class Confirm(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock) : IUseCase
+    public sealed class Confirm(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var enrollment = await enrollments.GetByIdAsync(command.EnrollmentId, ct);
+            var enrollment = await repository.GetByIdAsync(command.EnrollmentId, ct);
             if (enrollment is null)
             {
                 return Result.Failure(EnrollmentErrors.NotFound);
@@ -37,7 +37,7 @@ public static class EnrollmentConfirm
 
             var schoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct);
             var classIds = schoolYearClasses.Select(c => c.Id).ToList();
-            var confirmed = await enrollments.SearchAsync(
+            var confirmed = await repository.SearchAsync(
                 new EnrollmentSpecification(studentId: enrollment.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Any(other => other.Id != enrollment.Id))
             {

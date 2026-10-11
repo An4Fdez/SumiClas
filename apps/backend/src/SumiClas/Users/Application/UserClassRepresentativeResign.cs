@@ -11,7 +11,7 @@ public static class UserClassRepresentativeResign
 {
     public sealed record Command(Guid ClassId) : IRequest<Result>, ICommand;
 
-    public sealed class Resign(IUserRepository users, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Resign(IUserRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -34,13 +34,13 @@ public static class UserClassRepresentativeResign
                 return schoolYear;
             }
 
-            var user = await users.GetByIdAsync(userId, ct);
+            var user = await repository.GetByIdAsync(userId, ct);
             if (user is null)
             {
                 return Result.Failure(UserErrors.NotFound);
             }
 
-            var representatives = await users.SearchAsync(
+            var representatives = await repository.SearchAsync(
                 new UserSpecification(classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
             if (representatives.Count == 1 && representatives.Single().Id == user.Id)
             {

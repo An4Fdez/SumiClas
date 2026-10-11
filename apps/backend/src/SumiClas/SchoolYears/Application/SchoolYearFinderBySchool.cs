@@ -11,7 +11,7 @@ public static class SchoolYearFinderBySchool
     /// <summary>The school years of a school, newest first; <paramref name="Status"/> ("Active"/"Archived") is optional.</summary>
     public sealed record Query(Guid SchoolId, string? Status) : IQuery<Result<IReadOnlyCollection<SchoolYearResponse>>>;
 
-    public sealed class Finder(ISchoolYearRepository schoolYearRepository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ISchoolYearRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<SchoolYearResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -32,7 +32,7 @@ public static class SchoolYearFinderBySchool
                 return Result<IReadOnlyCollection<SchoolYearResponse>>.Failure(school.Error!);
             }
 
-            var schoolYears = await schoolYearRepository.SearchAsync(new SchoolYearSpecification(schoolId: query.SchoolId, status: status), ct);
+            var schoolYears = await repository.SearchAsync(new SchoolYearSpecification(schoolId: query.SchoolId, status: status), ct);
             IReadOnlyCollection<SchoolYearResponse> response = schoolYears
                 .OrderByDescending(schoolYear => schoolYear.StartDate)
                 .Select(schoolYear => new SchoolYearResponse(

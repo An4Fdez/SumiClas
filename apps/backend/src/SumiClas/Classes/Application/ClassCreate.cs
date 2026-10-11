@@ -11,7 +11,7 @@ public static class ClassCreate
     /// <summary>The current user creates the class and becomes its first delegate, through the ClassCreatedDomainEvent.</summary>
     public sealed record Command(Guid Id, Guid SchoolYearId, string Name) : IRequest<Result>, ICommand;
 
-    public sealed class Create(IClassRepository classes, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Create(IClassRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -33,7 +33,7 @@ public static class ClassCreate
                 return schoolYear;
             }
 
-            await classes.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

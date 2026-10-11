@@ -9,11 +9,11 @@ public static class LocalityFinderByIds
     /// <summary>Returns only the localities that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> LocalityIds) : IQuery<IReadOnlyCollection<LocalityResponse>>;
 
-    public sealed class Finder(ILocalityRepository localityRepository) : IUseCase
+    public sealed class Finder(ILocalityRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<LocalityResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var localities = await localityRepository.SearchAsync(new LocalitySpecification(ids: query.LocalityIds), ct);
+            var localities = await repository.SearchAsync(new LocalitySpecification(ids: query.LocalityIds), ct);
             return localities
                 .Select(locality => new LocalityResponse(locality.Id, locality.ProvinceId, locality.Name))
                 .ToList();

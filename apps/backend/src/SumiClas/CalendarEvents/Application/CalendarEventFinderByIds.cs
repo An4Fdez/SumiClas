@@ -9,11 +9,11 @@ public static class CalendarEventFinderByIds
     /// <summary>Returns only the events that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> CalendarEventIds) : IQuery<IReadOnlyCollection<CalendarEventSummaryResponse>>;
 
-    public sealed class Finder(ICalendarEventRepository calendarEvents) : IUseCase
+    public sealed class Finder(ICalendarEventRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<CalendarEventSummaryResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var events = await calendarEvents.SearchAsync(new CalendarEventSpecification(ids: query.CalendarEventIds), ct);
+            var events = await repository.SearchAsync(new CalendarEventSpecification(ids: query.CalendarEventIds), ct);
             return events.Select(calendarEvent => new CalendarEventSummaryResponse(calendarEvent.Id, calendarEvent.Title)).ToList();
         }
     }

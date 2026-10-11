@@ -9,11 +9,11 @@ public static class ClassFinderByIds
     /// <summary>Returns only the classes that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> ClassIds) : IQuery<IReadOnlyCollection<ClassResponse>>;
 
-    public sealed class Finder(IClassRepository classRepository) : IUseCase
+    public sealed class Finder(IClassRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<ClassResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var classes = await classRepository.SearchAsync(new ClassSpecification(ids: query.ClassIds), ct);
+            var classes = await repository.SearchAsync(new ClassSpecification(ids: query.ClassIds), ct);
             return classes
                 .Select(schoolClass => new ClassResponse(schoolClass.Id, schoolClass.SchoolYearId, schoolClass.Name))
                 .ToList();

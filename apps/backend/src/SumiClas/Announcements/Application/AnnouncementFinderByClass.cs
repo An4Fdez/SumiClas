@@ -13,7 +13,7 @@ public static class AnnouncementFinderByClass
     /// <summary>School-wide announcements plus the ones of the class, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AnnouncementResponse>>>;
 
-    public sealed class Finder(IAnnouncementRepository announcementRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Finder(IAnnouncementRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<PagedResponse<AnnouncementResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -41,8 +41,8 @@ public static class AnnouncementFinderByClass
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(schoolClass.Error!);
             }
 
-            var candidates = (await announcementRepository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.School, page: page.Value), ct))
-                .Concat(await announcementRepository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page.Value), ct))
+            var candidates = (await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.School, page: page.Value), ct))
+                .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page.Value), ct))
                 .OrderByDescending(announcement => announcement.CreatedAt)
                 .ThenByDescending(announcement => announcement.Id, Pagination.IdComparer)
                 .ToList();

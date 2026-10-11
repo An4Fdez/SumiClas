@@ -12,7 +12,7 @@ public static class SchoolFinderByLocality
     /// <summary>Schools of the locality whose name contains <paramref name="Name"/> (every school when blank), by name, at most <see cref="MaxResults"/>. A missing or empty <paramref name="LocalityId"/> is rejected.</summary>
     public sealed record Query(Guid? LocalityId, string? Name) : IQuery<Result<IReadOnlyCollection<SchoolResponse>>>;
 
-    public sealed class Finder(ISchoolRepository schoolRepository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ISchoolRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<SchoolResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -21,7 +21,7 @@ public static class SchoolFinderByLocality
                 return Result<IReadOnlyCollection<SchoolResponse>>.Failure(SchoolErrors.LocalityFilterRequired);
             }
 
-            var schools = await schoolRepository.SearchAsync(
+            var schools = await repository.SearchAsync(
                 new SchoolsInLocalityByNameSpecification(query.LocalityId.Value, query.Name, MaxResults), ct);
             var responses = await SchoolResponseFactory.CreateAsync(queryBus, schools, ct);
             return Result<IReadOnlyCollection<SchoolResponse>>.Success(responses);

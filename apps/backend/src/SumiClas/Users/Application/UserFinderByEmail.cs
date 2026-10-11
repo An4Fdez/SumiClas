@@ -10,7 +10,7 @@ public static class UserFinderByEmail
     /// <summary>Fails with <see cref="UserErrors.InvalidEmailFormat"/> for a malformed email and with <see cref="UserErrors.NotFound"/> when nobody has it.</summary>
     public sealed record Query(string Email) : IQuery<Result<UserResponse>>;
 
-    public sealed class Finder(IUserRepository users) : IUseCase
+    public sealed class Finder(IUserRepository repository) : IUseCase
     {
         public async Task<Result<UserResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -20,7 +20,7 @@ public static class UserFinderByEmail
                 return Result<UserResponse>.Failure(email.Error!);
             }
 
-            var found = await users.SearchAsync(new UserSpecification(email: email.Value), ct);
+            var found = await repository.SearchAsync(new UserSpecification(email: email.Value), ct);
             var user = found.FirstOrDefault();
             return user is null
                 ? Result<UserResponse>.Failure(UserErrors.NotFound)

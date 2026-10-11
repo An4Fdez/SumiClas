@@ -13,7 +13,7 @@ public static class CalendarEventBirthdayCreate
     public sealed record Command(Guid Id, Guid StudentId, string Title, int Month, int Day)
         : IRequest<Result>, ICommand;
 
-    public sealed class Create(ICalendarEventRepository calendarEvents, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Create(ICalendarEventRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -50,7 +50,7 @@ public static class CalendarEventBirthdayCreate
                 return Result.Failure(student.Error!);
             }
 
-            await calendarEvents.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

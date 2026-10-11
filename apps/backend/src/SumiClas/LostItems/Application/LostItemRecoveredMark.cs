@@ -11,11 +11,11 @@ public static class LostItemRecoveredMark
 {
     public sealed record Command(Guid LostItemId) : IRequest<Result>, ICommand;
 
-    public sealed class Mark(ILostItemRepository lostItems, IQueryBus queryBus) : IUseCase
+    public sealed class Mark(ILostItemRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var lostItem = await lostItems.GetByIdAsync(command.LostItemId, ct);
+            var lostItem = await repository.GetByIdAsync(command.LostItemId, ct);
             if (lostItem is null)
             {
                 return Result.Failure(LostItemErrors.NotFound);

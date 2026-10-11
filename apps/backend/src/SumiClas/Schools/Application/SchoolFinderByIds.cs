@@ -9,11 +9,11 @@ public static class SchoolFinderByIds
     /// <summary>Returns only the schools that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> SchoolIds) : IQuery<IReadOnlyCollection<SchoolResponse>>;
 
-    public sealed class Finder(ISchoolRepository schoolRepository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ISchoolRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<IReadOnlyCollection<SchoolResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schools = await schoolRepository.SearchAsync(new SchoolSpecification(ids: query.SchoolIds), ct);
+            var schools = await repository.SearchAsync(new SchoolSpecification(ids: query.SchoolIds), ct);
             return await SchoolResponseFactory.CreateAsync(queryBus, schools, ct);
         }
     }

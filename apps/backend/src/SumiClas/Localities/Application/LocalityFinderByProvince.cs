@@ -12,11 +12,11 @@ public static class LocalityFinderByProvince
     /// </summary>
     public sealed record Query(Guid ProvinceId, string? Name) : IQuery<IReadOnlyCollection<LocalityResponse>>;
 
-    public sealed class Finder(ILocalityRepository localityRepository) : IUseCase
+    public sealed class Finder(ILocalityRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<LocalityResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var localities = await localityRepository.SearchAsync(
+            var localities = await repository.SearchAsync(
                 new LocalitiesInProvinceByNameSpecification(query.ProvinceId, query.Name), ct);
             return localities
                 .Select(locality => new LocalityResponse(locality.Id, locality.ProvinceId, locality.Name))

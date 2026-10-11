@@ -17,7 +17,7 @@ public static class CalendarEventFinderByClass
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<CalendarEventResponse>>>;
 
     public sealed class Finder(
-        ICalendarEventRepository calendarEvents,
+        ICalendarEventRepository repository,
         IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
@@ -35,11 +35,11 @@ public static class CalendarEventFinderByClass
                 .Distinct()
                 .ToList();
 
-            var events = (await calendarEvents.SearchAsync(new CalendarEventSpecification(scope: EventScope.School), ct)).ToList();
-            events.AddRange(await calendarEvents.SearchAsync(new CalendarEventSpecification(scope: EventScope.Class, classId: query.ClassId), ct));
+            var events = (await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.School), ct)).ToList();
+            events.AddRange(await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.Class, classId: query.ClassId), ct));
             if (studentIds.Count > 0)
             {
-                events.AddRange(await calendarEvents.SearchAsync(new CalendarEventSpecification(studentIds: studentIds), ct));
+                events.AddRange(await repository.SearchAsync(new CalendarEventSpecification(studentIds: studentIds), ct));
             }
 
             var authorIds = events.Select(calendarEvent => calendarEvent.AuthorId).Distinct().ToList();

@@ -12,7 +12,7 @@ public static class AssignmentCommentAdd
 {
     public sealed record Command(Guid AssignmentId, string Text) : IRequest<Result>, ICommand;
 
-    public sealed class Add(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Add(IAssignmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -22,7 +22,7 @@ public static class AssignmentCommentAdd
                 return Result.Failure(current.Error!);
             }
 
-            var assignment = await assignments.GetByIdAsync(command.AssignmentId, ct);
+            var assignment = await repository.GetByIdAsync(command.AssignmentId, ct);
             if (assignment is null)
             {
                 return Result.Failure(AssignmentErrors.NotFound);

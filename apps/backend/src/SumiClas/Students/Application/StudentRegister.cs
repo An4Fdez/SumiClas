@@ -15,7 +15,7 @@ public static class StudentRegister
         string? SecondSurname,
         string FirstGuardianRole) : IRequest<Result>, ICommand;
 
-    public sealed class Register(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Register(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -50,7 +50,7 @@ public static class StudentRegister
                 return Result.Failure(guardian.Error!);
             }
 
-            await students.AddAsync(registration.Value, ct);
+            await repository.AddAsync(registration.Value, ct);
 
             return Result.Success();
         }

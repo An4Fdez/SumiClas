@@ -11,11 +11,11 @@ public static class ClassExpenseUnpaidMark
 {
     public sealed record Command(Guid ClassExpenseId, Guid GuardianId) : IRequest<Result>, ICommand;
 
-    public sealed class Mark(IClassExpenseRepository classExpenses, IQueryBus queryBus) : IUseCase
+    public sealed class Mark(IClassExpenseRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var classExpense = await classExpenses.GetByIdAsync(command.ClassExpenseId, ct);
+            var classExpense = await repository.GetByIdAsync(command.ClassExpenseId, ct);
             if (classExpense is null)
             {
                 return Result.Failure(ClassExpenseErrors.NotFound);

@@ -13,7 +13,7 @@ public static class UserClassRepresentativeAssign
     public sealed record Command(Guid UserId, Guid ClassId) : IRequest<Result>, ICommand;
 
     public sealed class Assign(
-        IUserRepository users,
+        IUserRepository repository,
         IQueryBus queryBus,
         IUserProvider userProvider) : IUseCase
     {
@@ -38,20 +38,20 @@ public static class UserClassRepresentativeAssign
                 return schoolYear;
             }
 
-            var actingRepresentative = await users.SearchAsync(
+            var actingRepresentative = await repository.SearchAsync(
                 new UserSpecification(id: actingUserId, classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
             if (actingRepresentative.Count == 0)
             {
                 return Result.Failure(UserErrors.AssignForbidden);
             }
 
-            var user = await users.GetByIdAsync(command.UserId, ct);
+            var user = await repository.GetByIdAsync(command.UserId, ct);
             if (user is null)
             {
                 return Result.Failure(UserErrors.NotFound);
             }
 
-            var representatives = await users.SearchAsync(
+            var representatives = await repository.SearchAsync(
                 new UserSpecification(classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
 
             return user.AssignAsClassRepresentative(command.ClassId, representatives.Count);

@@ -10,11 +10,11 @@ public static class ClassRename
 {
     public sealed record Command(Guid ClassId, string Name) : IRequest<Result>, ICommand;
 
-    public sealed class Rename(IClassRepository classes, IQueryBus queryBus) : IUseCase
+    public sealed class Rename(IClassRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var schoolClass = await classes.GetByIdAsync(command.ClassId, ct);
+            var schoolClass = await repository.GetByIdAsync(command.ClassId, ct);
             if (schoolClass is null)
             {
                 return Result.Failure(ClassErrors.NotFound);

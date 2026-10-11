@@ -10,7 +10,7 @@ public static class StudentGuardianAdd
 {
     public sealed record Command(Guid StudentId, Guid GuardianId, string Role) : IRequest<Result>, ICommand;
 
-    public sealed class Add(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Add(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -25,7 +25,7 @@ public static class StudentGuardianAdd
                 return Result.Failure(StudentErrors.InvalidGuardianRole);
             }
 
-            var student = await students.GetByIdAsync(command.StudentId, ct);
+            var student = await repository.GetByIdAsync(command.StudentId, ct);
             if (student is null)
             {
                 return Result.Failure(StudentErrors.NotFound);

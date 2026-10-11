@@ -9,7 +9,7 @@ public static class StudentGuardianFinderByStudents
     /// <summary>Returns only the ids of the guardians of the given students: no data about the students leaves this module.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> StudentIds) : IQuery<IReadOnlyCollection<Guid>>;
 
-    public sealed class Finder(IStudentRepository studentRepository) : IUseCase
+    public sealed class Finder(IStudentRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<Guid>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -18,7 +18,7 @@ public static class StudentGuardianFinderByStudents
                 return [];
             }
 
-            var students = await studentRepository.SearchAsync(new StudentSpecification(ids: query.StudentIds), ct);
+            var students = await repository.SearchAsync(new StudentSpecification(ids: query.StudentIds), ct);
             return students
                 .SelectMany(student => student.Guardians.Select(link => link.GuardianId))
                 .Distinct()

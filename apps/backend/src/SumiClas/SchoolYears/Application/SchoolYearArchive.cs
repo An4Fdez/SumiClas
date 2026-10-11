@@ -9,11 +9,11 @@ public static class SchoolYearArchive
 {
     public sealed record Command(Guid SchoolYearId) : IRequest<Result>, ICommand;
 
-    public sealed class Archive(ISchoolYearRepository schoolYears, IClock clock) : IUseCase
+    public sealed class Archive(ISchoolYearRepository repository, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var schoolYear = await schoolYears.GetByIdAsync(command.SchoolYearId, ct);
+            var schoolYear = await repository.GetByIdAsync(command.SchoolYearId, ct);
             if (schoolYear is null)
             {
                 return Result.Failure(SchoolYearErrors.NotFound);

@@ -18,7 +18,7 @@ public static class UserClassMemberFinderByClass
     /// </summary>
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<UserClassMemberResponse>>>;
 
-    public sealed class Finder(IUserRepository userRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Finder(IUserRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -42,11 +42,11 @@ public static class UserClassMemberFinderByClass
                 .ToList();
             var guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
 
-            var delegates = await userRepository.SearchAsync(
+            var delegates = await repository.SearchAsync(
                 new UserSpecification(classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
             var memberIds = guardianIds.Concat(delegates.Select(user => user.Id)).Distinct().ToList();
 
-            var users = await userRepository.SearchAsync(new UserSpecification(ids: memberIds), ct);
+            var users = await repository.SearchAsync(new UserSpecification(ids: memberIds), ct);
             if (users.All(user => user.Id != current.Value))
             {
                 return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(UserErrors.ClassMembersForbidden);

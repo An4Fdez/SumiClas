@@ -10,7 +10,7 @@ public static class SubjectFinderByClass
 {
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<SubjectResponse>>>;
 
-    public sealed class Finder(ISubjectRepository subjectRepository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ISubjectRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<SubjectResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -20,7 +20,7 @@ public static class SubjectFinderByClass
                 return Result<IReadOnlyCollection<SubjectResponse>>.Failure(schoolClass.Error!);
             }
 
-            var subjects = await subjectRepository.SearchAsync(new SubjectSpecification(classId: query.ClassId), ct);
+            var subjects = await repository.SearchAsync(new SubjectSpecification(classId: query.ClassId), ct);
             IReadOnlyCollection<SubjectResponse> response = subjects
                 .OrderBy(subject => subject.Label)
                 .Select(subject => new SubjectResponse(subject.Id, subject.ClassId, subject.Label))

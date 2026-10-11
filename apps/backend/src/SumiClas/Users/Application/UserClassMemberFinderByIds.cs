@@ -10,11 +10,11 @@ public static class UserClassMemberFinderByIds
     public sealed record Query(Guid ClassId, IReadOnlyCollection<Guid> UserIds)
         : IQuery<IReadOnlyCollection<UserClassMemberResponse>>;
 
-    public sealed class Finder(IUserRepository userRepository) : IUseCase
+    public sealed class Finder(IUserRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<UserClassMemberResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var users = await userRepository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
+            var users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
             return users
                 .Select(user => new UserClassMemberResponse(
                     user.Id,

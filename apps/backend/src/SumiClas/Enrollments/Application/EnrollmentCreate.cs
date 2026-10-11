@@ -12,7 +12,7 @@ public static class EnrollmentCreate
 {
     public sealed record Command(Guid Id, Guid StudentId, Guid ClassId) : IRequest<Result>, ICommand;
 
-    public sealed class Create(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock) : IUseCase
+    public sealed class Create(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -44,14 +44,14 @@ public static class EnrollmentCreate
 
             var schoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct);
             var classIds = schoolYearClasses.Select(c => c.Id).ToList();
-            var confirmed = await enrollments.SearchAsync(
+            var confirmed = await repository.SearchAsync(
                 new EnrollmentSpecification(studentId: command.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Count > 0)
             {
                 return Result.Failure(EnrollmentErrors.AlreadyExists);
             }
 
-            await enrollments.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

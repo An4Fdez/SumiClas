@@ -8,11 +8,11 @@ public static class EnrollmentFinderByClass
 {
     public sealed record Query(Guid ClassId) : IQuery<IReadOnlyCollection<EnrollmentResponse>>;
 
-    public sealed class Finder(IEnrollmentRepository enrollmentRepository) : IUseCase
+    public sealed class Finder(IEnrollmentRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<EnrollmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var enrollments = await enrollmentRepository.SearchAsync(new EnrollmentSpecification(classId: query.ClassId), ct);
+            var enrollments = await repository.SearchAsync(new EnrollmentSpecification(classId: query.ClassId), ct);
             return enrollments
                 .Select(enrollment => new EnrollmentResponse(
                     enrollment.Id,

@@ -11,7 +11,7 @@ public static class AnnouncementReadMark
     /// <summary>The current user marks the announcement as read. Idempotent: marking it again does nothing.</summary>
     public sealed record Command(Guid AnnouncementId) : IRequest<Result>, ICommand;
 
-    public sealed class Mark(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Mark(IAnnouncementRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -21,7 +21,7 @@ public static class AnnouncementReadMark
                 return Result.Failure(current.Error!);
             }
 
-            var announcement = await announcements.GetByIdAsync(command.AnnouncementId, ct);
+            var announcement = await repository.GetByIdAsync(command.AnnouncementId, ct);
             if (announcement is null)
             {
                 return Result.Failure(AnnouncementErrors.NotFound);

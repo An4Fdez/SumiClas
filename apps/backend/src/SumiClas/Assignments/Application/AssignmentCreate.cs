@@ -20,7 +20,7 @@ public static class AssignmentCreate
         string? Description,
         DateOnly DueDate) : IRequest<Result>, ICommand;
 
-    public sealed class Create(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Create(IAssignmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -81,7 +81,7 @@ public static class AssignmentCreate
                 return Result.Failure(creation.Error!);
             }
 
-            await assignments.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

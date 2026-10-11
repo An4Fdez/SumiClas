@@ -9,11 +9,11 @@ public static class UserFinderByIds
     /// <summary>Returns only the users that exist, so callers compare it with what they asked for.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> UserIds) : IQuery<IReadOnlyCollection<UserResponse>>;
 
-    public sealed class Finder(IUserRepository userRepository) : IUseCase
+    public sealed class Finder(IUserRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<UserResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var users = await userRepository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
+            var users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
             return users.Select(user => new UserResponse(user.Id, user.FullName)).ToList();
         }
     }

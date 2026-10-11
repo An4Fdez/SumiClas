@@ -15,7 +15,7 @@ public static class EnrollmentSuggestedCreate
         : IRequest<Result<EnrollmentSuggestedCreateResponse>>, ICommand;
 
     public sealed class Create(
-        IEnrollmentRepository enrollments,
+        IEnrollmentRepository repository,
         IQueryBus queryBus,
         IUserProvider userProvider,
         IClock clock) : IUseCase
@@ -78,7 +78,7 @@ public static class EnrollmentSuggestedCreate
                 return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.DifferentSchool);
             }
 
-            var candidates = (await enrollments.SearchAsync(
+            var candidates = (await repository.SearchAsync(
                     new EnrollmentSpecification(classId: command.PreviousClassId, status: EnrollmentStatus.Confirmed), ct))
                 .Select(enrollment => enrollment.StudentId)
                 .Distinct()
@@ -88,11 +88,11 @@ public static class EnrollmentSuggestedCreate
                 return Result<EnrollmentSuggestedCreateResponse>.Success(new EnrollmentSuggestedCreateResponse(0, 0));
             }
 
-            var inNewClass = await enrollments.SearchAsync(
+            var inNewClass = await repository.SearchAsync(
                 new EnrollmentSpecification(studentIds: candidates, classIds: [command.ClassId]), ct);
 
             var newSchoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(newSchoolYearId), ct);
-            var confirmedInNewSchoolYear = await enrollments.SearchAsync(
+            var confirmedInNewSchoolYear = await repository.SearchAsync(
                 new EnrollmentSpecification(
                     studentIds: candidates,
                     classIds: newSchoolYearClasses.Select(schoolClass => schoolClass.Id).ToList(),
@@ -112,7 +112,7 @@ public static class EnrollmentSuggestedCreate
                     return Result<EnrollmentSuggestedCreateResponse>.Failure(suggestion.Error!);
                 }
 
-                await enrollments.AddAsync(suggestion.Value, ct);
+                await repository.AddAsync(suggestion.Value, ct);
                 created++;
             }
 

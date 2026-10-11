@@ -15,7 +15,7 @@ public static class UserPasswordVerify
     /// </summary>
     public sealed record Query(string Email, string Password) : IQuery<Result<UserResponse>>;
 
-    public sealed class Verify(IUserRepository users, IPasswordHasher hasher, IClock clock) : IUseCase
+    public sealed class Verify(IUserRepository repository, IPasswordHasher hasher, IClock clock) : IUseCase
     {
         public async Task<Result<UserResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -23,7 +23,7 @@ public static class UserPasswordVerify
 
             var email = Email.Create(query.Email ?? string.Empty);
             var user = email.IsSuccess
-                ? (await users.SearchAsync(new UserSpecification(email: email.Value), ct)).FirstOrDefault()
+                ? (await repository.SearchAsync(new UserSpecification(email: email.Value), ct)).FirstOrDefault()
                 : null;
 
             var verification = hasher.Verify(user?.PasswordHash, password);

@@ -11,7 +11,7 @@ public static class SubjectCreate
 {
     public sealed record Command(Guid Id, Guid ClassId, string Label) : IRequest<Result>, ICommand;
 
-    public sealed class Create(ISubjectRepository subjects, IQueryBus queryBus) : IUseCase
+    public sealed class Create(ISubjectRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -33,7 +33,7 @@ public static class SubjectCreate
                 return schoolYear;
             }
 
-            await subjects.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

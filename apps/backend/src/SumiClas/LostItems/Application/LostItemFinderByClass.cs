@@ -12,7 +12,7 @@ public static class LostItemFinderByClass
     /// <summary>School-wide lost and found items plus the ones of the class, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<LostItemResponse>>>;
 
-    public sealed class Finder(ILostItemRepository lostItemRepository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ILostItemRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<PagedResponse<LostItemResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -34,8 +34,8 @@ public static class LostItemFinderByClass
                 return Result<PagedResponse<LostItemResponse>>.Failure(schoolClass.Error!);
             }
 
-            var candidates = (await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.School, page: page.Value), ct))
-                .Concat(await lostItemRepository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page.Value), ct))
+            var candidates = (await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.School, page: page.Value), ct))
+                .Concat(await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page.Value), ct))
                 .OrderByDescending(lostItem => lostItem.CreatedAt)
                 .ThenByDescending(lostItem => lostItem.Id, Pagination.IdComparer)
                 .ToList();

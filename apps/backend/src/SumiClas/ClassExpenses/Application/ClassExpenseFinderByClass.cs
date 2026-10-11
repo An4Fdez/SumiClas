@@ -13,7 +13,7 @@ public static class ClassExpenseFinderByClass
     /// <summary>The expenses of the class with who participates and who has paid, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<ClassExpenseResponse>>>;
 
-    public sealed class Finder(IClassExpenseRepository classExpenses, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(IClassExpenseRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result<PagedResponse<ClassExpenseResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -35,7 +35,7 @@ public static class ClassExpenseFinderByClass
                 return Result<PagedResponse<ClassExpenseResponse>>.Failure(schoolClass.Error!);
             }
 
-            var candidates = await classExpenses.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page.Value), ct);
+            var candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page.Value), ct);
             var (expenses, nextCursor) = Pagination.Cut(
                 candidates.OrderByDescending(expense => expense.CreatedAt).ThenByDescending(expense => expense.Id, Pagination.IdComparer).ToList(),
                 pageRequest.Value.Limit,

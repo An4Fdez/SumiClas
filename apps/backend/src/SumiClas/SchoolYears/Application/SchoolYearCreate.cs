@@ -11,7 +11,7 @@ public static class SchoolYearCreate
     public sealed record Command(Guid Id, Guid SchoolId, string Label, DateOnly StartDate, DateOnly EndDate)
         : IRequest<Result>, ICommand;
 
-    public sealed class Create(ISchoolYearRepository schoolYears, IQueryBus queryBus) : IUseCase
+    public sealed class Create(ISchoolYearRepository repository, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -27,7 +27,7 @@ public static class SchoolYearCreate
                 return Result.Failure(creation.Error!);
             }
 
-            await schoolYears.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

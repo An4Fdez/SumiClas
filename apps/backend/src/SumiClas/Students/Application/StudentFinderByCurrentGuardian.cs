@@ -14,7 +14,7 @@ public static class StudentFinderByCurrentGuardian
     /// <summary>The students of the current user (as guardian), with their current class and school.</summary>
     public sealed record Query : IQuery<Result<IReadOnlyCollection<ChildResponse>>>;
 
-    public sealed class Finder(IStudentRepository studentRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
+    public sealed class Finder(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<ChildResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -24,7 +24,7 @@ public static class StudentFinderByCurrentGuardian
                 return Result<IReadOnlyCollection<ChildResponse>>.Failure(current.Error!);
             }
 
-            var students = await studentRepository.SearchAsync(new StudentSpecification(guardianId: current.Value), ct);
+            var students = await repository.SearchAsync(new StudentSpecification(guardianId: current.Value), ct);
             var studentIds = students.Select(student => student.Id).ToList();
             if (studentIds.Count == 0)
             {

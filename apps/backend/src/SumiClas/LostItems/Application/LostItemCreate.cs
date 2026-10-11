@@ -19,7 +19,7 @@ public static class LostItemCreate
         string? PhotoUrl,
         bool PhotoPrivacyConfirmed) : IRequest<Result>, ICommand;
 
-    public sealed class Create(ILostItemRepository lostItems, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Create(ILostItemRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -76,7 +76,7 @@ public static class LostItemCreate
                 }
             }
 
-            await lostItems.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

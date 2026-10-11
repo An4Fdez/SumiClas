@@ -19,7 +19,7 @@ public static class ClassExpenseCreate
         IReadOnlyCollection<Guid> ParticipantIds,
         Guid? RelatedEventId) : IRequest<Result>, ICommand;
 
-    public sealed class Create(IClassExpenseRepository classExpenses, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
+    public sealed class Create(IClassExpenseRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -79,7 +79,7 @@ public static class ClassExpenseCreate
                 }
             }
 
-            await classExpenses.AddAsync(creation.Value, ct);
+            await repository.AddAsync(creation.Value, ct);
 
             return Result.Success();
         }

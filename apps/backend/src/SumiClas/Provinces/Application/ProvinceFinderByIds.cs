@@ -9,11 +9,11 @@ public static class ProvinceFinderByIds
     /// <summary>Returns only the provinces that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> ProvinceIds) : IQuery<IReadOnlyCollection<ProvinceResponse>>;
 
-    public sealed class Finder(IProvinceRepository provinceRepository) : IUseCase
+    public sealed class Finder(IProvinceRepository repository) : IUseCase
     {
         public async Task<IReadOnlyCollection<ProvinceResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var provinces = await provinceRepository.SearchAsync(new ProvinceSpecification(ids: query.ProvinceIds), ct);
+            var provinces = await repository.SearchAsync(new ProvinceSpecification(ids: query.ProvinceIds), ct);
             return provinces
                 .Select(province => new ProvinceResponse(province.Id, province.Name))
                 .ToList();

@@ -8,11 +8,11 @@ public static class UserIsClassRepresentative
 {
     public sealed record Query(Guid UserId, Guid ClassId) : IQuery<bool>;
 
-    public sealed class Check(IUserRepository users) : IUseCase
+    public sealed class Check(IUserRepository repository) : IUseCase
     {
         public async Task<bool> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var matches = await users.SearchAsync(
+            var matches = await repository.SearchAsync(
                 new UserSpecification(id: query.UserId, classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative),
                 ct);
             return matches.Count > 0;

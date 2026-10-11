@@ -9,7 +9,7 @@ public static class StudentGuardianRemove
 {
     public sealed record Command(Guid StudentId, Guid GuardianId) : IRequest<Result>, ICommand;
 
-    public sealed class Remove(IStudentRepository students, IUserProvider userProvider) : IUseCase
+    public sealed class Remove(IStudentRepository repository, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -19,7 +19,7 @@ public static class StudentGuardianRemove
                 return Result.Failure(current.Error!);
             }
 
-            var student = await students.GetByIdAsync(command.StudentId, ct);
+            var student = await repository.GetByIdAsync(command.StudentId, ct);
             if (student is null)
             {
                 return Result.Failure(StudentErrors.NotFound);

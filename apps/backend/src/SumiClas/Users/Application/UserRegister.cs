@@ -13,7 +13,7 @@ public static class UserRegister
     /// Nothing is hashed until the password rules and the email format pass. A race on the unique email index is still
     /// caught as a 409 by the unit of work.
     /// </summary>
-    public sealed class Register(IUserRepository users, IPasswordHasher hasher, IClock clock) : IUseCase
+    public sealed class Register(IUserRepository repository, IPasswordHasher hasher, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -36,13 +36,13 @@ public static class UserRegister
                 return Result.Failure(registration.Error!);
             }
 
-            var existing = await users.SearchAsync(new UserSpecification(email: email.Value), ct);
+            var existing = await repository.SearchAsync(new UserSpecification(email: email.Value), ct);
             if (existing.Count > 0)
             {
                 return Result.Failure(UserErrors.EmailAlreadyRegistered);
             }
 
-            await users.AddAsync(registration.Value, ct);
+            await repository.AddAsync(registration.Value, ct);
 
             return Result.Success();
         }
