@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using SumiClas.Authentication.Infrastructure;
+using SumiClas.RefreshTokens.Infrastructure;
 
-namespace SumiClas.Tests.Authentication.Infrastructure;
+namespace SumiClas.Tests.RefreshTokens.Infrastructure;
 
 [TestFixture]
 public class RefreshTokenGeneratorTests

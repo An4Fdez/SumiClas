@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SumiClas.Announcements.Domain;
 using SumiClas.Authentication.Domain;
+using SumiClas.RefreshTokens.Domain;
 using SumiClas.Assignments.Domain;
 using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Domain;

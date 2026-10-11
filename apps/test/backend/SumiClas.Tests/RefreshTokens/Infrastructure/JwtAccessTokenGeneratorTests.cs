@@ -3,21 +3,21 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
-using SumiClas.Authentication.Application;
-using SumiClas.Authentication.Infrastructure;
+using SumiClas.RefreshTokens.Domain;
+using SumiClas.RefreshTokens.Infrastructure;
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Tests.Authentication.Infrastructure;
+namespace SumiClas.Tests.RefreshTokens.Infrastructure;
 
 [TestFixture]
-public class JwtAccessTokenIssuerTests
+public class JwtAccessTokenGeneratorTests
 {
     private const string Key = "unit-test-signing-key-with-at-least-32-bytes!";
     private static readonly DateTimeOffset Now = new(2026, 3, 1, 10, 0, 0, TimeSpan.Zero);
 
     private readonly Guid _userId = Guid.NewGuid();
     private JwtOptions _options = null!;
-    private JwtAccessTokenIssuer _issuer = null!;
+    private JwtAccessTokenGenerator _generator = null!;
 
     [SetUp]
     public void SetUp()
@@ -33,13 +33,13 @@ public class JwtAccessTokenIssuerTests
         };
         var clock = new Mock<IClock>();
         clock.Setup(c => c.UtcNow).Returns(Now);
-        _issuer = new JwtAccessTokenIssuer(Options.Create(_options), clock.Object);
+        _generator = new JwtAccessTokenGenerator(Options.Create(_options), clock.Object);
     }
 
     [Test]
     public void Issue_ProducesAnAtJwtWithTheExpectedClaims()
     {
-        var token = new JsonWebToken(_issuer.Issue(_userId).Value);
+        var token = new JsonWebToken(_generator.Generate(_userId).Value.Value);
 
         Assert.That(token.Typ, Is.EqualTo("at+jwt"));
         Assert.That(token.Alg, Is.EqualTo("HS256"));
@@ -53,16 +53,25 @@ public class JwtAccessTokenIssuerTests
     }
 
     [Test]
+    public void Issue_ReturnsASuccessfulResultWithAnAccessTokenValueObject()
+    {
+        var result = _generator.Generate(_userId);
+
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Value, Is.EqualTo(AccessToken.Create(result.Value.Value, Now.AddMinutes(15)).Value));
+    }
+
+    [Test]
     public void Issue_ReturnsTheExpiryFromTheClockAndTheConfiguredLifetime()
     {
-        Assert.That(_issuer.Issue(_userId).ExpiresAt, Is.EqualTo(Now.AddMinutes(15)));
+        Assert.That(_generator.Generate(_userId).Value.ExpiresAt, Is.EqualTo(Now.AddMinutes(15)));
     }
 
     [Test]
     public void Issue_UsesAFreshJtiOnEveryCall()
     {
-        var first = new JsonWebToken(_issuer.Issue(_userId).Value);
-        var second = new JsonWebToken(_issuer.Issue(_userId).Value);
+        var first = new JsonWebToken(_generator.Generate(_userId).Value.Value);
+        var second = new JsonWebToken(_generator.Generate(_userId).Value.Value);
 
         Assert.That(first.Id, Is.Not.EqualTo(second.Id));
     }
@@ -70,7 +79,7 @@ public class JwtAccessTokenIssuerTests
     [Test]
     public void Issue_DoesNotIncludePersonalData()
     {
-        var token = new JsonWebToken(_issuer.Issue(_userId).Value);
+        var token = new JsonWebToken(_generator.Generate(_userId).Value.Value);
 
         var names = token.Claims.Select(claim => claim.Type).ToList();
 
@@ -83,7 +92,7 @@ public class JwtAccessTokenIssuerTests
     [Test]
     public async Task Issue_SignatureValidatesWithTheKeyAndFailsWithAnotherOne()
     {
-        var value = _issuer.Issue(_userId).Value;
+        var value = _generator.Generate(_userId).Value.Value;
         var handler = new JsonWebTokenHandler();
 
         var withKey = await handler.ValidateTokenAsync(value, Parameters(Key));

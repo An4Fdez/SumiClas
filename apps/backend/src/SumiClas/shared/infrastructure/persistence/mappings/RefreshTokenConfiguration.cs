@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SumiClas.Authentication.Domain;
+using SumiClas.RefreshTokens.Domain;
 
 namespace SumiClas.Shared.Infrastructure.Persistence.Mappings;
 

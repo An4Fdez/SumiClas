@@ -104,7 +104,7 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("Assignments", (string)null);
                 });
 
-            modelBuilder.Entity("SumiClas.Authentication.Domain.RefreshToken", b =>
+            modelBuilder.Entity("SumiClas.RefreshTokens.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

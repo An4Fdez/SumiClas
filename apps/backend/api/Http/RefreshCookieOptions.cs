@@ -1,4 +1,4 @@
-namespace SumiClas.Authentication.Application;
+namespace SumiClas.Api.Http;
 
 public sealed class RefreshCookieOptions
 {

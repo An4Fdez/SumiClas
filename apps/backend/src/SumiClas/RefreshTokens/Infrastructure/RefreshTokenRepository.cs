@@ -1,7 +1,7 @@
-using SumiClas.Authentication.Domain;
+using SumiClas.RefreshTokens.Domain;
 using SumiClas.Shared.Infrastructure.Persistence;
 
-namespace SumiClas.Authentication.Infrastructure;
+namespace SumiClas.RefreshTokens.Infrastructure;
 
 public sealed class RefreshTokenRepository(SumiClasDbContext dbContext)
     : BaseRepository<RefreshToken>(dbContext), IRefreshTokenRepository;

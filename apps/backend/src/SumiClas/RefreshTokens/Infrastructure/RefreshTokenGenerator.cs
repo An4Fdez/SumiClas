@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
-using SumiClas.Authentication.Application;
+using SumiClas.RefreshTokens.Domain;
 
-namespace SumiClas.Authentication.Infrastructure;
+namespace SumiClas.RefreshTokens.Infrastructure;
 
 public sealed class RefreshTokenGenerator : IRefreshTokenGenerator
 {

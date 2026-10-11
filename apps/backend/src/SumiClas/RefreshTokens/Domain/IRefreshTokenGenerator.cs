@@ -1,4 +1,4 @@
-namespace SumiClas.Authentication.Application;
+namespace SumiClas.RefreshTokens.Domain;
 
 public interface IRefreshTokenGenerator
 {

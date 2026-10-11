@@ -1,6 +1,6 @@
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Authentication.Domain;
+namespace SumiClas.RefreshTokens.Domain;
 
 public sealed class RefreshTokenSpecification : Specification<RefreshToken>
 {

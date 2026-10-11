@@ -1,6 +1,6 @@
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Authentication.Domain;
+namespace SumiClas.RefreshTokens.Domain;
 
 /// <summary>
 /// One link of a session chain. Only the hash of the token value is kept. Each rotation replaces a token with a successor

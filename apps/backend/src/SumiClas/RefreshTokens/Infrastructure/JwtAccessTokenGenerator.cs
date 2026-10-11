@@ -2,19 +2,19 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using SumiClas.Authentication.Application;
+using SumiClas.RefreshTokens.Domain;
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Authentication.Infrastructure;
+namespace SumiClas.RefreshTokens.Infrastructure;
 
-public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
+public sealed class JwtAccessTokenGenerator : IAccessTokenGenerator
 {
     private readonly JsonWebTokenHandler _handler = new();
     private readonly JwtOptions _options;
     private readonly IClock _clock;
     private readonly SigningCredentials _credentials;
 
-    public JwtAccessTokenIssuer(IOptions<JwtOptions> options, IClock clock)
+    public JwtAccessTokenGenerator(IOptions<JwtOptions> options, IClock clock)
     {
         _options = options.Value;
         _clock = clock;
@@ -23,7 +23,7 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             SecurityAlgorithms.HmacSha256);
     }
 
-    public AccessToken Issue(Guid userId)
+    public Result<AccessToken> Generate(Guid userId)
     {
         var now = _clock.UtcNow;
         var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
@@ -44,6 +44,6 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             },
         };
 
-        return new AccessToken(_handler.CreateToken(descriptor), expiresAt);
+        return AccessToken.Create(_handler.CreateToken(descriptor), expiresAt);
     }
 }

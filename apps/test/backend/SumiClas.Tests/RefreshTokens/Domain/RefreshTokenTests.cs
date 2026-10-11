@@ -1,8 +1,8 @@
 using Moq;
-using SumiClas.Authentication.Domain;
+using SumiClas.RefreshTokens.Domain;
 using SumiClas.Shared.Domain;
 
-namespace SumiClas.Tests.Authentication.Domain;
+namespace SumiClas.Tests.RefreshTokens.Domain;
 
 [TestFixture]
 public class RefreshTokenTests
