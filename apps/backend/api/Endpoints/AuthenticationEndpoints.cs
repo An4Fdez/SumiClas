@@ -4,7 +4,6 @@ using SumiClas.Api.Bootstrap;
 using SumiClas.Api.Http;
 using SumiClas.RefreshTokens.Application;
 using SumiClas.Users.Application;
-using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -12,11 +11,11 @@ public sealed record AccountRegisterRequest(
     Guid Id,
     [StringLength(200)] string FullName,
     [StringLength(320)] string Email,
-    [StringLength(Password.MaxLength)] string Password);
+    [StringLength(128)] string Password);
 
 public sealed record AccountLoginRequest(
     [StringLength(320)] string Email,
-    [StringLength(Password.MaxLength)] string Password);
+    [StringLength(128)] string Password);
 
 public sealed class AuthenticationEndpoints : IEndpoints
 {
