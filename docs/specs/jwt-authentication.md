@@ -44,6 +44,8 @@ Para resolverlo se usan dos «llaves», porque ninguna sola es a la vez cómoda 
 ### Por qué rotar el refresh token y qué es una «familia»
 Cada login crea una *familia* de refresh tokens: cada rotación genera uno nuevo de la misma familia y deja el anterior inutilizable. Si alguien roba un refresh token y lo usa, el verdadero dueño acabará presentando el suyo, que ya está usado: el servidor ve que se **reutiliza un token que ya había sido reemplazado**, deduce que hay un robo y **revoca toda la familia**; los dos (ladrón y dueño) tendrán que volver a iniciar sesión, pero el atacante pierde el acceso.
 
+> Nota (J1g): en todo este documento «familia» (y `FamilyId`) equivale a la **sesión**: desde J1g la cadena de refresh tokens de un login es el agregado `Session` (módulo `Sessions`) y cada `RefreshToken` es una entidad hija suya. El texto de los requisitos y de los escenarios no cambia.
+
 Hay una excepción razonable: si tienes la app abierta en dos pestañas y las dos intentan refrescar a la vez, una usará el token primero y la otra llegará con el ya reemplazado. Eso no es un robo. Por eso hay una **ventana de gracia de 10 segundos**: dentro de ella una reutilización solo devuelve «inténtalo otra vez» (la otra pestaña ya dejó la cookie nueva) sin cerrar la sesión. Además, el frontend coordina las pestañas con un mecanismo del navegador (`navigator.locks`) para que normalmente ni se produzca.
 
 ### Qué protege cada decisión (y de qué amenaza)
@@ -66,7 +68,7 @@ En este proyecto, en producción, la web y la API se sirven **desde el mismo dom
 
 ### Qué cambia para cada parte
 - **Para la persona usuaria**: prácticamente nada. Inicia sesión una vez, la sesión dura hasta 14 días sin volver a pedir la contraseña (mientras use la app) y «Cerrar sesión» cierra de verdad.
-- **Backend**: un nuevo módulo `RefreshTokens` con su agregado `RefreshToken` y su tabla, tres casos de uso (`RefreshTokenCreate`, `RefreshTokenRotate`, `RefreshTokenRevoke`; el login consulta `UserPasswordVerify` de `Users`), validación del JWT en cada petición y un `JwtUserProvider` que lee el id del token. Los casos de uso que hoy piden «quién es el usuario actual» **no cambian**: solo cambia de dónde sale ese dato. Desaparecen `HeaderUserProvider` y la cabecera `X-User-Id`.
+- **Backend**: un nuevo módulo `Sessions` con su agregado `Session` (que contiene sus `RefreshToken`) y sus tablas, tres casos de uso (`SessionCreate`, `SessionRotate`, `SessionRevoke`; el login consulta `UserPasswordVerify` de `Users`), validación del JWT en cada petición y un `JwtUserProvider` que lee el id del token. Los casos de uso que hoy piden «quién es el usuario actual» **no cambian**: solo cambia de dónde sale ese dato. Desaparecen `HeaderUserProvider` y la cabecera `X-User-Id`.
 - **Frontend**: el id deja de guardarse en `localStorage`; un almacén en memoria guarda el access token, un envoltorio de las peticiones lo añade y se encarga del refresco transparente, y un contexto de sesión decide si mostrar la app o llevar a `/login`.
 
 ### Qué NO resuelve este plan (importante)
@@ -80,7 +82,7 @@ Saber **quién eres** no es lo mismo que saber **qué puedes ver**. Después de 
 |---|---|
 | Access token | JWT firmado (HS256) que identifica al usuario en cada petición. Vida: 15 min. Solo en memoria del navegador. |
 | Refresh token | Valor aleatorio opaco de 256 bits (base64url). Permite pedir un access nuevo. Cookie httpOnly. En BD solo su hash SHA-256 (hex). |
-| Familia | Cadena de refresh tokens nacida de un mismo login (cada rotación hereda `FamilyId`). Revocar la familia cierra esa sesión. |
+| Sesión | Agregado `Session`: la cadena de refresh tokens nacida de un mismo login (antes «familia», `FamilyId`; cada rotación añade un `RefreshToken` hijo a la misma sesión). Revocar la sesión la cierra. |
 | Rotación | Cada uso de un refresh lo invalida y crea el siguiente. |
 | Reutilización | Presentar un refresh que ya fue reemplazado: señal de robo si ocurre fuera de la ventana de gracia. |
 | Ventana de gracia | 10 s tras una rotación en los que una reutilización se trata como carrera benigna (dos pestañas), no como robo. |
@@ -152,23 +154,35 @@ Palabras clave: DEBE (obligatorio), DEBERÍA (recomendado).
 - `expiresAt`: fecha-hora UTC ISO-8601 de caducidad del access (`ApiClient` ya revive `createdAt`; añadir `expiresAt` a `DATE_TIME_KEYS`).
 - Cookie: `sumiclas_refresh=<valor>; Path=/api/auth; Max-Age=1209600; HttpOnly; Secure; SameSite=Strict`.
 - 401/403 de middleware: `ProblemDetails` con `type`, `title`, `status`, `code` (misma forma que `ToProblem`).
-- Endpoints nuevos: `WithName` = `RefreshTokenRotate` / `RefreshTokenRevoke` (el login pasa a `RefreshTokenCreate`), `WithTags("Authentication")`, `Produces*` y `ProducesProblem` completos; esquema de seguridad Bearer declarado en el OpenAPI.
+- Endpoints nuevos: `WithName` = `SessionRotate` / `SessionRevoke` (el login pasa a `SessionCreate`), `WithTags("Authentication")`, `Produces*` y `ProducesProblem` completos; esquema de seguridad Bearer declarado en el OpenAPI.
 
 ## 5. Modelo de datos
 
-Tabla `RefreshTokens` (migración `RefreshTokens`):
+Desde J1g el modelo son dos tablas: `Sessions` (raíz del agregado `Session`) y `RefreshTokens` (hija, solo existe dentro de su sesión). La migración `RefreshTokens` creó la tabla original y `SessionsAggregate` la reorganiza (una fila de `Sessions` por cada antigua `FamilyId`).
+
+Tabla `Sessions`:
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `Id` | uuid PK | es el id de la sesión (antes `FamilyId`); generado fuera del dominio |
+| `UserId` | uuid not null | sin FK (referencias por id); índice `IX_Sessions_UserId` |
+| `CreatedAt` | timestamptz not null | `IClock` |
+| `RevokedAt` | timestamptz null | revocada por logout o reutilización |
+| `xmin` | (columna de sistema de PostgreSQL) | token de concurrencia optimista, propiedad sombra; no se crea en la migración |
+
+Tabla `RefreshTokens` (hija de `Sessions`):
 
 | Columna | Tipo | Notas |
 |---|---|---|
 | `Id` | uuid PK | generado fuera del dominio (convención del repo) |
-| `UserId` | uuid not null | sin FK (referencias por id) |
-| `FamilyId` | uuid not null | índice `IX_RefreshTokens_FamilyId` |
+| `SessionId` | uuid not null | FK a `Sessions.Id` con borrado en cascada; índice `IX_RefreshTokens_SessionId` |
 | `TokenHash` | varchar(64) not null | SHA-256 hex; índice único `IX_RefreshTokens_TokenHash` |
 | `CreatedAt` | timestamptz not null | `IClock` |
 | `ExpiresAt` | timestamptz not null | `CreatedAt + RefreshTokenDays` |
-| `RevokedAt` | timestamptz null | revocado por logout o reutilización |
 | `ReplacedAt` | timestamptz null | cuándo fue reemplazado (ventana de gracia) |
 | `ReplacedById` | uuid null | siguiente de la cadena |
+
+La sesión poda en cada rotación los tokens reemplazados hace más de 24 h o caducados (ver 9.1).
 
 ## 6. Configuración
 
@@ -242,27 +256,28 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 
 **Módulos.** Un módulo = una raíz de agregado, y un caso de uso solo usa el repositorio de su propio módulo (entre módulos, `IQueryBus` o eventos). `User` lleva el hash de la contraseña (`UserCredential` y el módulo `Authentication` se eliminaron en J1e; `IPasswordHasher`, el value object `Password` y `PasswordVerification` viven en `Users/Domain`) y `Users` expone la query `UserPasswordVerify`. Los puertos que implementa `Infrastructure` viven en `Domain`.
 
-**Dominio** (`RefreshTokens/Domain`): agregado `RefreshToken : AggregateRoot`
-- `Create(id, userId, familyId, tokenHash, IClock clock, TimeSpan lifetime)` → `Result<RefreshToken>` (valida ids y hash no vacío; errores `RefreshToken.IdRequired`, `RefreshToken.UserRequired`, `RefreshToken.HashRequired`).
-- `IsActive(clock)` = no revocado, no reemplazado y no caducado.
-- `MarkReplaced(successorId, clock)`, `Revoke(clock)`, `WasReplacedWithin(clock, grace)`.
-- `IRefreshTokenRepository` (`GetByIdAsync`, `SearchAsync(ISpecification)`, `AddAsync`) + `RefreshTokenSpecification(tokenHash?, familyId?)` base con un parámetro por campo.
+**Dominio** (`Sessions/Domain`, J1g): agregado `Session : AggregateRoot` (la raíz es la sesión; `RefreshToken : Entity` es su entidad hija, sin repositorio propio)
+- `Create(userId, tokenHash, IClock clock, TimeSpan lifetime)` → `Result<Session>` (genera el id de la sesión con `Guid.NewGuid()`, valida el usuario, hash no vacío y duración positiva; el id del primer refresh token (entidad hija) lo genera el propio agregado con `Guid.NewGuid()`; errores `Session.UserRequired`, `Session.TokenHashRequired`, `Session.LifetimeInvalid`).
+- `Rotate(tokenHash, newTokenHash, clock, lifetime, grace)` → `Result<SessionRotation>` (`Rotated(NewToken) | Invalid | Reused`; el id del sucesor lo genera el propio agregado; solo falla con argumentos inválidos). La detección de reutilización es comportamiento del agregado: sesión revocada → `Invalid`; huella desconocida → `Invalid`; token ya reemplazado dentro de la gracia → `Invalid` sin cambios, fuera de la gracia → revoca la sesión y `Reused`; caducado → `Invalid`; en otro caso marca el token como reemplazado y añade el sucesor. En cada rotación correcta poda los tokens reemplazados hace más de `Session.ReplacedTokenRetention` (24 h) o caducados (compromiso: acota las filas por sesión; la repetición de un token más antiguo que eso es `Invalid`, no `Reused`).
+- `Revoke(clock)` idempotente, `IsActive(clock)`, `HasToken(tokenHash)`. `RefreshToken.IsActive(clock)` = no reemplazado y no caducado; `WasReplacedWithin(clock, grace)`.
+- Concurrencia: token optimista con la columna `xmin` de PostgreSQL como propiedad sombra en el mapeo (el Domain no conoce Npgsql), con la intención de que dos refrescos simultáneos no creen dos sucesores activos. **No está verificado**: una rotación solo cambia filas de `RefreshTokens`, así que puede que EF no emita ningún `UPDATE` sobre `Sessions` y el token nunca se compruebe (seguimiento en la ficha de la tarea).
+- `ISessionRepository` (`GetByIdAsync`, `SearchAsync(ISpecification)`, `AddAsync`) + `SessionSpecification(id?, userId?, tokenHash?)` base con un parámetro por campo (`tokenHash` filtra las sesiones con algún refresh token con esa huella).
 - Value object `AccessToken` (`Create(value, expiresAt)` → `Result<AccessToken>`; errores `AccessToken.ValueRequired` y `AccessToken.ExpiryRequired`; igualdad por componentes).
 
-**Puertos** (`RefreshTokens/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. `JwtOptions` (configuración plana) también vive en `Domain`.
-**Infraestructura** (`RefreshTokens/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `RefreshTokenRepository`. `JwtOptions` se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
+**Puertos** (`Sessions/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. `JwtOptions` (configuración plana) también vive en `Domain`.
+**Infraestructura** (`Sessions/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `SessionRepository`. `JwtOptions` se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
 
 **Casos de uso**:
 - `UserPasswordVerify` (`Users/Application`, `Query`/`Verify`/`Handler`): `Query(Email, Password)` → `Result<UserResponse>`; mismo `Authentication.InvalidCredentials` para email desconocido o contraseña errónea, y el hasher se ejecuta siempre. Si el hasher pide rehash, el `Verify` reemplaza el hash del usuario rastreado (`User.ReplacePasswordHash`) y lo persiste el `UnitOfWorkBehavior` del comando raíz (compromiso: una query con un efecto lateral acotado).
-- `RefreshTokenCreate` (login; clase estática con `Command`/`Create`/`Handler`): `Command(Email, Password)`; envía `UserPasswordVerify.Query` por `IQueryBus`, genera refresh, crea `RefreshToken` (familia nueva), emite access; devuelve `Result<SessionResponse>` con `AccessToken`, `ExpiresAt`, `UserId`, `FullName` y `RefreshTokenRaw` (el endpoint pone la cookie y **no** lo serializa).
-- `RefreshTokenRotate.Command(RawRefreshToken?)` → `Result<RefreshOutcome>` **siempre exitoso** salvo error técnico: `Rotated(SessionResponse+raw)`, `Invalid` o `Reused`. Flujo: hash → buscar; no encontrado/caducado/revocado → `Invalid`; reemplazado: dentro de gracia → `Invalid` sin tocar, fuera → revocar familia y `Reused`; activo → comprobar que el usuario existe (`IQueryBus` + `UserFinderById`, si no → `Invalid`), `MarkReplaced`, crear sucesor, emitir access. El endpoint traduce `Invalid`/`Reused` a 401 + borrado de cookie (así el `UnitOfWorkBehavior` confirma la revocación).
-- `RefreshTokenRevoke.Command(RawRefreshToken?)` → `Result` siempre éxito: si encuentra el token revoca la familia entera.
+- `SessionCreate` (login; clase estática con `Command`/`Create`/`Handler`): `Command(Email, Password)`; envía `UserPasswordVerify.Query` por `IQueryBus`, genera refresh, crea la `Session` con su primer `RefreshToken`, emite access; devuelve `Result<SessionResponse>` con `AccessToken`, `ExpiresAt`, `UserId`, `FullName` y `RefreshTokenRaw` (el endpoint pone la cookie y **no** lo serializa).
+- `SessionRotate.Command(RawRefreshToken?)` → `Result<SessionRotateOutcome>` **siempre exitoso** salvo error técnico: `Rotated(SessionResponse+raw)`, `Invalid` o `Reused`. Flujo: hash → buscar la sesión con `SessionSpecification(tokenHash:)`; no encontrada → `Invalid`; comprobar que el usuario existe (`IQueryBus` + `UserFinderById`, si no → `Invalid`; antes de rotar, para que un usuario inexistente nunca rote); `Session.Rotate` decide `Invalid`/`Reused`/`Rotated` (ver Dominio); emitir access en `Rotated`. El endpoint traduce `Invalid`/`Reused` a 401 + borrado de cookie (así el `UnitOfWorkBehavior` confirma la revocación).
+- `SessionRevoke.Command(RawRefreshToken?)` → `Result` siempre éxito: si encuentra la sesión del token la revoca.
 
 **API** (`api/`): `AddJwtBearer` (`MapInboundClaims=false`, `ValidateIssuer/Audience/Lifetime/IssuerSigningKey`, `ClockSkew` 30 s, `RequireSignedTokens`), `AddAuthorizationBuilder().SetFallbackPolicy(RequireAuthenticatedUser)`, `.AllowAnonymous()` en la lista de §4/RF-11, `AddProblemDetails`, eventos `OnChallenge`/`OnForbidden` que escriben `ProblemDetails` con `code`; `JwtUserProvider` (lee `sub`; ausente o no-Guid → `Authentication.Unauthenticated`) sustituye a `HeaderUserProvider` (se borra); `CorsServiceCollectionExtensions` (política única desde `Cors:AllowedOrigins`; si la lista está vacía no se registra `UseCors`); `RateLimitingServiceCollectionExtensions` añade la política `auth-refresh`. Orden del pipeline: `UseRateLimiter` → `UseCors` → `UseAuthentication` → `UseAuthorization` → `MapEndpoints`. Helper `RefreshCookie.Write/Clear` en `api/Http` (único sitio que toca la cookie).
 
 **Secuencias.**
-- *Login*: cliente → `POST /auth/login` → verificar contraseña → crear familia + `RefreshToken` → `Set-Cookie` + cuerpo `{accessToken,…}`.
-- *Refresco*: cliente → `POST /auth/refresh` (cookie) → `RefreshTokenRotate` → ramas `Rotated` (200 + cookie rotada) / `Invalid` / `Reused` (401 + borrar cookie; en `Reused` la revocación ya está confirmada).
+- *Login*: cliente → `POST /auth/login` → verificar contraseña → crear `Session` + su primer `RefreshToken` → `Set-Cookie` + cuerpo `{accessToken,…}`.
+- *Refresco*: cliente → `POST /auth/refresh` (cookie) → `SessionRotate` → ramas `Rotated` (200 + cookie rotada) / `Invalid` / `Reused` (401 + borrar cookie; en `Reused` la revocación ya está confirmada).
 - *401 con reintento*: petición con access caducado → 401 → single-flight refresh → repetir una vez → OK; o fallo → limpiar sesión → `/login`.
 
 ### 9.2 Frontend (`apps/frontend/sumiclas-web/src`)
@@ -289,6 +304,7 @@ RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 | **J1c** | Mapeo EF + `DbSet` + `RefreshTokenRepository` + migración `RefreshTokens` (pieza propia por el `Designer`). | J1a | S-01 (BD) | ~800 líneas generadas |
 | **J1d** | Reorganización por módulos: `RefreshToken` y sus piezas pasan a un módulo propio `RefreshTokens`; `Authentication` queda solo con `UserCredential` y expone `AccountCredentialVerify` (query; sustituido en J1e) para el login; `AccessToken` como value object de dominio (`Result<AccessToken>`); puertos en `Domain`; `RefreshCookieOptions` pasa a `api/Http`; sin migración nueva (solo cambia el nombre CLR en el snapshot y el `Designer`). | J1b, J1c | S-01, S-03..S-10 (sin cambio de comportamiento) | refactor + ~12 tests |
 | **J1e** | Unificar `User` y `UserCredential` (1:1, mismo ciclo de vida) en un solo agregado y una sola tabla: `User` lleva `PasswordHash`/`PasswordChangedAt`; `UserRegister` (sustituye a `AccountRegister`, sin evento de dominio) y `UserPasswordVerify` (sustituye a `AccountCredentialVerify`) viven en `Users`; `IPasswordHasher`, `Password` y `IdentityPasswordHasher` pasan a `Users`; se elimina el módulo `Authentication`; migración `MergeUserCredentialsIntoUsers` que copia los hashes y borra `UserCredentials`. `RefreshTokens` solo cambia el nombre de la query. | J1d | S-01, S-02 (sin cambio de comportamiento) | refactor + tests movidos |
+| **J1g** | El agregado pasa a ser la sesión: módulo `RefreshTokens` → `Sessions`, `RefreshToken` (raíz) → `Session` (raíz, antes la «familia») con `RefreshToken` como entidad hija; reutilización y revocación como comportamiento del agregado (`Session.Rotate`, `Revoke`), poda de tokens antiguos, token de concurrencia `xmin`; casos de uso `SessionCreate`/`SessionRotate`/`SessionRevoke`, `SessionRotateOutcome`; migración `SessionsAggregate` (tablas `Sessions` + `RefreshTokens` con `SessionId`, conserva los datos). Sin cambio de contrato HTTP ni de escenarios. | J1e, J2a | S-01, S-03..S-10 (sin cambio de comportamiento) | refactor + tests movidos, migración |
 | **J2a** | Casos de uso `RefreshTokenCreate` (sesión+refresh), `RefreshTokenRotate`, `RefreshTokenRevoke` + tests con Moq/`IClock` falso (rotación, reutilización con y sin gracia, caducado, usuario inexistente, idempotencia). | J1b, J1c, J1d | S-01, S-03..S-10 | ~500 líneas |
 | **J2b** | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, CORS, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`. | J2a | S-11..S-19 | ~550 líneas |
 | **J3a** | Regenerar cliente NSwag; `tokenStore`, `authHttp` (single-flight, locks, reintento), `IAuthenticationRepository.refresh/logout`, `Session`; retirar `X-User-Id`. | J2b | S-21, S-24..S-26 | ~450 líneas |
