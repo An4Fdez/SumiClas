@@ -12,7 +12,7 @@ public static class AssignmentCommentAdd
 {
     public sealed record Command(Guid AssignmentId, string Text) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Add(IAssignmentRepository assignments, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -50,9 +50,9 @@ public static class AssignmentCommentAdd
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Add add) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => add.ExecuteAsync(command, ct);
     }
 }

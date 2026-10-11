@@ -8,10 +8,9 @@ public static class EnrollmentFinderByClass
 {
     public sealed record Query(Guid ClassId) : IQuery<IReadOnlyCollection<EnrollmentResponse>>;
 
-    public sealed class Handler(IEnrollmentRepository enrollmentRepository)
-        : IRequestHandler<Query, IReadOnlyCollection<EnrollmentResponse>>
+    public sealed class Finder(IEnrollmentRepository enrollmentRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<EnrollmentResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<EnrollmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var enrollments = await enrollmentRepository.SearchAsync(new EnrollmentSpecification(classId: query.ClassId), ct);
             return enrollments
@@ -24,5 +23,11 @@ public static class EnrollmentFinderByClass
                     enrollment.ConfirmedAt))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<EnrollmentResponse>>
+    {
+        public Task<IReadOnlyCollection<EnrollmentResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

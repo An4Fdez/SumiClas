@@ -11,7 +11,7 @@ public static class EnrollmentConfirm
 {
     public sealed record Command(Guid EnrollmentId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock)
+    public sealed class Confirm(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -48,9 +48,9 @@ public static class EnrollmentConfirm
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Confirm confirm) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => confirm.ExecuteAsync(command, ct);
     }
 }

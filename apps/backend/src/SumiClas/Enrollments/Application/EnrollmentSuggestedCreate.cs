@@ -14,11 +14,11 @@ public static class EnrollmentSuggestedCreate
     public sealed record Command(Guid ClassId, Guid PreviousClassId)
         : IRequest<Result<EnrollmentSuggestedCreateResponse>>, ICommand;
 
-    public sealed class UseCase(
+    public sealed class Create(
         IEnrollmentRepository enrollments,
         IQueryBus queryBus,
         IUserProvider userProvider,
-        IClock clock)
+        IClock clock) : IUseCase
     {
         public async Task<Result<EnrollmentSuggestedCreateResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -121,9 +121,9 @@ public static class EnrollmentSuggestedCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result<EnrollmentSuggestedCreateResponse>>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result<EnrollmentSuggestedCreateResponse>>
     {
         public Task<Result<EnrollmentSuggestedCreateResponse>> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

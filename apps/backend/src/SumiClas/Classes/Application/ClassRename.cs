@@ -10,7 +10,7 @@ public static class ClassRename
 {
     public sealed record Command(Guid ClassId, string Name) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IClassRepository classes, IQueryBus queryBus)
+    public sealed class Rename(IClassRepository classes, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -30,9 +30,9 @@ public static class ClassRename
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Rename rename) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => rename.ExecuteAsync(command, ct);
     }
 }

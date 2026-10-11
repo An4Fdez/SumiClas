@@ -13,10 +13,9 @@ public static class AssignmentFinderByClass
     /// <summary>The homework of the class with its subject and its comments, ordered by due date, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AssignmentResponse>>>;
 
-    public sealed class Handler(IAssignmentRepository assignmentRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<PagedResponse<AssignmentResponse>>>
+    public sealed class Finder(IAssignmentRepository assignmentRepository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<PagedResponse<AssignmentResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<AssignmentResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
             if (pageRequest.IsFailure)
@@ -85,5 +84,11 @@ public static class AssignmentFinderByClass
 
             return Result<PagedResponse<AssignmentResponse>>.Success(new PagedResponse<AssignmentResponse>(items, nextCursor));
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<AssignmentResponse>>>
+    {
+        public Task<Result<PagedResponse<AssignmentResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

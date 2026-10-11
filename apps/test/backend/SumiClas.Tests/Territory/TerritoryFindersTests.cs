@@ -76,8 +76,8 @@ public class TerritoryFindersTests
         AddProvince("Álava");
         AddProvince("Almería");
 
-        var result = await new ProvinceFinderAll.Handler(_provinceRepository)
-            .Handle(new ProvinceFinderAll.Query(), CancellationToken.None);
+        var result = await new ProvinceFinderAll.Finder(_provinceRepository)
+            .ExecuteAsync(new ProvinceFinderAll.Query(), CancellationToken.None);
 
         Assert.That(result.Select(province => province.Name), Is.EqualTo(new[] { "Álava", "Almería", "Sevilla" }));
     }
@@ -88,8 +88,8 @@ public class TerritoryFindersTests
         var known = AddProvince("Almería");
         AddProvince("Madrid");
 
-        var result = await new ProvinceFinderByIds.Handler(_provinceRepository)
-            .Handle(new ProvinceFinderByIds.Query([known.Id, Guid.NewGuid()]), CancellationToken.None);
+        var result = await new ProvinceFinderByIds.Finder(_provinceRepository)
+            .ExecuteAsync(new ProvinceFinderByIds.Query([known.Id, Guid.NewGuid()]), CancellationToken.None);
 
         Assert.That(result.Select(province => province.Id), Is.EqualTo(new[] { known.Id }));
     }
@@ -100,9 +100,9 @@ public class TerritoryFindersTests
         AddLocality(Almeria, "Níjar");
         AddLocality(Almeria, "Abla");
         AddLocality(Madrid, "Getafe");
-        var handler = new LocalityFinderByProvince.Handler(_localityRepository);
+        var handler = new LocalityFinderByProvince.Finder(_localityRepository);
 
-        var result = await handler.Handle(new LocalityFinderByProvince.Query(Almeria, null), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new LocalityFinderByProvince.Query(Almeria, null), CancellationToken.None);
 
         Assert.That(result.Select(locality => locality.Name), Is.EqualTo(new[] { "Abla", "Níjar" }));
         Assert.That(result.Select(locality => locality.ProvinceId), Is.All.EqualTo(Almeria));
@@ -115,9 +115,9 @@ public class TerritoryFindersTests
     {
         AddLocality(Almeria, "Níjar");
         AddLocality(Almeria, "Abla");
-        var handler = new LocalityFinderByProvince.Handler(_localityRepository);
+        var handler = new LocalityFinderByProvince.Finder(_localityRepository);
 
-        var result = await handler.Handle(new LocalityFinderByProvince.Query(Almeria, name), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new LocalityFinderByProvince.Query(Almeria, name), CancellationToken.None);
 
         Assert.That(result.Select(locality => locality.Name), Is.EqualTo(new[] { "Níjar" }));
     }
@@ -127,8 +127,8 @@ public class TerritoryFindersTests
     {
         AddLocality(Almeria, "Abla");
 
-        var result = await new LocalityFinderByProvince.Handler(_localityRepository)
-            .Handle(new LocalityFinderByProvince.Query(Guid.NewGuid(), null), CancellationToken.None);
+        var result = await new LocalityFinderByProvince.Finder(_localityRepository)
+            .ExecuteAsync(new LocalityFinderByProvince.Query(Guid.NewGuid(), null), CancellationToken.None);
 
         Assert.That(result, Is.Empty);
     }
@@ -139,8 +139,8 @@ public class TerritoryFindersTests
         var abla = AddLocality(Almeria, "Abla");
         AddLocality(Madrid, "Getafe");
 
-        var result = await new LocalityFinderByIds.Handler(_localityRepository)
-            .Handle(new LocalityFinderByIds.Query([abla.Id, Guid.NewGuid()]), CancellationToken.None);
+        var result = await new LocalityFinderByIds.Finder(_localityRepository)
+            .ExecuteAsync(new LocalityFinderByIds.Query([abla.Id, Guid.NewGuid()]), CancellationToken.None);
 
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result.Single().ProvinceId, Is.EqualTo(Almeria));
@@ -153,10 +153,68 @@ public class TerritoryFindersTests
         var postalCode = PostalCode.Create(Guid.NewGuid(), abla.Id, "04510").Value;
         _postalCodes.Add(postalCode);
 
-        var result = await new PostalCodeFinderByIds.Handler(_postalCodeRepository)
-            .Handle(new PostalCodeFinderByIds.Query([postalCode.Id, Guid.NewGuid()]), CancellationToken.None);
+        var result = await new PostalCodeFinderByIds.Finder(_postalCodeRepository)
+            .ExecuteAsync(new PostalCodeFinderByIds.Query([postalCode.Id, Guid.NewGuid()]), CancellationToken.None);
 
         Assert.That(result.Single().Code, Is.EqualTo("04510"));
         Assert.That(result.Single().LocalityId, Is.EqualTo(abla.Id));
+    }
+
+    [Test]
+    public async Task ProvinceFinderAllHandler_DelegatesToTheUseCase()
+    {
+        var known = AddProvince("Almería");
+        var handler = new ProvinceFinderAll.Handler(new ProvinceFinderAll.Finder(_provinceRepository));
+
+        var result = await handler.Handle(new ProvinceFinderAll.Query(), CancellationToken.None);
+
+        Assert.That(result.Select(province => province.Id), Is.EqualTo(new[] { known.Id }));
+    }
+
+    [Test]
+    public async Task ProvinceFinderByIdsHandler_DelegatesToTheUseCase()
+    {
+        var known = AddProvince("Almería");
+        var handler = new ProvinceFinderByIds.Handler(new ProvinceFinderByIds.Finder(_provinceRepository));
+
+        var result = await handler.Handle(new ProvinceFinderByIds.Query([known.Id]), CancellationToken.None);
+
+        Assert.That(result.Select(province => province.Id), Is.EqualTo(new[] { known.Id }));
+    }
+
+    [Test]
+    public async Task LocalityFinderByProvinceHandler_DelegatesToTheUseCase()
+    {
+        AddLocality(Almeria, "Abla");
+        AddLocality(Madrid, "Getafe");
+        var handler = new LocalityFinderByProvince.Handler(new LocalityFinderByProvince.Finder(_localityRepository));
+
+        var result = await handler.Handle(new LocalityFinderByProvince.Query(Almeria, null), CancellationToken.None);
+
+        Assert.That(result.Select(locality => locality.Name), Is.EqualTo(new[] { "Abla" }));
+    }
+
+    [Test]
+    public async Task LocalityFinderByIdsHandler_DelegatesToTheUseCase()
+    {
+        var abla = AddLocality(Almeria, "Abla");
+        var handler = new LocalityFinderByIds.Handler(new LocalityFinderByIds.Finder(_localityRepository));
+
+        var result = await handler.Handle(new LocalityFinderByIds.Query([abla.Id]), CancellationToken.None);
+
+        Assert.That(result.Single().Id, Is.EqualTo(abla.Id));
+    }
+
+    [Test]
+    public async Task PostalCodeFinderByIdsHandler_DelegatesToTheUseCase()
+    {
+        var abla = AddLocality(Almeria, "Abla");
+        var postalCode = PostalCode.Create(Guid.NewGuid(), abla.Id, "04510").Value;
+        _postalCodes.Add(postalCode);
+        var handler = new PostalCodeFinderByIds.Handler(new PostalCodeFinderByIds.Finder(_postalCodeRepository));
+
+        var result = await handler.Handle(new PostalCodeFinderByIds.Query([postalCode.Id]), CancellationToken.None);
+
+        Assert.That(result.Single().Code, Is.EqualTo("04510"));
     }
 }

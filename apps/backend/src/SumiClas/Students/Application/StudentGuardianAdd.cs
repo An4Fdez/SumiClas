@@ -10,7 +10,7 @@ public static class StudentGuardianAdd
 {
     public sealed record Command(Guid StudentId, Guid GuardianId, string Role) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider)
+    public sealed class Add(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -46,9 +46,9 @@ public static class StudentGuardianAdd
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Add add) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => add.ExecuteAsync(command, ct);
     }
 }

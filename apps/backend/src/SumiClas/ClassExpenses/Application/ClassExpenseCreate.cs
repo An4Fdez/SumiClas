@@ -19,7 +19,7 @@ public static class ClassExpenseCreate
         IReadOnlyCollection<Guid> ParticipantIds,
         Guid? RelatedEventId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IClassExpenseRepository classExpenses, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Create(IClassExpenseRepository classExpenses, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -85,9 +85,9 @@ public static class ClassExpenseCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

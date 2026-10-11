@@ -13,10 +13,9 @@ public static class AnnouncementFinderByClass
     /// <summary>School-wide announcements plus the ones of the class, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AnnouncementResponse>>>;
 
-    public sealed class Handler(IAnnouncementRepository announcementRepository, IQueryBus queryBus, IUserProvider userProvider)
-        : IRequestHandler<Query, Result<PagedResponse<AnnouncementResponse>>>
+    public sealed class Finder(IAnnouncementRepository announcementRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<PagedResponse<AnnouncementResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<AnnouncementResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -76,5 +75,11 @@ public static class AnnouncementFinderByClass
 
             return Result<PagedResponse<AnnouncementResponse>>.Success(new PagedResponse<AnnouncementResponse>(items, nextCursor));
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<AnnouncementResponse>>>
+    {
+        public Task<Result<PagedResponse<AnnouncementResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

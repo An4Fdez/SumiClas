@@ -11,7 +11,7 @@ public static class SubjectCreate
 {
     public sealed record Command(Guid Id, Guid ClassId, string Label) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ISubjectRepository subjects, IQueryBus queryBus)
+    public sealed class Create(ISubjectRepository subjects, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -39,9 +39,9 @@ public static class SubjectCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

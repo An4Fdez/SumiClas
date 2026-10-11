@@ -12,7 +12,7 @@ public static class EnrollmentCreate
 {
     public sealed record Command(Guid Id, Guid StudentId, Guid ClassId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock)
+    public sealed class Create(IEnrollmentRepository enrollments, IQueryBus queryBus, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -57,9 +57,9 @@ public static class EnrollmentCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

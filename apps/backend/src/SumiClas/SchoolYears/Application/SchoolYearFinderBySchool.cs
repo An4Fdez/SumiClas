@@ -11,10 +11,9 @@ public static class SchoolYearFinderBySchool
     /// <summary>The school years of a school, newest first; <paramref name="Status"/> ("Active"/"Archived") is optional.</summary>
     public sealed record Query(Guid SchoolId, string? Status) : IQuery<Result<IReadOnlyCollection<SchoolYearResponse>>>;
 
-    public sealed class Handler(ISchoolYearRepository schoolYearRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<SchoolYearResponse>>>
+    public sealed class Finder(ISchoolYearRepository schoolYearRepository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<SchoolYearResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<IReadOnlyCollection<SchoolYearResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             SchoolYearStatus? status = null;
             if (!string.IsNullOrWhiteSpace(query.Status))
@@ -47,5 +46,11 @@ public static class SchoolYearFinderBySchool
 
             return Result<IReadOnlyCollection<SchoolYearResponse>>.Success(response);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<SchoolYearResponse>>>
+    {
+        public Task<Result<IReadOnlyCollection<SchoolYearResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

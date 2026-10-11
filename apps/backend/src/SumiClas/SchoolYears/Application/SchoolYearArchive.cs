@@ -9,7 +9,7 @@ public static class SchoolYearArchive
 {
     public sealed record Command(Guid SchoolYearId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ISchoolYearRepository schoolYears, IClock clock)
+    public sealed class Archive(ISchoolYearRepository schoolYears, IClock clock) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -23,9 +23,9 @@ public static class SchoolYearArchive
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Archive archive) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => archive.ExecuteAsync(command, ct);
     }
 }

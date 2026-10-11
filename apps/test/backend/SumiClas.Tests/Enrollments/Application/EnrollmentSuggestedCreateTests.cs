@@ -26,7 +26,7 @@ public class EnrollmentSuggestedCreateTests
     private Mock<IClock> _clock = null!;
     private List<Enrollment> _store = null!;
     private List<Enrollment> _added = null!;
-    private EnrollmentSuggestedCreate.UseCase _useCase = null!;
+    private EnrollmentSuggestedCreate.Create _useCase = null!;
     private EnrollmentSuggestedCreate.Handler _handler = null!;
     private bool _isRepresentative;
     private Guid _previousSchoolId;
@@ -91,7 +91,7 @@ public class EnrollmentSuggestedCreateTests
             .Setup(bus => bus.Send(It.IsAny<IQuery<IReadOnlyCollection<ClassResponse>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ClassResponse> { new(NewClassId, NewYearId, "3A") });
 
-        _useCase = new EnrollmentSuggestedCreate.UseCase(_enrollments.Object, _queryBus.Object, _userProvider.Object, _clock.Object);
+        _useCase = new EnrollmentSuggestedCreate.Create(_enrollments.Object, _queryBus.Object, _userProvider.Object, _clock.Object);
         _handler = new EnrollmentSuggestedCreate.Handler(_useCase);
     }
 

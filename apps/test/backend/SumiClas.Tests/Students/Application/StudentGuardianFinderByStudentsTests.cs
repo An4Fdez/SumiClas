@@ -11,7 +11,7 @@ public class StudentGuardianFinderByStudentsTests
 {
     private Mock<IStudentRepository> _students = null!;
     private List<Student> _store = null!;
-    private StudentGuardianFinderByStudents.Handler _handler = null!;
+    private StudentGuardianFinderByStudents.Finder _useCase = null!;
 
     [SetUp]
     public void SetUp()
@@ -22,7 +22,7 @@ public class StudentGuardianFinderByStudentsTests
             .Setup(repository => repository.SearchAsync(It.IsAny<ISpecification<Student>>(), It.IsAny<CancellationToken>()))
             .Returns<ISpecification<Student>, CancellationToken>((specification, _) =>
                 Task.FromResult<IReadOnlyCollection<Student>>(_store.Where(specification.Criteria.Compile()).ToList()));
-        _handler = new StudentGuardianFinderByStudents.Handler(_students.Object);
+        _useCase = new StudentGuardianFinderByStudents.Finder(_students.Object);
     }
 
     private Student AddStudent(string firstName, params Guid[] guardianIds)
@@ -42,7 +42,7 @@ public class StudentGuardianFinderByStudentsTests
     }
 
     [Test]
-    public async Task Handle_ReturnsTheGuardianIdsOfTheRequestedStudentsOnly()
+    public async Task UseCase_ReturnsTheGuardianIdsOfTheRequestedStudentsOnly()
     {
         var motherA = Guid.NewGuid();
         var motherB = Guid.NewGuid();
@@ -50,7 +50,7 @@ public class StudentGuardianFinderByStudentsTests
         var requested = AddStudent("Lucía", motherA, father);
         var other = AddStudent("Mateo", motherB);
 
-        var result = await _handler.Handle(new StudentGuardianFinderByStudents.Query([requested.Id]), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new StudentGuardianFinderByStudents.Query([requested.Id]), CancellationToken.None);
 
         Assert.That(result, Is.EquivalentTo(new[] { motherA, father }));
         Assert.That(result, Does.Not.Contain(motherB));
@@ -58,21 +58,21 @@ public class StudentGuardianFinderByStudentsTests
     }
 
     [Test]
-    public async Task Handle_WithSiblingsOfTheSameGuardian_ReturnsEachGuardianOnce()
+    public async Task UseCase_WithSiblingsOfTheSameGuardian_ReturnsEachGuardianOnce()
     {
         var mother = Guid.NewGuid();
         var first = AddStudent("Lucía", mother);
         var second = AddStudent("Mateo", mother);
 
-        var result = await _handler.Handle(new StudentGuardianFinderByStudents.Query([first.Id, second.Id]), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new StudentGuardianFinderByStudents.Query([first.Id, second.Id]), CancellationToken.None);
 
         Assert.That(result, Is.EqualTo(new[] { mother }));
     }
 
     [Test]
-    public async Task Handle_WithNoStudentIds_ReturnsEmptyWithoutQueryingTheRepository()
+    public async Task UseCase_WithNoStudentIds_ReturnsEmptyWithoutQueryingTheRepository()
     {
-        var result = await _handler.Handle(new StudentGuardianFinderByStudents.Query([]), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new StudentGuardianFinderByStudents.Query([]), CancellationToken.None);
 
         Assert.That(result, Is.Empty);
         _students.Verify(
@@ -81,11 +81,11 @@ public class StudentGuardianFinderByStudentsTests
     }
 
     [Test]
-    public async Task Handle_WithUnknownStudentIds_ReturnsEmpty()
+    public async Task UseCase_WithUnknownStudentIds_ReturnsEmpty()
     {
         AddStudent("Lucía", Guid.NewGuid());
 
-        var result = await _handler.Handle(new StudentGuardianFinderByStudents.Query([Guid.NewGuid()]), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new StudentGuardianFinderByStudents.Query([Guid.NewGuid()]), CancellationToken.None);
 
         Assert.That(result, Is.Empty);
     }
@@ -96,5 +96,15 @@ public class StudentGuardianFinderByStudentsTests
         Assert.That(
             typeof(StudentGuardianFinderByStudents.Query).GetInterfaces(),
             Does.Contain(typeof(IQuery<IReadOnlyCollection<Guid>>)));
+    }
+
+    [Test]
+    public async Task Handler_DelegatesToTheUseCase()
+    {
+        var handler = new StudentGuardianFinderByStudents.Handler(_useCase);
+
+        var result = await handler.Handle(new StudentGuardianFinderByStudents.Query([]), CancellationToken.None);
+
+        Assert.That(result, Is.Empty);
     }
 }

@@ -11,7 +11,7 @@ public static class AnnouncementReadMark
     /// <summary>The current user marks the announcement as read. Idempotent: marking it again does nothing.</summary>
     public sealed record Command(Guid AnnouncementId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Mark(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -37,9 +37,9 @@ public static class AnnouncementReadMark
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => mark.ExecuteAsync(command, ct);
     }
 }

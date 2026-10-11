@@ -13,7 +13,7 @@ public static class CalendarEventBirthdayCreate
     public sealed record Command(Guid Id, Guid StudentId, string Title, int Month, int Day)
         : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ICalendarEventRepository calendarEvents, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Create(ICalendarEventRepository calendarEvents, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -56,9 +56,9 @@ public static class CalendarEventBirthdayCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

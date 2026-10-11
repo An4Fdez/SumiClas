@@ -9,7 +9,7 @@ public static class StudentGuardianRemove
 {
     public sealed record Command(Guid StudentId, Guid GuardianId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IStudentRepository students, IUserProvider userProvider)
+    public sealed class Remove(IStudentRepository students, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -34,9 +34,9 @@ public static class StudentGuardianRemove
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Remove remove) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => remove.ExecuteAsync(command, ct);
     }
 }

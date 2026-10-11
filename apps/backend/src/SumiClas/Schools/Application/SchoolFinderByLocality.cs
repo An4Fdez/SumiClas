@@ -11,13 +11,19 @@ public static class SchoolFinderByLocality
     /// <summary>Schools of the locality whose name contains <paramref name="Name"/> (every school when blank), by name, at most <see cref="MaxResults"/>.</summary>
     public sealed record Query(Guid LocalityId, string? Name) : IQuery<IReadOnlyCollection<SchoolResponse>>;
 
-    public sealed class Handler(ISchoolRepository schoolRepository, IQueryBus queryBus) : IRequestHandler<Query, IReadOnlyCollection<SchoolResponse>>
+    public sealed class Finder(ISchoolRepository schoolRepository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<IReadOnlyCollection<SchoolResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<SchoolResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schools = await schoolRepository.SearchAsync(
                 new SchoolsInLocalityByNameSpecification(query.LocalityId, query.Name, MaxResults), ct);
             return await SchoolResponseFactory.CreateAsync(queryBus, schools, ct);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<SchoolResponse>>
+    {
+        public Task<IReadOnlyCollection<SchoolResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

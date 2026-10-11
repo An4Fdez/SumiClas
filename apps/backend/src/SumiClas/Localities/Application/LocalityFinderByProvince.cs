@@ -12,9 +12,9 @@ public static class LocalityFinderByProvince
     /// </summary>
     public sealed record Query(Guid ProvinceId, string? Name) : IQuery<IReadOnlyCollection<LocalityResponse>>;
 
-    public sealed class Handler(ILocalityRepository localityRepository) : IRequestHandler<Query, IReadOnlyCollection<LocalityResponse>>
+    public sealed class Finder(ILocalityRepository localityRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<LocalityResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<LocalityResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var localities = await localityRepository.SearchAsync(
                 new LocalitiesInProvinceByNameSpecification(query.ProvinceId, query.Name), ct);
@@ -22,5 +22,11 @@ public static class LocalityFinderByProvince
                 .Select(locality => new LocalityResponse(locality.Id, locality.ProvinceId, locality.Name))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<LocalityResponse>>
+    {
+        public Task<IReadOnlyCollection<LocalityResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

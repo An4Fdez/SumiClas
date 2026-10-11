@@ -8,14 +8,20 @@ public static class ClassFinderBySchoolYear
 {
     public sealed record Query(Guid SchoolYearId) : IQuery<IReadOnlyCollection<ClassResponse>>;
 
-    public sealed class Handler(IClassRepository classRepository) : IRequestHandler<Query, IReadOnlyCollection<ClassResponse>>
+    public sealed class Finder(IClassRepository classRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<ClassResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<ClassResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var classes = await classRepository.SearchAsync(new ClassSpecification(schoolYearId: query.SchoolYearId), ct);
             return classes
                 .Select(schoolClass => new ClassResponse(schoolClass.Id, schoolClass.SchoolYearId, schoolClass.Name))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<ClassResponse>>
+    {
+        public Task<IReadOnlyCollection<ClassResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

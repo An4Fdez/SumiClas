@@ -15,7 +15,7 @@ public static class StudentRegister
         string? SecondSurname,
         string FirstGuardianRole) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider)
+    public sealed class Register(IStudentRepository students, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -56,9 +56,9 @@ public static class StudentRegister
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Register register) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => register.ExecuteAsync(command, ct);
     }
 }

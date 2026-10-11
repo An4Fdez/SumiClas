@@ -9,9 +9,9 @@ public static class SchoolFinderById
 {
     public sealed record Query(Guid SchoolId) : IQuery<Result<SchoolResponse>>;
 
-    public sealed class Handler(SchoolFinder finder, IQueryBus queryBus) : IRequestHandler<Query, Result<SchoolResponse>>
+    public sealed class Finder(SchoolFinder finder, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<SchoolResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<SchoolResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var found = await finder.FindByIdAsync(query.SchoolId, ct);
             if (found.IsFailure)
@@ -22,5 +22,11 @@ public static class SchoolFinderById
             var responses = await SchoolResponseFactory.CreateAsync(queryBus, [found.Value], ct);
             return Result<SchoolResponse>.Success(responses.Single());
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<SchoolResponse>>
+    {
+        public Task<Result<SchoolResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

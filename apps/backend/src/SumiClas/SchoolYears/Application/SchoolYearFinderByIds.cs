@@ -9,9 +9,9 @@ public static class SchoolYearFinderByIds
     /// <summary>Returns only the school years that exist.</summary>
     public sealed record Query(IReadOnlyCollection<Guid> SchoolYearIds) : IQuery<IReadOnlyCollection<SchoolYearResponse>>;
 
-    public sealed class Handler(ISchoolYearRepository schoolYearRepository) : IRequestHandler<Query, IReadOnlyCollection<SchoolYearResponse>>
+    public sealed class Finder(ISchoolYearRepository schoolYearRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<SchoolYearResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<SchoolYearResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schoolYears = await schoolYearRepository.SearchAsync(new SchoolYearSpecification(ids: query.SchoolYearIds), ct);
             return schoolYears
@@ -24,5 +24,11 @@ public static class SchoolYearFinderByIds
                     schoolYear.Status.ToString()))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<SchoolYearResponse>>
+    {
+        public Task<IReadOnlyCollection<SchoolYearResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

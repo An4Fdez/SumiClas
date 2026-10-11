@@ -11,7 +11,7 @@ public static class ClassExpensePaidMark
 {
     public sealed record Command(Guid ClassExpenseId, Guid GuardianId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IClassExpenseRepository classExpenses, IQueryBus queryBus)
+    public sealed class Mark(IClassExpenseRepository classExpenses, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -37,9 +37,9 @@ public static class ClassExpensePaidMark
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => mark.ExecuteAsync(command, ct);
     }
 }

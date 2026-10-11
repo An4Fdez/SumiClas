@@ -16,12 +16,11 @@ public static class CalendarEventFinderByClass
     /// </summary>
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<CalendarEventResponse>>>;
 
-    public sealed class Handler(
+    public sealed class Finder(
         ICalendarEventRepository calendarEvents,
-                IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<CalendarEventResponse>>>
+        IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
             if (schoolClass.IsFailure)
@@ -72,5 +71,11 @@ public static class CalendarEventFinderByClass
 
             return Result<IReadOnlyCollection<CalendarEventResponse>>.Success(response);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<CalendarEventResponse>>>
+    {
+        public Task<Result<IReadOnlyCollection<CalendarEventResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

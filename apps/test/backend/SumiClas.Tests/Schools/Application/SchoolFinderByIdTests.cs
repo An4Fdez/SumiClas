@@ -65,9 +65,9 @@ public class SchoolFinderByIdTests
     public async Task ById_ReturnsTheSchoolWithTerritoryNamesAndPhone()
     {
         var school = AddSchool("CEIP Sumi", Fuengirola, FuengirolaPostalCode);
-        var handler = new SchoolFinderById.Handler(new SchoolFinder(_schools), _queryBus.Object);
+        var handler = new SchoolFinderById.Finder(new SchoolFinder(_schools), _queryBus.Object);
 
-        var result = await handler.Handle(new SchoolFinderById.Query(school.Id), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new SchoolFinderById.Query(school.Id), CancellationToken.None);
 
         Assert.That(result.IsSuccess, Is.True);
         var response = result.Value;
@@ -82,9 +82,9 @@ public class SchoolFinderByIdTests
     [Test]
     public async Task ById_WithUnknownSchool_ReturnsNotFoundWithoutAskingOtherModules()
     {
-        var handler = new SchoolFinderById.Handler(new SchoolFinder(_schools), _queryBus.Object);
+        var handler = new SchoolFinderById.Finder(new SchoolFinder(_schools), _queryBus.Object);
 
-        var result = await handler.Handle(new SchoolFinderById.Query(Guid.NewGuid()), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new SchoolFinderById.Query(Guid.NewGuid()), CancellationToken.None);
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(result.Error, Is.EqualTo(SchoolErrors.NotFound));
@@ -96,9 +96,9 @@ public class SchoolFinderByIdTests
     {
         var first = AddSchool("CEIP Sumi", Fuengirola, FuengirolaPostalCode);
         var second = AddSchool("IES Centro", Madrid);
-        var handler = new SchoolFinderByIds.Handler(_schools, _queryBus.Object);
+        var handler = new SchoolFinderByIds.Finder(_schools, _queryBus.Object);
 
-        var result = await handler.Handle(new SchoolFinderByIds.Query([first.Id, second.Id]), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new SchoolFinderByIds.Query([first.Id, second.Id]), CancellationToken.None);
 
         Assert.That(result.Select(school => school.ProvinceName), Is.EquivalentTo(new[] { "Málaga", "Madrid" }));
         Assert.That(result.Single(school => school.Id == second.Id).PostalCode, Is.Null);
@@ -110,9 +110,9 @@ public class SchoolFinderByIdTests
     [Test]
     public async Task ByIds_WithNoMatchingSchool_ReturnsEmpty()
     {
-        var handler = new SchoolFinderByIds.Handler(_schools, _queryBus.Object);
+        var handler = new SchoolFinderByIds.Finder(_schools, _queryBus.Object);
 
-        var result = await handler.Handle(new SchoolFinderByIds.Query([Guid.NewGuid()]), CancellationToken.None);
+        var result = await handler.ExecuteAsync(new SchoolFinderByIds.Query([Guid.NewGuid()]), CancellationToken.None);
 
         Assert.That(result, Is.Empty);
     }
@@ -121,9 +121,29 @@ public class SchoolFinderByIdTests
     public void ById_WhenTheLocalityIsMissingFromTheCatalog_FailsLoudly()
     {
         var school = AddSchool("CEIP Sumi", Guid.NewGuid());
-        var handler = new SchoolFinderById.Handler(new SchoolFinder(_schools), _queryBus.Object);
+        var handler = new SchoolFinderById.Finder(new SchoolFinder(_schools), _queryBus.Object);
 
         Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.Handle(new SchoolFinderById.Query(school.Id), CancellationToken.None));
+            () => handler.ExecuteAsync(new SchoolFinderById.Query(school.Id), CancellationToken.None));
+    }
+
+    [Test]
+    public async Task SchoolFinderByIdHandler_DelegatesToTheUseCase()
+    {
+        var handler = new SchoolFinderById.Handler(new SchoolFinderById.Finder(new SchoolFinder(_schools), _queryBus.Object));
+
+        var result = await handler.Handle(new SchoolFinderById.Query(Guid.NewGuid()), CancellationToken.None);
+
+        Assert.That(result.Error, Is.EqualTo(SchoolErrors.NotFound));
+    }
+
+    [Test]
+    public async Task SchoolFinderByIdsHandler_DelegatesToTheUseCase()
+    {
+        var handler = new SchoolFinderByIds.Handler(new SchoolFinderByIds.Finder(_schools, _queryBus.Object));
+
+        var result = await handler.Handle(new SchoolFinderByIds.Query([Guid.NewGuid()]), CancellationToken.None);
+
+        Assert.That(result, Is.Empty);
     }
 }

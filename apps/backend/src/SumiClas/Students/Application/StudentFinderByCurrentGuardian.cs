@@ -14,10 +14,9 @@ public static class StudentFinderByCurrentGuardian
     /// <summary>The students of the current user (as guardian), with their current class and school.</summary>
     public sealed record Query : IQuery<Result<IReadOnlyCollection<ChildResponse>>>;
 
-    public sealed class Handler(IStudentRepository studentRepository, IQueryBus queryBus, IUserProvider userProvider)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<ChildResponse>>>
+    public sealed class Finder(IStudentRepository studentRepository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<ChildResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<IReadOnlyCollection<ChildResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -74,5 +73,11 @@ public static class StudentFinderByCurrentGuardian
 
             return Result<IReadOnlyCollection<ChildResponse>>.Success(response);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<ChildResponse>>>
+    {
+        public Task<Result<IReadOnlyCollection<ChildResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

@@ -19,7 +19,7 @@ public class AnnouncementFinderByClassTests
     private Mock<IAnnouncementRepository> _announcements = null!;
     private Mock<IQueryBus> _queryBus = null!;
     private Mock<IUserProvider> _userProvider = null!;
-    private AnnouncementFinderByClass.Handler _handler = null!;
+    private AnnouncementFinderByClass.Finder _useCase = null!;
 
     [SetUp]
     public void SetUp()
@@ -39,7 +39,7 @@ public class AnnouncementFinderByClassTests
             .Setup(bus => bus.Send(It.IsAny<IQuery<IReadOnlyCollection<CalendarEventSummaryResponse>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CalendarEventSummaryResponse>());
 
-        _handler = new AnnouncementFinderByClass.Handler(_announcements.Object, _queryBus.Object, _userProvider.Object);
+        _useCase = new AnnouncementFinderByClass.Finder(_announcements.Object, _queryBus.Object, _userProvider.Object);
     }
 
     private static Announcement Build(AnnouncementScope scope, int minutes)
@@ -68,13 +68,13 @@ public class AnnouncementFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WithMoreAnnouncementsThanLimit_MergesBothBranchesNewestFirstAndReturnsNextCursor()
+    public async Task UseCase_WithMoreAnnouncementsThanLimit_MergesBothBranchesNewestFirstAndReturnsNextCursor()
     {
         ReturnBranches(
             [Build(AnnouncementScope.School, 3), Build(AnnouncementScope.School, 1)],
             [Build(AnnouncementScope.Class, 4), Build(AnnouncementScope.Class, 2)]);
 
-        var result = await _handler.Handle(new AnnouncementFinderByClass.Query(ClassId, 2), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new AnnouncementFinderByClass.Query(ClassId, 2), CancellationToken.None);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.Items.Select(item => item.Title), Is.EqualTo(new[] { "Aviso 4", "Aviso 3" }));
@@ -83,22 +83,22 @@ public class AnnouncementFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WithAsManyAnnouncementsAsLimit_HasNoNextCursor()
+    public async Task UseCase_WithAsManyAnnouncementsAsLimit_HasNoNextCursor()
     {
         ReturnBranches(
             [Build(AnnouncementScope.School, 1)],
             [Build(AnnouncementScope.Class, 2)]);
 
-        var result = await _handler.Handle(new AnnouncementFinderByClass.Query(ClassId, 2), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new AnnouncementFinderByClass.Query(ClassId, 2), CancellationToken.None);
 
         Assert.That(result.Value.Items, Has.Count.EqualTo(2));
         Assert.That(result.Value.NextCursor, Is.Null);
     }
 
     [Test]
-    public async Task Handle_WithInvalidCursor_FailsBeforeReadingAnything()
+    public async Task UseCase_WithInvalidCursor_FailsBeforeReadingAnything()
     {
-        var result = await _handler.Handle(new AnnouncementFinderByClass.Query(ClassId, 10, "garbage!"), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new AnnouncementFinderByClass.Query(ClassId, 10, "garbage!"), CancellationToken.None);
 
         Assert.That(result.Error!.Code, Is.EqualTo("Pagination.InvalidCursor"));
         _announcements.Verify(
@@ -107,22 +107,32 @@ public class AnnouncementFinderByClassTests
     }
 
     [Test]
-    public async Task Handle_WithLimitOutOfRange_ReturnsInvalidLimit()
+    public async Task UseCase_WithLimitOutOfRange_ReturnsInvalidLimit()
     {
-        var result = await _handler.Handle(new AnnouncementFinderByClass.Query(ClassId, 500), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new AnnouncementFinderByClass.Query(ClassId, 500), CancellationToken.None);
 
         Assert.That(result.Error!.Code, Is.EqualTo("Pagination.InvalidLimit"));
     }
 
     [Test]
-    public async Task Handle_WithAnUnknownClass_ReturnsTheClassError()
+    public async Task UseCase_WithAnUnknownClass_ReturnsTheClassError()
     {
         _queryBus
             .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<ClassResponse>.Failure(new Error("Class.NotFound", "No existe.")));
 
-        var result = await _handler.Handle(new AnnouncementFinderByClass.Query(ClassId), CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(new AnnouncementFinderByClass.Query(ClassId), CancellationToken.None);
 
         Assert.That(result.Error!.Code, Is.EqualTo("Class.NotFound"));
+    }
+
+    [Test]
+    public async Task Handler_DelegatesToTheUseCase()
+    {
+        var handler = new AnnouncementFinderByClass.Handler(_useCase);
+
+        var result = await handler.Handle(new AnnouncementFinderByClass.Query(ClassId, 500), CancellationToken.None);
+
+        Assert.That(result.Error!.Code, Is.EqualTo("Pagination.InvalidLimit"));
     }
 }

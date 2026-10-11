@@ -20,7 +20,7 @@ public static class AnnouncementCreate
         string Priority,
         Guid? RelatedEventId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Create(IAnnouncementRepository announcements, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -92,9 +92,9 @@ public static class AnnouncementCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

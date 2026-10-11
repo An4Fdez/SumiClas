@@ -9,9 +9,9 @@ public static class ProvinceFinderAll
     /// <summary>Every province, by name. There are only 52, so there is no pagination.</summary>
     public sealed record Query : IQuery<IReadOnlyCollection<ProvinceResponse>>;
 
-    public sealed class Handler(IProvinceRepository provinceRepository) : IRequestHandler<Query, IReadOnlyCollection<ProvinceResponse>>
+    public sealed class Finder(IProvinceRepository provinceRepository) : IUseCase
     {
-        public async Task<IReadOnlyCollection<ProvinceResponse>> Handle(Query query, CancellationToken ct)
+        public async Task<IReadOnlyCollection<ProvinceResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var provinces = await provinceRepository.SearchAsync(new ProvinceSpecification(), ct);
             return provinces
@@ -19,5 +19,11 @@ public static class ProvinceFinderAll
                 .Select(province => new ProvinceResponse(province.Id, province.Name))
                 .ToList();
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<ProvinceResponse>>
+    {
+        public Task<IReadOnlyCollection<ProvinceResponse>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

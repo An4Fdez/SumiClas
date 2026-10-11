@@ -19,7 +19,7 @@ public static class LostItemCreate
         string? PhotoUrl,
         bool PhotoPrivacyConfirmed) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ILostItemRepository lostItems, IQueryBus queryBus, IClock clock, IUserProvider userProvider)
+    public sealed class Create(ILostItemRepository lostItems, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -82,9 +82,9 @@ public static class LostItemCreate
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => create.ExecuteAsync(command, ct);
     }
 }

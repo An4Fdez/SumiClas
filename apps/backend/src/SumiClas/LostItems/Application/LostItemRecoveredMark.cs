@@ -11,7 +11,7 @@ public static class LostItemRecoveredMark
 {
     public sealed record Command(Guid LostItemId) : IRequest<Result>, ICommand;
 
-    public sealed class UseCase(ILostItemRepository lostItems, IQueryBus queryBus)
+    public sealed class Mark(ILostItemRepository lostItems, IQueryBus queryBus) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -41,9 +41,9 @@ public static class LostItemRecoveredMark
         }
     }
 
-    public sealed class Handler(UseCase useCase) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
     {
         public Task<Result> Handle(Command command, CancellationToken ct)
-            => useCase.ExecuteAsync(command, ct);
+            => mark.ExecuteAsync(command, ct);
     }
 }

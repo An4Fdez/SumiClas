@@ -69,14 +69,13 @@ public static class ConventionServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers every concrete class that implements IUseCase, plus (until the migration is complete) every public nested class named "UseCase" declared inside a static class.
+    /// Registers every concrete public class that implements IUseCase (nested in a static class, e.g. SchoolYearCreate.Create), whatever its name.
     /// </summary>
     public static IServiceCollection AddUseCasesByConvention(this IServiceCollection services, Assembly assembly)
     {
         var useCases = assembly.GetTypes().Where(type =>
             type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
-            && (typeof(IUseCase).IsAssignableFrom(type)
-                || (type is { IsNestedPublic: true, Name: "UseCase" } && type.DeclaringType is { IsAbstract: true, IsSealed: true })));
+            && typeof(IUseCase).IsAssignableFrom(type));
 
         foreach (var useCase in useCases)
         {

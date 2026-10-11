@@ -10,10 +10,9 @@ public static class SubjectFinderByClass
 {
     public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<SubjectResponse>>>;
 
-    public sealed class Handler(ISubjectRepository subjectRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<IReadOnlyCollection<SubjectResponse>>>
+    public sealed class Finder(ISubjectRepository subjectRepository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<SubjectResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<IReadOnlyCollection<SubjectResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
             if (schoolClass.IsFailure)
@@ -29,5 +28,11 @@ public static class SubjectFinderByClass
 
             return Result<IReadOnlyCollection<SubjectResponse>>.Success(response);
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<SubjectResponse>>>
+    {
+        public Task<Result<IReadOnlyCollection<SubjectResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }

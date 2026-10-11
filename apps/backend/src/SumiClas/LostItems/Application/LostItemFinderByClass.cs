@@ -12,10 +12,9 @@ public static class LostItemFinderByClass
     /// <summary>School-wide lost and found items plus the ones of the class, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<LostItemResponse>>>;
 
-    public sealed class Handler(ILostItemRepository lostItemRepository, IQueryBus queryBus)
-        : IRequestHandler<Query, Result<PagedResponse<LostItemResponse>>>
+    public sealed class Finder(ILostItemRepository lostItemRepository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<PagedResponse<LostItemResponse>>> Handle(Query query, CancellationToken ct)
+        public async Task<Result<PagedResponse<LostItemResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
             if (pageRequest.IsFailure)
@@ -63,5 +62,11 @@ public static class LostItemFinderByClass
 
             return Result<PagedResponse<LostItemResponse>>.Success(new PagedResponse<LostItemResponse>(items, nextCursor));
         }
+    }
+
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<LostItemResponse>>>
+    {
+        public Task<Result<PagedResponse<LostItemResponse>>> Handle(Query query, CancellationToken ct)
+            => finder.ExecuteAsync(query, ct);
     }
 }
