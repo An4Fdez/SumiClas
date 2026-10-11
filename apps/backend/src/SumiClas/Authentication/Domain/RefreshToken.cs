@@ -44,6 +44,10 @@ public sealed class RefreshToken : AggregateRoot
         {
             return Result<RefreshToken>.Failure(RefreshTokenErrors.HashRequired);
         }
+        if (lifetime <= TimeSpan.Zero)
+        {
+            return Result<RefreshToken>.Failure(RefreshTokenErrors.LifetimeInvalid);
+        }
 
         var now = clock.UtcNow;
         return Result<RefreshToken>.Success(new RefreshToken(id, userId, familyId, tokenHash, now, now + lifetime));
@@ -52,10 +56,16 @@ public sealed class RefreshToken : AggregateRoot
     public bool IsActive(IClock clock)
         => RevokedAt is null && ReplacedAt is null && clock.UtcNow < ExpiresAt;
 
-    public void MarkReplaced(Guid successorId, IClock clock)
+    public Result MarkReplaced(Guid successorId, IClock clock)
     {
+        if (!IsActive(clock))
+        {
+            return Result.Failure(RefreshTokenErrors.NotActive);
+        }
+
         ReplacedAt = clock.UtcNow;
         ReplacedById = successorId;
+        return Result.Success();
     }
 
     public void Revoke(IClock clock)

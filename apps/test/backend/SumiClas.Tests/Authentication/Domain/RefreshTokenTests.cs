@@ -80,6 +80,50 @@ public class RefreshTokenTests
         Assert.That(result.Error, Is.EqualTo(RefreshTokenErrors.HashRequired));
     }
 
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void Create_WithNonPositiveLifetime_ReturnsLifetimeInvalid(int days)
+    {
+        var result = RefreshToken.Create(TokenId, UserId, FamilyId, "hash-value", _clock.Object, TimeSpan.FromDays(days));
+
+        Assert.That(result.Error, Is.EqualTo(RefreshTokenErrors.LifetimeInvalid));
+    }
+
+    [Test]
+    public void MarkReplaced_OnAnAlreadyReplacedToken_FailsAndKeepsTheFirstSuccessor()
+    {
+        var token = NewToken();
+        token.MarkReplaced(SuccessorId, _clock.Object);
+
+        var result = token.MarkReplaced(Guid.NewGuid(), _clock.Object);
+
+        Assert.That(result.Error, Is.EqualTo(RefreshTokenErrors.NotActive));
+        Assert.That(token.ReplacedById, Is.EqualTo(SuccessorId));
+    }
+
+    [Test]
+    public void MarkReplaced_OnARevokedToken_Fails()
+    {
+        var token = NewToken();
+        token.Revoke(_clock.Object);
+
+        var result = token.MarkReplaced(SuccessorId, _clock.Object);
+
+        Assert.That(result.Error, Is.EqualTo(RefreshTokenErrors.NotActive));
+        Assert.That(token.ReplacedAt, Is.Null);
+    }
+
+    [Test]
+    public void MarkReplaced_OnAnExpiredToken_Fails()
+    {
+        var token = NewToken();
+        Advance(Lifetime);
+
+        var result = token.MarkReplaced(SuccessorId, _clock.Object);
+
+        Assert.That(result.Error, Is.EqualTo(RefreshTokenErrors.NotActive));
+    }
+
     [Test]
     public void IsActive_ForAFreshToken_IsTrue()
     {
