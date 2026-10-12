@@ -1,6 +1,6 @@
 # Especificación SDD: JWT + refresh token en cookie
 
-> **Estado: especificación aprobada; backend implementado hasta J2b (la API ya valida JWT y ofrece refresh/logout con cookie); el frontend sigue sin adaptar (J3a/J3b).** Este documento es la fuente de verdad de la funcionalidad. El seguimiento de las tareas está en `odd/tasks/jwt.md`. No se implementa nada que no esté aquí: si cambia un requisito, se edita primero este documento.
+> **Estado: especificación aprobada; implementada y verificada de extremo a extremo (J1..J4: API, frontend y navegador real).** Este documento es la fuente de verdad de la funcionalidad. El seguimiento de las tareas está en `odd/tasks/jwt.md`. No se implementa nada que no esté aquí: si cambia un requisito, se edita primero este documento.
 
 Formato **Spec-Driven Development**: primero la especificación completa (qué debe hacer el sistema, con escenarios comprobables), luego el diseño, luego las tareas. Cada tarea se da por buena cuando sus escenarios pasan.
 
@@ -308,7 +308,7 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 | **J2b** ✅ | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, `SessionResponse.RefreshTokenExpiresAt`, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`, `RefreshCookie`, `ResultExtensions`, validación de `JwtOptions` y del bearer. Sin CORS (decisión del usuario). | J2a | S-11..S-17, S-19 (S-18 retirado) | ~550 líneas |
 | **J3a** | Regenerar cliente NSwag; `tokenStore`, `authHttp` (single-flight, locks, reintento), `IAuthenticationRepository.refresh/logout`, `Session`; retirar `X-User-Id`. | J2b | S-21, S-24..S-26 | ~450 líneas |
 | **J3b** | `AuthContext`/`AuthProvider`/`useAuth`, `RequireSession`, `Login`, `Register` (register→login), logout en `AppLayout`/`More`, mensajes. | J3a | S-22, S-23, S-27, S-28 | ~450 líneas |
-| **J4** | Verificación E2E real (API temporal + Postgres: S-01..S-20 con `curl`/script; navegador CDP: S-21..S-28, forzando el refresco con un token inválido en el almacén en memoria del frontend para disparar el flujo 401→refresh), limpieza de datos, docs finales (ambos `AGENTS.md`: quitar «identidad provisional» y `X-User-Id`; `odd/tasks/jwt.md` con evidencia; espejo Engram). | J3b | todos | docs + evidencia |
+| **J4** ✅ | Verificación E2E real (API temporal + Postgres: S-01..S-20 con `curl`/script; navegador CDP: S-21..S-28, forzando el refresco con un token inválido en el almacén en memoria del frontend para disparar el flujo 401→refresh), limpieza de datos, docs finales (ambos `AGENTS.md`: quitar «identidad provisional» y `X-User-Id`; `odd/tasks/jwt.md` con evidencia; espejo Engram). | J3b | todos | docs + evidencia (ver «Notas de J4») |
 
 **Definición de hecho por tarea**: build y `dotnet test` / `pnpm typecheck` + `pnpm lint` limpios; los escenarios de la tarea comprobados y anotados con su evidencia en `odd/tasks/jwt.md`; revisión nativa aprobada por pieza; sin atribución de IA en commits; cada commit compila por sí solo (se comprueba en copia aislada).
 
@@ -318,19 +318,29 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 - El DTO HTTP del login y del refresco es `AccountSessionResponse { accessToken, expiresAt, userId, fullName }` (sustituye a `AccountResponse`); el refresh token solo viaja en la cookie. `SessionResponse` lleva `RefreshTokenExpiresAt` (la caducidad del refresh recién emitido) para calcular `Max-Age`.
 - Los tests de `api` referencian `SumiClas.Api.csproj` desde `SumiClas.Tests` (autorizado por el usuario). Cubren `JwtUserProvider`, `RefreshCookie`, `ResultExtensions`, la validación de `JwtOptions`/`RefreshCookieOptions` y los parámetros de validación del bearer con tokens reales (firma, `iss`, `aud`, caducidad con tolerancia de 30 s, `typ`, `alg`); los endpoints en sí se verificaron con E2E real contra una base desechable.
 - Verificación E2E con `curl` (API real, PostgreSQL desechable): S-01, S-03, S-04, S-05, S-07/S-08 (reloj real), S-09..S-17, S-19 y S-20 pasan; el documento OpenAPI declara Bearer y marca las 41 operaciones protegidas con `security` y 401, y ninguna de las anónimas.
-- Mientras no se haga J3a el frontend sigue enviando `X-User-Id`, que ya no autentica: la web no podrá iniciar sesión hasta J3a/J3b (aceptado).
+- Mientras no se hizo J3a el frontend seguía enviando `X-User-Id`, que ya no autentica (histórico: resuelto en J3a/J3b).
+
+**Notas de J4 (hecho).** Todas las comprobaciones pasaron contra bases de datos desechables; no se encontraron defectos.
+- **A1, rehash persistido**: un usuario con hash de 1000 iteraciones PBKDF2 que entra con la contraseña correcta recibe 200 y su hash pasa a uno de 100000 iteraciones; con contraseña errónea, 401 y el hash no cambia; un segundo login es estable (el rehash de `UserPasswordVerify` sí lo persiste la unidad de trabajo del comando raíz).
+- **A2, arranque sin clave válida (S-20)**: el proceso termina con código -532462766 (0xE0434352, excepción .NET no controlada) tanto sin clave como con una de 16 caracteres, con los mensajes explícitos en español. La API publicada debe ejecutarse desde su propio directorio, porque `appsettings.json` se lee del directorio de trabajo.
+- **A3, API por el proxy de Vite**: registro 201; login 200 con la cookie `sumiclas_refresh` (ruta `/api/auth`, secure, samesite strict, httponly); refresh rota cookie y token; logout 204 y cookie borrada; cookie antigua o ya rotada → 401 `Authentication.RefreshTokenInvalid`; `/openapi/v1.json` da 401 sin Bearer y 200 con él; una petición con solo `X-User-Id` → 401.
+- **Navegador real (Chrome headless por CDP, Vite + API sobre una BD desechable), S-21..S-28 pasan**: S-21 ningún token en localStorage/sessionStorage/IndexedDB, `sumiclas-user-id` se borra y `sumiclas-guardian` se conserva; S-22 al recargar aparece «Cargando tu sesión…» y se termina en la misma página privada sin pasar por `/login`; S-23 recargar sin cookie termina en `/login`; S-24 token inválido y dos llamadas simultáneas → exactamente un `POST /api/auth/refresh` y ambas OK (también con tres); S-25 contraseña errónea → 401 sin llamada de refresh, y un fallo definitivo del refresh reintenta una vez a los ~324 ms, limpia la sesión y va a `/login`; S-26 dos pestañas refrescando a la vez → un refresh cada una, serializadas por Web Locks, ambas sobreviven; S-27 registro por la UI → login → `/onboarding`, y el email duplicado muestra el 409 sin bucle; S-28 el logout llama a `POST /api/auth/logout`, limpia la sesión, va a `/login`, Atrás/Adelante no entran en rutas privadas y, sin red, la sesión local se limpia igualmente. Cookie tal como la guarda Chrome: HttpOnly, Secure, SameSite=Strict, Path=/api/auth, sin Domain, ~14 días; `document.cookie` no la muestra. Ninguna petición llevó `X-User-Id` y no hubo excepciones en consola (solo los logs esperados de 401/409).
+- **Comportamientos aceptados (no son defectos)**: (1) con la red **apagada**, el logout limpia la sesión local pero la cookie no se borra y la sesión del servidor no se revoca, así que al recargar la sesión se restaura; (2) una primera carga anónima cuesta dos llamadas a `/auth/refresh` (un 401 y el reintento de RF-19 a los ~300 ms), por lo que la pantalla de carga se ve al menos ~300 ms y aparecen dos 401 en la consola; (3) el limitador de login/registro permite 10 por minuto y por IP, así que las pruebas con muchos escenarios necesitan espaciarse.
 
 ## 11. Matriz de trazabilidad
 
-| RF | Escenarios | Tarea(s) | Verificación |
-|---|---|---|---|
-| RF-01..04 | S-01, S-02, S-03 | J1b, J1c, J2a | tests unitarios + E2E |
-| RF-05..08 | S-04..S-08 | J1a, J2a | tests unitarios + E2E |
-| RF-09 | S-09, S-10 | J2a | tests + E2E |
-| RF-10..13 | S-11..S-17 | J2b | E2E |
-| RF-15 (RF-14 retirado) | S-19 | J2b | E2E |
-| RF-16 | S-20 | J1b | test de opciones + E2E de arranque |
-| RF-17..21 | S-21..S-28 | J3a, J3b | E2E navegador |
+| RF | Escenarios | Tarea(s) | Verificación | Estado |
+|---|---|---|---|---|
+| RF-01..04 | S-01, S-02, S-03 | J1b, J1c, J2a | tests unitarios + E2E | verificado (tests; E2E real de J2b y J4) |
+| RF-05..08 | S-04..S-08 | J1a, J2a | tests unitarios + E2E | verificado (tests; E2E real de J2b y J4) |
+| RF-09 | S-09, S-10 | J2a | tests + E2E | verificado (tests; E2E real de J2b y J4) |
+| RF-10..13 | S-11..S-17 | J2b | E2E | verificado (curl/BD real de J2b y J4) |
+| RF-14 (retirado) | S-18 | — | — | retirado: no hay CORS |
+| RF-15 | S-19 | J2b | E2E | verificado (E2E real de J2b) |
+| RF-16 | S-20 | J1b | test de opciones + E2E de arranque | verificado (test de opciones; arranque real en J2b y J4) |
+| RF-17..21 | S-21..S-28 | J3a, J3b | E2E navegador | verificado en un Chrome real en J4 (S-21..S-28) |
+
+S-01..S-20 verificados con tests y con ejecuciones reales contra BD y `curl` en J2b y J4; S-21..S-28 verificados en un navegador real en J4; S-18 retirado.
 
 ## 12. Riesgos y decisiones registradas
 

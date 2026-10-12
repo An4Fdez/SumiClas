@@ -11,7 +11,7 @@ Si un archivo más específico entra en conflicto con este, gana el más especí
 
 SumiClas es una app de coordinación escolar (sustituto del grupo de WhatsApp de clase) en fase de TFM/Beta. Contexto de producto, roles, modelo de datos y reglas de privacidad de menores: ver `docs/arquitectura-app-coordinacion-escolar.md`. Hay también `docs/diseno-pantalla-inicial.md` y `docs/investigacion-requisitos-sumiclas.md`.
 
-**Nota sobre el documento de arquitectura**: recomienda React + Next.js (PWA) sobre un backend .NET 10 Minimal API + PostgreSQL. Para el backend esa recomendación se sigue (.NET 10 + EF Core/PostgreSQL, ver `apps/backend/AGENTS.md`). Para el frontend, en cambio, **Next.js/PWA queda descartado de forma definitiva**: el stack oficial es Vite + React (ver `apps/frontend/AGENTS.md`). No propongas SSR, PWA, service worker ni migración a Next.js. El backend todavía no está conectado al frontend (Supabase está instalado como dependencia pero sin usar).
+**Nota sobre el documento de arquitectura**: recomienda React + Next.js (PWA) sobre un backend .NET 10 Minimal API + PostgreSQL. Para el backend esa recomendación se sigue (.NET 10 + EF Core/PostgreSQL, ver `apps/backend/AGENTS.md`). Para el frontend, en cambio, **Next.js/PWA queda descartado de forma definitiva**: el stack oficial es Vite + React (ver `apps/frontend/AGENTS.md`). No propongas SSR, PWA, service worker ni migración a Next.js. El frontend ya habla con el backend real (autenticación con JWT en memoria + cookie de refresh, y buena parte de las pantallas sobre la API); solo el resumen del dashboard sigue con mocks. Supabase está instalado como dependencia del frontend pero no se usa en ningún sitio.
 
 ## Estructura del repositorio
 
@@ -54,10 +54,11 @@ cd apps/frontend/sumiclas-web
 pnpm install   # solo la primera vez / tras cambios en dependencias
 pnpm dev
 ```
-- `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue/hosting real (producción) sigue sin decidir (ver "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend todavía no tiene `DbContext` ni cadena de conexión configurada — este contenedor deja la BBDD lista para cuando se construya esa pieza, pero `dotnet run` hoy no la usa todavía.
+- `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue/hosting real (producción) sigue sin decidir (ver "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend usa esta base de datos en desarrollo (cadena de conexión `ConnectionStrings:SumiClasDb` en `appsettings.Development.json` y migraciones EF Core aplicadas al arrancar).
+- **Clave de firma del JWT (obligatoria para arrancar la API)**: la API no arranca sin `Jwt:SigningKey` (≥ 32 caracteres) y no va en ningún `appsettings*.json`. En local, una sola vez: `dotnet user-secrets set "Jwt:SigningKey" "<≥32 chars>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Jwt__SigningKey`. Ver "Autenticación de la API" en `apps/backend/AGENTS.md`.
 - Frontend (Vite): `https://localhost:4004`.
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
-- El proxy de Vite reenvía `/api/` a `http://localhost:4000` — este puerto no coincide con el perfil `https` de `launchSettings.json`; si tocas la integración frontend↔backend, confírmalo con el usuario antes de asumir cuál es el puerto correcto.
+- El proxy de Vite reenvía `/api/` a `https://localhost:7064` por defecto (el perfil `https` de `launchSettings.json`); se puede cambiar con la variable `API_PROXY_TARGET` (ver `vite.config.ts`). Web y API comparten así origen y no hay CORS.
 
 ## Convenciones comunes
 
@@ -80,7 +81,7 @@ pnpm dev
 
 **No toques sin permiso explícito:**
 - La estructura de la solución: `SumiClas.slnx`, los `.csproj` (`SumiClas.Api.csproj`, `SumiClas.csproj`) y el `.esproj` del frontend. Si una tarea requiere añadir un proyecto nuevo o cambiar referencias, confírmalo antes con el usuario.
-- Secretos y configuración local: `appsettings.*.Local.json`, `.env` y cualquier archivo que `.gitignore` ya marque como local/sensible. Ahora mismo el proyecto usa datos mock y no hay conexión real a base de datos ni a Supabase, así que no debería haber secretos reales todavía — si aparecen, trátalos como sensibles por defecto.
+- Secretos y configuración local: `appsettings.*.Local.json`, `.env` y cualquier archivo que `.gitignore` ya marque como local/sensible. Hay conexión real a PostgreSQL local (credenciales de desarrollo de `docker-compose.yml`, no secretas) y una clave de firma de JWT que vive solo en User Secrets o en `Jwt__SigningKey`: nunca la escribas en un archivo del repositorio. Supabase no se usa. Trata como sensible por defecto cualquier otro secreto que aparezca.
 - No hay `.env.example` ni equivalente que mantener actualizado por ahora; cuando se conecte un backend/BD real, esto habrá que revisarlo y documentarlo.
 
 ## Referencias
