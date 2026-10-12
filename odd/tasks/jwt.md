@@ -10,12 +10,12 @@ Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access 
 - Access token de vida corta en memoria + refresh token rotatorio en cookie httpOnly, guardado con hash.
 - Producción en un solo dominio con proxy `/api` (mismo origen). Decisión posterior: **no se configura CORS** (ni en producción ni en desarrollo, donde el proxy de Vite mantiene el mismo origen); el navegador bloquea por defecto lo que venga de otro origen, que ya es lo restrictivo. Si algún día la web se sirve desde otro origen habrá que añadirlo.
 - Email + contraseña (ya implementado); magic link fuera.
-- Un agregado por módulo: `RefreshToken` vive en su propio módulo `RefreshTokens`. Un caso de uso toca únicamente el repositorio de su módulo; lo demás va por `IQueryBus` o por eventos.
+- Un agregado por módulo. Un caso de uso toca únicamente el repositorio de su módulo; lo demás va por `IQueryBus` o por eventos.
 - El agregado de la sesión se llama `Session` (módulo `Sessions`, raíz = sesión, hijas = `RefreshToken`); `AccessToken` es value object y el JWT se genera por un puerto de `Domain`. Decidido tras descartar `Auth` (no es una raíz de agregado y rompería la regla de nombres).
-- `Infrastructure` solo depende de `Domain`: los puertos (`IPasswordHasher`, `IAccessTokenGenerator`, `IRefreshTokenGenerator`) y `JwtOptions` viven en `Domain`.
+- `Infrastructure` solo depende de `Domain`: los puertos (`IPasswordHasher` en `Users`, `IAccessTokenGenerator` e `IRefreshTokenGenerator` en `Sessions`) viven en `Domain`. `JwtOptions` (emisor, audiencia y clave) vive en `Infrastructure`; las duraciones (14 días, 10 s y 15 min) son constantes de `RefreshToken`, `Session` y `AccessToken`.
 - `AccessToken` es un value object de `Domain` (`ValueObject` + `Create` → `Result`).
-- `User` y `UserCredential` se unifican en un solo agregado y una sola tabla (1:1, mismo ciclo de vida); el módulo `Authentication` se elimina. El token (`RefreshTokens`) sigue siendo un módulo aparte.
-- El login pasa a ser `RefreshTokenCreate` (módulo `RefreshTokens`), que verifica la contraseña con la query `UserPasswordVerify` (módulo `Users`, con el rehash dentro del `UseCase`).
+- `User` y `UserCredential` se unifican en un solo agregado y una sola tabla (1:1, mismo ciclo de vida); el módulo `Authentication` se elimina. La sesión (`Sessions`) es un módulo aparte.
+- El login es `SessionCreate` (módulo `Sessions`), que verifica la contraseña con la query `UserPasswordVerify` (módulo `Users`, con el rehash dentro del `UseCase`).
 
 ## Restricciones
 - Seguir `apps/backend/AGENTS.md` y `apps/frontend/AGENTS.md`.
