@@ -1,4 +1,4 @@
-export type AccountRegistration = {
+export type NewUser = {
   id: string;
   fullName: string;
   email: string;

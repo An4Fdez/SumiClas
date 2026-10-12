@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { UserRound, Bell, HelpCircle, ShieldCheck, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
-import { clearSession } from '@/lib/auth';
+import { useSessionRepository } from '@/hooks/useSessionRepository';
+import { clearGuardianInfo } from '@/lib/auth';
 
 const items: { icon: LucideIcon; label: string; href: string }[] = [
   { icon: UserRound, label: 'Mi perfil', href: '#perfil' },
@@ -9,6 +10,14 @@ const items: { icon: LucideIcon; label: string; href: string }[] = [
 ];
 
 export default function More() {
+  const navigate = useNavigate();
+  const sessionRepository = useSessionRepository();
+  const handleLogout = async () => {
+    await sessionRepository.logout().catch(() => undefined);
+    clearGuardianInfo();
+    navigate('/');
+  };
+
   return (
     <div>
       <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
@@ -37,14 +46,14 @@ export default function More() {
             <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
           </a>
         ))}
-        <Link
-          to="/"
-          onClick={clearSession}
-          className="flex items-center gap-3 px-4 py-3.5 text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/15"
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/15"
         >
           <LogOut className="h-4 w-4" />
           <span className="flex-1 text-sm font-semibold">Cerrar sesión</span>
-        </Link>
+        </button>
       </div>
     </div>
   );

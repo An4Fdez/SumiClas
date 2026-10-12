@@ -6,10 +6,12 @@ import { AppTabBar } from '@/components/app/AppTabBar';
 import { ChildProvider } from '@/context/ChildProvider';
 import { useChildContext } from '@/hooks/useChildContext';
 import { useTheme } from '@/hooks/useTheme';
-import { clearSession } from '@/lib/auth';
+import { useSessionRepository } from '@/hooks/useSessionRepository';
+import { clearGuardianInfo } from '@/lib/auth';
 
 function AppContent() {
   const navigate = useNavigate();
+  const sessionRepository = useSessionRepository();
   const { loading, error, reload } = useChildContext();
 
   if (loading) {
@@ -21,8 +23,9 @@ function AppContent() {
   }
 
   if (error) {
-    const handleLogout = () => {
-      clearSession();
+    const handleLogout = async () => {
+      await sessionRepository.logout().catch(() => undefined);
+      clearGuardianInfo();
       navigate('/login');
     };
 

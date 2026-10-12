@@ -1,6 +1,7 @@
+import { getSession } from './tokenStore';
+
 const GUARDIAN_KEY = 'sumiclas-guardian';
-const USER_ID_KEY = 'sumiclas-user-id';
-const LEGACY_AUTH_KEY = 'sumiclas-auth';
+const LEGACY_KEYS = ['sumiclas-user-id', 'sumiclas-auth'];
 
 export type GuardianRole = 'father' | 'mother' | 'guardian';
 
@@ -9,36 +10,19 @@ export type GuardianInfo = {
   role: GuardianRole;
 };
 
-/** Provisional identity: the backend trusts this id (sent as X-User-Id) until JWT authentication exists. */
+try {
+  LEGACY_KEYS.forEach((key) => localStorage.removeItem(key));
+} catch {
+  // localStorage unavailable — ignored
+}
+
 export function getUserId(): string | null {
-  try {
-    return localStorage.getItem(USER_ID_KEY);
-  } catch {
-    return null;
-  }
+  return getSession()?.userId ?? null;
 }
 
-export function setUserId(id: string) {
-  try {
-    localStorage.setItem(USER_ID_KEY, id);
-  } catch {
-    // localStorage unavailable — ignored
-  }
-}
-
-/** A session exists while a user id is stored. */
+/** A session exists while there is an access token in memory. */
 export function isAuthenticated(): boolean {
-  return getUserId() !== null;
-}
-
-export function clearSession() {
-  try {
-    localStorage.removeItem(USER_ID_KEY);
-    localStorage.removeItem(GUARDIAN_KEY);
-    localStorage.removeItem(LEGACY_AUTH_KEY);
-  } catch {
-    // localStorage unavailable — ignored
-  }
+  return getSession() !== null;
 }
 
 export function getGuardianInfo(): GuardianInfo | null {
@@ -53,6 +37,14 @@ export function getGuardianInfo(): GuardianInfo | null {
 export function setGuardianInfo(info: GuardianInfo) {
   try {
     localStorage.setItem(GUARDIAN_KEY, JSON.stringify(info));
+  } catch {
+    // localStorage unavailable — ignored
+  }
+}
+
+export function clearGuardianInfo() {
+  try {
+    localStorage.removeItem(GUARDIAN_KEY);
   } catch {
     // localStorage unavailable — ignored
   }

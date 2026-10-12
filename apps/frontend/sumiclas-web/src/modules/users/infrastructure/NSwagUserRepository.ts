@@ -2,6 +2,7 @@ import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import { parseClassRole, type ClassRole } from '@/lib/roles';
 import type { ClassMember } from '../domain/ClassMember';
 import type { IUserRepository } from '../domain/IUserRepository';
+import type { NewUser } from '../domain/NewUser';
 import type { Profile } from '../domain/Profile';
 
 function toClassRole(role: string): ClassRole {
@@ -39,5 +40,14 @@ export class NSwagUserRepository implements IUserRepository {
 
   async resignClassRepresentative(classId: string): Promise<void> {
     await this.client.userClassRepresentativeResign(classId);
+  }
+
+  async register(newUser: NewUser): Promise<void> {
+    await this.client.userRegister({
+      id: newUser.id,
+      fullName: newUser.fullName,
+      email: newUser.email,
+      password: newUser.password,
+    });
   }
 }

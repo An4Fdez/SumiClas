@@ -8,7 +8,9 @@ const MESSAGE_BY_CODE: Record<string, string> = {
   'User.EmailAlreadyRegistered': 'Ya existe una cuenta con este correo electrónico.',
   'Authentication.InvalidCredentials': 'Correo o contraseña incorrectos.',
   'Authentication.PasswordTooWeak': 'La contraseña no cumple los requisitos: debe tener entre 8 y 128 caracteres.',
-  'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Vuelve a crear tu cuenta.',
+  'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Inicia sesión de nuevo.',
+  'Authentication.RefreshTokenInvalid': 'Tu sesión ha caducado. Inicia sesión de nuevo.',
+  'Shared.ConcurrencyConflict': 'Otra petición modificó lo mismo a la vez. Vuelve a intentarlo.',
   'Enrollment.AlreadyExists': 'Tu hijo/a ya está matriculado/a en una clase de este curso.',
   'User.NotFound': 'No encontramos tu cuenta. Vuelve a crear tu cuenta.',
   'User.AssignForbidden': 'Solo un delegado/a de la clase puede nombrar a otro delegado/a.',
@@ -20,7 +22,7 @@ const MESSAGE_BY_CODE: Record<string, string> = {
 
 const MESSAGE_BY_STATUS: Record<number, string> = {
   400: 'Algún dato no es válido. Revisa el formulario e inténtalo de nuevo.',
-  401: 'Tu sesión no es válida. Vuelve a crear tu cuenta.',
+  401: 'Tu sesión no es válida. Inicia sesión de nuevo.',
   403: 'No tienes permiso para hacer esto.',
   404: 'No hemos encontrado lo que buscas.',
   409: 'Esta operación entra en conflicto con datos que ya existen.',

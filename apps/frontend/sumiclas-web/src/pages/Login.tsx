@@ -2,9 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { useAuthenticationRepository } from '@/hooks/useAuthenticationRepository';
+import { useSessionRepository } from '@/hooks/useSessionRepository';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { isAuthenticated, setGuardianInfo, setUserId } from '@/lib/auth';
+import { isAuthenticated, setGuardianInfo } from '@/lib/auth';
 import { isValidEmail } from '@/lib/validation';
 
 // The login response only has the full name: show the first two words (name and first surname), like Register.
@@ -14,7 +14,7 @@ function displayName(fullName: string) {
 
 export default function Login() {
   const navigate = useNavigate();
-  const authentication = useAuthenticationRepository();
+  const sessionRepository = useSessionRepository();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,10 +33,9 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      const account = await authentication.login({ email: email.trim(), password });
-      setUserId(account.userId);
+      const session = await sessionRepository.login({ email: email.trim(), password });
       // The role is only asked at sign-up and the API does not return it: fall back to the generic one.
-      setGuardianInfo({ name: displayName(account.fullName), role: 'guardian' });
+      setGuardianInfo({ name: displayName(session.fullName), role: 'guardian' });
       navigate('/home');
     } catch (err) {
       setError(getApiErrorMessage(err));

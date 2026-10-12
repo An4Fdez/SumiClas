@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, UserRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { setGuardianInfo, setUserId, type GuardianRole } from '@/lib/auth';
+import { setGuardianInfo, type GuardianRole } from '@/lib/auth';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
-import { useAuthenticationRepository } from '@/hooks/useAuthenticationRepository';
+import { useSessionRepository } from '@/hooks/useSessionRepository';
+import { useUserRepository } from '@/hooks/useUserRepository';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { isValidEmail, isPasswordPwned, MIN_PASSWORD_LENGTH, RECOMMENDED_PASSWORD_LENGTH } from '@/lib/validation';
 
@@ -16,7 +17,8 @@ const roleOptions: { value: GuardianRole; label: string }[] = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const authentication = useAuthenticationRepository();
+  const sessionRepository = useSessionRepository();
+  const userRepository = useUserRepository();
   const ids = useWizardIds();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -66,10 +68,9 @@ export default function Register() {
     setErrors({});
     setSubmitError(null);
     setSubmitting(true);
-    let userId: string;
     try {
-      userId = ids.take('account');
-      await authentication.register({
+      const userId = ids.take('account');
+      await userRepository.register({
         id: userId,
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
@@ -84,8 +85,15 @@ export default function Register() {
       return;
     }
 
+    try {
+      await sessionRepository.login({ email: email.trim(), password });
+    } catch (error) {
+      setSubmitError(`Tu cuenta se ha creado, pero no hemos podido iniciar sesión. ${getApiErrorMessage(error)} Prueba a iniciar sesión desde la pantalla de acceso.`);
+      setSubmitting(false);
+      return;
+    }
+
     const firstLastName = lastName.trim().split(/\s+/)[0] ?? '';
-    setUserId(userId);
     setGuardianInfo({ name: `${firstName.trim()} ${firstLastName}`.trim(), role: role as GuardianRole });
     navigate('/onboarding');
   };
