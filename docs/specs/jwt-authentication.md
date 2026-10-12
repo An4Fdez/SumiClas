@@ -1,6 +1,6 @@
-# Especificación SDD: JWT + refresh token en cookie + CORS
+# Especificación SDD: JWT + refresh token en cookie
 
-> **Estado: especificación aprobada, sin implementar.** Este documento es la fuente de verdad de la funcionalidad. El seguimiento de las tareas está en `odd/tasks/jwt.md`. No se implementa nada que no esté aquí: si cambia un requisito, se edita primero este documento.
+> **Estado: especificación aprobada; backend implementado hasta J2b (la API ya valida JWT y ofrece refresh/logout con cookie); el frontend sigue sin adaptar (J3a/J3b).** Este documento es la fuente de verdad de la funcionalidad. El seguimiento de las tareas está en `odd/tasks/jwt.md`. No se implementa nada que no esté aquí: si cambia un requisito, se edita primero este documento.
 
 Formato **Spec-Driven Development**: primero la especificación completa (qué debe hacer el sistema, con escenarios comprobables), luego el diseño, luego las tareas. Cada tarea se da por buena cuando sus escenarios pasan.
 
@@ -10,14 +10,14 @@ Formato **Spec-Driven Development**: primero la especificación completa (qué d
 
 **Problema.** Ya existe login con email y contraseña (en `Users`), pero la sesión es falsificable: el backend toma al usuario de la cabecera `X-User-Id` (`api/Http/HeaderUserProvider.cs`), que el cliente elige libremente, y ningún endpoint exige autenticación. La app maneja datos de menores, así que esto debe cerrarse antes de cualquier uso fuera de desarrollo.
 
-**Objetivo.** Identidad real y verificable en cada petición (JWT firmado), sesión larga y revocable (refresh token rotatorio en cookie httpOnly), cierre de sesión efectivo y CORS restrictivo.
+**Objetivo.** Identidad real y verificable en cada petición (JWT firmado), sesión larga y revocable (refresh token rotatorio en cookie httpOnly), cierre de sesión efectivo. No se configura CORS: web y API comparten origen.
 
 **Decisiones del usuario.**
 - Access token de vida corta **en memoria** + refresh token **rotatorio en cookie httpOnly**, guardado **hasheado** en BD.
-- Producción en **un solo dominio con proxy `/api`** (mismo origen, como el proxy de Vite hoy); CORS restrictivo y configurable, no se usa en producción.
+- Web y API en **un solo origen** (proxy `/api` de Vite en desarrollo, mismo dominio en producción). **No se configura CORS** (decisión del usuario): el navegador bloquea por defecto las peticiones de otro origen, que ya es lo restrictivo. Si algún día la web se sirve desde otro origen habrá que añadirlo (con orígenes explícitos, nunca `*`, y ajustando la cookie).
 - Método de acceso: email + contraseña (ya implementado). Magic link fuera.
 
-**Dentro de alcance.** Emisión y validación de JWT; refresh rotatorio con detección de reutilización; logout; autenticación obligatoria por defecto; `JwtUserProvider` en lugar de `HeaderUserProvider`; retirada de `X-User-Id`; CORS; ProblemDetails en 401/403; límite de peticiones para los endpoints nuevos; capa de sesión del frontend (restaurar sesión al recargar, refresco transparente, logout); documentación.
+**Dentro de alcance.** Emisión y validación de JWT; refresh rotatorio con detección de reutilización; logout; autenticación obligatoria por defecto; `JwtUserProvider` en lugar de `HeaderUserProvider`; retirada de `X-User-Id`; ProblemDetails en 401/403; límite de peticiones para los endpoints nuevos; capa de sesión del frontend (restaurar sesión al recargar, refresco transparente, logout); documentación.
 
 **Fuera de alcance (planes posteriores).** Autorización por rol y pertenencia a la clase en las lecturas de datos de menores (hoy cualquiera con sesión lee cualquier clase), recuperación/cambio de contraseña, bloqueo de cuenta por intentos, claim de rol en el token, limpieza periódica de refresh tokens caducados, tests de integración HTTP automáticos (no hay infraestructura; se verifica con E2E real como en fases anteriores), tests de frontend (no hay infraestructura).
 
@@ -61,10 +61,10 @@ Hay una excepción razonable: si tienes la app abierta en dos pestañas y las do
 | El token no lleva email, nombre ni datos de menores | Si se filtra, no revela información personal |
 | Todo protegido por defecto | Olvidar proteger un endpoint nuevo deja de ser un fallo de seguridad: es el comportamiento por defecto exigir sesión |
 
-### Qué es CORS y por qué lo incluimos
-Los navegadores impiden que una web de un origen (por ejemplo `https://app.midominio.com`) llame a una API de **otro** origen (`https://api.otrositio.com`), salvo que esa API lo autorice expresamente con unas cabeceras: eso es CORS. Es una protección del navegador, no del servidor.
+### Por qué no hay CORS
+Los navegadores impiden que una web de un origen (por ejemplo `https://app.midominio.com`) llame a una API de **otro** origen (`https://api.otrositio.com`), salvo que esa API lo autorice con unas cabeceras: eso es CORS. Es una protección del navegador, no del servidor.
 
-En este proyecto, en producción, la web y la API se sirven **desde el mismo dominio** (la API cuelga de `/api`, igual que hace hoy el proxy de desarrollo de Vite). Para el navegador es el mismo origen, así que **en producción CORS no entra en juego**. Aun así lo configuramos de forma estricta y desactivada por defecto: una **lista de orígenes permitidos** que sale de la configuración (vacía = ninguno), nunca `*`. Sirve para dos cosas: poder probar el frontend sin el proxy durante el desarrollo, y no tener que rehacer nada si algún día la web y la API acaban en dominios distintos. Si en el futuro hiciera falta, bastaría con rellenar la lista y ajustar la cookie desde la configuración, sin tocar código.
+Aquí la web y la API se sirven **desde el mismo origen** (la API cuelga de `/api`: proxy de Vite en desarrollo, mismo dominio en producción), así que CORS no entra en juego y **no se configura nada**: sin cabeceras `Access-Control-*`, el navegador sigue bloqueando por defecto cualquier otro origen. Si algún día la web se sirviera desde otro origen, habría que añadir CORS (orígenes explícitos, nunca `*`, con credenciales) y ajustar `SameSite` de la cookie.
 
 ### Qué cambia para cada parte
 - **Para la persona usuaria**: prácticamente nada. Inicia sesión una vez, la sesión dura hasta 14 días sin volver a pedir la contraseña (mientras use la app) y «Cerrar sesión» cierra de verdad.
@@ -110,13 +110,13 @@ Palabras clave: DEBE (obligatorio), DEBERÍA (recomendado).
 
 **Protección de la API**
 - **RF-10** Toda petición a un endpoint no incluido en la lista de anónimos DEBE llevar `Authorization: Bearer <access>` válido (firma, `iss`, `aud`, `exp` con tolerancia de 30 s); si no, 401 con `ProblemDetails` (`status` 401, `code` `Authentication.Unauthenticated`). Un token válido pero con recurso prohibido → 403 con `ProblemDetails`.
-- **RF-11** Endpoints anónimos (únicos): `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /healthy`, y en Development `/openapi/*` y Swagger UI. Quedan por tanto protegidos los `GET` hoy abiertos (colegios, provincias, poblaciones).
+- **RF-11** Endpoints anónimos (únicos): `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /healthy`. **Decisión del usuario: ni siquiera en Development es anónimo `/openapi/*`** (exige Bearer); Swagger UI es un middleware ajeno a la política y carga sin poder leer el documento, y el cliente NSwag se genera descargando el documento con un token. Quedan por tanto protegidos los `GET` hoy abiertos (colegios, provincias, poblaciones).
 - **RF-12** `IUserProvider` DEBE resolverse desde el claim `sub` del token validado (`JwtUserProvider`). `HeaderUserProvider` y la cabecera `X-User-Id` DEBEN eliminarse: enviar `X-User-Id` NO DEBE autenticar nunca. Los casos de uso no cambian.
 - **RF-13** Un access token válido cuyo `sub` ya no corresponde a un usuario existente NO DEBE conceder acceso a datos ajenos; los casos de uso que ya comprueban existencia siguen devolviendo `User.NotFound`.
 
-**CORS y límites**
-- **RF-14** CORS DEBE permitir únicamente orígenes de `Cors:AllowedOrigins` (vacía por defecto = ninguno), métodos `GET, POST, PUT, DELETE`, cabeceras `Authorization` y `Content-Type`, con credenciales. NUNCA `*`. Un origen no listado NO DEBE recibir cabeceras `Access-Control-*`.
-- **RF-15** `/auth/refresh` y `/auth/logout` DEBEN tener su propio limitador por IP (30 peticiones / 60 s; configurable); `/auth/login` y `/auth/register` mantienen 10/60 s (60/60 en Development). Superado → 429 `ProblemDetails` con `Retry-After`.
+**Límites**
+- **RF-14** *(retirado por decisión del usuario)* No se configura CORS: web y API comparten origen, y sin cabeceras `Access-Control-*` el navegador bloquea por defecto lo que venga de otro origen.
+- **RF-15** `/auth/refresh` y `/auth/logout` DEBEN tener su propio limitador por IP (política `auth-refresh`, contador separado: 30 peticiones / 60 s; `RateLimiting:AuthRefresh:PermitLimit` y `WindowSeconds`); `/auth/login` y `/auth/register` mantienen la política `auth` (10/60 s; 60/60 en Development). Superado → 429 `ProblemDetails` con `Retry-After`.
 
 **Configuración**
 - **RF-16** Claves `Jwt` DEBEN validarse al arrancar: `SigningKey` ≥ 32 bytes, `Issuer` y `Audience`. En ningún entorno la API DEBE arrancar sin `Jwt:SigningKey`, y el mensaje de error DEBE indicar cómo definirla. La clave NUNCA se escribe en un `appsettings*.json` del repositorio: en desarrollo se guarda con User Secrets (`dotnet user-secrets set "Jwt:SigningKey" "<clave>"`, con `UserSecretsId` en `SumiClas.Api.csproj`) y en los demás entornos con la variable de entorno `Jwt__SigningKey` o el gestor de secretos del hosting.
@@ -195,7 +195,6 @@ Jwt:RefreshCookie:Name     "sumiclas_refresh"
 Jwt:RefreshCookie:Path     "/api/auth"
 Jwt:RefreshCookie:Secure   true
 Jwt:RefreshCookie:SameSite "Strict"
-Cors:AllowedOrigins     []   (Development: https://localhost:4004 para probar sin proxy)
 RateLimiting:Auth:PermitLimit / WindowSeconds                 10 / 60   (Development 60 / 60)
 RateLimiting:AuthRefresh:PermitLimit / WindowSeconds          30 / 60
 ```
@@ -236,7 +235,7 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 | S-15 | Petición con `X-User-Id` válido y sin Bearer → 401 | RF-12 |
 | S-16 | Con Bearer de A y `X-User-Id` de B, el usuario actual es A | RF-12 |
 | S-17 | `GET /healthy` y `POST /auth/register|login|refresh|logout` responden sin Bearer; `GET /schools`, `/provinces` sin Bearer → 401 | RF-11 |
-| S-18 | Origen no listado: respuesta sin `Access-Control-Allow-Origin`; origen listado: cabeceras con `Allow-Credentials: true`; preflight permite `Authorization` | RF-14 |
+| S-18 | *(retirado: sin CORS, ver RF-14)* | RF-14 |
 | S-19 | 31 llamadas a `/auth/refresh` en 60 s desde una IP → la 31 da 429 con `Retry-After`; `/healthy` no se ve afectado | RF-15 |
 | S-20 | En cualquier entorno, sin `Jwt:SigningKey` (ni en User Secrets ni en `Jwt__SigningKey`) la API no arranca y el mensaje indica cómo definirla; con clave de 16 bytes tampoco; ningún `appsettings*.json` del repo contiene la clave | RF-16 |
 | S-21 | Tras login, `localStorage` y `sessionStorage` no contienen ningún token; `sumiclas-user-id` antiguo se borra | RF-17 |
@@ -265,7 +264,7 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 - Value object `AccessToken` (`Create(value, expiresAt)` → `Result<AccessToken>`; errores `AccessToken.ValueRequired` y `AccessToken.ExpiryRequired`; igualdad por componentes).
 
 **Puertos** (`Sessions/Domain`): `IAccessTokenGenerator.Generate(userId)` → `Result<AccessToken>`; `IRefreshTokenGenerator.Generate()` → `(Raw, Hash)` y `Hash(raw)`. Las duraciones son política de negocio y viven como constantes en las entidades: `RefreshToken.Lifetime` (14 días), `Session.RefreshGrace` (10 s) y `AccessToken.Lifetime` (15 min); no se configuran.
-**Infraestructura** (`Sessions/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `SessionRepository`. `JwtOptions` (`Sessions/Infrastructure`, solo `Issuer`, `Audience` y `SigningKey`) se valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwt` (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
+**Infraestructura** (`Sessions/Infrastructure`): `JwtAccessTokenGenerator` (`JsonWebTokenHandler`, HS256, `IClock`), `RefreshTokenGenerator` (`RandomNumberGenerator` 32 bytes, base64url, SHA-256 hex), `SessionRepository`. `JwtOptions` (`Sessions/Infrastructure`, solo `Issuer`, `Audience` y `SigningKey`) se enlaza y valida al arrancar con `.Validate(...)` + `.ValidateOnStart()` en `AddSumiClasJwtOptions`, que llama `AddSumiClasInfrastructure` junto con el registro de los dos generadores (sin clase validadora aparte). `RefreshCookieOptions` solo lo usa la capa `api` y está en `api/Http`.
 
 **Casos de uso**:
 - `UserPasswordVerify` (`Users/Application`, `Query`/`Verify`/`Handler`): `Query(Email, Password)` → `Result<UserResponse>`; mismo `Authentication.InvalidCredentials` para email desconocido o contraseña errónea, y el hasher se ejecuta siempre. Si el hasher pide rehash, el `Verify` reemplaza el hash del usuario rastreado (`User.ReplacePasswordHash`) y lo persiste el `UnitOfWorkBehavior` del comando raíz (compromiso: una query con un efecto lateral acotado).
@@ -273,7 +272,7 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 - `SessionRotate.Command(RawRefreshToken?)` → `Result<SessionRotateOutcome>` **siempre exitoso** salvo error técnico: `Rotated(SessionResponse+raw)`, `Invalid` o `Reused`. Flujo: hash → buscar la sesión con `SessionSpecification(tokenHash:)`; no encontrada → `Invalid`; comprobar que el usuario existe (`IQueryBus` + `UserFinderById`, si no → `Invalid`; antes de rotar, para que un usuario inexistente nunca rote); `Session.Rotate` decide `Invalid`/`Reused`/`Rotated` (ver Dominio); emitir access en `Rotated`. El endpoint traduce `Invalid`/`Reused` a 401 + borrado de cookie (así el `UnitOfWorkBehavior` confirma la revocación).
 - `SessionRevoke.Command(RawRefreshToken?)` → `Result` siempre éxito: si encuentra la sesión del token la revoca.
 
-**API** (`api/`): `AddJwtBearer` (`MapInboundClaims=false`, `ValidateIssuer/Audience/Lifetime/IssuerSigningKey`, `ClockSkew` 30 s, `RequireSignedTokens`), `AddAuthorizationBuilder().SetFallbackPolicy(RequireAuthenticatedUser)`, `.AllowAnonymous()` en la lista de §4/RF-11, `AddProblemDetails`, eventos `OnChallenge`/`OnForbidden` que escriben `ProblemDetails` con `code`; `JwtUserProvider` (lee `sub`; ausente o no-Guid → `Authentication.Unauthenticated`) sustituye a `HeaderUserProvider` (se borra); `CorsServiceCollectionExtensions` (política única desde `Cors:AllowedOrigins`; si la lista está vacía no se registra `UseCors`); `RateLimitingServiceCollectionExtensions` añade la política `auth-refresh`. Orden del pipeline: `UseRateLimiter` → `UseCors` → `UseAuthentication` → `UseAuthorization` → `MapEndpoints`. Helper `RefreshCookie.Write/Clear` en `api/Http` (único sitio que toca la cookie).
+**API** (`api/`): `AddSumiClasApiSecurity(IConfiguration)` (después de `AddSumiClasInfrastructure`) agrupa `IHttpContextAccessor`, `JwtUserProvider`, `TimeProvider.System`, `RefreshCookieOptions`, la autenticación y la seguridad OpenAPI; la autenticación registra `AddJwtBearer`, que configura `ConfigureJwtBearerOptions` desde `IOptions<JwtOptions>` ya validado (`MapInboundClaims=false`, `ValidateIssuer/Audience/Lifetime/IssuerSigningKey`, `ClockSkew` 30 s, `RequireSignedTokens`, `ValidAlgorithms=[HS256]`, `ValidTypes=["at+jwt"]`) y `AddAuthorizationBuilder().SetFallbackPolicy(RequireAuthenticatedUser)`; `.AllowAnonymous()` en la lista de §4/RF-11 (grupo `/auth`, `/healthy`; `MapOpenApi` también exige Bearer); los eventos `OnChallenge`/`OnForbidden` del bearer escriben `ProblemDetails` con `code` (`Authentication.Unauthenticated` 401 con `WWW-Authenticate: Bearer`, `Authentication.Forbidden` 403) por los helpers de `api/Http/ResultExtensions`; `JwtUserProvider` (lee `sub`; ausente, no-Guid o `Guid.Empty` → `Authentication.Unauthenticated`) sustituye a `HeaderUserProvider` (borrado); no hay CORS; `RateLimitingServiceCollectionExtensions` añade la política `auth-refresh`. Solo HTTPS: no hay `UseHttpsRedirection` ni se publica ningún puerto HTTP. Orden del pipeline: `UseSwaggerUI` → `UseRateLimiter` → `UseAuthentication` → `UseAuthorization` → `MapHealthChecks`/`MapEndpoints` (Swagger UI es un middleware ajeno a la política de reserva). Helper `RefreshCookie.Read/Write/Clear` en `api/Http` (único sitio que toca la cookie; sin `Domain`, `Max-Age` calculado desde `SessionResponse.RefreshTokenExpiresAt`); `RefreshCookieOptions` se valida al arrancar (en `AddSumiClasApiSecurity`) (nombre, ruta que empiece por `/`, `SameSite` Strict/Lax/None y `None` exige `Secure`). OpenAPI: el helper `AddSumiClasOpenApiSecurity` (llamado por `AddSumiClasApiSecurity`) declara el esquema Bearer y, en cada operación no anónima, el requisito de seguridad y la respuesta 401, para todos los documentos por versión.
 
 **Secuencias.**
 - *Login*: cliente → `POST /auth/login` → verificar contraseña → crear `Session` + su primer `RefreshToken` → `Set-Cookie` + cuerpo `{accessToken,…}`.
@@ -306,12 +305,20 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 | **J1e** | Unificar `User` y `UserCredential` (1:1, mismo ciclo de vida) en un solo agregado y una sola tabla: `User` lleva `PasswordHash`/`PasswordChangedAt`; `UserRegister` (sustituye a `AccountRegister`, sin evento de dominio) y `UserPasswordVerify` (sustituye a `AccountCredentialVerify`) viven en `Users`; `IPasswordHasher`, `Password` y `IdentityPasswordHasher` pasan a `Users`; se elimina el módulo `Authentication`; migración `MergeUserCredentialsIntoUsers` que copia los hashes y borra `UserCredentials`. `RefreshTokens` solo cambia el nombre de la query. | J1d | S-01, S-02 (sin cambio de comportamiento) | refactor + tests movidos |
 | **J1g** | El agregado pasa a ser la sesión: módulo `RefreshTokens` → `Sessions`, `RefreshToken` (raíz) → `Session` (raíz, antes la «familia») con `RefreshToken` como entidad hija; reutilización y revocación como comportamiento del agregado (`Session.Rotate`, `Revoke`), poda de tokens antiguos, token de concurrencia `xmin`; casos de uso `SessionCreate`/`SessionRotate`/`SessionRevoke`, `SessionRotateOutcome`; migración `SessionsAggregate` (tablas `Sessions` + `RefreshTokens` con `SessionId`, conserva los datos). Sin cambio de contrato HTTP ni de escenarios. | J1e, J2a | S-01, S-03..S-10 (mismo comportamiento salvo dos cambios aceptados: los reintentos de tokens reemplazados hace más de 24 h pasan a `Invalid` y no a `Reused`, y un usuario inexistente da `Invalid` sin revocar la sesión) | refactor + tests movidos, migración |
 | **J2a** | Casos de uso `RefreshTokenCreate` (sesión+refresh), `RefreshTokenRotate`, `RefreshTokenRevoke` + tests con Moq/`IClock` falso (rotación, reutilización con y sin gracia, caducado, usuario inexistente, idempotencia). | J1b, J1c, J1d | S-01, S-03..S-10 | ~500 líneas |
-| **J2b** | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, CORS, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`. | J2a | S-11..S-19 | ~550 líneas |
+| **J2b** ✅ | API: JwtBearer, política de reserva y lista anónima, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints `/auth/refresh` y `/auth/logout` con `RefreshCookie`, `SessionResponse.RefreshTokenExpiresAt`, limitador `auth-refresh`, OpenAPI Bearer, tests de `JwtUserProvider`, `RefreshCookie`, `ResultExtensions`, validación de `JwtOptions` y del bearer. Sin CORS (decisión del usuario). | J2a | S-11..S-17, S-19 (S-18 retirado) | ~550 líneas |
 | **J3a** | Regenerar cliente NSwag; `tokenStore`, `authHttp` (single-flight, locks, reintento), `IAuthenticationRepository.refresh/logout`, `Session`; retirar `X-User-Id`. | J2b | S-21, S-24..S-26 | ~450 líneas |
 | **J3b** | `AuthContext`/`AuthProvider`/`useAuth`, `RequireSession`, `Login`, `Register` (register→login), logout en `AppLayout`/`More`, mensajes. | J3a | S-22, S-23, S-27, S-28 | ~450 líneas |
 | **J4** | Verificación E2E real (API temporal + Postgres: S-01..S-20 con `curl`/script; navegador CDP: S-21..S-28, forzando el refresco con un token inválido en el almacén en memoria del frontend para disparar el flujo 401→refresh), limpieza de datos, docs finales (ambos `AGENTS.md`: quitar «identidad provisional» y `X-User-Id`; `odd/tasks/jwt.md` con evidencia; espejo Engram). | J3b | todos | docs + evidencia |
 
 **Definición de hecho por tarea**: build y `dotnet test` / `pnpm typecheck` + `pnpm lint` limpios; los escenarios de la tarea comprobados y anotados con su evidencia en `odd/tasks/jwt.md`; revisión nativa aprobada por pieza; sin atribución de IA en commits; cada commit compila por sí solo (se comprueba en copia aislada).
+
+**Notas de J2b (hecho).**
+- Sin CORS: no hay `Cors:*` en la configuración ni `UseCors`; RF-14 y S-18 quedan retirados.
+- `SessionRotateOutcome` sigue siendo `Rotated | Invalid | Reused`: `Invalid` y `Reused` dan 401 `Authentication.RefreshTokenInvalid` y borran la cookie; un fallo técnico (p. ej. el 409 `Shared.ConcurrencyConflict` de dos refrescos simultáneos) responde con su `ProblemDetails` **sin tocar la cookie**, para que el frontend reintente una vez (RF-19).
+- El DTO HTTP del login y del refresco es `AccountSessionResponse { accessToken, expiresAt, userId, fullName }` (sustituye a `AccountResponse`); el refresh token solo viaja en la cookie. `SessionResponse` lleva `RefreshTokenExpiresAt` (la caducidad del refresh recién emitido) para calcular `Max-Age`.
+- Los tests de `api` referencian `SumiClas.Api.csproj` desde `SumiClas.Tests` (autorizado por el usuario). Cubren `JwtUserProvider`, `RefreshCookie`, `ResultExtensions`, la validación de `JwtOptions`/`RefreshCookieOptions` y los parámetros de validación del bearer con tokens reales (firma, `iss`, `aud`, caducidad con tolerancia de 30 s, `typ`, `alg`); los endpoints en sí se verificaron con E2E real contra una base desechable.
+- Verificación E2E con `curl` (API real, PostgreSQL desechable): S-01, S-03, S-04, S-05, S-07/S-08 (reloj real), S-09..S-17, S-19 y S-20 pasan; el documento OpenAPI declara Bearer y marca las 41 operaciones protegidas con `security` y 401, y ninguna de las anónimas.
+- Mientras no se haga J3a el frontend sigue enviando `X-User-Id`, que ya no autentica: la web no podrá iniciar sesión hasta J3a/J3b (aceptado).
 
 ## 11. Matriz de trazabilidad
 
@@ -321,7 +328,7 @@ Las duraciones (access token 15 min, refresh token 14 días, gracia de rotación
 | RF-05..08 | S-04..S-08 | J1a, J2a | tests unitarios + E2E |
 | RF-09 | S-09, S-10 | J2a | tests + E2E |
 | RF-10..13 | S-11..S-17 | J2b | E2E |
-| RF-14, 15 | S-18, S-19 | J2b | E2E |
+| RF-15 (RF-14 retirado) | S-19 | J2b | E2E |
 | RF-16 | S-20 | J1b | test de opciones + E2E de arranque |
 | RF-17..21 | S-21..S-28 | J3a, J3b | E2E navegador |
 

@@ -1,14 +1,14 @@
 # JWT, refresh token rotatorio en cookie y CORS
 
 ## Objetivo
-Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access de 15 min en memoria) más un refresh token rotatorio en cookie httpOnly (guardado con hash en la base de datos), con cierre de sesión real, autenticación obligatoria por defecto y CORS restrictivo.
+Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access de 15 min en memoria) más un refresh token rotatorio en cookie httpOnly (guardado con hash en la base de datos), con cierre de sesión real, autenticación obligatoria por defecto y sin CORS (mismo origen).
 
 ## Fuente de verdad
 `docs/specs/jwt-authentication.md` (desarrollo guiado por especificación: explicación, requisitos RF-01..RF-21, escenarios S-01..S-28, diseño, tareas y matriz de trazabilidad). No se implementa nada que no esté en ese documento; si cambia un requisito, se edita primero la especificación.
 
 ## Decisiones (usuario)
 - Access token de vida corta en memoria + refresh token rotatorio en cookie httpOnly, guardado con hash.
-- Producción en un solo dominio con proxy `/api` (mismo origen); CORS restrictivo y configurable.
+- Producción en un solo dominio con proxy `/api` (mismo origen). Decisión posterior: **no se configura CORS** (ni en producción ni en desarrollo, donde el proxy de Vite mantiene el mismo origen); el navegador bloquea por defecto lo que venga de otro origen, que ya es lo restrictivo. Si algún día la web se sirve desde otro origen habrá que añadirlo.
 - Email + contraseña (ya implementado); magic link fuera.
 - Un agregado por módulo: `RefreshToken` vive en su propio módulo `RefreshTokens`. Un caso de uso toca únicamente el repositorio de su módulo; lo demás va por `IQueryBus` o por eventos.
 - El agregado de la sesión se llama `Session` (módulo `Sessions`, raíz = sesión, hijas = `RefreshToken`); `AccessToken` es value object y el JWT se genera por un puerto de `Domain`. Decidido tras descartar `Auth` (no es una raíz de agregado y rompería la regla de nombres).
@@ -22,6 +22,9 @@ Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access 
 - Ningún token, hash ni clave en los logs; el access token nunca en `localStorage`/`sessionStorage`.
 - Un `Result` fallido revierte la unidad de trabajo, así que la detección de reutilización y el logout devuelven un resultado exitoso con un resultado de dominio que el endpoint traduce a 401 (RNF-02).
 - Fuera de alcance: autorización por rol y pertenencia a la clase, recuperación de contraseña, bloqueo de cuenta, limpieza de tokens caducados, infraestructura de tests HTTP y de frontend.
+- Decisión del usuario: recuperación y cambio de contraseña, bloqueo de cuenta por intentos, rol dentro del token y limpieza periódica de sesiones caducadas **no son necesarios para el MVP** (consecuencias asumidas: una contraseña olvidada se resuelve a mano, el limitador de 10 por minuto por IP es la única defensa contra fuerza bruta, y la tabla de sesiones solo crece despacio).
+- Decisión del usuario: **solo HTTPS** (sin `UseHttpsRedirection`; no se publica ningún puerto HTTP) y **`/openapi` no es anónimo ni en Development** (exige Bearer; el cliente NSwag se genera descargando el documento con un token en J3a; Swagger UI no puede leerlo).
+- Regla práctica del usuario para registrar servicios: si seguiría haciendo falta en un proyecto de consola que reutilice el dominio → infraestructura; si solo sirve para recibir peticiones HTTP → capa API.
 
 ## Tareas (ver la sección 10 de la especificación: archivos, dependencias y escenarios)
 - [x] J0 Guardar la especificación en `docs/specs/jwt-authentication.md` y crear esta ficha (commit `9c769c4`).
@@ -35,7 +38,7 @@ Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access 
 - [x] J1g Agregado `Session` (módulo `Sessions`) en lugar de `RefreshToken`/`RefreshTokens`: la raíz es la sesión (lo que hoy es la «familia») y `RefreshToken` pasa a entidad hija; revocar y detectar reutilización son comportamiento del agregado; token de concurrencia `xmin` en `Session` (la revisión señaló que probablemente no protege la rotación: ver seguimiento 1); casos de uso `SessionCreate`/`SessionRotate`/`SessionRevoke`; migración de datos de `RefreshTokens` a `Sessions`; tests y documentación (commits `1aee3d1`, `9cc8fcd` y `2aee133`: módulo y migración, tests, y el repositorio inyectado llamado siempre `repository`).
 - [x] J1g2 `Configuration` en lugar de `Bootstrap` en la API (commit `cef780a`) y duraciones como constantes de las entidades con `JwtOptions` en `Infrastructure` (commit `f201be4`).
 - [x] J1h Concurrencia de la rotación (probada con dos contextos contra PostgreSQL: sin tocar la raíz la carrera no se detectaba y quedaban 2 sucesores activos; con `LastRotatedAt` el segundo guardado falla y queda 1): la raíz `Session` debe modificarse en cada rotación (`LastRotatedAt`) para que el token `xmin` se compruebe, traducir `DbUpdateConcurrencyException` a `ConcurrencyConflictException` → 409, migración de la columna y prueba real con dos contextos contra PostgreSQL.
-- [ ] J2b API: JwtBearer, política por defecto y lista de anónimos, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints de refresh y logout con cookie, CORS, limitador de refresh y esquema Bearer en OpenAPI.
+- [x] J2b API: JwtBearer, política por defecto y lista de anónimos, ProblemDetails 401/403, `JwtUserProvider` (se borra `HeaderUserProvider`), endpoints de refresh y logout con cookie (`RefreshCookie`), `SessionResponse` con `RefreshTokenExpiresAt`, limitador `auth-refresh` y esquema Bearer en OpenAPI. Sin CORS (decisión del usuario: web y API en el mismo origen). Hecho y verificado: 335 tests y prueba de humo real (S-01..S-17, S-19, S-20) con base de datos desechable; registros de DI reorganizados (`AddSumiClasInfrastructure` con los generadores y `JwtOptions`, `AddSumiClasApiSecurity` para lo web).
 - [ ] J3a Regenerar el cliente NSwag; `tokenStore`, `authHttp` (una sola llamada de refresco compartida, locks, reintento), refresh/logout en el repositorio y retirada de `X-User-Id`.
 - [ ] J3b `AuthProvider`/`useAuth`, `RequireSession`, Login, Register (registro y después login), cerrar sesión y mensajes.
 - [ ] J4 Verificación E2E real (API y Postgres para S-01..S-20, Chrome headless para S-21..S-28), limpieza de datos, documentación final, quitar las notas de «identidad provisional» y espejo en Engram.
