@@ -52,7 +52,7 @@ public static class SessionRotate
 
             switch (rotation.Value)
             {
-                case SessionRotation.Rotated:
+                case SessionRotation.Rotated rotated:
                     var accessToken = accessTokenGenerator.Generate(session.UserId);
                     if (accessToken.IsFailure)
                     {
@@ -61,7 +61,7 @@ public static class SessionRotate
 
                     return Done(new SessionRotateOutcome.Rotated(
                         new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, session.UserId,
-                            user.Value.FullName, refreshToken)));
+                            user.Value.FullName, refreshToken, rotated.NewToken.ExpiresAt)));
                 case SessionRotation.Reused:
                     return Done(new SessionRotateOutcome.Reused());
                 default:

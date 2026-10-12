@@ -84,7 +84,7 @@ public class SessionRotateTests
         var result = await _useCase.ExecuteAsync(new SessionRotate.Command("old-raw"));
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.Value, Is.EqualTo(new SessionRotateOutcome.Rotated(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "new-raw"))));
+        Assert.That(result.Value, Is.EqualTo(new SessionRotateOutcome.Rotated(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "new-raw", Now + RefreshToken.Lifetime))));
         var old = TokenOf(session, "old-raw");
         var successor = TokenOf(session, "new-raw");
         Assert.That(session.RefreshTokens, Has.Count.EqualTo(2));

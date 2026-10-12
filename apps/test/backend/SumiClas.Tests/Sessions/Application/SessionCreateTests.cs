@@ -50,7 +50,7 @@ public class SessionCreateTests
         var result = await _useCase.ExecuteAsync(new SessionCreate.Command("ana@example.com", "right-password"));
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.Value, Is.EqualTo(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "raw-refresh")));
+        Assert.That(result.Value, Is.EqualTo(new SessionResponse("jwt", Now + AccessToken.Lifetime, UserId, "Ana Perez", "raw-refresh", Now + RefreshToken.Lifetime)));
         _queryBus.Verify(bus => bus.Send(
             It.Is<UserPasswordVerify.Query>(query => query.Email == "ana@example.com" && query.Password == "right-password"),
             It.IsAny<CancellationToken>()), Times.Once);

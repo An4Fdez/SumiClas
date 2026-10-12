@@ -9,4 +9,5 @@ public sealed record SessionResponse(
     DateTimeOffset ExpiresAt,
     Guid UserId,
     string FullName,
-    string RefreshTokenRaw);
+    string RefreshTokenRaw,
+    DateTimeOffset RefreshTokenExpiresAt);

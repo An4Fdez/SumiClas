@@ -48,7 +48,7 @@ public static class SessionCreate
 
             return Result<SessionResponse>.Success(
                 new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Value.Id,
-                    user.Value.FullName, refreshToken));
+                    user.Value.FullName, refreshToken, session.Value.RefreshTokens.Single().ExpiresAt));
         }
     }
 
