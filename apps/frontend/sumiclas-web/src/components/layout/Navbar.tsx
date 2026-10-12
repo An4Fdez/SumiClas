@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Moon, Sun, LogIn, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
 import { useTheme } from '@/hooks/useTheme';
-import { isAuthenticated, getGuardianInfo } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
+import { getGuardianInfo } from '@/lib/auth';
 
 const links = [
   { label: 'Cómo funciona', href: '#how-it-works' },
@@ -14,6 +15,7 @@ const links = [
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
+  const { status } = useAuth();
   const [open, setOpen] = useState(false);
   // Navbar/Layout is not unmounted when navigating between public routes (Login, Register,
   // Onboarding share the same <Layout/>), so without this the session/name would stay
@@ -21,7 +23,7 @@ export function Navbar() {
   // useLocation() forces a re-render on every route change to always re-read
   // localStorage with the freshest data.
   useLocation();
-  const isLoggedIn = isAuthenticated();
+  const isLoggedIn = status === 'authenticated';
   const guardian = isLoggedIn ? getGuardianInfo() : null;
   const guardianName = guardian?.name ?? 'Mi cuenta';
 

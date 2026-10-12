@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { UserRound, Bell, HelpCircle, ShieldCheck, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
-import { useSessionRepository } from '@/hooks/useSessionRepository';
-import { clearGuardianInfo } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 const items: { icon: LucideIcon; label: string; href: string }[] = [
   { icon: UserRound, label: 'Mi perfil', href: '#perfil' },
@@ -11,11 +10,10 @@ const items: { icon: LucideIcon; label: string; href: string }[] = [
 
 export default function More() {
   const navigate = useNavigate();
-  const sessionRepository = useSessionRepository();
+  const { logout } = useAuth();
   const handleLogout = async () => {
-    await sessionRepository.logout().catch(() => undefined);
-    clearGuardianInfo();
-    navigate('/');
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (

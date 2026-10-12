@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { useSessionRepository } from '@/hooks/useSessionRepository';
+import { SessionLoading } from '@/components/layout/SessionLoading';
+import { useAuth } from '@/hooks/useAuth';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { isAuthenticated, setGuardianInfo } from '@/lib/auth';
+import { setGuardianInfo } from '@/lib/auth';
 import { isValidEmail } from '@/lib/validation';
 
 // The login response only has the full name: show the first two words (name and first surname), like Register.
@@ -14,14 +15,15 @@ function displayName(fullName: string) {
 
 export default function Login() {
   const navigate = useNavigate();
-  const sessionRepository = useSessionRepository();
+  const { status, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (isAuthenticated()) return <Navigate to="/home" replace />;
+  if (status === 'loading') return <SessionLoading />;
+  if (status === 'authenticated') return <Navigate to="/home" replace />;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      const session = await sessionRepository.login({ email: email.trim(), password });
+      const session = await login({ email: email.trim(), password });
       // The role is only asked at sign-up and the API does not return it: fall back to the generic one.
       setGuardianInfo({ name: displayName(session.fullName), role: 'guardian' });
       navigate('/home');

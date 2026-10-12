@@ -1,7 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { isAuthenticated } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
+import { SessionLoading } from './SessionLoading';
 
 export function RequireSession() {
-  if (!isAuthenticated()) return <Navigate to="/login" replace />;
+  const { status } = useAuth();
+  if (status === 'loading') return <SessionLoading />;
+  if (status === 'anonymous') return <Navigate to="/login" replace />;
   return <Outlet />;
 }

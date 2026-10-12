@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Bell, Calendar, BookOpen, CheckCircle2, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
-import { isAuthenticated } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Hero() {
   const navigate = useNavigate();
+  const { status } = useAuth();
 
   const handleSearchSchool = () => {
-    navigate(isAuthenticated() ? '/onboarding' : '/login');
+    navigate(status === 'authenticated' ? '/onboarding' : '/login');
   };
 
   return (

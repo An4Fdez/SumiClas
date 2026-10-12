@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { getUserId } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 const KEY_PREFIX = 'sumiclas-homework-done:';
 
@@ -17,7 +17,8 @@ function read(key: string): Set<string> {
  * the current user and the assignment id.
  */
 export function useDoneAssignments() {
-  const key = `${KEY_PREFIX}${getUserId() ?? 'anonymous'}`;
+  const { user } = useAuth();
+  const key = `${KEY_PREFIX}${user?.userId ?? 'anonymous'}`;
   const [done, setDone] = useState(() => read(key));
 
   const toggle = useCallback(

@@ -4,8 +4,8 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff, UserRound, CheckCircle2, AlertCirc
 import { Reveal } from '@/components/layout/Reveal';
 import { setGuardianInfo, type GuardianRole } from '@/lib/auth';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
-import { useSessionRepository } from '@/hooks/useSessionRepository';
-import { useUserRepository } from '@/hooks/useUserRepository';
+import { AccountCreatedLoginFailedError } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { isValidEmail, isPasswordPwned, MIN_PASSWORD_LENGTH, RECOMMENDED_PASSWORD_LENGTH } from '@/lib/validation';
 
@@ -17,8 +17,7 @@ const roleOptions: { value: GuardianRole; label: string }[] = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const sessionRepository = useSessionRepository();
-  const userRepository = useUserRepository();
+  const { register } = useAuth();
   const ids = useWizardIds();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -70,7 +69,7 @@ export default function Register() {
     setSubmitting(true);
     try {
       const userId = ids.take('account');
-      await userRepository.register({
+      await register({
         id: userId,
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
@@ -78,17 +77,14 @@ export default function Register() {
       });
       ids.consume('account');
     } catch (error) {
-      // A 409 means the id or the email already exists: retrying with the same id would only repeat it.
-      if (getApiErrorStatus(error) === 409) ids.consume('account');
-      setSubmitError(getApiErrorMessage(error));
-      setSubmitting(false);
-      return;
-    }
-
-    try {
-      await sessionRepository.login({ email: email.trim(), password });
-    } catch (error) {
-      setSubmitError(`Tu cuenta se ha creado, pero no hemos podido iniciar sesión. ${getApiErrorMessage(error)} Prueba a iniciar sesión desde la pantalla de acceso.`);
+      if (error instanceof AccountCreatedLoginFailedError) {
+        ids.consume('account');
+        setSubmitError(`Tu cuenta se ha creado, pero no hemos podido iniciar sesión. ${getApiErrorMessage(error.loginError)} Prueba a iniciar sesión desde la pantalla de acceso.`);
+      } else {
+        // A 409 means the id or the email already exists: retrying with the same id would only repeat it.
+        if (getApiErrorStatus(error) === 409) ids.consume('account');
+        setSubmitError(getApiErrorMessage(error));
+      }
       setSubmitting(false);
       return;
     }

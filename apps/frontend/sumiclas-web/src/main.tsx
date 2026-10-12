@@ -14,45 +14,42 @@ import { OnboardingRepositoriesProvider } from '@/context/OnboardingRepositories
 import { ProvinceRepositoryProvider } from '@/context/ProvinceRepositoryProvider';
 import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
 import { UserRepositoryProvider } from '@/context/UserRepositoryProvider';
-import { refreshSession, setSessionLostHandler } from '@/modules/Shared/Infrastructure/authHttp';
+import { AuthProvider } from '@/context/AuthProvider';
+import { removeLegacySessionKeys } from '@/lib/auth';
 import './index.css';
 
-// Provisional until the AuthProvider takes over: the access token only lives in memory, so restore the session from
-// the refresh cookie before the first render, and send the user to the login screen when a refresh is refused.
-setSessionLostHandler(() => window.location.assign('/login'));
+removeLegacySessionKeys();
 
-const root = createRoot(document.getElementById('root')!);
-
-void refreshSession({ notifyOnLoss: false })
-  .catch(() => undefined)
-  .finally(() => root.render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ApiClientProvider>
       <SessionRepositoryProvider>
-      <UserRepositoryProvider>
-        <StudentRepositoryProvider>
-          <ProvinceRepositoryProvider>
-            <LocalityRepositoryProvider>
-              <OnboardingRepositoriesProvider>
-                <AnnouncementRepositoryProvider>
-                  <LostItemRepositoryProvider>
-                    <CalendarEventRepositoryProvider>
-                      <HomeworkRepositoriesProvider>
-                        <ClassExpenseRepositoryProvider>
-                          <BrowserRouter>
-                            <App />
-                          </BrowserRouter>
-                        </ClassExpenseRepositoryProvider>
-                      </HomeworkRepositoriesProvider>
-                    </CalendarEventRepositoryProvider>
-                  </LostItemRepositoryProvider>
-                </AnnouncementRepositoryProvider>
-              </OnboardingRepositoriesProvider>
-            </LocalityRepositoryProvider>
-          </ProvinceRepositoryProvider>
-        </StudentRepositoryProvider>
-      </UserRepositoryProvider>
+        <UserRepositoryProvider>
+          <StudentRepositoryProvider>
+            <ProvinceRepositoryProvider>
+              <LocalityRepositoryProvider>
+                <OnboardingRepositoriesProvider>
+                  <AnnouncementRepositoryProvider>
+                    <LostItemRepositoryProvider>
+                      <CalendarEventRepositoryProvider>
+                        <HomeworkRepositoriesProvider>
+                          <ClassExpenseRepositoryProvider>
+                            <BrowserRouter>
+                              <AuthProvider>
+                                <App />
+                              </AuthProvider>
+                            </BrowserRouter>
+                          </ClassExpenseRepositoryProvider>
+                        </HomeworkRepositoriesProvider>
+                      </CalendarEventRepositoryProvider>
+                    </LostItemRepositoryProvider>
+                  </AnnouncementRepositoryProvider>
+                </OnboardingRepositoriesProvider>
+              </LocalityRepositoryProvider>
+            </ProvinceRepositoryProvider>
+          </StudentRepositoryProvider>
+        </UserRepositoryProvider>
       </SessionRepositoryProvider>
     </ApiClientProvider>
-  </StrictMode>
-  ));
+  </StrictMode>,
+);
