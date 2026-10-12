@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
+using Microsoft.Extensions.Options;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Sessions.Application;
@@ -23,9 +24,12 @@ public sealed class AuthenticationEndpoints : IEndpoints
     {
         var authentication = app.MapGroup("/auth")
             .WithTags("Authentication")
+            .AllowAnonymous();
+
+        var credentials = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthPolicy);
 
-        authentication.MapPost("/register", async (AccountRegisterRequest request, ISender sender, CancellationToken ct) =>
+        credentials.MapPost("/register", async (AccountRegisterRequest request, ISender sender, CancellationToken ct) =>
             (await sender.Send(new UserRegister.Command(request.Id, request.FullName, request.Email, request.Password), ct)).ToCreated())
             .WithName("UserRegister")
             .Produces(StatusCodes.Status201Created)
@@ -34,17 +38,86 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
-        authentication.MapPost("/login", async (AccountLoginRequest request, ISender sender, CancellationToken ct) =>
+        credentials.MapPost("/login", async (
+                AccountLoginRequest request,
+                ISender sender,
+                HttpResponse response,
+                IOptions<RefreshCookieOptions> cookieOptions,
+                TimeProvider time,
+                CancellationToken ct) =>
         {
             var result = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
-            return result.IsSuccess
-                ? Results.Ok(new AccountResponse(result.Value.UserId, result.Value.FullName))
-                : result.ToProblem();
+            if (result.IsFailure)
+            {
+                return result.ToProblem();
+            }
+
+            return Respond(result.Value, response, cookieOptions.Value, time);
         })
             .WithName("SessionCreate")
-            .Produces<AccountResponse>(StatusCodes.Status200OK)
+            .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
+        var session = authentication.MapGroup(string.Empty)
+            .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthRefreshPolicy);
+
+        session.MapPost("/refresh", async (
+                HttpRequest request,
+                HttpResponse response,
+                ISender sender,
+                IOptions<RefreshCookieOptions> cookieOptions,
+                TimeProvider time,
+                CancellationToken ct) =>
+        {
+            var options = cookieOptions.Value;
+            var result = await sender.Send(new SessionRotate.Command(RefreshCookie.Read(request, options)), ct);
+            if (result.IsFailure)
+            {
+                return result.ToProblem();
+            }
+
+            if (result.Value is SessionRotateOutcome.Rotated rotated)
+            {
+                return Respond(rotated.Session, response, options, time);
+            }
+
+            RefreshCookie.Clear(response, options);
+            return ResultExtensions.RefreshTokenInvalidProblem();
+        })
+            .WithName("SessionRotate")
+            .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
+        session.MapPost("/logout", async (
+                HttpRequest request,
+                HttpResponse response,
+                ISender sender,
+                IOptions<RefreshCookieOptions> cookieOptions,
+                CancellationToken ct) =>
+        {
+            var options = cookieOptions.Value;
+            var result = await sender.Send(new SessionRevoke.Command(RefreshCookie.Read(request, options)), ct);
+            if (result.IsFailure)
+            {
+                return result.ToProblem();
+            }
+
+            RefreshCookie.Clear(response, options);
+            return Results.NoContent();
+        })
+            .WithName("SessionRevoke")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+    }
+
+    private static IResult Respond(SessionResponse session, HttpResponse response, RefreshCookieOptions options, TimeProvider time)
+    {
+        RefreshCookie.Write(response, session.RefreshTokenRaw, session.RefreshTokenExpiresAt, time.GetUtcNow(), options);
+        return Results.Ok(new AccountSessionResponse(session.AccessToken, session.ExpiresAt, session.UserId, session.FullName));
     }
 }

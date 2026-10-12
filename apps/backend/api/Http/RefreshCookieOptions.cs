@@ -4,8 +4,8 @@ public sealed class RefreshCookieOptions
 {
     public const string SectionName = "Jwt:RefreshCookie";
 
-    public string Name { get; set; } = "sumiclas_refresh";
-    public string Path { get; set; } = "/api/auth";
-    public bool Secure { get; set; } = true;
-    public string SameSite { get; set; } = "Strict";
+    public string Name { get; init; } = "sumiclas_refresh";
+    public string Path { get; init; } = "/api/auth";
+    public bool Secure { get; init; } = true;
+    public string SameSite { get; init; } = "Strict";
 }

@@ -10,4 +10,6 @@ public static class AuthenticationErrors
     public static readonly Error PasswordTooWeak = new("Authentication.PasswordTooWeak", "La contraseña debe tener entre 8 y 128 caracteres.");
 
     public static readonly Error RefreshTokenInvalid = new("Authentication.RefreshTokenInvalid", "Tu sesión ha caducado. Inicia sesión de nuevo.");
+
+    public static readonly Error Forbidden = new("Authentication.Forbidden", "No tienes permiso para hacer esto.");
 }

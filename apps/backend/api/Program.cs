@@ -16,20 +16,22 @@ builder.Services.AddApiVersioning(versionOptions =>
 
 builder.Services.AddHealthChecks();
 builder.Services.AddValidation();
-builder.Services.AddSumiClasIdentity();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
+builder.Services.AddSumiClasApiSecurity(builder.Configuration);
 builder.Services.AddSumiClasRateLimiting(builder.Configuration);
-builder.Services.AddSumiClasJwt(builder.Configuration);
 
 
 var app = builder.Build();
 app.ApplySumiClasMigrations();
 
 // Configure the HTTP request pipeline.
+// HTTPS only: nothing listens on plain HTTP, so there is no HTTP-to-HTTPS redirection to configure.
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi().WithDocumentPerVersion();
+    // The document needs a Bearer token even in Development: nothing is anonymous just because it is a dev environment.
+    app.MapOpenApi().WithDocumentPerVersion().RequireAuthorization();
 }
 
 app.UseSwaggerUI(swaggerUiOptions =>
@@ -41,13 +43,14 @@ app.UseSwaggerUI(swaggerUiOptions =>
             swaggerUiOptions.SwaggerEndpoint($"/openapi/{apiVersion.GroupName}.json",
                 apiVersion.GroupName.ToUpperInvariant());
         }
-        
+
     }
 
 });
 
 app.UseRateLimiter();
-app.MapHealthChecks("/healthy");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapHealthChecks("/healthy").AllowAnonymous();
 app.MapEndpoints();
-app.UseHttpsRedirection();
 app.Run();

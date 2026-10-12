@@ -19,9 +19,16 @@ public static class ResultExtensions
         => result.IsSuccess ? Results.StatusCode(StatusCodes.Status201Created) : result.ToProblem();
 
     public static IResult ToProblem(this Result result)
-    {
-        var error = result.Error ?? throw new InvalidOperationException("A successful result has no error to map.");
+        => (result.Error ?? throw new InvalidOperationException("A successful result has no error to map.")).ToProblem();
 
+    public static IResult UnauthenticatedProblem() => AuthenticationErrors.Unauthenticated.ToProblem();
+
+    public static IResult ForbiddenProblem() => AuthenticationErrors.Forbidden.ToProblem();
+
+    public static IResult RefreshTokenInvalidProblem() => AuthenticationErrors.RefreshTokenInvalid.ToProblem();
+
+    public static IResult ToProblem(this Error error)
+    {
         var statusCode = error.Code switch
         {
             var code when code.EndsWith("NotFound", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
