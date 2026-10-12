@@ -67,12 +67,22 @@ export interface IGeneratedApiClient {
     /**
      * @return Created
      */
-    accountRegister(body: AccountRegisterRequest): Promise<void>;
+    userRegister(body: AccountRegisterRequest): Promise<void>;
 
     /**
      * @return OK
      */
-    accountLogin(body: AccountLoginRequest): Promise<AccountResponse>;
+    sessionCreate(body: AccountLoginRequest): Promise<AccountSessionResponse>;
+
+    /**
+     * @return OK
+     */
+    sessionRotate(): Promise<AccountSessionResponse>;
+
+    /**
+     * @return No Content
+     */
+    sessionRevoke(): Promise<void>;
 
     /**
      * @return Created
@@ -689,6 +699,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -766,7 +780,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return Created
      */
-    accountRegister(body: AccountRegisterRequest): Promise<void> {
+    userRegister(body: AccountRegisterRequest): Promise<void> {
         let url_ = this.baseUrl + "/auth/register";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -783,11 +797,11 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAccountRegister(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processUserRegister(_response));
         });
     }
 
-    protected processAccountRegister(response: Response): Promise<void> {
+    protected processUserRegister(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 201) {
@@ -823,7 +837,7 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     /**
      * @return OK
      */
-    accountLogin(body: AccountLoginRequest): Promise<AccountResponse> {
+    sessionCreate(body: AccountLoginRequest): Promise<AccountSessionResponse> {
         let url_ = this.baseUrl + "/auth/login";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -841,17 +855,17 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAccountLogin(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processSessionCreate(_response));
         });
     }
 
-    protected processAccountLogin(response: Response): Promise<AccountResponse> {
+    protected processSessionCreate(response: Response): Promise<AccountSessionResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountResponse;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountSessionResponse;
             return result200;
             });
         } else if (status === 400) {
@@ -877,7 +891,110 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<AccountResponse>(null as any);
+        return Promise.resolve<AccountSessionResponse>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    sessionRotate(): Promise<AccountSessionResponse> {
+        let url_ = this.baseUrl + "/auth/refresh";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processSessionRotate(_response));
+        });
+    }
+
+    protected processSessionRotate(response: Response): Promise<AccountSessionResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountSessionResponse;
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
+            });
+        } else if (status === 429) {
+            return response.text().then((_responseText) => {
+            let result429: any = null;
+            result429 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Too Many Requests", status, _responseText, _headers, result429);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AccountSessionResponse>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    sessionRevoke(): Promise<void> {
+        let url_ = this.baseUrl + "/auth/logout";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processSessionRevoke(_response));
+        });
+    }
+
+    protected processSessionRevoke(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Conflict", status, _responseText, _headers, result409);
+            });
+        } else if (status === 429) {
+            return response.text().then((_responseText) => {
+            let result429: any = null;
+            result429 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Too Many Requests", status, _responseText, _headers, result429);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -976,6 +1093,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CalendarEventResponse[];
             return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1151,6 +1272,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ClassResponse[];
             return result200;
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -1199,6 +1324,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -1245,6 +1374,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ClassResponse;
             return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1373,6 +1506,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -1425,6 +1562,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1479,6 +1620,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -1529,6 +1674,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1585,6 +1734,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1643,6 +1796,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LocalityResponse[];
             return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1765,6 +1922,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -1814,6 +1975,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -1865,6 +2030,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -1909,6 +2078,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProvinceResponse[];
             return result200;
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -1949,6 +2122,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SchoolResponse;
             return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -2010,6 +2187,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -2054,6 +2235,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -2120,6 +2305,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -2169,6 +2358,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result400: any = null;
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -2415,6 +2608,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             let result404: any = null;
@@ -2468,6 +2665,10 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SubjectResponse[];
             return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
@@ -2715,7 +2916,9 @@ export interface AccountRegisterRequest {
     [key: string]: any;
 }
 
-export interface AccountResponse {
+export interface AccountSessionResponse {
+    accessToken: string;
+    expiresAt: Date;
     userId: string;
     fullName: string;
 
