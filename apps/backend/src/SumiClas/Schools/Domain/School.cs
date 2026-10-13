@@ -12,7 +12,7 @@ public sealed class School : AggregateRoot
     public string? Address { get; private set; }
     public string? Phone { get; private set; }
 
-    private School(
+    public School(
         Guid id,
         string name,
         string normalizedName,

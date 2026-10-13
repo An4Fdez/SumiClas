@@ -30,10 +30,19 @@ public sealed class Session : AggregateRoot
     {
     }
 
-    private Session(Guid id, Guid userId, DateTimeOffset createdAt) : base(id)
+    public Session(
+        Guid id,
+        Guid userId,
+        DateTimeOffset createdAt,
+        DateTimeOffset? revokedAt,
+        DateTimeOffset? lastRotatedAt,
+        IEnumerable<RefreshToken> refreshTokens) : base(id)
     {
         UserId = userId;
         CreatedAt = createdAt;
+        RevokedAt = revokedAt;
+        LastRotatedAt = lastRotatedAt;
+        _refreshTokens.AddRange(refreshTokens);
     }
 
     public static Result<Session> Create(Guid userId, string tokenHash, IClock clock)
@@ -49,8 +58,13 @@ public sealed class Session : AggregateRoot
             return Result<Session>.Failure(validation.Error!);
         }
 
-        var session = new Session(Guid.NewGuid(), userId, clock.UtcNow);
-        session._refreshTokens.Add(RefreshToken.Create(tokenHash, clock));
+        var session = new Session(
+            Guid.NewGuid(),
+            userId,
+            clock.UtcNow,
+            null,
+            null,
+            [RefreshToken.Create(tokenHash, clock)]);
         return Result<Session>.Success(session);
     }
 

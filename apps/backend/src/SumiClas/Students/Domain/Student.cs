@@ -9,10 +9,10 @@ public sealed class Student : AggregateRoot
 
     public StudentName Name { get; private set; }
 
-    private Student(Guid id, StudentName name, GuardianLink firstGuardian) : base(id)
+    public Student(Guid id, StudentName name, IEnumerable<GuardianLink> guardians) : base(id)
     {
         Name = name;
-        _guardians.Add(firstGuardian);
+        _guardians.AddRange(guardians);
     }
 
     /// <summary>EF Core materialization only — the real constructor takes firstGuardian, which doesn't map to a single property.</summary>
@@ -39,7 +39,7 @@ public sealed class Student : AggregateRoot
             return Result<Student>.Failure(guardianLink.Error!);
         }
 
-        var student = new Student(id, name, guardianLink.Value);
+        var student = new Student(id, name, [guardianLink.Value]);
         return Result<Student>.Success(student);
     }
 

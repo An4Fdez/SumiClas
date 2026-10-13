@@ -7,7 +7,7 @@ public sealed class Province : AggregateRoot
     public string Name { get; private set; }
     public string NormalizedName { get; private set; }
 
-    private Province(Guid id, string name, string normalizedName) : base(id)
+    public Province(Guid id, string name, string normalizedName) : base(id)
     {
         Name = name;
         NormalizedName = normalizedName;

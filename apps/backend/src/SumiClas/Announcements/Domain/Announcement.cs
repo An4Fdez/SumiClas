@@ -22,7 +22,7 @@ public sealed class Announcement : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    private Announcement(
+    public Announcement(
         Guid id,
         AnnouncementScope scope,
         Guid? classId,

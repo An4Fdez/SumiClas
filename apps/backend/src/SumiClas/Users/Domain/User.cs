@@ -14,12 +14,19 @@ public sealed class User : AggregateRoot
     public string PasswordHash { get; private set; }
     public DateTimeOffset PasswordChangedAt { get; private set; }
 
-    private User(Guid id, string fullName, Email email, string passwordHash, DateTimeOffset passwordChangedAt) : base(id)
+    public User(
+        Guid id,
+        string fullName,
+        Email email,
+        string passwordHash,
+        DateTimeOffset passwordChangedAt,
+        IEnumerable<ClassRoleAssignment> classRoles) : base(id)
     {
         FullName = fullName;
         Email = email;
         PasswordHash = passwordHash;
         PasswordChangedAt = passwordChangedAt;
+        _classRoles.AddRange(classRoles);
     }
 
     /// <summary>EF Core materialization only — constructor parameters can never bind to an owned-type navigation (Email), even when named to match.</summary>
@@ -38,7 +45,7 @@ public sealed class User : AggregateRoot
             return Result<User>.Failure(validation.Error!);
         }
 
-        return Result<User>.Success(new User(id, fullName.Trim(), email, passwordHash, clock.UtcNow));
+        return Result<User>.Success(new User(id, fullName.Trim(), email, passwordHash, clock.UtcNow, []));
     }
 
     private static Result Validate(Guid id, string fullName, string passwordHash)

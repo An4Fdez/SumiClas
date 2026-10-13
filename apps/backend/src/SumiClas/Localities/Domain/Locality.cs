@@ -8,7 +8,7 @@ public sealed class Locality : AggregateRoot
     public string Name { get; private set; }
     public string NormalizedName { get; private set; }
 
-    private Locality(Guid id, Guid provinceId, string name, string normalizedName) : base(id)
+    public Locality(Guid id, Guid provinceId, string name, string normalizedName) : base(id)
     {
         ProvinceId = provinceId;
         Name = name;

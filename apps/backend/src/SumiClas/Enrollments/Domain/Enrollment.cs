@@ -10,12 +10,19 @@ public sealed class Enrollment : AggregateRoot
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? ConfirmedAt { get; private set; }
 
-    private Enrollment(Guid id, Guid studentId, Guid classId, EnrollmentStatus status, IClock clock) : base(id)
+    public Enrollment(
+        Guid id,
+        Guid studentId,
+        Guid classId,
+        EnrollmentStatus status,
+        DateTimeOffset createdAt,
+        DateTimeOffset? confirmedAt) : base(id)
     {
         StudentId = studentId;
         ClassId = classId;
         Status = status;
-        CreatedAt = clock.UtcNow;
+        CreatedAt = createdAt;
+        ConfirmedAt = confirmedAt;
     }
 
     /// <summary>EF Core materialization only — the real constructor takes an IClock, which EF cannot bind.</summary>
@@ -32,10 +39,8 @@ public sealed class Enrollment : AggregateRoot
             return Result<Enrollment>.Failure(validation.Error!);
         }
 
-        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, clock)
-        {
-            ConfirmedAt = clock.UtcNow,
-        };
+        var now = clock.UtcNow;
+        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, now, now);
         return Result<Enrollment>.Success(enrollment);
     }
 
@@ -48,7 +53,7 @@ public sealed class Enrollment : AggregateRoot
             return Result<Enrollment>.Failure(validation.Error!);
         }
 
-        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Suggested, clock);
+        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Suggested, clock.UtcNow, null);
         return Result<Enrollment>.Success(enrollment);
     }
 

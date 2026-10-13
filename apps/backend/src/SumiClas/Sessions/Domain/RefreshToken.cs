@@ -15,17 +15,25 @@ public sealed class RefreshToken : Entity
     public DateTimeOffset? ReplacedAt { get; private set; }
     public Guid? ReplacedById { get; private set; }
 
-    private RefreshToken(Guid id, string tokenHash, DateTimeOffset createdAt, DateTimeOffset expiresAt) : base(id)
+    public RefreshToken(
+        Guid id,
+        string tokenHash,
+        DateTimeOffset createdAt,
+        DateTimeOffset expiresAt,
+        DateTimeOffset? replacedAt,
+        Guid? replacedById) : base(id)
     {
         TokenHash = tokenHash;
         CreatedAt = createdAt;
         ExpiresAt = expiresAt;
+        ReplacedAt = replacedAt;
+        ReplacedById = replacedById;
     }
 
     internal static RefreshToken Create(string tokenHash, IClock clock)
     {
         var now = clock.UtcNow;
-        return new RefreshToken(Guid.NewGuid(), tokenHash, now, now + Lifetime);
+        return new RefreshToken(Guid.NewGuid(), tokenHash, now, now + Lifetime, null, null);
     }
 
     public bool IsActive(IClock clock)

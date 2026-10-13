@@ -9,7 +9,7 @@ public sealed class PostalCode : AggregateRoot
     public Guid LocalityId { get; private set; }
     public string Code { get; private set; }
 
-    private PostalCode(Guid id, Guid localityId, string code) : base(id)
+    public PostalCode(Guid id, Guid localityId, string code) : base(id)
     {
         LocalityId = localityId;
         Code = code;
