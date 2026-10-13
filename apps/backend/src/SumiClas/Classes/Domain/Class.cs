@@ -8,7 +8,7 @@ public sealed class Class : AggregateRoot
     public Guid SchoolYearId { get; private set; }
     public string Name { get; private set; }
 
-    private Class(Guid id, Guid schoolYearId, string name) : base(id)
+    public Class(Guid id, Guid schoolYearId, string name) : base(id)
     {
         SchoolYearId = schoolYearId;
         Name = name;

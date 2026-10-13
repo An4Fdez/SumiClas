@@ -12,13 +12,19 @@ public sealed class SchoolYear : AggregateRoot
 
     public bool IsArchived => Status == SchoolYearStatus.Archived;
 
-    private SchoolYear(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate) : base(id)
+    public SchoolYear(
+        Guid id,
+        Guid schoolId,
+        string label,
+        DateOnly startDate,
+        DateOnly endDate,
+        SchoolYearStatus status) : base(id)
     {
         SchoolId = schoolId;
         Label = label;
         StartDate = startDate;
         EndDate = endDate;
-        Status = SchoolYearStatus.Active;
+        Status = status;
     }
 
     public static Result<SchoolYear> Create(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
@@ -29,7 +35,7 @@ public sealed class SchoolYear : AggregateRoot
             return Result<SchoolYear>.Failure(validation.Error!);
         }
 
-        var schoolYear = new SchoolYear(id, schoolId, label.Trim(), startDate, endDate);
+        var schoolYear = new SchoolYear(id, schoolId, label.Trim(), startDate, endDate, SchoolYearStatus.Active);
         return Result<SchoolYear>.Success(schoolYear);
     }
 
