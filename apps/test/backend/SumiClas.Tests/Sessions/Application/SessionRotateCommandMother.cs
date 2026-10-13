@@ -8,6 +8,4 @@ public static class SessionRotateCommandMother
         => new(refreshToken);
 
     public static SessionRotate.Command WithToken(string? refreshToken) => Create(refreshToken);
-
-    public static SessionRotate.Command Blank() => Create(null);
 }

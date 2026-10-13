@@ -5,7 +5,7 @@ Cubrir con tests unitarios los 42 casos de uso del backend que hoy no tienen nin
 
 ## Decisiones (usuario)
 - Solo se prueban casos de uso (más la infraestructura con lógica propia); el dominio se prueba a través de los casos de uso que lo alcanzan.
-- Clase `<CasoDeUso>Should`, métodos en `snake_case` describiendo el comportamiento, una carpeta por módulo (`<Modulo>/Application/`), un fixture por caso de uso con el test de su `Handler` en el mismo fichero.
+- Clase `<CasoDeUso>Should`, métodos en `snake_case` describiendo el comportamiento, una carpeta por módulo (`<Modulo>/Application/`), un fixture por caso de uso. **No se testean los `Handler`** (solo delegan; decisión expresa del usuario).
 - Siempre Object Mother para `Command`/`Query`/respuestas/entidades, excepto los que no tienen parámetros (se crean con `new`). Los Mothers de entidades llaman al constructor **completo y público** de la entidad, nunca a su `Create`. Un Mother solo expone lo que los tests usan.
 - Datos de relleno aleatorios o de Mother; los literales solo cuando son el comportamiento que se prueba. Los datos se declaran como variables locales de cada test, no como campos del fixture.
 - Los registros de `QueryBus`/`UserProvider` son helpers `Should...` llamados desde cada test (nunca desde `[SetUp]`); los de varios módulos van a `UnitTestCase`, los de un agregado a su módulo como extensión de `Mock<IQueryBus>`, los de un solo caso de uso quedan privados en su fixture.

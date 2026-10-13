@@ -13,7 +13,7 @@ public sealed class Subject : AggregateRoot
     public Guid ClassId { get; private set; }
     public string Label { get; private set; }
 
-    private Subject(Guid id, Guid classId, string label) : base(id)
+    public Subject(Guid id, Guid classId, string label) : base(id)
     {
         ClassId = classId;
         Label = label;

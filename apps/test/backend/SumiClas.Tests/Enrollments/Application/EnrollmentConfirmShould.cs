@@ -15,7 +15,6 @@ using SumiClas.Tests.Shared;
 public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
 {
     private readonly EnrollmentConfirm.Confirm _useCase;
-    private readonly EnrollmentConfirm.Handler _handler;
 
     public EnrollmentConfirmShould()
     {
@@ -23,7 +22,6 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.Clock.Object);
-        this._handler = new EnrollmentConfirm.Handler(this._useCase);
     }
 
     [Test]
@@ -137,6 +135,7 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
         this.ShouldReturn(enrollment, confirmedElsewhere);
         this.QueryBus.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.QueryBus.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, confirmedElsewhere.ClassId);
         this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -186,16 +185,6 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
 
         result.Error.Should().Be(EnrollmentErrors.NotFound);
         this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Result result = await this._handler.Handle(
-            EnrollmentConfirmCommandMother.WithEnrollmentId(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Error.Should().Be(EnrollmentErrors.NotFound);
     }
 
     private void ShouldResolveSchoolYearOf(Enrollment enrollment, Guid schoolYearId, params Guid[] otherClassIds)

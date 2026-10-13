@@ -19,7 +19,6 @@ using SumiClas.Tests.Students;
 public class EnrollmentCreateShould : EnrollmentsUnitTestCase
 {
     private readonly EnrollmentCreate.Create _useCase;
-    private readonly EnrollmentCreate.Handler _handler;
 
     public EnrollmentCreateShould()
     {
@@ -27,7 +26,6 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.Clock.Object);
-        this._handler = new EnrollmentCreate.Handler(this._useCase);
     }
 
     [Test]
@@ -144,6 +142,7 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         this.QueryBus.ShouldFindStudent(studentId);
         this.QueryBus.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.QueryBus.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
         this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldReturn(EnrollmentMother.Confirmed(studentId, classId));
 
@@ -250,16 +249,6 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
             EnrollmentCreateCommandMother.With(GuidMother.Random(), Guid.Empty, Guid.Empty));
 
         result.Error.Should().Be(EnrollmentErrors.StudentRequired);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Result result = await this._handler.Handle(
-            EnrollmentCreateCommandMother.With(Guid.Empty, GuidMother.Random(), GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Error.Should().Be(EnrollmentErrors.IdRequired);
     }
 
     private void ShouldResolveEnrollableStudentAndClass(

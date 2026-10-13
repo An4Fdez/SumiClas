@@ -2,6 +2,8 @@ namespace SumiClas.Tests.Users;
 
 using Moq;
 using SumiClas.Shared.Domain;
+using SumiClas.Tests.Classes;
+using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 using SumiClas.Users.Domain;
 
@@ -37,6 +39,12 @@ public abstract class UsersUnitTestCase : UnitTestCase
         => this.Repository
             .Setup(repository => repository.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
+
+    protected void ShouldResolveActiveClass(Guid classId, Guid schoolYearId)
+    {
+        this.QueryBus.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
+    }
 
     protected void ShouldHaveSaved(
         Guid id,

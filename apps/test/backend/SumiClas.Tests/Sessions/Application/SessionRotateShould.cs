@@ -7,9 +7,9 @@ using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Sessions.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Tests.Users;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Application;
-using SumiClas.Users.Domain;
 
 [TestFixture]
 public class SessionRotateShould : SessionsUnitTestCase
@@ -238,7 +238,7 @@ public class SessionRotateShould : SessionsUnitTestCase
             StringMother.Random("new"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
         this.ShouldReturn(session);
-        this.ShouldNotFindUser();
+        this.QueryBus.ShouldNotFindUser(userId);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
@@ -249,26 +249,8 @@ public class SessionRotateShould : SessionsUnitTestCase
         session.RefreshTokens.Should().HaveCount(1);
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        SessionRotate.Handler handler = new(this._useCase);
-
-        Result<SessionRotateOutcome> result = await handler.Handle(
-            SessionRotateCommandMother.Blank(),
-            CancellationToken.None);
-
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
-    }
-
     private static RefreshToken TokenOf(Session session, string raw)
         => session.RefreshTokens.Single(token => token.TokenHash == HashOf(raw));
-
-
-    private void ShouldNotFindUser()
-        => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
 
     private void ShouldIssueRotation(Guid userId, string fullName, string jwt, string newRaw)
     {

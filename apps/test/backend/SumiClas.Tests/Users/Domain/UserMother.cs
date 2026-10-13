@@ -27,4 +27,7 @@ public static class UserMother
 
     public static User Representative(Guid classId, string? fullName = null)
         => With(fullName: fullName, classRoles: [ClassRoleAssignmentMother.Representative(classId)]);
+
+    public static User Participant(Guid classId)
+        => With(classRoles: [ClassRoleAssignmentMother.Participant(classId)]);
 }

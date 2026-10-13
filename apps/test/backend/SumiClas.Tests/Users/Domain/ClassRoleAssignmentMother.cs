@@ -5,4 +5,6 @@ using SumiClas.Users.Domain;
 public static class ClassRoleAssignmentMother
 {
     public static ClassRoleAssignment Representative(Guid classId) => new(classId, ClassRoleType.ClassRepresentative);
+
+    public static ClassRoleAssignment Participant(Guid classId) => new(classId, ClassRoleType.Participant);
 }
