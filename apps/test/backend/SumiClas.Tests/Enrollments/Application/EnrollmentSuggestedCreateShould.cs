@@ -10,6 +10,7 @@ using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Enrollments.Domain;
+using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Domain;
 using SumiClas.Users.Application;
@@ -122,7 +123,7 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
         Error archived = ErrorMother.With(code: "SchoolYear.Archived");
-        this.ShouldResolveClasses(oldClassId, newClassId, newYearActive: Result.Failure(archived));
+        this.ShouldResolveClasses(oldClassId, newClassId, newYearError: archived);
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -247,14 +248,13 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         Guid? otherOldClassId = null,
         bool isRepresentative = true,
         bool inSameSchool = true,
-        Result? newYearActive = null)
+        Error? newYearError = null)
     {
         Guid schoolId = GuidMother.Random();
         Guid previousSchoolId = inSameSchool ? schoolId : GuidMother.Random();
         Guid oldYearId = GuidMother.Random();
         Guid newYearId = GuidMother.Random();
         Guid otherClassId = otherOldClassId ?? GuidMother.Random();
-        Result yearActive = newYearActive ?? Result.Success();
 
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.QueryBus
@@ -267,11 +267,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
                     otherClassId,
                     oldYearId,
                     newYearId))));
-        this.QueryBus
-            .Setup(bus => bus.Send(
-                It.Is<IQuery<Result>>(query => query is SchoolYearEnsureIsActive.Query),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(yearActive);
+        if (newYearError is null)
+        {
+            this.QueryBus.ShouldEnsureSchoolYearIsActive(newYearId);
+        }
+        else
+        {
+            this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(newYearId, newYearError);
+        }
+
         this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<IQuery<bool>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(isRepresentative);

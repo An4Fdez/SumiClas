@@ -14,6 +14,23 @@ public static class ClassesQueryBusExtensions
             .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
 
+    public static void ShouldFindClassInSchoolYear(this Mock<IQueryBus> queryBus, Guid classId, Guid schoolYearId)
+        => queryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+
+    public static void ShouldFindClassesOfSchoolYear(
+        this Mock<IQueryBus> queryBus,
+        Guid schoolYearId,
+        params Guid[] classIds)
+        => queryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(classIds.Select(classId => ClassResponseMother.With(classId, schoolYearId)).ToList());
+
     public static void ShouldNotFindClass(this Mock<IQueryBus> queryBus)
         => queryBus
             .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))

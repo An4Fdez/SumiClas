@@ -7,4 +7,7 @@ public static class StudentNameMother
 {
     public static StudentName Random()
         => StudentName.Create(StringMother.Random("First"), StringMother.Random("Surname"), null).Value;
+
+    public static StudentName With(string firstName, string firstSurname, string? secondSurname)
+        => StudentName.Create(firstName, firstSurname, secondSurname).Value;
 }

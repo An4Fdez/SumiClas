@@ -21,6 +21,10 @@ public abstract class EnrollmentsUnitTestCase : UnitTestCase
         this._added.Clear();
         this.Repository.Reset();
         this.Repository
+            .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken _)
+                => this._stored.FirstOrDefault(enrollment => enrollment.Id == id));
+        this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Enrollment>>(),
                 It.IsAny<CancellationToken>()))
