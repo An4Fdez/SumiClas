@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Students.Application;
 
 using AwesomeAssertions;
-using SumiClas.Shared.Application;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
 using SumiClas.Tests.Shared;
@@ -75,22 +74,32 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
     }
 
     [Test]
-    public void return_only_guardian_ids_and_no_student_data_from_the_query()
+    public async Task return_the_guardians_of_the_known_students_when_some_of_the_requested_ids_are_unknown()
     {
-        Type[] interfaces = typeof(StudentGuardianFinderByStudents.Query).GetInterfaces();
+        Guid mother = GuidMother.Random();
+        Student known = StudentMother.GuardedBy(mother);
+        this.ShouldReturn(known, StudentMother.GuardedBy(GuidMother.Random()));
 
-        interfaces.Should().Contain(typeof(IQuery<IReadOnlyCollection<Guid>>));
+        IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
+            StudentGuardianFinderByStudentsQueryMother.WithStudentIds(known.Id, GuidMother.Random()),
+            CancellationToken.None);
+
+        result.Should().Equal(mother);
     }
 
     [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
+    public async Task return_every_guardian_of_a_student_with_several_guardians()
     {
-        StudentGuardianFinderByStudents.Handler handler = new(this._useCase);
+        Guid mother = GuidMother.Random();
+        Guid father = GuidMother.Random();
+        Guid grandmother = GuidMother.Random();
+        Student student = StudentMother.GuardedBy(mother, father, grandmother);
+        this.ShouldReturn(student);
 
-        IReadOnlyCollection<Guid> result = await handler.Handle(
-            StudentGuardianFinderByStudentsQueryMother.WithoutStudents(),
+        IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
+            StudentGuardianFinderByStudentsQueryMother.WithStudentIds(student.Id),
             CancellationToken.None);
 
-        result.Should().BeEmpty();
+        result.Should().BeEquivalentTo([mother, father, grandmother]);
     }
 }

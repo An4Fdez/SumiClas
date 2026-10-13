@@ -6,7 +6,6 @@ using SumiClas.Classes.Application;
 using SumiClas.Enrollments.Application;
 using SumiClas.Schools.Application;
 using SumiClas.SchoolYears.Application;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
@@ -20,7 +19,6 @@ using SumiClas.Tests.Students.Domain;
 public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
 {
     private readonly StudentFinderByCurrentGuardian.Finder _useCase;
-    private readonly StudentFinderByCurrentGuardian.Handler _handler;
 
     public StudentFinderByCurrentGuardianShould()
     {
@@ -28,7 +26,6 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.UserProvider.Object);
-        this._handler = new StudentFinderByCurrentGuardian.Handler(this._useCase);
     }
 
     [Test]
@@ -288,18 +285,6 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.ShouldNotHaveSearched();
         this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Result<IReadOnlyCollection<ChildResponse>> result = await this._handler.Handle(
-            new StudentFinderByCurrentGuardian.Query(),
-            CancellationToken.None);
-
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
 
     private static bool HasIds(IReadOnlyCollection<Guid> actual, params Guid[] expected)

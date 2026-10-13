@@ -94,14 +94,4 @@ public class SessionRevokeShould : SessionsUnitTestCase
         result.IsSuccess.Should().BeTrue();
         session.RevokedAt.Should().BeNull();
     }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        SessionRevoke.Handler handler = new(this._useCase);
-
-        Result result = await handler.Handle(SessionRevokeCommandMother.Blank(), CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-    }
 }

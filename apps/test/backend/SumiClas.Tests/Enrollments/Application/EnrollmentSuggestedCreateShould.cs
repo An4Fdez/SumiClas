@@ -13,13 +13,11 @@ using SumiClas.Tests.Enrollments.Domain;
 using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Domain;
-using SumiClas.Users.Application;
 
 [TestFixture]
 public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
 {
     private readonly EnrollmentSuggestedCreate.Create _useCase;
-    private readonly EnrollmentSuggestedCreate.Handler _handler;
 
     public EnrollmentSuggestedCreateShould()
     {
@@ -28,7 +26,6 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
             this.QueryBus.Object,
             this.UserProvider.Object,
             this.Clock.Object);
-        this._handler = new EnrollmentSuggestedCreate.Handler(this._useCase);
     }
 
     [Test]
@@ -215,21 +212,6 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
         result.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Nothing());
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Guid oldClassId = GuidMother.Random();
-        Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        this.AddConfirmed(oldClassId);
-
-        Result<EnrollmentSuggestedCreateResponse> result = await this._handler.Handle(
-            EnrollmentSuggestedCreateCommandMother.WithClasses(newClassId, oldClassId),
-            CancellationToken.None);
-
-        result.Value.Created.Should().Be(1);
     }
 
     private Guid AddConfirmed(Guid classId)

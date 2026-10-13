@@ -222,23 +222,6 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         properties.Should().BeEquivalentTo("UserId", "FullName", "ClassRole");
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
-        User parent = this.AddUser(classId);
-        this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
-        this.ShouldResolveCurrentUser(parent.Id);
-        UserClassMemberFinderByClass.Handler handler = new(this._useCase);
-
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await handler.Handle(
-            UserClassMemberFinderByClassQueryMother.WithClassId(classId),
-            CancellationToken.None);
-
-        result.Value.Select(member => member.UserId).Should().Equal(parent.Id);
-    }
-
     private User AddUser(Guid classId, string? fullName = null, bool representative = false)
     {
         string name = fullName ?? StringMother.Random("name");

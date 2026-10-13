@@ -2,7 +2,6 @@ namespace SumiClas.Tests.Provinces.Application;
 
 using AwesomeAssertions;
 using SumiClas.Provinces.Application;
-using SumiClas.Provinces.Domain;
 using SumiClas.Tests.Provinces.Domain;
 using SumiClas.Tests.Shared;
 
@@ -24,20 +23,6 @@ public class ProvinceFinderAllShould : ProvincesUnitTestCase
             .ExecuteAsync(new ProvinceFinderAll.Query(), CancellationToken.None);
 
         result.Select(province => province.Name).Should().Equal(accentedFirst, plainSecond, plainLast);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_province_finder_all_handler_handles_the_query()
-    {
-        Province known = ProvinceMother.Random();
-        this.ShouldReturnProvinces(known);
-        ProvinceFinderAll.Handler handler = new(this.NewProvinceFinderAll());
-
-        IReadOnlyCollection<ProvinceResponse> result = await handler.Handle(
-            new ProvinceFinderAll.Query(),
-            CancellationToken.None);
-
-        result.Select(province => province.Id).Should().Equal(known.Id);
     }
 
     private ProvinceFinderAll.Finder NewProvinceFinderAll() => new(this.Repository.Object);

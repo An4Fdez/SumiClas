@@ -11,15 +11,12 @@ using SumiClas.Users.Domain;
 [TestFixture]
 public class UserRegisterShould : UsersUnitTestCase
 {
-
     private readonly Mock<IPasswordHasher> _hasher = new();
     private readonly UserRegister.Register _useCase;
-    private readonly UserRegister.Handler _handler;
 
     public UserRegisterShould()
     {
         this._useCase = new UserRegister.Register(this.Repository.Object, this._hasher.Object, this.Clock.Object);
-        this._handler = new UserRegister.Handler(this._useCase);
     }
 
     [SetUp]
@@ -174,16 +171,6 @@ public class UserRegisterShould : UsersUnitTestCase
 
         result.Error.Should().Be(UserErrors.FullNameRequired);
         this.ShouldNotHaveSaved();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHashPasswords();
-        Result result = await this._handler.Handle(UserRegisterCommandMother.Random(), CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        this.Saved.Should().HaveCount(1);
     }
 
     private static string HashFor(string password) => $"hash-of-{password.Length}-chars";

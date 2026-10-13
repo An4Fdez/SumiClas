@@ -8,6 +8,4 @@ public static class SessionRevokeCommandMother
         => new(refreshToken);
 
     public static SessionRevoke.Command WithToken(string? refreshToken) => Create(refreshToken);
-
-    public static SessionRevoke.Command Blank() => Create(null);
 }

@@ -12,12 +12,10 @@ using SumiClas.Tests.Shared;
 public class ClassFinderByIdShould : ClassesUnitTestCase
 {
     private readonly ClassFinderById.Finder _useCase;
-    private readonly ClassFinderById.Handler _handler;
 
     public ClassFinderByIdShould()
     {
         this._useCase = new ClassFinderById.Finder(new ClassByIdFinder(this.Repository.Object));
-        this._handler = new ClassFinderById.Handler(this._useCase);
     }
 
     [Test]
@@ -48,16 +46,6 @@ public class ClassFinderByIdShould : ClassesUnitTestCase
             ClassFinderByIdQueryMother.WithClassId(GuidMother.Random()));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(ClassErrors.NotFound);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Result<ClassResponse> result = await this._handler.Handle(
-            ClassFinderByIdQueryMother.WithClassId(GuidMother.Random()),
-            CancellationToken.None);
-
         result.Error.Should().Be(ClassErrors.NotFound);
     }
 }

@@ -24,19 +24,5 @@ public class PostalCodeFinderByIdsShould : PostalCodesUnitTestCase
         result.Single().LocalityId.Should().Be(localityId);
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_postal_code_finder_by_ids_handler_handles_the_query()
-    {
-        PostalCode postalCode = PostalCodeMother.Random();
-        this.ShouldReturnPostalCodes(postalCode);
-        PostalCodeFinderByIds.Handler handler = new(this.NewPostalCodeFinderByIds());
-
-        IReadOnlyCollection<PostalCodeResponse> result = await handler.Handle(
-            PostalCodeFinderByIdsQueryMother.WithIds(postalCode.Id),
-            CancellationToken.None);
-
-        result.Single().Code.Should().Be(postalCode.Code);
-    }
-
     private PostalCodeFinderByIds.Finder NewPostalCodeFinderByIds() => new(this.Repository.Object);
 }

@@ -21,8 +21,8 @@ Cubrir con tests unitarios los 42 casos de uso del backend que hoy no tienen nin
 ## Tareas
 Cada tarea cierra con un commit con evidencia (build, `dotnet test`, mutación, estabilidad con orden aleatorio, greps de estilo).
 - [x] T1 `Classes` (ClassCreate, ClassFinderById, ClassFinderByIds, ClassFinderBySchoolYear, ClassRename) y `SchoolYears` (SchoolYearArchive, SchoolYearCreate, SchoolYearEnsureIsActive, SchoolYearFinderByIds, SchoolYearFinderBySchool). Ruta: delegada, un escritor. Hecha (commit `73a50f0`): 74 tests nuevos, cobertura 100 % de `Application` y `Domain` de ambos módulos; constructores públicos en `Class` y `SchoolYear`.
-- [ ] T2 `Enrollments` (EnrollmentCreate, EnrollmentConfirm, EnrollmentFinderByClass, EnrollmentFinderByStudents) y `Students` (StudentRegister, StudentFinderById, StudentFinderByCurrentGuardian, StudentGuardianAdd, StudentGuardianRemove). Ruta: delegada.
-- [ ] T3 `Users` (UserClassRepresentativeAssign, UserClassRepresentativeResign) y `Subjects` (SubjectCreate, SubjectFinderByClass, SubjectFinderById). Ruta: delegada.
+- [x] T2 `Enrollments` (EnrollmentCreate, EnrollmentConfirm, EnrollmentFinderByClass, EnrollmentFinderByStudents) y `Students` (StudentRegister, StudentFinderById, StudentFinderByCurrentGuardian, StudentGuardianAdd, StudentGuardianRemove). Ruta: delegada. Hecha (commit `ab7ba5f`).
+- [x] T3 `Users` (UserClassRepresentativeAssign, UserClassRepresentativeResign) y `Subjects` (SubjectCreate, SubjectFinderByClass, SubjectFinderById). Ruta: delegada. Hecha (commit `2ff6c9e`).
 - [ ] T4 `Announcements` (AnnouncementCreate, AnnouncementReadMark) y `CalendarEvents` (CalendarEventCreate, CalendarEventBirthdayCreate, CalendarEventFinderByClass, CalendarEventFinderById, CalendarEventFinderByIds). Ruta: delegada.
 - [ ] T5 `Assignments` (AssignmentCreate, AssignmentCommentAdd, AssignmentFinderByClass) y `ClassExpenses` (ClassExpenseCreate, ClassExpenseFinderByClass, ClassExpensePaidMark, ClassExpenseUnpaidMark). Ruta: delegada.
 - [ ] T6 `LostItems` (LostItemCreate, LostItemFinderByClass, LostItemRecoveredMark, LostItemNotRecoveredMark). Ruta: delegada.
@@ -37,6 +37,22 @@ Cada tarea cierra con un commit con evidencia (build, `dotnet test`, mutación, 
 ## Progreso y evidencia
 - Línea base (2026-10-13): 283 tests en verde; 22 de 64 casos de uso con test; cobertura global de líneas ~29 % (sin código generado).
 - Tras T1: 357 tests. Tras T2: 457 tests (Enrollments y Students: cobertura de Application 96,6 % y 96,9 %).
+- Tras T3: 502. Tras quitar los tests de `Handler` y cubrir 4 casos de uso de `Users` más: ver el commit siguiente.
+
+## Hallazgos (comportamiento actual, probado tal cual y sin corregir)
+Se acumulan al terminar cada tarea; el resumen final se entrega al usuario al cerrar T7.
+- **Autorización ausente** (hueco ya apuntado en `apps/backend/AGENTS.md`): cualquier usuario autenticado puede archivar un curso (`SchoolYearArchive`), crear cursos (`SchoolYearCreate`), crear y renombrar clases (`ClassCreate`, `ClassRename`), matricular y confirmar a cualquier alumno (`EnrollmentCreate`, `EnrollmentConfirm`, que ni siquiera usan `IUserProvider`) y crear o listar asignaturas de cualquier clase (`SubjectCreate`, `SubjectFinderByClass`).
+- **Delegado de clase:** `UserClassRepresentativeAssign` no exige que el destinatario pertenezca a la clase; comprueba que quien actúa es delegado antes de comprobar que el destinatario existe (un no delegado recibe 403 aunque no exista); `UserClassRepresentativeResign` no tiene control de concurrencia (dos dimisiones simultáneas podrían dejar la clase sin delegado).
+- **Estados y roles numéricos:** `Enum.TryParse` acepta `"0"`/`"1"` como valores válidos en `SchoolYearFinderBySchool` (estado) y `"1"` como rol en `StudentRegister` y `StudentGuardianAdd`; solo se rechazan los números sin valor definido.
+- **Orden de validaciones** (documentado con tests): `ClassRename` comprueba el curso activo antes que el nombre; `SchoolYearCreate` comprueba el colegio antes que los datos; `SchoolYearFinderBySchool` valida el estado antes que el colegio.
+- **Sin validación de duplicados:** `SubjectCreate` permite repetir la misma asignatura en una clase.
+- **Ordenación sensible a la cultura del servidor:** `StudentFinderByCurrentGuardian` (por nombre) y `SubjectFinderByClass` (por etiqueta) usan el comparador de cadenas por defecto; además `StudentFinderByCurrentGuardian` expone `FirstSurname[..1] + "."` sin normalizar mayúsculas.
+- **Filtros por ids:** una colección vacía devuelve vacío, pero `null` en `UserSpecification(ids: null)` devolvería todos los usuarios (`UserFinderByIds`, `UserClassMemberFinderByIds`; la query no admite `null`, así que no hay guarda); el orden del resultado es el que devuelve el repositorio, no el de los ids pedidos.
+- **Código inalcanzable:** una rama de `Student.Register` (`GuardianLink.Create` no puede fallar tras `Validate`) y la rama `Guid.Empty` de `StudentGuardianAdd` (solo se alcanza simulando el buscador de usuarios).
+- **Constructores públicos de las entidades** (decisión del usuario para los Mothers): permiten construir entidades sin pasar por la validación de sus factorías; las revisiones nativas lo señalaron como WARNING en `Class`, `SchoolYear`, `Student`, `Subject`... Alternativa propuesta por la revisión: `internal` + `InternalsVisibleTo`.
+- **Lectura de EF sin probar:** `SchoolYear`, `Enrollment`, `Student`, `RefreshToken` y otras entidades tienen ahora un constructor público con todo el estado que EF podría usar para materializar; el modelo no cambia, pero ninguna prueba lee filas reales (falta TestContainers).
+- **Cobertura retirada por decisión del usuario:** las factorías `School.Create`, `Province.Create`, `Locality.Create`, `PostalCode.Create` (solo las usa el importador), igualdad y `ToString` de `Password`, idempotencia de `TextNormalizer`, `Pagination.ByDate`.
+- **De proceso:** se habían conservado 54 tests de `Handler` heredados y se habían replicado en tests nuevos, contra lo que el usuario había indicado; retirados, y 4 casos de uso que solo tenían ese test pasan a estar cubiertos de verdad.
 
 ## Siguiente paso
-T2 (ya escrita, pendiente de commit), después T3.
+T4. Antes, en el commit en curso: quitar los 39 tests de `Handler` que quedaban y cubrir de verdad `UserFinderById`, `UserFinderByIds`, `UserClassMemberFinderByIds` y `UserIsClassRepresentative` (solo tenían el test del `Handler`; el inventario inicial los daba por cubiertos solo porque existía el fichero).

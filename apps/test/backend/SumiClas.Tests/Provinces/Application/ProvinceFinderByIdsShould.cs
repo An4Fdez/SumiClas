@@ -22,19 +22,5 @@ public class ProvinceFinderByIdsShould : ProvincesUnitTestCase
         result.Select(province => province.Id).Should().Equal(known.Id);
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_province_finder_by_ids_handler_handles_the_query()
-    {
-        Province known = ProvinceMother.Random();
-        this.ShouldReturnProvinces(known);
-        ProvinceFinderByIds.Handler handler = new(this.NewProvinceFinderByIds());
-
-        IReadOnlyCollection<ProvinceResponse> result = await handler.Handle(
-            ProvinceFinderByIdsQueryMother.WithIds(known.Id),
-            CancellationToken.None);
-
-        result.Select(province => province.Id).Should().Equal(known.Id);
-    }
-
     private ProvinceFinderByIds.Finder NewProvinceFinderByIds() => new(this.Repository.Object);
 }

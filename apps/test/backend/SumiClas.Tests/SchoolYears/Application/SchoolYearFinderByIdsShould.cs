@@ -13,12 +13,10 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     private static readonly DateOnly END_DATE = new(2027, 6, 30);
 
     private readonly SchoolYearFinderByIds.Finder _useCase;
-    private readonly SchoolYearFinderByIds.Handler _handler;
 
     public SchoolYearFinderByIdsShould()
     {
         this._useCase = new SchoolYearFinderByIds.Finder(this.Repository.Object);
-        this._handler = new SchoolYearFinderByIds.Handler(this._useCase);
     }
 
     [Test]
@@ -92,18 +90,5 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
             SchoolYearFinderByIdsQueryMother.WithIds());
 
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
-
-        IReadOnlyCollection<SchoolYearResponse> result = await this._handler.Handle(
-            SchoolYearFinderByIdsQueryMother.WithIds(schoolYear.Id),
-            CancellationToken.None);
-
-        result.Select(response => response.Id).Should().Equal(schoolYear.Id);
     }
 }

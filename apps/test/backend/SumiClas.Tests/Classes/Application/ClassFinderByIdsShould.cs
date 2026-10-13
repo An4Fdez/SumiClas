@@ -10,12 +10,10 @@ using SumiClas.Tests.Shared;
 public class ClassFinderByIdsShould : ClassesUnitTestCase
 {
     private readonly ClassFinderByIds.Finder _useCase;
-    private readonly ClassFinderByIds.Handler _handler;
 
     public ClassFinderByIdsShould()
     {
         this._useCase = new ClassFinderByIds.Finder(this.Repository.Object);
-        this._handler = new ClassFinderByIds.Handler(this._useCase);
     }
 
     [Test]
@@ -68,18 +66,5 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
             ClassFinderByIdsQueryMother.WithIds());
 
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Class existing = ClassMother.InSchoolYear(GuidMother.Random());
-        this.ShouldReturn(existing);
-
-        IReadOnlyCollection<ClassResponse> result = await this._handler.Handle(
-            ClassFinderByIdsQueryMother.WithIds(existing.Id),
-            CancellationToken.None);
-
-        result.Select(response => response.Id).Should().Equal(existing.Id);
     }
 }

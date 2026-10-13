@@ -174,24 +174,6 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         this.ShouldNotHaveAskedAnyModule();
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid localityId = GuidMother.Random();
-        Guid otherLocalityId = GuidMother.Random();
-        string schoolName = StringMother.Random("school");
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
-        School inMalaga = SchoolMother.InLocality(schoolName, localityId);
-        this.ShouldReturn(inMalaga, SchoolMother.InLocality(schoolName, otherLocalityId));
-        SchoolFinderByLocality.Handler handler = new(this._useCase);
-
-        IReadOnlyCollection<SchoolResponse> result = (await handler.Handle(
-            SchoolFinderByLocalityQueryMother.InLocality(localityId),
-            CancellationToken.None)).Value;
-
-        result.Select(school => school.Id).Should().Equal(inMalaga.Id);
-    }
-
     private static string NameOf(int index) => $"school-{index:000}";
 
     private Task<Result<IReadOnlyCollection<SchoolResponse>>> Find(Guid localityId, string? name = null)

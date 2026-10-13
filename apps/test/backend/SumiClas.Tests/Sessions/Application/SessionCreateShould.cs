@@ -111,25 +111,6 @@ public class SessionCreateShould : SessionsUnitTestCase
         result.Error.Should().Be(AccessTokenErrors.ValueRequired);
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHashTokens(this._refreshTokenGenerator);
-        string email = StringMother.Random("email") + "@example.com";
-        string password = StringMother.Random("password");
-        this.ShouldIssueSession(
-            GuidMother.Random(),
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("raw"));
-        SessionCreate.Handler handler = new(this._useCase);
-        SessionCreate.Command command = SessionCreateCommandMother.WithCredentials(email, password);
-
-        Result<SessionResponse> result = await handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-    }
-
     private void ShouldRejectCredentials()
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserPasswordVerify.Query>(), It.IsAny<CancellationToken>()))

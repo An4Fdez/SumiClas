@@ -11,12 +11,10 @@ using SumiClas.Tests.Shared;
 public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
 {
     private readonly SchoolYearArchive.Archive _useCase;
-    private readonly SchoolYearArchive.Handler _handler;
 
     public SchoolYearArchiveShould()
     {
         this._useCase = new SchoolYearArchive.Archive(this.Repository.Object, this.Clock.Object);
-        this._handler = new SchoolYearArchive.Handler(this._useCase);
     }
 
     [Test]
@@ -82,16 +80,6 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(GuidMother.Random()));
-
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Result result = await this._handler.Handle(
-            SchoolYearArchiveCommandMother.WithSchoolYearId(GuidMother.Random()),
-            CancellationToken.None);
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
     }

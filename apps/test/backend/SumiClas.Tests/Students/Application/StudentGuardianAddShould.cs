@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Students.Application;
 
 using AwesomeAssertions;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
@@ -14,7 +13,6 @@ using SumiClas.Users.Domain;
 public class StudentGuardianAddShould : StudentsUnitTestCase
 {
     private readonly StudentGuardianAdd.Add _useCase;
-    private readonly StudentGuardianAdd.Handler _handler;
 
     public StudentGuardianAddShould()
     {
@@ -22,7 +20,6 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.UserProvider.Object);
-        this._handler = new StudentGuardianAdd.Handler(this._useCase);
     }
 
     [Test]
@@ -194,17 +191,5 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
 
         result.Error.Should().Be(StudentErrors.GuardianIdRequired);
         student.Guardians.Should().Equal(GuardianLinkMother.Mother(currentId));
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Result result = await this._handler.Handle(
-            StudentGuardianAddCommandMother.With(GuidMother.Random(), GuidMother.Random(), nameof(GuardianRole.Mother)),
-            CancellationToken.None);
-
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
 }

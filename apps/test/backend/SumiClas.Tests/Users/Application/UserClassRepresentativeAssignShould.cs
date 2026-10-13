@@ -3,7 +3,6 @@ namespace SumiClas.Tests.Users.Application;
 using AwesomeAssertions;
 using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes;
 using SumiClas.Tests.SchoolYears;

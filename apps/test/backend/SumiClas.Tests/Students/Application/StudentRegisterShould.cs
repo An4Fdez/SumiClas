@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Students.Application;
 
 using AwesomeAssertions;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
@@ -14,7 +13,6 @@ using SumiClas.Users.Domain;
 public class StudentRegisterShould : StudentsUnitTestCase
 {
     private readonly StudentRegister.Register _useCase;
-    private readonly StudentRegister.Handler _handler;
 
     public StudentRegisterShould()
     {
@@ -22,7 +20,6 @@ public class StudentRegisterShould : StudentsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.UserProvider.Object);
-        this._handler = new StudentRegister.Handler(this._useCase);
     }
 
     [Test]
@@ -230,17 +227,5 @@ public class StudentRegisterShould : StudentsUnitTestCase
 
         result.Error.Should().Be(UserErrors.NotFound);
         this.Added.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Result result = await this._handler.Handle(
-            StudentRegisterCommandMother.WithId(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
 }

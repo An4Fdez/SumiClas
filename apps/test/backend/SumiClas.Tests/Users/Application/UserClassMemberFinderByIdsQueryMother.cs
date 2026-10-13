@@ -4,6 +4,5 @@ using SumiClas.Users.Application;
 
 public static class UserClassMemberFinderByIdsQueryMother
 {
-    public static UserClassMemberFinderByIds.Query WithUserIds(Guid classId, params Guid[] userIds)
-        => new(classId, userIds);
+    public static UserClassMemberFinderByIds.Query With(Guid classId, params Guid[] userIds) => new(classId, userIds);
 }

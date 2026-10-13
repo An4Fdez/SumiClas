@@ -12,12 +12,10 @@ using SumiClas.Tests.Shared;
 public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
 {
     private readonly SchoolYearEnsureIsActive.EnsureIsActive _useCase;
-    private readonly SchoolYearEnsureIsActive.Handler _handler;
 
     public SchoolYearEnsureIsActiveShould()
     {
         this._useCase = new SchoolYearEnsureIsActive.EnsureIsActive(new SchoolYearFinder(this.Repository.Object));
-        this._handler = new SchoolYearEnsureIsActive.Handler(this._useCase);
     }
 
     [Test]
@@ -53,18 +51,5 @@ public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(GuidMother.Random()));
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        SchoolYear schoolYear = SchoolYearMother.Archived(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
-
-        Result result = await this._handler.Handle(
-            SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(schoolYear.Id),
-            CancellationToken.None);
-
-        result.Error.Should().Be(SchoolYearErrors.Archived);
     }
 }

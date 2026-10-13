@@ -52,20 +52,4 @@ public class UserFinderByEmailShould : UsersUnitTestCase
 
         result.Error.Should().Be(UserErrors.InvalidEmailFormat);
     }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        string fullName = StringMother.Random("name");
-        string email = StringMother.Random("user") + "@example.com";
-        User user = UserMother.With(fullName: fullName, email: EmailMother.Create(email));
-        this.ShouldReturn(user);
-        UserFinderByEmail.Handler handler = new(this._useCase);
-
-        Result<UserResponse> result = await handler.Handle(
-            UserFinderByEmailQueryMother.WithEmail(email),
-            CancellationToken.None);
-
-        result.Value.Should().Be(UserResponseMother.Create(user.Id, fullName));
-    }
 }

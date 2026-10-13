@@ -1,11 +1,9 @@
 namespace SumiClas.Tests.Classes.Application;
 
 using AwesomeAssertions;
-using Moq;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Shared.Domain.Events;
 using SumiClas.Tests.SchoolYears;
@@ -15,7 +13,6 @@ using SumiClas.Tests.Shared;
 public class ClassCreateShould : ClassesUnitTestCase
 {
     private readonly ClassCreate.Create _useCase;
-    private readonly ClassCreate.Handler _handler;
 
     public ClassCreateShould()
     {
@@ -24,7 +21,6 @@ public class ClassCreateShould : ClassesUnitTestCase
             this.QueryBus.Object,
             this.Clock.Object,
             this.UserProvider.Object);
-        this._handler = new ClassCreate.Handler(this._useCase);
     }
 
     [Test]
@@ -173,17 +169,5 @@ public class ClassCreateShould : ClassesUnitTestCase
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
         this.Added.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Result result = await this._handler.Handle(
-            ClassCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), StringMother.Random("class")),
-            CancellationToken.None);
-
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
 }

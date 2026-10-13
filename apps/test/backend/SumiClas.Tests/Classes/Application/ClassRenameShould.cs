@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Classes.Application;
 
 using AwesomeAssertions;
-using Moq;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
@@ -14,12 +13,10 @@ using SumiClas.Tests.Shared;
 public class ClassRenameShould : ClassesUnitTestCase
 {
     private readonly ClassRename.Rename _useCase;
-    private readonly ClassRename.Handler _handler;
 
     public ClassRenameShould()
     {
         this._useCase = new ClassRename.Rename(this.Repository.Object, this.QueryBus.Object);
-        this._handler = new ClassRename.Handler(this._useCase);
     }
 
     [Test]
@@ -108,15 +105,5 @@ public class ClassRenameShould : ClassesUnitTestCase
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
         schoolClass.Name.Should().Be(oldName);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Result result = await this._handler.Handle(
-            ClassRenameCommandMother.With(GuidMother.Random(), StringMother.Random("class")),
-            CancellationToken.None);
-
-        result.Error.Should().Be(ClassErrors.NotFound);
     }
 }

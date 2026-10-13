@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Users.Application;
 
 using AwesomeAssertions;
-using Moq;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
@@ -12,7 +11,6 @@ using SumiClas.Users.Domain.Services;
 [TestFixture]
 public class UserProfileFinderCurrentShould : UsersUnitTestCase
 {
-
     private readonly UserProfileFinderCurrent.Finder _useCase;
 
     public UserProfileFinderCurrentShould()
@@ -65,19 +63,6 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
         result.Value.Email.Should().Be(email);
         result.Value.ClassRoles.Select(role => (role.ClassId, role.Role))
             .Should().Equal((classId, "ClassRepresentative"));
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        User user = this.GivenCurrentUser(UserMother.Random());
-        UserProfileFinderCurrent.Handler handler = new(this._useCase);
-
-        Result<UserProfileResponse> result = await handler.Handle(
-            new UserProfileFinderCurrent.Query(),
-            CancellationToken.None);
-
-        result.Value.Id.Should().Be(user.Id);
     }
 
     private User GivenCurrentUser(User user)

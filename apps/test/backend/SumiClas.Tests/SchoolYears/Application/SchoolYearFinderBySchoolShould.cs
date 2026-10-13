@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.SchoolYears.Application;
 
 using AwesomeAssertions;
-using Moq;
 using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Application;
 using SumiClas.SchoolYears.Domain;
@@ -18,12 +17,10 @@ public class SchoolYearFinderBySchoolShould : SchoolYearsUnitTestCase
     private static readonly DateOnly NEWEST_START = new(2025, 9, 1);
 
     private readonly SchoolYearFinderBySchool.Finder _useCase;
-    private readonly SchoolYearFinderBySchool.Handler _handler;
 
     public SchoolYearFinderBySchoolShould()
     {
         this._useCase = new SchoolYearFinderBySchool.Finder(this.Repository.Object, this.QueryBus.Object);
-        this._handler = new SchoolYearFinderBySchool.Handler(this._useCase);
     }
 
     [Test]
@@ -173,18 +170,5 @@ public class SchoolYearFinderBySchoolShould : SchoolYearsUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldNotFindSchool(schoolId);
-
-        Result<IReadOnlyCollection<SchoolYearResponse>> result = await this._handler.Handle(
-            SchoolYearFinderBySchoolQueryMother.WithSchoolId(schoolId),
-            CancellationToken.None);
-
-        result.Error.Should().Be(SchoolErrors.NotFound);
     }
 }

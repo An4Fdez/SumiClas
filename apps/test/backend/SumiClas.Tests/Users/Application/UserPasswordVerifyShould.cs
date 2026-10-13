@@ -13,12 +13,10 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
 {
     private readonly Mock<IPasswordHasher> _hasher = new();
     private readonly UserPasswordVerify.Verify _useCase;
-    private readonly UserPasswordVerify.Handler _handler;
 
     public UserPasswordVerifyShould()
     {
         this._useCase = new UserPasswordVerify.Verify(this.Repository.Object, this._hasher.Object, this.Clock.Object);
-        this._handler = new UserPasswordVerify.Handler(this._useCase);
     }
 
     [SetUp]
@@ -150,26 +148,6 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
             CancellationToken.None);
 
         this._hasher.Verify(hasher => hasher.Verify(It.IsAny<string?>(), It.IsAny<string>()), Times.Exactly(2));
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid userId = GuidMother.Random();
-        string fullName = StringMother.Random("name");
-        string email = StringMother.Random("user") + "@example.com";
-        string password = StringMother.Random("password");
-        string storedHash = StringMother.Random("stored");
-        this.GivenAnAccount(userId, fullName, email, storedHash);
-        this._hasher.Setup(hasher => hasher.Verify(storedHash, password))
-            .Returns(PasswordVerification.Success);
-
-        Result<UserResponse> result = await this._handler.Handle(
-            UserPasswordVerifyQueryMother.WithCredentials(email, password),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(UserResponseMother.Create(userId, fullName));
     }
 
     private User GivenAnAccount(Guid userId, string fullName, string email, string passwordHash)

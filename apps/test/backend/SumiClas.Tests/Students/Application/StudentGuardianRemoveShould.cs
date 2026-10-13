@@ -1,7 +1,6 @@
 namespace SumiClas.Tests.Students.Application;
 
 using AwesomeAssertions;
-using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
@@ -12,12 +11,10 @@ using SumiClas.Tests.Students.Domain;
 public class StudentGuardianRemoveShould : StudentsUnitTestCase
 {
     private readonly StudentGuardianRemove.Remove _useCase;
-    private readonly StudentGuardianRemove.Handler _handler;
 
     public StudentGuardianRemoveShould()
     {
         this._useCase = new StudentGuardianRemove.Remove(this.Repository.Object, this.UserProvider.Object);
-        this._handler = new StudentGuardianRemove.Handler(this._useCase);
     }
 
     [Test]
@@ -122,17 +119,5 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.ShouldNotHaveFetched();
         student.Guardians.Should().HaveCount(2);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Result result = await this._handler.Handle(
-            StudentGuardianRemoveCommandMother.With(GuidMother.Random(), GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
 }

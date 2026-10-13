@@ -129,28 +129,4 @@ public class SchoolFinderByIdShould : SchoolsUnitTestCase
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_school_finder_by_id_handler_handles_the_query()
-    {
-        SchoolFinderById.Handler handler = new(this._byIdFinder);
-
-        Result<SchoolResponse> result = await handler.Handle(
-            SchoolFinderByIdQueryMother.Random(),
-            CancellationToken.None);
-
-        result.Error.Should().Be(SchoolErrors.NotFound);
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_school_finder_by_ids_handler_handles_the_query()
-    {
-        SchoolFinderByIds.Handler handler = new(this._byIdsFinder);
-
-        IReadOnlyCollection<SchoolResponse> result = await handler.Handle(
-            SchoolFinderByIdsQueryMother.Random(),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
 }

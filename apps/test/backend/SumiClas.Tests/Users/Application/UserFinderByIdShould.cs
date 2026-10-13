@@ -11,24 +11,48 @@ using SumiClas.Users.Domain.Services;
 [TestFixture]
 public class UserFinderByIdShould : UsersUnitTestCase
 {
-    private readonly UserFinderById.Handler _handler;
+    private readonly UserFinderById.Finder _useCase;
 
     public UserFinderByIdShould()
     {
-        this._handler = new UserFinderById.Handler(new UserFinderById.Finder(new UserFinder(this.Repository.Object)));
+        this._useCase = new UserFinderById.Finder(new UserFinder(this.Repository.Object));
     }
 
     [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
+    public async Task return_only_the_id_and_the_name_of_the_user()
     {
         string fullName = StringMother.Random("name");
         User user = UserMother.WithName(fullName);
         this.ShouldFind(user);
 
-        Result<UserResponse> result = await this._handler.Handle(
+        Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdQueryMother.WithUserId(user.Id),
             CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(UserResponseMother.Create(user.Id, fullName));
+    }
+
+    [Test]
+    public async Task return_not_found_when_the_user_does_not_exist()
+    {
+        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+            UserFinderByIdQueryMother.WithUserId(GuidMother.Random()),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(UserErrors.NotFound);
+    }
+
+    [Test]
+    public async Task return_not_found_for_an_id_other_than_the_one_that_exists()
+    {
+        this.ShouldFind(UserMother.Random());
+
+        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+            UserFinderByIdQueryMother.WithUserId(GuidMother.Random()),
+            CancellationToken.None);
+
+        result.Error.Should().Be(UserErrors.NotFound);
     }
 }

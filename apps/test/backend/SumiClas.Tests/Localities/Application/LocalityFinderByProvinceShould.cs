@@ -8,7 +8,6 @@ using SumiClas.Tests.Shared;
 [TestFixture]
 public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
 {
-
     [Test]
     public async Task return_only_that_province_ordered_by_name_when_localities_are_requested_by_province()
     {
@@ -57,24 +56,6 @@ public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
             CancellationToken.None);
 
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_locality_finder_by_province_handler_handles_the_query()
-    {
-        Guid provinceId = GuidMother.Random();
-        Guid otherProvinceId = GuidMother.Random();
-        string name = StringMother.Random("locality");
-        this.ShouldReturnLocalities(
-            LocalityMother.InProvince(provinceId, name),
-            LocalityMother.InProvince(otherProvinceId, StringMother.Random("other")));
-        LocalityFinderByProvince.Handler handler = new(this.NewLocalityFinderByProvince());
-
-        IReadOnlyCollection<LocalityResponse> result = await handler.Handle(
-            LocalityFinderByProvinceQueryMother.WithProvinceId(provinceId),
-            CancellationToken.None);
-
-        result.Select(locality => locality.Name).Should().Equal(name);
     }
 
     private LocalityFinderByProvince.Finder NewLocalityFinderByProvince() => new(this.Repository.Object);

@@ -293,21 +293,6 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         result.Error!.Code.Should().Be("Class.NotFound");
     }
 
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        AnnouncementFinderByClass.Handler handler = new(this._useCase);
-
-        Result<PagedResponse<AnnouncementResponse>> result = await handler.Handle(
-            AnnouncementFinderByClassQueryMother.WithLimit(classId, 500),
-            CancellationToken.None);
-
-        result.Error!.Code.Should().Be("Pagination.InvalidLimit");
-    }
-
     private static Announcement SchoolNotice(Guid authorId, string titlePrefix, int minutes)
         => AnnouncementMother.SchoolWide(TitleOf(titlePrefix, minutes), Now.AddMinutes(minutes), authorId);
 

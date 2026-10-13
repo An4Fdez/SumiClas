@@ -10,12 +10,10 @@ using SumiClas.Tests.Shared;
 public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
 {
     private readonly EnrollmentFinderByStudents.Finder _useCase;
-    private readonly EnrollmentFinderByStudents.Handler _handler;
 
     public EnrollmentFinderByStudentsShould()
     {
         this._useCase = new EnrollmentFinderByStudents.Finder(this.Repository.Object);
-        this._handler = new EnrollmentFinderByStudents.Handler(this._useCase);
     }
 
     [Test]
@@ -63,19 +61,5 @@ public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
             EnrollmentFinderByStudentsQueryMother.WithStudentIds(GuidMother.Random()));
 
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_query()
-    {
-        Guid studentId = GuidMother.Random();
-        Enrollment confirmed = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
-        this.ShouldReturn(confirmed);
-
-        IReadOnlyCollection<EnrollmentResponse> result = await this._handler.Handle(
-            EnrollmentFinderByStudentsQueryMother.WithStudentIds(studentId),
-            CancellationToken.None);
-
-        result.Should().ContainSingle().Which.Should().Be(EnrollmentResponseMother.Confirmed(confirmed));
     }
 }

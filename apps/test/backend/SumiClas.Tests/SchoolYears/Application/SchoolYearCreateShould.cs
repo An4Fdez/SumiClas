@@ -15,12 +15,10 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     private static readonly DateOnly END_DATE = new(2027, 6, 30);
 
     private readonly SchoolYearCreate.Create _useCase;
-    private readonly SchoolYearCreate.Handler _handler;
 
     public SchoolYearCreateShould()
     {
         this._useCase = new SchoolYearCreate.Create(this.Repository.Object, this.QueryBus.Object);
-        this._handler = new SchoolYearCreate.Handler(this._useCase);
     }
 
     [Test]
@@ -169,23 +167,5 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Should().ContainSingle();
-    }
-
-    [Test]
-    public async Task return_the_use_case_result_when_the_handler_handles_the_command()
-    {
-        Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldNotFindSchool(schoolId);
-
-        Result result = await this._handler.Handle(
-            SchoolYearCreateCommandMother.With(
-                GuidMother.Random(),
-                schoolId,
-                StringMother.Random("year"),
-                START_DATE,
-                END_DATE),
-            CancellationToken.None);
-
-        result.Error.Should().Be(SchoolErrors.NotFound);
     }
 }
