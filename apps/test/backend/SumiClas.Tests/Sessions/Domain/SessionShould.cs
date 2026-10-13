@@ -104,13 +104,24 @@ public class SessionShould : UnitTestCase
         session.RevokedAt.Should().BeNull();
     }
 
-    [TestCase("", "new-hash")]
-    [TestCase("old-hash", " ")]
-    public void return_token_hash_required_when_rotating_with_a_blank_hash(string hash, string newHash)
+    [Test]
+    public void return_token_hash_required_when_rotating_with_a_blank_old_hash()
     {
         Session session = this.NewSession(GuidMother.Random(), StringMother.Random("hash"));
 
-        Result<SessionRotation> result = this.Rotate(session, hash, newHash);
+        Result<SessionRotation> result = this.Rotate(session, "", StringMother.Random("hash"));
+
+        result.Error.Should().Be(SessionErrors.TokenHashRequired);
+        session.RefreshTokens.Should().HaveCount(1);
+    }
+
+    [Test]
+    public void return_token_hash_required_when_rotating_with_a_blank_new_hash_even_if_the_old_one_is_known()
+    {
+        string firstHash = StringMother.Random("hash");
+        Session session = this.NewSession(GuidMother.Random(), firstHash);
+
+        Result<SessionRotation> result = this.Rotate(session, firstHash, " ");
 
         result.Error.Should().Be(SessionErrors.TokenHashRequired);
         session.RefreshTokens.Should().HaveCount(1);

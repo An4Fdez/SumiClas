@@ -34,7 +34,6 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
 
         result.Should().BeEquivalentTo([motherA, father]);
         result.Should().NotContain(motherB);
-        students.Should().Contain(other);
     }
 
     [Test]

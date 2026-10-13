@@ -149,16 +149,20 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         List<Guid> seen = [];
         string? cursor = null;
 
-        do
+        for (int requested = 0; requested <= tied.Length; requested++)
         {
             Result<PagedResponse<AnnouncementResponse>> page = await this._useCase.ExecuteAsync(
                 AnnouncementFinderByClassQueryMother.With(classId, 1, cursor),
                 CancellationToken.None);
             seen.AddRange(page.Value.Items.Select(item => item.Id));
             cursor = page.Value.NextCursor;
+            if (cursor is null)
+            {
+                break;
+            }
         }
-        while (cursor is not null);
 
+        cursor.Should().BeNull();
         seen.Should().BeEquivalentTo(tied.Select(announcement => announcement.Id));
     }
 
@@ -253,7 +257,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task order_announcements_created_at_the_same_time_by_id_following_the_database_order()
+    public async Task order_announcements_created_at_the_same_time_by_descending_id()
     {
         Guid classId = GuidMother.Random();
         this.QueryBus.ShouldFindClass(classId);
