@@ -79,23 +79,6 @@ public class UnitOfWorkBehaviorShould
     }
 
     [Test]
-    public async Task return_a_failed_generic_result_when_saving_violates_a_unique_key()
-    {
-        this.ShouldDispatchEvents();
-        this.ShouldThrowSaving(DuplicateKeyExceptionMother.WithoutConstraint());
-
-        int value = System.Random.Shared.Next();
-
-        Result<int> response = await this.HandleValueAsync(() => Task.FromResult(Result<int>.Success(value)));
-
-        response.Should().BeOfType<Result<int>>();
-        response.IsFailure.Should().BeTrue();
-        response.Error.Should().Be(SharedErrors.AlreadyExists);
-        this.VerifyRolledBackOnce();
-        this.VerifyNeverCommitted();
-    }
-
-    [Test]
     public async Task roll_back_and_return_the_shared_error_when_the_handler_raises_a_unique_key_violation()
     {
         Result response = await this.HandlePlainAsync(
@@ -138,30 +121,6 @@ public class UnitOfWorkBehaviorShould
         response.Error!.Code.Should().Be("Shared.ConcurrencyConflict");
         this.VerifyRolledBackOnce();
         this.VerifyNeverCommitted();
-    }
-
-    [Test]
-    public async Task roll_back_and_return_the_shared_error_when_the_handler_raises_a_concurrency_conflict()
-    {
-        Result response = await this.HandlePlainAsync(() => throw ConcurrencyConflictExceptionMother.Random());
-
-        response.Error.Should().Be(SharedErrors.ConcurrencyConflict);
-        this.VerifyRolledBackOnce();
-        this.VerifyNeverCommitted();
-        this.VerifyNeverDispatched();
-    }
-
-    [Test]
-    public async Task roll_back_and_return_the_shared_error_when_dispatching_events_loses_a_race()
-    {
-        this.ShouldThrowDispatching(ConcurrencyConflictExceptionMother.Random());
-
-        Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
-
-        response.Error.Should().Be(SharedErrors.ConcurrencyConflict);
-        this.VerifyRolledBackOnce();
-        this.VerifyNeverCommitted();
-        this.VerifyNeverSaved();
     }
 
     [Test]

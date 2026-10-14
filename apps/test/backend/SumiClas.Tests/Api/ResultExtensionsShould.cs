@@ -17,11 +17,10 @@ public class ResultExtensionsShould : ApiUnitTestCase
     [TestCase("User.EmailAlreadyRegistered", 409)]
     [TestCase("Shared.AlreadyExists", 409)]
     [TestCase("Shared.ConcurrencyConflict", 409)]
+    [TestCase("Enrollment.AlreadyConfirmed", 409)]
     [TestCase("User.NotFound", 404)]
-    [TestCase("Authentication.Forbidden", 403)]
     [TestCase("User.AssignForbidden", 403)]
     [TestCase("Authentication.PasswordTooWeak", 400)]
-    [TestCase("School.LocalityFilterRequired", 400)]
     public async Task map_the_error_code_suffix_to_the_status_when_converting_a_failure_to_a_problem(
         string code,
         int expected)

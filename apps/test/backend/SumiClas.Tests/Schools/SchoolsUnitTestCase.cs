@@ -34,9 +34,6 @@ public abstract class SchoolsUnitTestCase : UnitTestCase
     protected void ShouldFetchNoSchools()
         => this.ShouldFetchSchools();
 
-    protected void ShouldSearchNoSchools()
-        => this.ShouldSearchSchools();
-
     protected void ShouldFindLocalities(IReadOnlyCollection<LocalityResponse> localities)
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<LocalityFinderByIds.Query>(), It.IsAny<CancellationToken>()))

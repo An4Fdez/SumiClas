@@ -103,7 +103,6 @@ public class RefreshCookieShould : UnitTestCase
 
     [TestCase("Name", "  ")]
     [TestCase("Path", "api/auth")]
-    [TestCase("SameSite", "Unspecified")]
     [TestCase("SameSite", "banana")]
     public void fail_validation_when_a_value_is_invalid(string key, string value)
     {

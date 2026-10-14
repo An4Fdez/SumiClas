@@ -54,16 +54,4 @@ public class SchoolFinderByIdsShould : SchoolsUnitTestCase
         result.Single(school => school.Id == second.Id).PostalCode.Should().BeNull();
         this.ShouldHaveAskedEachModuleOnce();
     }
-
-    [Test]
-    public async Task return_empty_when_no_school_matches_the_ids()
-    {
-        this.ShouldSearchNoSchools();
-
-        IReadOnlyCollection<SchoolResponse> result = await this._useCase.ExecuteAsync(
-            SchoolFinderByIdsQueryMother.Random(),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
 }

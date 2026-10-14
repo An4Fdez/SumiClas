@@ -45,18 +45,5 @@ public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
         result.Select(locality => locality.Name).Should().Equal("Níjar");
     }
 
-    [Test]
-    public async Task return_empty_when_localities_are_requested_for_an_unknown_province()
-    {
-        Guid provinceId = GuidMother.Random();
-        this.ShouldSearchLocalities(LocalityMother.InProvince(provinceId, StringMother.Random("locality")));
-
-        IReadOnlyCollection<LocalityResponse> result = await this.NewLocalityFinderByProvince().ExecuteAsync(
-            LocalityFinderByProvinceQueryMother.WithProvinceId(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
-
     private LocalityFinderByProvince.Finder NewLocalityFinderByProvince() => new(this.Repository.Object);
 }

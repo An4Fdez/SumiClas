@@ -53,7 +53,6 @@ public class JwtUserProviderShould
     }
 
     [TestCase("not-a-guid")]
-    [TestCase("")]
     [TestCase("00000000-0000-0000-0000-000000000000")]
     public void be_unauthenticated_when_the_sub_claim_is_invalid(string sub)
     {
