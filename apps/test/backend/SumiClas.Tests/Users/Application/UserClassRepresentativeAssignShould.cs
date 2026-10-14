@@ -218,6 +218,26 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
     }
 
     [Test]
+    public async Task return_assign_forbidden_when_a_participant_acts_even_if_another_user_represents_the_class()
+    {
+        Guid classId = GuidMother.Random();
+        User acting = UserMother.Participant(classId);
+        User representative = UserMother.Representative(classId);
+        User target = UserMother.Random();
+        this.ShouldResolveCurrentUser(acting.Id);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(acting, representative, target);
+
+        Result result = await this._useCase.ExecuteAsync(
+            UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
+
+        result.Error.Should().Be(UserErrors.AssignForbidden);
+        target.ClassRoles.Should().BeEmpty();
+    }
+
+    [Test]
     public async Task return_assign_forbidden_when_the_current_user_is_a_representative_of_another_class_only()
     {
         Guid classId = GuidMother.Random();

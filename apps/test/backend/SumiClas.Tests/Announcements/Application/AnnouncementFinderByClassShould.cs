@@ -251,6 +251,20 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
+    public async Task return_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
+    {
+        this.ShouldHaveNoCurrentUser();
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(GuidMother.Random()),
+            CancellationToken.None);
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.QueryBus.VerifyNoOtherCalls();
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
     public async Task return_the_class_error_when_the_class_is_unknown()
     {
         Guid classId = GuidMother.Random();

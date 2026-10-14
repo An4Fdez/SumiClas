@@ -98,8 +98,10 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, confirmedElsewhere.ClassId);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
