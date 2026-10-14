@@ -49,7 +49,7 @@ public class UserFinderByIdShould : UsersUnitTestCase
     [Test]
     public async Task return_not_found_for_an_id_other_than_the_one_that_exists()
     {
-        this.ShouldFetchNoUsers();
+        this.ShouldFetchUsers(UserMother.Random());
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdQueryMother.WithUserId(GuidMother.Random()),
