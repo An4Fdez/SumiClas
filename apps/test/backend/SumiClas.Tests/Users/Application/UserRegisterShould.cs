@@ -31,6 +31,8 @@ public class UserRegisterShould : UsersUnitTestCase
         this.ShouldHashPasswords();
         Guid userId = GuidMother.Random();
         string password = StringMother.Random("password");
+        this.ShouldSearchNoUsers();
+        this.ShouldCaptureSavedUsers();
 
         Result result = await this._useCase.ExecuteAsync(
             UserRegisterCommandMother.With(userId, password: password));
@@ -51,6 +53,7 @@ public class UserRegisterShould : UsersUnitTestCase
         string fullName = StringMother.Random("name");
         string email = StringMother.Random("user") + "@example.com";
         string password = StringMother.Random("password");
+        this.ShouldSearchNoUsers();
 
         Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.With(
             userId,
@@ -87,6 +90,9 @@ public class UserRegisterShould : UsersUnitTestCase
     [TestCase(128)]
     public async Task accept_the_password_when_its_length_is_at_the_limit(int length)
     {
+        this.ShouldSearchNoUsers();
+        this.ShouldCaptureSavedUsers();
+
         this.ShouldHashPasswords();
         Result result = await this._useCase.ExecuteAsync(
             UserRegisterCommandMother.WithPassword(new string('a', length)));
@@ -99,6 +105,9 @@ public class UserRegisterShould : UsersUnitTestCase
     [TestCase("        ", "hash-of-8-chars")]
     public async Task hash_the_password_as_typed_without_trimming_when_it_has_spaces(string password, string hash)
     {
+        this.ShouldSearchNoUsers();
+        this.ShouldCaptureSavedUsers();
+
         this.ShouldHashPasswords();
         Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithPassword(password));
 
@@ -119,9 +128,7 @@ public class UserRegisterShould : UsersUnitTestCase
     [TestCase("   ")]
     public async Task return_password_hash_required_when_the_hasher_returns_a_blank_hash(string hash)
     {
-        this._hasher
-            .Setup(hasher => hasher.Generate(It.IsAny<Password>()))
-            .Returns(hash);
+        this.ShouldGenerateHash(hash);
 
         Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.Random());
 
@@ -144,7 +151,7 @@ public class UserRegisterShould : UsersUnitTestCase
     {
         this.ShouldHashPasswords();
         string email = StringMother.Random("user") + "@example.com";
-        this.ShouldReturn(UserMother.WithEmail(email));
+        this.ShouldSearchUsers(UserMother.WithEmail(email));
 
         Result result = await this._useCase.ExecuteAsync(
             UserRegisterCommandMother.WithEmail(email.ToUpperInvariant()));
@@ -174,6 +181,11 @@ public class UserRegisterShould : UsersUnitTestCase
     }
 
     private static string HashFor(string password) => $"hash-of-{password.Length}-chars";
+
+    private void ShouldGenerateHash(string hash)
+        => this._hasher
+            .Setup(hasher => hasher.Generate(It.IsAny<Password>()))
+            .Returns(hash);
 
     private void ShouldHashPasswords()
         => this._hasher

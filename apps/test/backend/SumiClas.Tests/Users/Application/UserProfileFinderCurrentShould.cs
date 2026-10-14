@@ -36,6 +36,7 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
     public async Task return_not_found_when_the_user_does_not_exist()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFetchNoUsers();
 
         Result<UserProfileResponse> result = await this._useCase.ExecuteAsync(
             new UserProfileFinderCurrent.Query());
@@ -49,10 +50,12 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         string fullName = StringMother.Random("name");
         string email = StringMother.Random("user") + "@example.com";
-        User user = this.GivenCurrentUser(UserMother.With(
+        User user = UserMother.With(
             fullName: fullName,
             email: EmailMother.Create(email),
-            classRoles: [ClassRoleAssignmentMother.Representative(classId)]));
+            classRoles: [ClassRoleAssignmentMother.Representative(classId)]);
+        this.ShouldResolveCurrentUser(user.Id);
+        this.ShouldFind(user);
 
         Result<UserProfileResponse> result = await this._useCase.ExecuteAsync(
             new UserProfileFinderCurrent.Query());
@@ -63,12 +66,5 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
         result.Value.Email.Should().Be(email);
         result.Value.ClassRoles.Select(role => (role.ClassId, role.Role))
             .Should().Equal((classId, "ClassRepresentative"));
-    }
-
-    private User GivenCurrentUser(User user)
-    {
-        this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldFind(user);
-        return user;
     }
 }

@@ -23,7 +23,7 @@ public class UserFinderByEmailShould : UsersUnitTestCase
         string fullName = StringMother.Random("name");
         string email = StringMother.Random("user") + "@example.com";
         User user = UserMother.With(fullName: fullName, email: EmailMother.Create(email));
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByEmailQueryMother.WithEmail("  " + email.ToUpperInvariant() + " "),
@@ -36,6 +36,8 @@ public class UserFinderByEmailShould : UsersUnitTestCase
     [Test]
     public async Task return_not_found_when_the_email_is_unknown()
     {
+        this.ShouldSearchNoUsers();
+
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByEmailQueryMother.WithEmail(StringMother.Random("nobody") + "@example.com"),
             CancellationToken.None);

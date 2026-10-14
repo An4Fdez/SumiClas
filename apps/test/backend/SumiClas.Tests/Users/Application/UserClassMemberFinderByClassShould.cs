@@ -8,7 +8,6 @@ using SumiClas.Enrollments.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
-using SumiClas.Tests.Classes;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Application;
@@ -42,7 +41,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task return_guardians_and_representatives_with_the_representatives_first_then_by_name()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         string anaName = StringMother.Random("Ana");
         string representativeName = StringMother.Random("Marta");
         string zoeName = StringMother.Random("zoe");
@@ -52,6 +51,9 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, zoe.Id);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, ana.Id, representative.Id);
         this.ShouldResolveCurrentUser(ana.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -65,11 +67,14 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task return_a_guardian_of_two_children_only_once()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.ShouldResolveCurrentUser(parent.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -81,12 +86,15 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task not_return_the_guardian_of_a_suggested_enrollment_as_a_member()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User confirmedParent = this.AddUser(classId);
         User suggestedParent = this.AddUser(classId);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, confirmedParent.Id);
         this.AddEnrollment(classId, EnrollmentResponseMother.SUGGESTED, suggestedParent.Id);
         this.ShouldResolveCurrentUser(confirmedParent.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -97,11 +105,14 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task include_a_representative_without_children_and_list_them_first()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         User representative = this.AddUser(classId, representative: true);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.ShouldResolveCurrentUser(representative.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -115,11 +126,14 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task return_class_members_forbidden_when_the_requester_is_not_a_member()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         User outsider = this.AddUser(classId);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.ShouldResolveCurrentUser(outsider.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -131,12 +145,15 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task return_class_members_forbidden_when_the_requester_only_has_a_suggested_enrollment()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         User suggestedParent = this.AddUser(classId);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.AddEnrollment(classId, EnrollmentResponseMother.SUGGESTED, suggestedParent.Id);
         this.ShouldResolveCurrentUser(suggestedParent.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -149,7 +166,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User parent = this.AddUser(classId);
         this.ShouldResolveCurrentUser(parent.Id);
-        this.QueryBus.ShouldNotFindClass();
+        this.ShouldNotFindClass();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -180,10 +197,13 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task skip_the_guardian_ids_that_no_longer_exist()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id, GuidMother.Random());
         this.ShouldResolveCurrentUser(parent.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
@@ -195,11 +215,14 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     public async Task read_only_the_guardian_ids_of_the_confirmed_students()
     {
         Guid classId = GuidMother.Random();
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldFindClass(classId);
         User parent = this.AddUser(classId);
         Guid confirmedStudent = this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
         this.AddEnrollment(classId, EnrollmentResponseMother.SUGGESTED, this.AddUser(classId).Id);
         this.ShouldResolveCurrentUser(parent.Id);
+        this.ShouldSearchUsers(this._users.ToArray());
+        this.ShouldFindStoredEnrollments();
+        this.ShouldFindStoredGuardians();
 
         await this.Ask(classId);
 
@@ -229,7 +252,6 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
             ? UserMother.Representative(classId, name)
             : UserMother.WithName(name);
         this._users.Add(user);
-        this.ShouldReturn(this._users.ToArray());
         return user;
     }
 
@@ -238,8 +260,6 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         Guid studentId = GuidMother.Random();
         this._enrollments.Add(EnrollmentResponseMother.OfStatus(classId, studentId, status));
         this._guardiansByStudent[studentId] = guardianIds.ToList();
-        this.ShouldFindStoredEnrollments();
-        this.ShouldFindStoredGuardians();
         return studentId;
     }
 

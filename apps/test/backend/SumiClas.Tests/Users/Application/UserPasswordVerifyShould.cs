@@ -34,8 +34,7 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         string password = StringMother.Random("password");
         string storedHash = StringMother.Random("stored");
         this.GivenAnAccount(userId, fullName, email, storedHash);
-        this._hasher.Setup(hasher => hasher.Verify(storedHash, password))
-            .Returns(PasswordVerification.Success);
+        this.ShouldVerifyPassword(storedHash, password, PasswordVerification.Success);
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, password),
@@ -53,8 +52,7 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         string wrongPassword = StringMother.Random("wrong");
         string storedHash = StringMother.Random("stored");
         this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, storedHash);
-        this._hasher.Setup(hasher => hasher.Verify(storedHash, wrongPassword))
-            .Returns(PasswordVerification.Failed);
+        this.ShouldVerifyPassword(storedHash, wrongPassword, PasswordVerification.Failed);
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, wrongPassword),
@@ -69,6 +67,7 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
     {
         string unknownEmail = StringMother.Random("nobody") + "@example.com";
         string unknownPassword = StringMother.Random("password");
+        this.ShouldSearchNoUsers();
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(unknownEmail, unknownPassword),
@@ -86,9 +85,8 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         string oldHash = StringMother.Random("old");
         string newHash = StringMother.Random("new");
         User user = this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, oldHash);
-        this._hasher.Setup(hasher => hasher.Generate(It.IsAny<Password>())).Returns(newHash);
-        this._hasher.Setup(hasher => hasher.Verify(oldHash, password))
-            .Returns(PasswordVerification.SuccessRehashNeeded);
+        this.ShouldGenerateHash(newHash);
+        this.ShouldVerifyPassword(oldHash, password, PasswordVerification.SuccessRehashNeeded);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
@@ -106,8 +104,7 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         string email = StringMother.Random("user") + "@example.com";
         string oldHash = StringMother.Random("old");
         User user = this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, oldHash);
-        this._hasher.Setup(hasher => hasher.Verify(oldHash, "short"))
-            .Returns(PasswordVerification.SuccessRehashNeeded);
+        this.ShouldVerifyPassword(oldHash, "short", PasswordVerification.SuccessRehashNeeded);
 
         Result<UserResponse> result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, "short"),
@@ -132,6 +129,8 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
     [Test]
     public async Task invoke_the_hasher_whatever_the_outcome()
     {
+        this.ShouldSearchNoUsers();
+
         string email = StringMother.Random("user") + "@example.com";
         string unknownEmail = StringMother.Random("nobody") + "@example.com";
         string unknownPassword = StringMother.Random("password");
@@ -141,8 +140,7 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
             UserPasswordVerifyQueryMother.WithCredentials(unknownEmail, unknownPassword),
             CancellationToken.None);
         this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, storedHash);
-        this._hasher.Setup(hasher => hasher.Verify(storedHash, wrongPassword))
-            .Returns(PasswordVerification.Failed);
+        this.ShouldVerifyPassword(storedHash, wrongPassword, PasswordVerification.Failed);
         await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, wrongPassword),
             CancellationToken.None);
@@ -157,7 +155,15 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
             fullName: fullName,
             email: EmailMother.Create(email),
             passwordHash: passwordHash);
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
         return user;
     }
+
+    private void ShouldVerifyPassword(string storedHash, string password, PasswordVerification verification)
+        => this._hasher
+            .Setup(hasher => hasher.Verify(storedHash, password))
+            .Returns(verification);
+
+    private void ShouldGenerateHash(string hash)
+        => this._hasher.Setup(hasher => hasher.Generate(It.IsAny<Password>())).Returns(hash);
 }

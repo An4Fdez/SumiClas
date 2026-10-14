@@ -1,9 +1,12 @@
 namespace SumiClas.Tests.Users;
 
 using Moq;
+using SumiClas.Classes.Application;
+using SumiClas.Classes.Domain;
+using SumiClas.SchoolYears.Application;
+using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
-using SumiClas.Tests.Classes;
-using SumiClas.Tests.SchoolYears;
+using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Users.Domain;
 
@@ -20,14 +23,14 @@ public abstract class UsersUnitTestCase : UnitTestCase
     {
         this._saved.Clear();
         this.Repository.Reset();
-        this.ShouldReturn();
-        this.Repository
-            .Setup(repository => repository.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
-            .Callback<User, CancellationToken>((user, _) => this._saved.Add(user))
-            .Returns(Task.CompletedTask);
     }
 
-    protected void ShouldReturn(params User[] users)
+    protected void ShouldFetchUsers(params User[] users)
+        => this.Repository
+            .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken _) => users.FirstOrDefault(user => user.Id == id));
+
+    protected void ShouldSearchUsers(params User[] users)
         => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<User>>(),
@@ -35,16 +38,22 @@ public abstract class UsersUnitTestCase : UnitTestCase
             .ReturnsAsync((ISpecification<User> specification, CancellationToken _)
                 => (IReadOnlyCollection<User>)users.Where(specification.Criteria.Compile()).ToList());
 
+    protected void ShouldFetchNoUsers()
+        => this.ShouldFetchUsers();
+
+    protected void ShouldSearchNoUsers()
+        => this.ShouldSearchUsers();
+
+    protected void ShouldCaptureSavedUsers()
+        => this.Repository
+            .Setup(repository => repository.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .Callback<User, CancellationToken>((user, _) => this._saved.Add(user))
+            .Returns(Task.CompletedTask);
+
     protected void ShouldFind(User user)
         => this.Repository
             .Setup(repository => repository.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
-
-    protected void ShouldResolveActiveClass(Guid classId, Guid schoolYearId)
-    {
-        this.QueryBus.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
-    }
 
     protected void ShouldHaveSaved(
         Guid id,
@@ -79,4 +88,35 @@ public abstract class UsersUnitTestCase : UnitTestCase
         => this.Repository.Verify(
             repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+    protected void ShouldFindClass(Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
+
+    protected void ShouldNotFindClass()
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Failure(ClassErrors.NotFound));
+
+    protected void ShouldFindClassInSchoolYear(Guid classId, Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+
+    protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(error));
 }

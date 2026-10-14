@@ -21,7 +21,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User representative = UserMother.Representative(classId);
-        this.ShouldReturn(representative);
+        this.ShouldSearchUsers(representative);
 
         bool result = await this.Ask(representative.Id, classId);
 
@@ -33,7 +33,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User participant = UserMother.Participant(classId);
-        this.ShouldReturn(participant);
+        this.ShouldSearchUsers(participant);
 
         bool result = await this.Ask(participant.Id, classId);
 
@@ -44,7 +44,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
     public async Task deny_a_user_without_roles()
     {
         User user = UserMother.Random();
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         bool result = await this.Ask(user.Id, GuidMother.Random());
 
@@ -55,7 +55,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
     public async Task deny_a_representative_of_another_class()
     {
         User representativeElsewhere = UserMother.Representative(GuidMother.Random());
-        this.ShouldReturn(representativeElsewhere);
+        this.ShouldSearchUsers(representativeElsewhere);
 
         bool result = await this.Ask(representativeElsewhere.Id, GuidMother.Random());
 
@@ -71,7 +71,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
             ClassRoleAssignmentMother.Participant(classId),
             ClassRoleAssignmentMother.Representative(GuidMother.Random()),
         ]);
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         bool result = await this.Ask(user.Id, classId);
 
@@ -87,7 +87,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
             ClassRoleAssignmentMother.Participant(GuidMother.Random()),
             ClassRoleAssignmentMother.Representative(classId),
         ]);
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         bool result = await this.Ask(user.Id, classId);
 
@@ -100,7 +100,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User representative = UserMother.Representative(classId);
         User participant = UserMother.Participant(classId);
-        this.ShouldReturn(representative, participant);
+        this.ShouldSearchUsers(representative, participant);
 
         bool result = await this.Ask(participant.Id, classId);
 
@@ -111,7 +111,7 @@ public class UserIsClassRepresentativeShould : UsersUnitTestCase
     public async Task deny_a_user_that_does_not_exist()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldReturn(UserMother.Representative(classId));
+        this.ShouldSearchUsers(UserMother.Representative(classId));
 
         bool result = await this.Ask(GuidMother.Random(), classId);
 

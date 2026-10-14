@@ -23,7 +23,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
         string secondName = StringMother.Random("second");
         User first = UserMother.WithName(firstName);
         User second = UserMother.WithName(secondName);
-        this.ShouldReturn(first, second);
+        this.ShouldSearchUsers(first, second);
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(first.Id, second.Id),
@@ -37,7 +37,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     public async Task not_return_the_users_that_were_not_requested()
     {
         User requested = UserMother.Random();
-        this.ShouldReturn(requested, UserMother.Random(), UserMother.Random());
+        this.ShouldSearchUsers(requested, UserMother.Random(), UserMother.Random());
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(requested.Id),
@@ -50,7 +50,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     public async Task skip_the_ids_of_users_that_do_not_exist()
     {
         User existing = UserMother.Random();
-        this.ShouldReturn(existing);
+        this.ShouldSearchUsers(existing);
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(GuidMother.Random(), existing.Id, GuidMother.Random()),
@@ -62,7 +62,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     [Test]
     public async Task return_an_empty_collection_when_no_requested_user_exists()
     {
-        this.ShouldReturn(UserMother.Random());
+        this.ShouldSearchUsers(UserMother.Random());
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(GuidMother.Random()),
@@ -75,7 +75,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     [Test]
     public async Task return_an_empty_collection_when_no_ids_are_requested_even_if_users_exist()
     {
-        this.ShouldReturn(UserMother.Random(), UserMother.Random());
+        this.ShouldSearchUsers(UserMother.Random(), UserMother.Random());
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(),
@@ -89,7 +89,7 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     public async Task return_a_user_requested_twice_only_once()
     {
         User user = UserMother.Random();
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
             UserFinderByIdsQueryMother.WithUserIds(user.Id, user.Id),

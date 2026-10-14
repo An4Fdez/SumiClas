@@ -22,7 +22,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         string fullName = StringMother.Random("name");
         User representative = UserMother.Representative(classId, fullName);
-        this.ShouldReturn(representative);
+        this.ShouldSearchUsers(representative);
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId, representative.Id);
 
@@ -34,7 +34,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User participant = UserMother.Participant(classId);
-        this.ShouldReturn(participant);
+        this.ShouldSearchUsers(participant);
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId, participant.Id);
 
@@ -45,7 +45,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     public async Task return_no_role_for_a_user_without_roles()
     {
         User user = UserMother.Random();
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(GuidMother.Random(), user.Id);
 
@@ -56,7 +56,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     public async Task return_no_role_for_a_user_whose_only_role_is_in_another_class()
     {
         User representativeElsewhere = UserMother.Representative(GuidMother.Random());
-        this.ShouldReturn(representativeElsewhere);
+        this.ShouldSearchUsers(representativeElsewhere);
 
         IReadOnlyCollection<UserClassMemberResponse> result =
             await this.Ask(GuidMother.Random(), representativeElsewhere.Id);
@@ -75,7 +75,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
             ClassRoleAssignmentMother.Participant(askedClassId),
             ClassRoleAssignmentMother.Representative(GuidMother.Random()),
         ]);
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(askedClassId, user.Id);
 
@@ -89,7 +89,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
         User representative = UserMother.Representative(classId);
         User participant = UserMother.Participant(classId);
         User outsider = UserMother.Random();
-        this.ShouldReturn(representative, participant, outsider);
+        this.ShouldSearchUsers(representative, participant, outsider);
 
         IReadOnlyCollection<UserClassMemberResponse> result =
             await this.Ask(classId, representative.Id, participant.Id, outsider.Id);
@@ -107,7 +107,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User requested = UserMother.Participant(classId);
-        this.ShouldReturn(requested, UserMother.Participant(classId));
+        this.ShouldSearchUsers(requested, UserMother.Participant(classId));
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId, requested.Id);
 
@@ -119,7 +119,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User existing = UserMother.Participant(classId);
-        this.ShouldReturn(existing);
+        this.ShouldSearchUsers(existing);
 
         IReadOnlyCollection<UserClassMemberResponse> result =
             await this.Ask(classId, GuidMother.Random(), existing.Id);
@@ -131,7 +131,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     public async Task return_an_empty_collection_when_no_ids_are_requested_even_if_users_exist()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldReturn(UserMother.Participant(classId), UserMother.Representative(classId));
+        this.ShouldSearchUsers(UserMother.Participant(classId), UserMother.Representative(classId));
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
 
@@ -144,7 +144,7 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         User user = UserMother.Participant(classId);
-        this.ShouldReturn(user);
+        this.ShouldSearchUsers(user);
 
         IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId, user.Id, user.Id);
 

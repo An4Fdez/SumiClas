@@ -4,8 +4,6 @@ using AwesomeAssertions;
 using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
-using SumiClas.Tests.Classes;
-using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Application;
@@ -30,8 +28,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User user = UserMother.Representative(classId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(classId));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -52,8 +52,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
             ClassRoleAssignmentMother.Representative(otherClassId),
         ]);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(classId));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
         await this._useCase.ExecuteAsync(UserClassRepresentativeResignCommandMother.WithClassId(classId));
@@ -68,8 +70,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User user = UserMother.Representative(classId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user);
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -85,8 +89,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User user = UserMother.Representative(classId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(GuidMother.Random()));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(GuidMother.Random()));
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -101,8 +107,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User user = UserMother.Representative(classId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(classId));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
         Result first = await this._useCase.ExecuteAsync(
@@ -121,8 +129,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         User user = UserMother.Participant(classId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(classId));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -139,8 +149,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid otherClassId = GuidMother.Random();
         User user = UserMother.Representative(otherClassId);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
-        this.ShouldReturn(user);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user);
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -154,7 +166,6 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     public async Task return_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
     {
         this.ShouldHaveNoCurrentUser();
-        this.QueryBus.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(GuidMother.Random()));
@@ -169,7 +180,7 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     public async Task return_class_not_found_without_reading_users_when_the_class_does_not_exist()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldNotFindClass();
+        this.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(GuidMother.Random()));
@@ -185,8 +196,8 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
@@ -201,8 +212,8 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
@@ -216,7 +227,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldResolveActiveClass(classId, GuidMother.Random());
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFetchNoUsers();
 
         Result result = await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
@@ -230,8 +244,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     {
         User user = UserMother.Representative(Guid.Empty);
         this.ShouldResolveCurrentUser(user.Id);
-        this.ShouldResolveActiveClass(Guid.Empty, GuidMother.Random());
-        this.ShouldReturn(user, UserMother.Representative(Guid.Empty));
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(Guid.Empty, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldSearchUsers(user, UserMother.Representative(Guid.Empty));
         this.ShouldFind(user);
 
         Result result = await this._useCase.ExecuteAsync(
