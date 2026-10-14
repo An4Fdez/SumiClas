@@ -15,7 +15,7 @@ public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
         Guid otherProvinceId = GuidMother.Random();
         string firstName = StringMother.Random("alpha");
         string lastName = StringMother.Random("zeta");
-        this.ShouldReturnLocalities(
+        this.ShouldSearchLocalities(
             LocalityMother.InProvince(provinceId, lastName),
             LocalityMother.InProvince(provinceId, firstName),
             LocalityMother.InProvince(otherProvinceId, StringMother.Random("other")));
@@ -34,7 +34,7 @@ public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
     public async Task match_the_name_ignoring_case_and_accents_when_localities_are_requested_with_a_name(string name)
     {
         Guid provinceId = GuidMother.Random();
-        this.ShouldReturnLocalities(
+        this.ShouldSearchLocalities(
             LocalityMother.InProvince(provinceId, "Níjar"),
             LocalityMother.InProvince(provinceId, StringMother.Random("other")));
 
@@ -49,7 +49,7 @@ public class LocalityFinderByProvinceShould : LocalitiesUnitTestCase
     public async Task return_empty_when_localities_are_requested_for_an_unknown_province()
     {
         Guid provinceId = GuidMother.Random();
-        this.ShouldReturnLocalities(LocalityMother.InProvince(provinceId, StringMother.Random("locality")));
+        this.ShouldSearchLocalities(LocalityMother.InProvince(provinceId, StringMother.Random("locality")));
 
         IReadOnlyCollection<LocalityResponse> result = await this.NewLocalityFinderByProvince().ExecuteAsync(
             LocalityFinderByProvinceQueryMother.WithProvinceId(GuidMother.Random()),

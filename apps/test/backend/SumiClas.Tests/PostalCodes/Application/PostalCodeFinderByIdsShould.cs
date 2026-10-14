@@ -14,7 +14,7 @@ public class PostalCodeFinderByIdsShould : PostalCodesUnitTestCase
     {
         Guid localityId = GuidMother.Random();
         PostalCode postalCode = PostalCodeMother.With(localityId: localityId);
-        this.ShouldReturnPostalCodes(postalCode);
+        this.ShouldSearchPostalCodes(postalCode);
 
         IReadOnlyCollection<PostalCodeResponse> result = await this.NewPostalCodeFinderByIds().ExecuteAsync(
             PostalCodeFinderByIdsQueryMother.WithIds(postalCode.Id, GuidMother.Random()),

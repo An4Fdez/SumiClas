@@ -11,7 +11,6 @@ using System.Text.Json;
 [TestFixture]
 public class ResultExtensionsShould : ApiUnitTestCase
 {
-
     [TestCase("Authentication.Unauthenticated", 401)]
     [TestCase("Authentication.InvalidCredentials", 401)]
     [TestCase("Authentication.RefreshTokenInvalid", 401)]

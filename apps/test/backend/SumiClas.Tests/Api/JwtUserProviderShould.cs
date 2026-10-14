@@ -10,22 +10,21 @@ using SumiClas.Tests.Shared;
 [TestFixture]
 public class JwtUserProviderShould
 {
-
     private readonly Mock<IHttpContextAccessor> _accessor = new();
+    private readonly JwtUserProvider _provider;
 
-    [SetUp]
-    public void SetUp()
+    public JwtUserProviderShould()
     {
-        this._accessor.Reset();
+        this._provider = new JwtUserProvider(this._accessor.Object);
     }
 
     [Test]
     public void return_the_user_id_when_the_sub_claim_is_valid()
     {
         Guid userId = GuidMother.Random();
+        this.ShouldHaveHttpContext(HttpContextMother.WithSubject(userId.ToString()));
 
-        Result<Guid> result = this.ProviderFor(HttpContextMother.WithSubject(userId.ToString()))
-            .GetCurrentUserId();
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(userId);
@@ -35,9 +34,9 @@ public class JwtUserProviderShould
     public void be_unauthenticated_when_there_is_no_sub_claim()
     {
         Guid userId = GuidMother.Random();
+        this.ShouldHaveHttpContext(HttpContextMother.WithClaim("jti", userId.ToString()));
 
-        Result<Guid> result = this.ProviderFor(HttpContextMother.WithClaim("jti", userId.ToString()))
-            .GetCurrentUserId();
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
@@ -46,7 +45,9 @@ public class JwtUserProviderShould
     [Test]
     public void be_unauthenticated_when_there_is_no_http_context()
     {
-        Result<Guid> result = this.ProviderFor(null).GetCurrentUserId();
+        this.ShouldHaveHttpContext(null);
+
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
@@ -56,7 +57,9 @@ public class JwtUserProviderShould
     [TestCase("00000000-0000-0000-0000-000000000000")]
     public void be_unauthenticated_when_the_sub_claim_is_invalid(string sub)
     {
-        Result<Guid> result = this.ProviderFor(HttpContextMother.WithSubject(sub)).GetCurrentUserId();
+        this.ShouldHaveHttpContext(HttpContextMother.WithSubject(sub));
+
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
@@ -68,8 +71,9 @@ public class JwtUserProviderShould
         DefaultHttpContext context = HttpContextMother.Empty();
         Guid userId = GuidMother.Random();
         context.Request.Headers["X-User-Id"] = userId.ToString();
+        this.ShouldHaveHttpContext(context);
 
-        Result<Guid> result = this.ProviderFor(context).GetCurrentUserId();
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
     }
@@ -80,15 +84,13 @@ public class JwtUserProviderShould
         Guid userId = GuidMother.Random();
         DefaultHttpContext context = HttpContextMother.WithSubject(userId.ToString());
         context.Request.Headers["X-User-Id"] = GuidMother.Random().ToString();
+        this.ShouldHaveHttpContext(context);
 
-        Result<Guid> result = this.ProviderFor(context).GetCurrentUserId();
+        Result<Guid> result = this._provider.GetCurrentUserId();
 
         result.Value.Should().Be(userId);
     }
 
-    private JwtUserProvider ProviderFor(HttpContext? context)
-    {
-        this._accessor.Setup(accessor => accessor.HttpContext).Returns(context);
-        return new JwtUserProvider(this._accessor.Object);
-    }
+    private void ShouldHaveHttpContext(HttpContext? context)
+        => this._accessor.Setup(accessor => accessor.HttpContext).Returns(context);
 }

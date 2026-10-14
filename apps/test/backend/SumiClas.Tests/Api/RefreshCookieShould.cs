@@ -12,7 +12,6 @@ using SumiClas.Tests.Shared;
 [TestFixture]
 public class RefreshCookieShould : UnitTestCase
 {
-
     [Test]
     public void set_a_http_only_secure_strict_cookie_with_the_configured_path_and_no_domain()
     {

@@ -22,12 +22,6 @@ public class SessionRevokeShould : SessionsUnitTestCase
             this.Clock.Object);
     }
 
-    [SetUp]
-    public void SetUp()
-    {
-        this._refreshTokenGenerator.Reset();
-    }
-
     [Test]
     public async Task revoke_only_the_session_of_a_known_token()
     {
@@ -37,7 +31,7 @@ public class SessionRevokeShould : SessionsUnitTestCase
         string otherRaw = StringMother.Random("other");
         Session session = SessionMother.With(userId, HashOf(activeRaw));
         Session other = SessionMother.With(userId, HashOf(otherRaw));
-        this.ShouldReturn(session, other);
+        this.ShouldSearchSessions(session, other);
 
         Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(activeRaw));
 
@@ -54,7 +48,7 @@ public class SessionRevokeShould : SessionsUnitTestCase
         string newRaw = StringMother.Random("new");
         Session session = SessionMother.With(GuidMother.Random(), HashOf(oldRaw));
         session.Rotate(HashOf(oldRaw), HashOf(newRaw), this.Clock.Object);
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
 
         Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(oldRaw));
 
@@ -68,7 +62,7 @@ public class SessionRevokeShould : SessionsUnitTestCase
         this.ShouldHashTokens(this._refreshTokenGenerator);
         string raw = StringMother.Random("raw");
         Session session = SessionMother.With(GuidMother.Random(), HashOf(raw));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
         await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(raw));
         DateTimeOffset? firstRevocation = session.RevokedAt;
         this.AdvanceClock(TimeSpan.FromHours(1));
@@ -87,7 +81,7 @@ public class SessionRevokeShould : SessionsUnitTestCase
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Session session = SessionMother.With(GuidMother.Random(), HashOf(StringMother.Random("raw")));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
 
         Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(token));
 

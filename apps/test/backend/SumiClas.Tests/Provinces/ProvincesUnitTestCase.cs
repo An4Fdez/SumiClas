@@ -9,14 +9,7 @@ public abstract class ProvincesUnitTestCase : UnitTestCase
 {
     protected Mock<IProvinceRepository> Repository { get; } = new();
 
-    [SetUp]
-    public void ProvincesSetUp()
-    {
-        this.Repository.Reset();
-        this.ShouldReturnProvinces();
-    }
-
-    protected void ShouldReturnProvinces(params Province[] provinces)
+    protected void ShouldSearchProvinces(params Province[] provinces)
         => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Province>>(),

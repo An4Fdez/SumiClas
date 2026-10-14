@@ -12,7 +12,6 @@ using SumiClas.Tests.Shared;
 [TestFixture]
 public class JwtOptionsValidationShould
 {
-
     [Test]
     public void succeed_when_the_key_has_32_bytes()
     {

@@ -9,14 +9,7 @@ public abstract class LocalitiesUnitTestCase : UnitTestCase
 {
     protected Mock<ILocalityRepository> Repository { get; } = new();
 
-    [SetUp]
-    public void LocalitiesSetUp()
-    {
-        this.Repository.Reset();
-        this.ShouldReturnLocalities();
-    }
-
-    protected void ShouldReturnLocalities(params Locality[] localities)
+    protected void ShouldSearchLocalities(params Locality[] localities)
         => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Locality>>(),

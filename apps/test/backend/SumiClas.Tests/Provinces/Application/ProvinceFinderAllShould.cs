@@ -14,7 +14,7 @@ public class ProvinceFinderAllShould : ProvincesUnitTestCase
         string accentedFirst = "Ála-" + StringMother.Random("x");
         string plainSecond = "Alm-" + StringMother.Random("x");
         string plainLast = "Sev-" + StringMother.Random("x");
-        this.ShouldReturnProvinces(
+        this.ShouldSearchProvinces(
             ProvinceMother.WithName(plainLast),
             ProvinceMother.WithName(accentedFirst),
             ProvinceMother.WithName(plainSecond));

@@ -25,6 +25,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
 
         TokenValidationResult result = await ValidateAsync(bearer, this.Issue(userId, options));
 
@@ -39,6 +40,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
         string[] parts = this.Issue(userId, options).Split('.');
         char[] signature = parts[2].ToCharArray();
         signature[10] = signature[10] == 'A' ? 'B' : 'A';
@@ -56,6 +58,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
         string token = JwtTokenMother.WithForgedPayload(
             this.Issue(userId, options),
             GuidMother.Random(),
@@ -74,6 +77,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
 
         TokenValidationResult result = await ValidateAsync(
             bearer,
@@ -88,6 +92,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
 
         TokenValidationResult result = await ValidateAsync(
             bearer,
@@ -102,6 +107,7 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow);
 
         TokenValidationResult result = await ValidateAsync(
             bearer,
@@ -116,10 +122,8 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
-        string token = this.Issue(
-            userId,
-            options,
-            at: DateTimeOffset.UtcNow - AccessToken.Lifetime - TimeSpan.FromMinutes(5));
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow - AccessToken.Lifetime - TimeSpan.FromMinutes(5));
+        string token = this.Issue(userId, options);
 
         TokenValidationResult result = await ValidateAsync(bearer, token);
 
@@ -132,10 +136,8 @@ public class JwtBearerValidationShould : ApiUnitTestCase
         Guid userId = GuidMother.Random();
         JwtOptions options = JwtOptionsMother.Random();
         JwtBearerOptions bearer = BearerFor(options);
-        string token = this.Issue(
-            userId,
-            options,
-            at: DateTimeOffset.UtcNow - AccessToken.Lifetime - TimeSpan.FromSeconds(10));
+        this.ShouldHaveClockAt(DateTimeOffset.UtcNow - AccessToken.Lifetime - TimeSpan.FromSeconds(10));
+        string token = this.Issue(userId, options);
 
         bearer.TokenValidationParameters.ClockSkew.Should().Be(TimeSpan.FromSeconds(30));
         (await ValidateAsync(bearer, token)).IsValid.Should().BeTrue();
@@ -282,15 +284,16 @@ public class JwtBearerValidationShould : ApiUnitTestCase
 
     private static AuthenticationScheme BearerScheme() => new("Bearer", null, typeof(JwtBearerHandler));
 
+    private void ShouldHaveClockAt(DateTimeOffset at)
+        => this.Clock.Setup(clock => clock.UtcNow).Returns(at);
+
     private string Issue(
         Guid userId,
         JwtOptions options,
         string? issuer = null,
         string? audience = null,
-        string? key = null,
-        DateTimeOffset? at = null)
+        string? key = null)
     {
-        this.Clock.Setup(clock => clock.UtcNow).Returns(at ?? DateTimeOffset.UtcNow);
         JwtOptions issuing = JwtOptionsMother.With(
             issuer ?? options.Issuer,
             audience ?? options.Audience,

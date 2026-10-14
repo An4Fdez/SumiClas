@@ -9,14 +9,7 @@ public abstract class PostalCodesUnitTestCase : UnitTestCase
 {
     protected Mock<IPostalCodeRepository> Repository { get; } = new();
 
-    [SetUp]
-    public void PostalCodesSetUp()
-    {
-        this.Repository.Reset();
-        this.ShouldReturnPostalCodes();
-    }
-
-    protected void ShouldReturnPostalCodes(params PostalCode[] postalCodes)
+    protected void ShouldSearchPostalCodes(params PostalCode[] postalCodes)
         => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<PostalCode>>(),

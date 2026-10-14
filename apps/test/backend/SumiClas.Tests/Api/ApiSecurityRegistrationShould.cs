@@ -14,7 +14,6 @@ using SumiClas.Tests.Sessions.Infrastructure;
 [TestFixture]
 public class ApiSecurityRegistrationShould
 {
-
     [Test]
     public void register_the_jwt_user_provider_and_resolve_the_bearer_options()
     {

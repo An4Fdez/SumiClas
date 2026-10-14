@@ -27,13 +27,6 @@ public class SessionCreateShould : SessionsUnitTestCase
             this.Clock.Object);
     }
 
-    [SetUp]
-    public void SetUp()
-    {
-        this._refreshTokenGenerator.Reset();
-        this._accessTokenGenerator.Reset();
-    }
-
     [Test]
     public async Task return_the_session_and_store_only_the_hash_in_a_new_session_when_credentials_are_valid()
     {
@@ -44,7 +37,9 @@ public class SessionCreateShould : SessionsUnitTestCase
         string password = StringMother.Random("password");
         string jwt = StringMother.Random("jwt");
         string rawRefresh = StringMother.Random("raw");
-        this.ShouldIssueSession(userId, fullName, jwt, rawRefresh);
+        this.ShouldAcceptCredentials(userId, fullName);
+        this.ShouldGenerateRefreshToken(rawRefresh);
+        this.ShouldGenerateAccessToken(userId, jwt);
         SessionCreate.Command command = SessionCreateCommandMother.WithCredentials(email, password);
 
         Result<SessionResponse> result = await this._useCase.ExecuteAsync(command);
@@ -70,11 +65,6 @@ public class SessionCreateShould : SessionsUnitTestCase
     public async Task propagate_the_failure_and_create_nothing_when_the_credential_check_fails()
     {
         string email = StringMother.Random("email") + "@example.com";
-        this.ShouldIssueSession(
-            GuidMother.Random(),
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("raw"));
         this.ShouldRejectCredentials();
         SessionCreate.Command command =
             SessionCreateCommandMother.WithCredentials(email, StringMother.Random("password"));
@@ -95,14 +85,9 @@ public class SessionCreateShould : SessionsUnitTestCase
         Guid userId = GuidMother.Random();
         string email = StringMother.Random("email") + "@example.com";
         string password = StringMother.Random("password");
-        this.ShouldIssueSession(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("raw"));
-        this._accessTokenGenerator
-            .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
+        this.ShouldAcceptCredentials(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("raw"));
+        this.ShouldFailGeneratingAccessToken(userId);
         SessionCreate.Command command = SessionCreateCommandMother.WithCredentials(email, password);
 
         Result<SessionResponse> result = await this._useCase.ExecuteAsync(command);
@@ -116,14 +101,21 @@ public class SessionCreateShould : SessionsUnitTestCase
             .Setup(bus => bus.Send(It.IsAny<UserPasswordVerify.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<UserResponse>.Failure(AuthenticationErrors.InvalidCredentials));
 
-    private void ShouldIssueSession(Guid userId, string fullName, string jwt, string rawRefresh)
-    {
-        this.QueryBus
+    private void ShouldAcceptCredentials(Guid userId, string fullName)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserPasswordVerify.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, fullName)));
-        this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(rawRefresh);
-        this._accessTokenGenerator
+
+    private void ShouldGenerateRefreshToken(string raw)
+        => this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(raw);
+
+    private void ShouldGenerateAccessToken(Guid userId, string jwt)
+        => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
             .Returns(Result<AccessToken>.Success(AccessTokenMother.With(jwt)));
-    }
+
+    private void ShouldFailGeneratingAccessToken(Guid userId)
+        => this._accessTokenGenerator
+            .Setup(generator => generator.Generate(userId))
+            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
 }

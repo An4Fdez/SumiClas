@@ -4,6 +4,8 @@ using Moq;
 using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 
 public abstract class SessionsUnitTestCase : UnitTestCase
 {
@@ -15,7 +17,6 @@ public abstract class SessionsUnitTestCase : UnitTestCase
     public void SessionsSetUp()
     {
         this.Repository.Reset();
-        this.ShouldReturn();
     }
 
     protected static string HashOf(string raw) => HASH_PREFIX + raw;
@@ -25,7 +26,7 @@ public abstract class SessionsUnitTestCase : UnitTestCase
             .Setup(refreshTokenGenerator => refreshTokenGenerator.Hash(It.IsAny<string>()))
             .Returns<string>(HashOf);
 
-    protected void ShouldReturn(params Session[] sessions)
+    protected void ShouldSearchSessions(params Session[] sessions)
         => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Session>>(),
@@ -59,4 +60,11 @@ public abstract class SessionsUnitTestCase : UnitTestCase
                 It.IsAny<ISpecification<Session>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+
+    protected void ShouldNotFindUser(Guid userId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserFinderById.Query>(query => query.UserId == userId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
 }

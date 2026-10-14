@@ -15,7 +15,7 @@ public class LocalityFinderByIdsShould : LocalitiesUnitTestCase
         Guid provinceId = GuidMother.Random();
         Guid otherProvinceId = GuidMother.Random();
         Locality locality = LocalityMother.InProvince(provinceId, StringMother.Random("locality"));
-        this.ShouldReturnLocalities(
+        this.ShouldSearchLocalities(
             locality,
             LocalityMother.InProvince(otherProvinceId, StringMother.Random("other")));
 

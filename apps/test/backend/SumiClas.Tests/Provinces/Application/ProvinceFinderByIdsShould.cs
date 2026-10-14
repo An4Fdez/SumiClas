@@ -13,7 +13,7 @@ public class ProvinceFinderByIdsShould : ProvincesUnitTestCase
     public async Task return_only_the_existing_provinces_when_provinces_are_requested_by_ids()
     {
         Province known = ProvinceMother.Random();
-        this.ShouldReturnProvinces(known, ProvinceMother.Random());
+        this.ShouldSearchProvinces(known, ProvinceMother.Random());
 
         IReadOnlyCollection<ProvinceResponse> result = await this.NewProvinceFinderByIds().ExecuteAsync(
             ProvinceFinderByIdsQueryMother.WithIds(known.Id, GuidMother.Random()),

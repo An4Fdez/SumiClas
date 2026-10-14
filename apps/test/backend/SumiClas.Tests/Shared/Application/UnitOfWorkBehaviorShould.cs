@@ -9,7 +9,6 @@ using SumiClas.Tests.Shared.Domain;
 [TestFixture]
 public class UnitOfWorkBehaviorShould
 {
-
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
@@ -53,9 +52,7 @@ public class UnitOfWorkBehaviorShould
     public async Task roll_back_and_return_its_error_without_saving_when_an_event_handler_fails()
     {
         Error dispatchError = ErrorMother.Random();
-        this._dispatcher
-            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(dispatchError));
+        this.ShouldFailDispatching(dispatchError);
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -70,9 +67,7 @@ public class UnitOfWorkBehaviorShould
     public async Task roll_back_and_return_the_shared_already_exists_error_when_saving_violates_a_unique_key()
     {
         this.ShouldDispatchEvents();
-        this._unitOfWork
-            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(DuplicateKeyExceptionMother.With(StringMother.Random("constraint")));
+        this.ShouldThrowSaving(DuplicateKeyExceptionMother.With(StringMother.Random("constraint")));
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -87,9 +82,7 @@ public class UnitOfWorkBehaviorShould
     public async Task return_a_failed_generic_result_when_saving_violates_a_unique_key()
     {
         this.ShouldDispatchEvents();
-        this._unitOfWork
-            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(DuplicateKeyExceptionMother.WithoutConstraint());
+        this.ShouldThrowSaving(DuplicateKeyExceptionMother.WithoutConstraint());
 
         int value = System.Random.Shared.Next();
 
@@ -118,9 +111,7 @@ public class UnitOfWorkBehaviorShould
     [Test]
     public async Task roll_back_and_return_the_shared_error_when_dispatching_events_violates_a_unique_key()
     {
-        this._dispatcher
-            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(DuplicateKeyExceptionMother.With(StringMother.Random("constraint")));
+        this.ShouldThrowDispatching(DuplicateKeyExceptionMother.With(StringMother.Random("constraint")));
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -135,9 +126,7 @@ public class UnitOfWorkBehaviorShould
     public async Task roll_back_and_return_the_shared_concurrency_conflict_error_when_saving_loses_a_race()
     {
         this.ShouldDispatchEvents();
-        this._unitOfWork
-            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(ConcurrencyConflictExceptionMother.Random());
+        this.ShouldThrowSaving(ConcurrencyConflictExceptionMother.Random());
 
         int value = System.Random.Shared.Next();
 
@@ -165,9 +154,7 @@ public class UnitOfWorkBehaviorShould
     [Test]
     public async Task roll_back_and_return_the_shared_error_when_dispatching_events_loses_a_race()
     {
-        this._dispatcher
-            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(ConcurrencyConflictExceptionMother.Random());
+        this.ShouldThrowDispatching(ConcurrencyConflictExceptionMother.Random());
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -181,9 +168,7 @@ public class UnitOfWorkBehaviorShould
     public async Task roll_back_and_propagate_it_when_saving_throws_another_exception()
     {
         this.ShouldDispatchEvents();
-        this._unitOfWork
-            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException(StringMother.Random("error")));
+        this.ShouldThrowSaving(new InvalidOperationException(StringMother.Random("error")));
 
         Func<Task> act = () => this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -195,7 +180,7 @@ public class UnitOfWorkBehaviorShould
     [Test]
     public async Task only_save_and_never_begin_or_commit_when_there_is_an_active_transaction()
     {
-        this._unitOfWork.SetupGet(unitOfWork => unitOfWork.HasActiveTransaction).Returns(true);
+        this.ShouldHaveActiveTransaction();
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
@@ -209,7 +194,7 @@ public class UnitOfWorkBehaviorShould
     public async Task not_save_when_there_is_an_active_transaction_and_the_handler_fails()
     {
         Error handlerError = ErrorMother.Random();
-        this._unitOfWork.SetupGet(unitOfWork => unitOfWork.HasActiveTransaction).Returns(true);
+        this.ShouldHaveActiveTransaction();
 
         Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Failure(handlerError)));
 
@@ -239,6 +224,24 @@ public class UnitOfWorkBehaviorShould
         => this._dispatcher
             .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success());
+
+    private void ShouldFailDispatching(Error error)
+        => this._dispatcher
+            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(error));
+
+    private void ShouldThrowDispatching(Exception exception)
+        => this._dispatcher
+            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+    private void ShouldThrowSaving(Exception exception)
+        => this._unitOfWork
+            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+    private void ShouldHaveActiveTransaction()
+        => this._unitOfWork.SetupGet(unitOfWork => unitOfWork.HasActiveTransaction).Returns(true);
 
     private void VerifyBeganOnce()
         => this._unitOfWork.Verify(

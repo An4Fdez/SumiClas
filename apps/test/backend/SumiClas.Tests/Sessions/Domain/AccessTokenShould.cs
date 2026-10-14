@@ -8,7 +8,6 @@ using SumiClas.Tests.Shared;
 [TestFixture]
 public class AccessTokenShould
 {
-
     [Test]
     public void have_a_lifetime_of_15_minutes()
     {

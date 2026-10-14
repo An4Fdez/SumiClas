@@ -7,7 +7,6 @@ using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Sessions.Domain;
 using SumiClas.Tests.Shared;
-using SumiClas.Tests.Users;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Application;
 
@@ -28,28 +27,16 @@ public class SessionRotateShould : SessionsUnitTestCase
             this.Clock.Object);
     }
 
-    [SetUp]
-    public void SetUp()
-    {
-        this._refreshTokenGenerator.Reset();
-        this._accessTokenGenerator.Reset();
-    }
-
     [Test]
     public async Task propagate_the_failure_when_the_access_token_issuer_fails()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
-        this.ShouldReturn(SessionMother.With(userId, HashOf(oldRaw)));
-        this._accessTokenGenerator
-            .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
+        this.ShouldFindUser(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
+        this.ShouldSearchSessions(SessionMother.With(userId, HashOf(oldRaw)));
+        this.ShouldFailGeneratingAccessToken(userId);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
@@ -67,9 +54,11 @@ public class SessionRotateShould : SessionsUnitTestCase
         string jwt = StringMother.Random("jwt");
         string oldRaw = StringMother.Random("old");
         string newRaw = StringMother.Random("new");
-        this.ShouldIssueRotation(userId, fullName, jwt, newRaw);
+        this.ShouldFindUser(userId, fullName);
+        this.ShouldGenerateRefreshToken(newRaw);
+        this.ShouldGenerateAccessToken(userId, jwt);
         Session session = SessionMother.With(userId, HashOf(oldRaw));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
@@ -114,7 +103,7 @@ public class SessionRotateShould : SessionsUnitTestCase
         string otherRaw = StringMother.Random("other");
         string unknownRaw = StringMother.Random("unknown");
         Session session = SessionMother.With(GuidMother.Random(), HashOf(otherRaw));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(unknownRaw));
@@ -130,13 +119,10 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
+        this.ShouldFindUser(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
         this.AdvanceClock(RefreshToken.Lifetime + TimeSpan.FromSeconds(1));
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
@@ -154,14 +140,11 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
+        this.ShouldFindUser(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
         session.Revoke(this.Clock.Object);
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
@@ -179,14 +162,12 @@ public class SessionRotateShould : SessionsUnitTestCase
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
         string unrelatedRaw = StringMother.Random("unrelated");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
+        this.ShouldFindUser(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
+        this.ShouldGenerateAccessToken(userId, StringMother.Random("jwt"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
         Session unrelated = SessionMother.With(userId, HashOf(unrelatedRaw));
-        this.ShouldReturn(session, unrelated);
+        this.ShouldSearchSessions(session, unrelated);
         await this._useCase.ExecuteAsync(SessionRotateCommandMother.WithToken(oldRaw));
         this.AdvanceClock(Session.RefreshGrace + TimeSpan.FromSeconds(1));
 
@@ -206,13 +187,11 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
+        this.ShouldFindUser(userId, StringMother.Random("name"));
+        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
+        this.ShouldGenerateAccessToken(userId, StringMother.Random("jwt"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
-        this.ShouldReturn(session);
+        this.ShouldSearchSessions(session);
         await this._useCase.ExecuteAsync(SessionRotateCommandMother.WithToken(oldRaw));
         this.AdvanceClock(Session.RefreshGrace / 2);
 
@@ -231,14 +210,9 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
         string oldRaw = StringMother.Random("old");
-        this.ShouldIssueRotation(
-            userId,
-            StringMother.Random("name"),
-            StringMother.Random("jwt"),
-            StringMother.Random("new"));
         Session session = SessionMother.With(userId, HashOf(oldRaw));
-        this.ShouldReturn(session);
-        this.QueryBus.ShouldNotFindUser(userId);
+        this.ShouldSearchSessions(session);
+        this.ShouldNotFindUser(userId);
 
         Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
@@ -252,14 +226,21 @@ public class SessionRotateShould : SessionsUnitTestCase
     private static RefreshToken TokenOf(Session session, string raw)
         => session.RefreshTokens.Single(token => token.TokenHash == HashOf(raw));
 
-    private void ShouldIssueRotation(Guid userId, string fullName, string jwt, string newRaw)
-    {
-        this.QueryBus
+    private void ShouldFindUser(Guid userId, string fullName)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, fullName)));
-        this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(newRaw);
-        this._accessTokenGenerator
+
+    private void ShouldGenerateRefreshToken(string raw)
+        => this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(raw);
+
+    private void ShouldGenerateAccessToken(Guid userId, string jwt)
+        => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
             .Returns(Result<AccessToken>.Success(AccessTokenMother.With(jwt)));
-    }
+
+    private void ShouldFailGeneratingAccessToken(Guid userId)
+        => this._accessTokenGenerator
+            .Setup(generator => generator.Generate(userId))
+            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
 }
