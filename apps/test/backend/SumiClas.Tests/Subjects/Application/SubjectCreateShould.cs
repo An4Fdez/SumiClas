@@ -43,6 +43,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [Test]
     public async Task return_class_not_found_without_adding_when_the_class_does_not_exist()
     {
+        this.ShouldCaptureAddedSubjects();
         this.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(SubjectCreateCommandMother.With(
@@ -57,6 +58,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [Test]
     public async Task return_school_year_archived_without_adding_when_the_school_year_is_archived()
     {
+        this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
@@ -72,6 +74,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [Test]
     public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
+        this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
@@ -87,6 +90,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [Test]
     public async Task return_id_required_without_asking_or_adding_when_the_subject_id_is_empty()
     {
+        this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(Guid.Empty, GuidMother.Random(), StringMother.Random("subject")));
 
@@ -98,6 +102,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [Test]
     public async Task return_class_required_without_asking_or_adding_when_the_class_id_is_empty()
     {
+        this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), Guid.Empty, StringMother.Random("subject")));
 
@@ -110,6 +115,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     [TestCase("   ")]
     public async Task return_label_required_without_asking_or_adding_when_the_label_is_blank(string label)
     {
+        this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), label));
 

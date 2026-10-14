@@ -45,6 +45,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_the_school_error_without_adding_when_the_school_does_not_exist()
     {
+        this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldNotFindSchool(schoolId);
 
@@ -74,6 +75,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_id_required_without_adding_when_the_school_year_id_is_empty()
     {
+        this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
@@ -91,6 +93,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_school_required_without_adding_when_the_school_id_is_empty()
     {
+        this.ShouldCaptureAddedSchoolYears();
         this.ShouldFindSchool(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
@@ -108,6 +111,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [TestCase("   ")]
     public async Task return_label_required_without_adding_when_the_label_is_blank(string label)
     {
+        this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
@@ -121,6 +125,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_invalid_date_range_without_adding_when_the_end_date_equals_the_start_date()
     {
+        this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
@@ -138,6 +143,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_invalid_date_range_without_adding_when_the_end_date_is_before_the_start_date()
     {
+        this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 

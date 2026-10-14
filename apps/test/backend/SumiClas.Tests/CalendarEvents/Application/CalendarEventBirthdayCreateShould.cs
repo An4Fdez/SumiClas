@@ -105,6 +105,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldHaveNoCurrentUser();
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: 13));
@@ -117,6 +118,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -130,6 +132,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_student_required_without_asking_or_adding_when_the_student_id_is_empty()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -144,6 +147,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [TestCase("   ")]
     public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank(string title)
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(title: title));
@@ -156,6 +160,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid());
@@ -170,6 +175,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [TestCase(-1)]
     public async Task return_invalid_month_without_asking_or_adding_when_the_month_is_out_of_range(int month)
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: month));
@@ -187,6 +193,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         int month,
         int day)
     {
+        this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -264,6 +271,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_user_not_found_without_asking_for_the_student_when_the_author_does_not_exist()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         Guid authorId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
@@ -282,6 +290,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [Test]
     public async Task return_student_not_found_without_adding_when_the_student_does_not_exist()
     {
+        this.ShouldCaptureAddedCalendarEvents();
         Guid studentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);

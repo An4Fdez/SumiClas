@@ -67,6 +67,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
+        this.ShouldCaptureAddedClasses();
         this.ShouldHaveNoCurrentUser();
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
@@ -82,6 +83,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_id_required_without_asking_or_adding_when_the_class_id_is_empty()
     {
+        this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
@@ -97,6 +99,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_school_year_required_without_asking_or_adding_when_the_school_year_id_is_empty()
     {
+        this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
@@ -113,6 +116,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [TestCase("   ")]
     public async Task return_name_required_without_asking_or_adding_when_the_name_is_blank(string name)
     {
+        this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
@@ -128,6 +132,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_creator_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
+        this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
@@ -143,6 +148,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_school_year_archived_without_adding_when_the_school_year_is_archived()
     {
+        this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
@@ -159,6 +165,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     [Test]
     public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
+        this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
