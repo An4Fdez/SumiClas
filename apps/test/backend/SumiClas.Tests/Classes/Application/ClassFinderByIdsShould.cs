@@ -17,7 +17,7 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
     }
 
     [Test]
-    public async Task return_only_the_requested_classes_with_their_school_year_and_name()
+    public async Task return_only_the_requested_classes_with_their_school_year_and_name_and_skip_unknown_ids()
     {
         Guid schoolYearId = GuidMother.Random();
         string name = StringMother.Random("class");
@@ -26,35 +26,12 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
         this.ShouldSearchClasses(requested, otherRequested, ClassMother.InSchoolYear(GuidMother.Random()));
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
-            ClassFinderByIdsQueryMother.WithIds(requested.Id, otherRequested.Id));
+            ClassFinderByIdsQueryMother.WithIds(requested.Id, GuidMother.Random(), otherRequested.Id));
 
         result.Select(response => response.Id).Should().BeEquivalentTo([requested.Id, otherRequested.Id]);
         ClassResponse found = result.Single(response => response.Id == requested.Id);
         found.SchoolYearId.Should().Be(schoolYearId);
         found.Name.Should().Be(name);
-    }
-
-    [Test]
-    public async Task skip_the_ids_that_do_not_exist()
-    {
-        Class existing = ClassMother.InSchoolYear(GuidMother.Random());
-        this.ShouldSearchClasses(existing);
-
-        IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
-            ClassFinderByIdsQueryMother.WithIds(GuidMother.Random(), existing.Id));
-
-        result.Select(response => response.Id).Should().Equal(existing.Id);
-    }
-
-    [Test]
-    public async Task return_empty_when_no_class_matches_the_ids()
-    {
-        this.ShouldSearchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
-
-        IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
-            ClassFinderByIdsQueryMother.WithIds(GuidMother.Random()));
-
-        result.Should().BeEmpty();
     }
 
     [Test]

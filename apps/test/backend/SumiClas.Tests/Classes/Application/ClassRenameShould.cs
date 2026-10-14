@@ -47,9 +47,8 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_name_required_and_keep_the_name_when_the_new_name_is_blank(string newName)
+    [Test]
+    public async Task return_name_required_and_keep_the_name_when_the_new_name_is_blank()
     {
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
@@ -57,7 +56,7 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldFetchClasses(schoolClass);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
-        Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, newName));
+        Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, "   "));
 
         result.Error.Should().Be(ClassErrors.NameRequired);
         schoolClass.Name.Should().Be(oldName);

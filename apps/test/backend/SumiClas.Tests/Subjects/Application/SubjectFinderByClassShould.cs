@@ -19,62 +19,32 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_subjects_of_the_class_with_their_id_class_and_label()
+    public async Task return_the_subjects_of_the_class_only_ordered_by_label_with_their_id_class_and_label()
     {
         Guid classId = GuidMother.Random();
-        Subject subject = SubjectMother.InClass(classId);
-        this.ShouldSearchSubjects(subject);
+        Subject first = SubjectMother.With(
+            Guid.Parse("00000000-0000-0000-0000-000000000003"),
+            classId,
+            StringMother.Random("a"));
+        Subject second = SubjectMother.With(
+            Guid.Parse("00000000-0000-0000-0000-000000000002"),
+            classId,
+            StringMother.Random("b"));
+        Subject third = SubjectMother.With(
+            Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            classId,
+            StringMother.Random("c"));
+        this.ShouldSearchSubjects(third, SubjectMother.InClass(GuidMother.Random()), first, second);
         this.ShouldFindClass(classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Equal(SubjectResponseMother.With(subject.Id, classId, subject.Label));
-    }
-
-    [Test]
-    public async Task return_the_subjects_ordered_by_label_whatever_the_stored_order()
-    {
-        Guid classId = GuidMother.Random();
-        Subject first = SubjectMother.WithLabel(classId, StringMother.Random("a"));
-        Subject second = SubjectMother.WithLabel(classId, StringMother.Random("b"));
-        Subject third = SubjectMother.WithLabel(classId, StringMother.Random("c"));
-        this.ShouldSearchSubjects(third, first, second);
-        this.ShouldFindClass(classId);
-
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
-            SubjectFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Select(response => response.Id).Should().Equal(first.Id, second.Id, third.Id);
-    }
-
-    [Test]
-    public async Task leave_out_the_subjects_of_other_classes()
-    {
-        Guid classId = GuidMother.Random();
-        Subject own = SubjectMother.InClass(classId);
-        this.ShouldSearchSubjects(SubjectMother.InClass(GuidMother.Random()), own);
-        this.ShouldFindClass(classId);
-
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
-            SubjectFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Select(response => response.Id).Should().Equal(own.Id);
-    }
-
-    [Test]
-    public async Task return_an_empty_list_when_the_class_has_no_subjects()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldSearchSubjects(SubjectMother.InClass(GuidMother.Random()));
-        this.ShouldFindClass(classId);
-
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
-            SubjectFinderByClassQueryMother.WithClassId(classId));
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Value.Should().Equal(
+            SubjectResponseMother.With(first.Id, classId, first.Label),
+            SubjectResponseMother.With(second.Id, classId, second.Label),
+            SubjectResponseMother.With(third.Id, classId, third.Label));
     }
 
     [Test]

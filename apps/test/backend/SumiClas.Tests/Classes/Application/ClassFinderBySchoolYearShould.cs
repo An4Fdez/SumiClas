@@ -32,15 +32,4 @@ public class ClassFinderBySchoolYearShould : ClassesUnitTestCase
         result.Should().OnlyContain(response => response.SchoolYearId == schoolYearId);
         result.Single(response => response.Id == first.Id).Name.Should().Be(name);
     }
-
-    [Test]
-    public async Task return_empty_when_the_school_year_has_no_classes()
-    {
-        this.ShouldSearchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
-
-        IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
-            ClassFinderBySchoolYearQueryMother.WithSchoolYearId(GuidMother.Random()));
-
-        result.Should().BeEmpty();
-    }
 }

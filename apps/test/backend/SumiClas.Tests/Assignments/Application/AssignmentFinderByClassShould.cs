@@ -29,7 +29,7 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_assignment_with_the_subject_the_author_and_the_comments_by_creation_time()
+    public async Task return_the_assignment_of_the_class_with_the_subject_the_author_and_the_comments_by_time()
     {
         Guid classId = GuidMother.Random();
         Guid subjectId = GuidMother.Random();
@@ -56,7 +56,7 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldHaveClassMembers(
             UserClassMemberResponseMother.Participant(authorId, authorName),
             UserClassMemberResponseMother.Representative(commenterId, commenterName));
-        this.ShouldSearchAssignments(assignment);
+        this.ShouldSearchAssignments(assignment, AssignmentMother.With(classId: GuidMother.Random()));
 
         Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
@@ -107,22 +107,6 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         AssignmentCommentResponse comment = item.Comments.Should().ContainSingle().Subject;
         comment.AuthorName.Should().BeEmpty();
         comment.AuthorRole.Should().BeNull();
-    }
-
-    [Test]
-    public async Task return_the_assignments_of_the_class_only()
-    {
-        Guid classId = GuidMother.Random();
-        Assignment mine = AssignmentMother.With(classId: classId);
-        this.ShouldFindClass(classId);
-        this.ShouldFindSubjectsOfClass(classId);
-        this.ShouldHaveClassMembers();
-        this.ShouldSearchAssignments(mine, AssignmentMother.With(classId: GuidMother.Random()));
-
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
-            AssignmentFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Items.Select(item => item.Id).Should().Equal(mine.Id);
     }
 
     [Test]

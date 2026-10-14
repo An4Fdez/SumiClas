@@ -9,6 +9,4 @@ public static class SubjectMother
 
     public static Subject InClass(Guid classId)
         => With(GuidMother.Random(), classId, StringMother.Random("subject"));
-
-    public static Subject WithLabel(Guid classId, string label) => With(GuidMother.Random(), classId, label);
 }

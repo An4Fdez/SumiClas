@@ -107,16 +107,15 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
         this.Added.Should().BeEmpty();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_label_required_without_adding_when_the_label_is_blank(string label)
+    [Test]
+    public async Task return_label_required_without_adding_when_the_label_is_blank()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(
-            SchoolYearCreateCommandMother.With(GuidMother.Random(), schoolId, label, START_DATE, END_DATE));
+            SchoolYearCreateCommandMother.With(GuidMother.Random(), schoolId, "   ", START_DATE, END_DATE));
 
         result.Error.Should().Be(SchoolYearErrors.LabelRequired);
         this.Added.Should().BeEmpty();

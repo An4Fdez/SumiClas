@@ -22,7 +22,7 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task mark_the_guardian_as_paid_and_leave_the_other_participants_unchanged()
+    public async Task mark_the_guardian_as_paid_and_leave_the_other_participants_and_expenses_unchanged()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -36,15 +36,17 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
                 ExpenseParticipantMother.Unpaid(guardianId),
                 ExpenseParticipantMother.Paid(otherPaidId),
             ]);
+        ClassExpense other = ClassExpenseMother.With(participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchClassExpenses(expense);
+        this.ShouldFetchClassExpenses(other, expense);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
 
         result.IsSuccess.Should().BeTrue();
+        other.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
         expense.Participants.Should().BeEquivalentTo(
         [
             ExpenseParticipantMother.Unpaid(otherUnpaidId),
@@ -71,26 +73,6 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
-    }
-
-    [Test]
-    public async Task mark_only_the_requested_expense()
-    {
-        Guid expenseId = GuidMother.Random();
-        Guid guardianId = GuidMother.Random();
-        ClassExpense requested = ClassExpenseMother.With(
-            id: expenseId,
-            participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
-        ClassExpense other = ClassExpenseMother.With(participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindClassInSchoolYear(requested.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchClassExpenses(other, requested);
-
-        await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
-
-        requested.Participants.Single().HasPaid.Should().BeTrue();
-        other.Participants.Single().HasPaid.Should().BeFalse();
     }
 
     [Test]

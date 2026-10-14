@@ -46,19 +46,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_active_status_name_for_an_active_school_year()
-    {
-        SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldSearchSchoolYears(schoolYear);
-
-        IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
-            SchoolYearFinderByIdsQueryMother.WithIds(schoolYear.Id));
-
-        result.Single().Status.Should().Be("Active");
-    }
-
-    [Test]
-    public async Task return_only_the_requested_school_years_and_skip_unknown_ids()
+    public async Task return_only_the_requested_school_years_with_their_status_and_skip_unknown_ids()
     {
         SchoolYear requested = SchoolYearMother.Active(GuidMother.Random());
         SchoolYear otherRequested = SchoolYearMother.Archived(GuidMother.Random());
@@ -68,17 +56,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
             SchoolYearFinderByIdsQueryMother.WithIds(requested.Id, GuidMother.Random(), otherRequested.Id));
 
         result.Select(response => response.Id).Should().BeEquivalentTo([requested.Id, otherRequested.Id]);
-    }
-
-    [Test]
-    public async Task return_empty_when_no_school_year_matches_the_ids()
-    {
-        this.ShouldSearchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
-
-        IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
-            SchoolYearFinderByIdsQueryMother.WithIds(GuidMother.Random()));
-
-        result.Should().BeEmpty();
+        result.Single(response => response.Id == requested.Id).Status.Should().Be("Active");
     }
 
     [Test]

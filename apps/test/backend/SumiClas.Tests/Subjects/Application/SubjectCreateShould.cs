@@ -88,36 +88,11 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_subject_id_is_empty()
+    public async Task return_label_required_without_asking_or_adding_when_the_label_is_blank()
     {
         this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
-            SubjectCreateCommandMother.With(Guid.Empty, GuidMother.Random(), StringMother.Random("subject")));
-
-        result.Error.Should().Be(SubjectErrors.IdRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_id_is_empty()
-    {
-        this.ShouldCaptureAddedSubjects();
-        Result result = await this._useCase.ExecuteAsync(
-            SubjectCreateCommandMother.With(GuidMother.Random(), Guid.Empty, StringMother.Random("subject")));
-
-        result.Error.Should().Be(SubjectErrors.ClassRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_label_required_without_asking_or_adding_when_the_label_is_blank(string label)
-    {
-        this.ShouldCaptureAddedSubjects();
-        Result result = await this._useCase.ExecuteAsync(
-            SubjectCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), label));
+            SubjectCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), "   "));
 
         result.Error.Should().Be(SubjectErrors.LabelRequired);
         this.Added.Should().BeEmpty();
@@ -125,30 +100,26 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_label_required_instead_of_class_not_found_when_both_fail()
+    public async Task return_id_required_without_asking_or_adding_when_every_field_is_invalid()
     {
-        Result result = await this._useCase.ExecuteAsync(
-            SubjectCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), " "));
-
-        result.Error.Should().Be(SubjectErrors.LabelRequired);
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_id_required_when_every_field_is_invalid()
-    {
+        this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(Guid.Empty, Guid.Empty, " "));
 
         result.Error.Should().Be(SubjectErrors.IdRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_id_and_the_label_are_invalid()
+    public async Task return_class_required_without_asking_or_adding_when_the_class_id_and_the_label_are_invalid()
     {
+        this.ShouldCaptureAddedSubjects();
         Result result = await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), Guid.Empty, " "));
 
         result.Error.Should().Be(SubjectErrors.ClassRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 }

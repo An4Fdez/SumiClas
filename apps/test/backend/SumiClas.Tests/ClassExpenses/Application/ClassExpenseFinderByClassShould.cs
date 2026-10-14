@@ -28,7 +28,7 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_the_expense_with_its_event_author_and_participants_ordered_by_name()
+    public async Task return_the_expense_of_the_class_with_its_event_author_and_participants_ordered_by_name()
     {
         Guid classId = GuidMother.Random();
         Guid eventId = GuidMother.Random();
@@ -58,7 +58,7 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             UserClassMemberResponseMother.Participant(betaId, betaName),
             UserClassMemberResponseMother.WithoutRole(gammaId, gammaName));
         this.ShouldFindCalendarEvents(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
-        this.ShouldSearchClassExpenses(expense);
+        this.ShouldSearchClassExpenses(expense, ClassExpenseMother.With(classId: GuidMother.Random()));
 
         Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
@@ -81,58 +81,30 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_empty_names_and_no_role_and_no_event_when_they_are_not_found()
+    public async Task return_empty_names_and_no_role_and_no_event_when_they_are_not_found_or_there_is_none()
     {
         Guid classId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
-        ClassExpense expense = ClassExpenseMother.With(
+        ClassExpense withEvent = ClassExpenseMother.With(
             classId: classId,
             relatedEventId: GuidMother.Random(),
+            createdAt: Now.AddMinutes(2),
             participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
+        ClassExpense withoutEvent = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(1));
         this.ShouldFindClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
-        this.ShouldSearchClassExpenses(expense);
+        this.ShouldSearchClassExpenses(withEvent, withoutEvent);
 
         Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        ClassExpenseResponse item = result.Value.Items.Should().ContainSingle().Subject;
-        item.RelatedEvent.Should().BeNull();
-        item.AuthorName.Should().BeEmpty();
-        item.AuthorRole.Should().BeNull();
-        item.Participants.Should().Equal(new ExpenseParticipantResponse(guardianId, string.Empty, false));
-    }
-
-    [Test]
-    public async Task return_no_event_when_the_expense_has_no_related_event()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldHaveClassMembers();
-        this.ShouldFindCalendarEvents();
-        this.ShouldSearchClassExpenses(ClassExpenseMother.With(classId: classId));
-
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Items.Single().RelatedEvent.Should().BeNull();
-    }
-
-    [Test]
-    public async Task return_the_expenses_of_the_class_only()
-    {
-        Guid classId = GuidMother.Random();
-        ClassExpense mine = ClassExpenseMother.With(classId: classId);
-        this.ShouldFindClass(classId);
-        this.ShouldHaveClassMembers();
-        this.ShouldFindCalendarEvents();
-        this.ShouldSearchClassExpenses(mine, ClassExpenseMother.With(classId: GuidMother.Random()));
-
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Items.Select(item => item.Id).Should().Equal(mine.Id);
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.Items.Should().OnlyContain(item => item.RelatedEvent == null);
+        ClassExpenseResponse first = result.Value.Items.First();
+        first.AuthorName.Should().BeEmpty();
+        first.AuthorRole.Should().BeNull();
+        first.Participants.Should().Equal(new ExpenseParticipantResponse(guardianId, string.Empty, false));
     }
 
     [Test]

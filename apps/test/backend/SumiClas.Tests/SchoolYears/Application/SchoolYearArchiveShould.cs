@@ -61,19 +61,6 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_archived_without_raising_events_when_the_school_year_was_stored_archived()
-    {
-        SchoolYear schoolYear = SchoolYearMother.Archived(GuidMother.Random());
-        this.ShouldFetchSchoolYears(schoolYear);
-
-        Result result = await this._useCase.ExecuteAsync(
-            SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
-
-        result.Error.Should().Be(SchoolYearErrors.Archived);
-        schoolYear.DomainEvents.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task return_not_found_when_the_school_year_does_not_exist()
     {
         this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));

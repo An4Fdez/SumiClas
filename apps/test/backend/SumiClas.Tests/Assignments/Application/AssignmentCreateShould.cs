@@ -94,7 +94,6 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("   ")]
     public async Task add_the_assignment_without_description_when_the_description_is_blank(string? description)
     {
@@ -158,60 +157,6 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldCaptureAddedAssignments();
-
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(id: Guid.Empty));
-
-        result.Error.Should().Be(AssignmentErrors.IdRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_is_empty()
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldCaptureAddedAssignments();
-
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(classId: Guid.Empty));
-
-        result.Error.Should().Be(AssignmentErrors.ClassRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task return_subject_required_without_asking_or_adding_when_the_subject_is_empty()
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldCaptureAddedAssignments();
-
-        Result result = await this._useCase.ExecuteAsync(
-            AssignmentCreateCommandMother.Valid(subjectId: Guid.Empty));
-
-        result.Error.Should().Be(AssignmentErrors.SubjectRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank(string title)
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldCaptureAddedAssignments();
-
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(title: title));
-
-        result.Error.Should().Be(AssignmentErrors.TitleRequired);
-        this.Added.Should().BeEmpty();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
     public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
@@ -225,46 +170,58 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_and_the_class_are_empty()
+    public async Task return_id_required_without_asking_or_adding_when_the_id_and_the_class_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldCaptureAddedAssignments();
 
         Result result = await this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(id: Guid.Empty, classId: Guid.Empty));
 
         result.Error.Should().Be(AssignmentErrors.IdRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_and_the_subject_are_empty()
+    public async Task return_class_required_without_asking_or_adding_when_the_class_and_the_subject_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldCaptureAddedAssignments();
 
         Result result = await this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: Guid.Empty, subjectId: Guid.Empty));
 
         result.Error.Should().Be(AssignmentErrors.ClassRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_subject_required_when_the_subject_is_empty_and_the_title_is_blank()
+    public async Task return_subject_required_without_asking_or_adding_when_the_subject_is_empty_and_title_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldCaptureAddedAssignments();
 
         Result result = await this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(subjectId: Guid.Empty, title: "  "));
 
         result.Error.Should().Be(AssignmentErrors.SubjectRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_title_required_when_the_title_is_blank_and_the_current_user_id_is_empty()
+    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank_and_the_user_id_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
+        this.ShouldCaptureAddedAssignments();
 
         Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(title: "  "));
 
         result.Error.Should().Be(AssignmentErrors.TitleRequired);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]

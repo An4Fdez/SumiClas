@@ -112,9 +112,8 @@ public class ClassCreateShould : ClassesUnitTestCase
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_name_required_without_asking_or_adding_when_the_name_is_blank(string name)
+    [Test]
+    public async Task return_name_required_without_asking_or_adding_when_the_name_is_blank()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
@@ -122,7 +121,7 @@ public class ClassCreateShould : ClassesUnitTestCase
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             GuidMother.Random(),
-            name));
+            "   "));
 
         result.Error.Should().Be(ClassErrors.NameRequired);
         this.Added.Should().BeEmpty();

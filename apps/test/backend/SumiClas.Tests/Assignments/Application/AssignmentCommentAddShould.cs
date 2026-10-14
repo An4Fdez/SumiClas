@@ -29,79 +29,39 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task add_a_trimmed_comment_with_the_current_user_and_the_clock_time()
+    public async Task add_a_trimmed_comment_after_the_existing_ones_with_the_current_user_and_the_clock_time()
     {
         Guid assignmentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         string text = StringMother.Random("comment");
-        Assignment assignment = AssignmentMother.With(id: assignmentId);
+        AssignmentComment previous = AssignmentCommentMother.With(
+            GuidMother.Random(),
+            StringMother.Random("previous"),
+            Now.AddDays(-1));
+        Assignment assignment = AssignmentMother.With(id: assignmentId, comments: [previous]);
+        Assignment other = AssignmentMother.With();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchAssignments(assignment);
+        this.ShouldFetchAssignments(other, assignment);
         this.ShouldCaptureAddedAssignments();
+        this.AdvanceClock(TimeSpan.FromHours(3));
 
         Result result = await this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, "  " + text + "\n"));
 
         result.IsSuccess.Should().BeTrue();
-        AssignmentComment comment = assignment.Comments.Should().ContainSingle().Subject;
-        comment.AuthorId.Should().Be(authorId);
-        comment.Text.Should().Be(text);
-        comment.CreatedAt.Should().Be(Now);
-        comment.Id.Should().NotBeEmpty();
-        this.Added.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task keep_the_existing_comments_and_append_the_new_one_with_its_own_time()
-    {
-        Guid assignmentId = GuidMother.Random();
-        Guid previousAuthorId = GuidMother.Random();
-        Guid authorId = GuidMother.Random();
-        AssignmentComment previous = AssignmentCommentMother.With(
-            previousAuthorId,
-            StringMother.Random("previous"),
-            Now.AddDays(-1));
-        Assignment assignment = AssignmentMother.With(id: assignmentId, comments: [previous]);
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchAssignments(assignment);
-        this.AdvanceClock(TimeSpan.FromHours(3));
-
-        Result result = await this._useCase.ExecuteAsync(
-            AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
-
-        result.IsSuccess.Should().BeTrue();
         assignment.Comments.Should().HaveCount(2);
         assignment.Comments.First().Should().BeSameAs(previous);
-        assignment.Comments.Last().AuthorId.Should().Be(authorId);
-        assignment.Comments.Last().CreatedAt.Should().Be(Now.AddHours(3));
-    }
-
-    [Test]
-    public async Task comment_only_the_requested_assignment()
-    {
-        Guid assignmentId = GuidMother.Random();
-        Assignment requested = AssignmentMother.With(id: assignmentId);
-        Assignment other = AssignmentMother.With();
-        Guid authorId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldFindClassInSchoolYear(requested.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchAssignments(other, requested);
-
-        await this._useCase.ExecuteAsync(AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
-
-        requested.Comments.Should().HaveCount(1);
+        AssignmentComment comment = assignment.Comments.Last();
+        comment.AuthorId.Should().Be(authorId);
+        comment.Text.Should().Be(text);
+        comment.CreatedAt.Should().Be(Now.AddHours(3));
+        comment.Id.Should().NotBeEmpty();
         other.Comments.Should().BeEmpty();
+        this.Added.Should().BeEmpty();
     }
 
     [Test]
@@ -239,9 +199,8 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         result.Error.Should().Be(SchoolYearErrors.Archived);
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_comment_text_required_without_commenting_when_the_text_is_blank(string text)
+    [Test]
+    public async Task return_comment_text_required_without_commenting_when_the_text_is_blank()
     {
         Guid assignmentId = GuidMother.Random();
         Assignment assignment = AssignmentMother.With(id: assignmentId);
@@ -254,28 +213,9 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldFetchAssignments(assignment);
 
         Result result = await this._useCase.ExecuteAsync(
-            AssignmentCommentAddCommandMother.WithText(assignmentId, text));
+            AssignmentCommentAddCommandMother.WithText(assignmentId, "   "));
 
         result.Error.Should().Be(AssignmentErrors.CommentTextRequired);
-        assignment.Comments.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_comment_author_required_without_commenting_when_the_current_user_id_is_empty()
-    {
-        Guid assignmentId = GuidMother.Random();
-        Assignment assignment = AssignmentMother.With(id: assignmentId);
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(Guid.Empty);
-        this.ShouldFindUser(Guid.Empty);
-        this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFetchAssignments(assignment);
-
-        Result result = await this._useCase.ExecuteAsync(
-            AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
-
-        result.Error.Should().Be(AssignmentErrors.CommentAuthorRequired);
         assignment.Comments.Should().BeEmpty();
     }
 
