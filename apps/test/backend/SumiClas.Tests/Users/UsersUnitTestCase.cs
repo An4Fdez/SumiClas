@@ -91,7 +91,9 @@ public abstract class UsersUnitTestCase : UnitTestCase
 
     protected void ShouldFindClass(Guid classId)
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
 
     protected void ShouldNotFindClass()
