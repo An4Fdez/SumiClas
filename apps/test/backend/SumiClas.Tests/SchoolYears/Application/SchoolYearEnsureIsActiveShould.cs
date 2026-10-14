@@ -22,7 +22,7 @@ public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
     public async Task succeed_when_the_school_year_is_active()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear, SchoolYearMother.Archived(GuidMother.Random()));
+        this.ShouldFetchSchoolYears(schoolYear, SchoolYearMother.Archived(GuidMother.Random()));
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(schoolYear.Id));
@@ -34,7 +34,7 @@ public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
     public async Task return_archived_when_the_school_year_is_archived()
     {
         SchoolYear schoolYear = SchoolYearMother.Archived(GuidMother.Random());
-        this.ShouldReturn(schoolYear, SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldFetchSchoolYears(schoolYear, SchoolYearMother.Active(GuidMother.Random()));
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(schoolYear.Id));
@@ -45,7 +45,7 @@ public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_not_found_when_the_school_year_does_not_exist()
     {
-        this.ShouldReturn(SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(GuidMother.Random()));

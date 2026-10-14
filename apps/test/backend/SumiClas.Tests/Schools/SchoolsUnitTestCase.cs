@@ -10,43 +10,47 @@ using SumiClas.Tests.Shared;
 
 public abstract class SchoolsUnitTestCase : UnitTestCase
 {
-    private readonly List<School> _stored = [];
-
     protected Mock<ISchoolRepository> Repository { get; } = new();
 
     [SetUp]
     public void SchoolsSetUp()
     {
-        this._stored.Clear();
         this.Repository.Reset();
-        this.Repository
+    }
+
+    protected void ShouldFetchSchools(params School[] schools)
+        => this.Repository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid id, CancellationToken _) => this._stored.FirstOrDefault(school => school.Id == id));
-        this.Repository
+            .ReturnsAsync((Guid id, CancellationToken _) => schools.FirstOrDefault(school => school.Id == id));
+
+    protected void ShouldSearchSchools(params School[] schools)
+        => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<School>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((ISpecification<School> specification, CancellationToken _)
-                => InMemorySearch.Run(this._stored, specification));
-    }
+                => InMemorySearch.Run(schools, specification));
 
-    protected void ShouldReturn(params School[] schools) => this._stored.AddRange(schools);
+    protected void ShouldFetchNoSchools()
+        => this.ShouldFetchSchools();
 
-    protected void ShouldResolve(
-        IReadOnlyCollection<LocalityResponse> localities,
-        IReadOnlyCollection<ProvinceResponse> provinces,
-        IReadOnlyCollection<PostalCodeResponse> postalCodes)
-    {
-        this.QueryBus
+    protected void ShouldSearchNoSchools()
+        => this.ShouldSearchSchools();
+
+    protected void ShouldFindLocalities(IReadOnlyCollection<LocalityResponse> localities)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<LocalityFinderByIds.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(localities);
-        this.QueryBus
+
+    protected void ShouldFindProvinces(IReadOnlyCollection<ProvinceResponse> provinces)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<ProvinceFinderByIds.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(provinces);
-        this.QueryBus
+
+    protected void ShouldFindPostalCodes(IReadOnlyCollection<PostalCodeResponse> postalCodes)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<PostalCodeFinderByIds.Query>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(postalCodes);
-    }
 
     protected void ShouldHaveAskedEachModuleOnce()
     {

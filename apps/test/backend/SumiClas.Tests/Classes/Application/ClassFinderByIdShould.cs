@@ -24,7 +24,7 @@ public class ClassFinderByIdShould : ClassesUnitTestCase
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         string name = StringMother.Random("class");
-        this.ShouldReturn(
+        this.ShouldFetchClasses(
             ClassMother.InSchoolYear(GuidMother.Random()),
             ClassMother.With(classId, schoolYearId, name));
 
@@ -40,7 +40,7 @@ public class ClassFinderByIdShould : ClassesUnitTestCase
     [Test]
     public async Task return_not_found_when_the_class_does_not_exist()
     {
-        this.ShouldReturn(ClassMother.InSchoolYear(GuidMother.Random()));
+        this.ShouldFetchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
 
         Result<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderByIdQueryMother.WithClassId(GuidMother.Random()));

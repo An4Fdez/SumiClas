@@ -6,7 +6,6 @@ using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Shared.Domain.Events;
-using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 
 [TestFixture]
@@ -30,7 +29,8 @@ public class ClassCreateShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         string name = StringMother.Random("class");
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldCaptureAddedClasses();
 
         Result result = await this._useCase.ExecuteAsync(
             ClassCreateCommandMother.With(classId, schoolYearId, "  " + name + " "));
@@ -50,7 +50,8 @@ public class ClassCreateShould : ClassesUnitTestCase
         Guid creatorId = GuidMother.Random();
         string name = StringMother.Random("class");
         this.ShouldResolveCurrentUser(creatorId);
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldCaptureAddedClasses();
 
         await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(classId, schoolYearId, name));
 
@@ -144,7 +145,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
@@ -160,7 +161,7 @@ public class ClassCreateShould : ClassesUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),

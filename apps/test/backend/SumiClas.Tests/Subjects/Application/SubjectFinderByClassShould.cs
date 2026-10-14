@@ -5,7 +5,6 @@ using SumiClas.Classes.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Subjects.Application;
 using SumiClas.Subjects.Domain;
-using SumiClas.Tests.Classes;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Subjects.Domain;
 
@@ -24,8 +23,8 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         Subject subject = SubjectMother.InClass(classId);
-        this.ShouldReturn(subject);
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldSearchSubjects(subject);
+        this.ShouldFindClass(classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
@@ -41,8 +40,8 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
         Subject first = SubjectMother.WithLabel(classId, StringMother.Random("a"));
         Subject second = SubjectMother.WithLabel(classId, StringMother.Random("b"));
         Subject third = SubjectMother.WithLabel(classId, StringMother.Random("c"));
-        this.ShouldReturn(third, first, second);
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldSearchSubjects(third, first, second);
+        this.ShouldFindClass(classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
@@ -55,8 +54,8 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         Subject own = SubjectMother.InClass(classId);
-        this.ShouldReturn(SubjectMother.InClass(GuidMother.Random()), own);
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldSearchSubjects(SubjectMother.InClass(GuidMother.Random()), own);
+        this.ShouldFindClass(classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
@@ -68,8 +67,8 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     public async Task return_an_empty_list_when_the_class_has_no_subjects()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldReturn(SubjectMother.InClass(GuidMother.Random()));
-        this.QueryBus.ShouldFindClass(classId);
+        this.ShouldSearchSubjects(SubjectMother.InClass(GuidMother.Random()));
+        this.ShouldFindClass(classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
@@ -82,8 +81,7 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     public async Task return_class_not_found_without_searching_when_the_class_does_not_exist()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldReturn(SubjectMother.InClass(classId));
-        this.QueryBus.ShouldNotFindClass();
+        this.ShouldNotFindClass();
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));

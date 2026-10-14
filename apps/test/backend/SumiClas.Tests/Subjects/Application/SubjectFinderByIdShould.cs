@@ -23,7 +23,7 @@ public class SubjectFinderByIdShould : SubjectsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         Subject subject = SubjectMother.InClass(classId);
-        this.ShouldReturn(SubjectMother.InClass(classId), subject);
+        this.ShouldFetchSubjects(SubjectMother.InClass(classId), subject);
 
         Result<SubjectResponse> result = await this._useCase.ExecuteAsync(
             SubjectFinderByIdQueryMother.WithSubjectId(subject.Id));
@@ -35,7 +35,7 @@ public class SubjectFinderByIdShould : SubjectsUnitTestCase
     [Test]
     public async Task return_not_found_when_the_subject_does_not_exist()
     {
-        this.ShouldReturn(SubjectMother.InClass(GuidMother.Random()));
+        this.ShouldFetchSubjects(SubjectMother.InClass(GuidMother.Random()));
 
         Result<SubjectResponse> result = await this._useCase.ExecuteAsync(
             SubjectFinderByIdQueryMother.WithSubjectId(GuidMother.Random()));

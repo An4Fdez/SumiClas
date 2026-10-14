@@ -1,13 +1,17 @@
 namespace SumiClas.Tests.Subjects;
 
 using Moq;
+using SumiClas.Classes.Application;
+using SumiClas.Classes.Domain;
+using SumiClas.SchoolYears.Application;
+using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Subjects.Domain;
+using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Shared;
 
 public abstract class SubjectsUnitTestCase : UnitTestCase
 {
-    private readonly List<Subject> _stored = [];
     private readonly List<Subject> _added = [];
 
     protected Mock<ISubjectRepository> Repository { get; } = new();
@@ -17,26 +21,29 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
     [SetUp]
     public void SubjectsSetUp()
     {
-        this._stored.Clear();
         this._added.Clear();
         this.Repository.Reset();
-        this.Repository
+    }
+
+    protected void ShouldFetchSubjects(params Subject[] subjects)
+        => this.Repository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _)
-                => this._stored.FirstOrDefault(subject => subject.Id == id));
-        this.Repository
+                => subjects.FirstOrDefault(subject => subject.Id == id));
+
+    protected void ShouldSearchSubjects(params Subject[] subjects)
+        => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Subject>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((ISpecification<Subject> specification, CancellationToken _)
-                => InMemorySearch.Run(this._stored, specification));
-        this.Repository
+                => InMemorySearch.Run(subjects, specification));
+
+    protected void ShouldCaptureAddedSubjects()
+        => this.Repository
             .Setup(repository => repository.AddAsync(It.IsAny<Subject>(), It.IsAny<CancellationToken>()))
             .Callback<Subject, CancellationToken>((subject, _) => this._added.Add(subject))
             .Returns(Task.CompletedTask);
-    }
-
-    protected void ShouldReturn(params Subject[] subjects) => this._stored.AddRange(subjects);
 
     protected void ShouldNotHaveSearched()
         => this.Repository.Verify(
@@ -44,4 +51,35 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
                 It.IsAny<ISpecification<Subject>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+
+    protected void ShouldFindClass(Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
+
+    protected void ShouldNotFindClass()
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Failure(ClassErrors.NotFound));
+
+    protected void ShouldFindClassInSchoolYear(Guid classId, Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+
+    protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(error));
 }

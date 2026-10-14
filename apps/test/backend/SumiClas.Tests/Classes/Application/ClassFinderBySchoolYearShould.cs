@@ -23,7 +23,7 @@ public class ClassFinderBySchoolYearShould : ClassesUnitTestCase
         string name = StringMother.Random("class");
         Class first = ClassMother.With(GuidMother.Random(), schoolYearId, name);
         Class second = ClassMother.InSchoolYear(schoolYearId);
-        this.ShouldReturn(first, ClassMother.InSchoolYear(GuidMother.Random()), second);
+        this.ShouldSearchClasses(first, ClassMother.InSchoolYear(GuidMother.Random()), second);
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderBySchoolYearQueryMother.WithSchoolYearId(schoolYearId));
@@ -36,7 +36,7 @@ public class ClassFinderBySchoolYearShould : ClassesUnitTestCase
     [Test]
     public async Task return_empty_when_the_school_year_has_no_classes()
     {
-        this.ShouldReturn(ClassMother.InSchoolYear(GuidMother.Random()));
+        this.ShouldSearchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderBySchoolYearQueryMother.WithSchoolYearId(GuidMother.Random()));

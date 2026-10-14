@@ -26,9 +26,12 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         Guid localityId = GuidMother.Random();
         Guid otherLocalityId = GuidMother.Random();
         string schoolName = StringMother.Random("school");
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
         School inMalaga = SchoolMother.InLocality(schoolName, localityId);
-        this.ShouldReturn(inMalaga, SchoolMother.InLocality(schoolName, otherLocalityId));
+        this.ShouldSearchSchools(inMalaga, SchoolMother.InLocality(schoolName, otherLocalityId));
 
         IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId)).Value;
 
@@ -45,11 +48,10 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         string provinceName = StringMother.Random("province");
         string localityName = StringMother.Random("locality");
         string postalCode = StringMother.Random("postal");
-        this.ShouldResolve(
-            [LocalityResponseMother.With(localityId, provinceId, localityName)],
-            [ProvinceResponseMother.With(provinceId, provinceName)],
-            [PostalCodeResponseMother.With(postalCodeId, localityId, postalCode)]);
-        this.ShouldReturn(SchoolMother.InLocality(StringMother.Random("school"), localityId, postalCodeId));
+        this.ShouldFindLocalities([LocalityResponseMother.With(localityId, provinceId, localityName)]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, provinceName)]);
+        this.ShouldFindPostalCodes([PostalCodeResponseMother.With(postalCodeId, localityId, postalCode)]);
+        this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), localityId, postalCodeId));
 
         SchoolResponse school = (await this.Find(localityId)).Value.Single();
 
@@ -64,8 +66,11 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     public async Task return_a_null_code_and_not_ask_for_postal_codes_when_the_school_has_no_postal_code()
     {
         Guid localityId = GuidMother.Random();
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
-        this.ShouldReturn(SchoolMother.InLocality(StringMother.Random("school"), localityId));
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
+        this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), localityId));
 
         SchoolResponse school = (await this.Find(localityId)).Value.Single();
 
@@ -79,8 +84,13 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     {
         Guid localityId = GuidMother.Random();
         Guid postalCodeId = GuidMother.Random();
-        this.ShouldResolveCatalog(localityId, postalCodeId);
-        this.ShouldReturn(Enumerable.Range(0, 10)
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
+        this.ShouldFindPostalCodes(
+            [PostalCodeResponseMother.With(postalCodeId, localityId, StringMother.Random("postal"))]);
+        this.ShouldSearchSchools(Enumerable.Range(0, 10)
             .Select(index => SchoolMother.InLocality(NameOf(index), localityId, postalCodeId))
             .ToArray());
 
@@ -93,9 +103,12 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     public async Task match_the_name_ignoring_case_and_accents_when_a_name_is_given()
     {
         Guid localityId = GuidMother.Random();
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
         School match = SchoolMother.InLocality("CEIP Peña Blanca", localityId);
-        this.ShouldReturn(match, SchoolMother.InLocality(StringMother.Random("other"), localityId));
+        this.ShouldSearchSchools(match, SchoolMother.InLocality(StringMother.Random("other"), localityId));
 
         IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId, "  PENA bla ")).Value;
 
@@ -106,9 +119,12 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     public async Task match_the_unaccented_name_when_the_search_is_accented()
     {
         Guid localityId = GuidMother.Random();
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
         School match = SchoolMother.InLocality("CEIP Alamos", localityId);
-        this.ShouldReturn(match);
+        this.ShouldSearchSchools(match);
 
         IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId, "Álamos")).Value;
 
@@ -121,8 +137,11 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         Guid localityId = GuidMother.Random();
         string firstName = StringMother.Random("alpha");
         string lastName = StringMother.Random("zeta");
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
-        this.ShouldReturn(
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
+        this.ShouldSearchSchools(
             SchoolMother.InLocality(lastName, localityId),
             SchoolMother.InLocality(firstName, localityId));
 
@@ -134,7 +153,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     [Test]
     public async Task return_nothing_without_asking_other_modules_when_the_locality_is_unknown()
     {
-        this.ShouldReturn(SchoolMother.InLocality(StringMother.Random("school"), GuidMother.Random()));
+        this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), GuidMother.Random()));
 
         IReadOnlyCollection<SchoolResponse> result = (await this.Find(GuidMother.Random())).Value;
 
@@ -146,8 +165,11 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     public async Task return_at_most_max_results_taking_the_first_by_name()
     {
         Guid localityId = GuidMother.Random();
-        this.ShouldResolveCatalog(localityId, GuidMother.Random());
-        this.ShouldReturn(Enumerable.Range(0, SchoolFinderByLocality.MaxResults + 5)
+        Guid provinceId = GuidMother.Random();
+        this.ShouldFindLocalities(
+            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))]);
+        this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
+        this.ShouldSearchSchools(Enumerable.Range(0, SchoolFinderByLocality.MaxResults + 5)
             .Select(index => SchoolMother.InLocality(NameOf(index), localityId))
             .ToArray());
 
@@ -180,13 +202,4 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         => this._useCase.ExecuteAsync(
             SchoolFinderByLocalityQueryMother.With(localityId, name),
             CancellationToken.None);
-
-    private void ShouldResolveCatalog(Guid localityId, Guid postalCodeId)
-    {
-        Guid provinceId = GuidMother.Random();
-        this.ShouldResolve(
-            [LocalityResponseMother.With(localityId, provinceId, StringMother.Random("locality"))],
-            [ProvinceResponseMother.With(provinceId, StringMother.Random("province"))],
-            [PostalCodeResponseMother.With(postalCodeId, localityId, StringMother.Random("postal"))]);
-    }
 }

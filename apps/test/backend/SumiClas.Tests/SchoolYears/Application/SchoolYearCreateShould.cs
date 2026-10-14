@@ -5,7 +5,6 @@ using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Application;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
-using SumiClas.Tests.Schools;
 using SumiClas.Tests.Shared;
 
 [TestFixture]
@@ -27,7 +26,8 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Guid schoolId = GuidMother.Random();
         string label = StringMother.Random("year");
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
+        this.ShouldCaptureAddedSchoolYears();
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(schoolYearId, schoolId, "  " + label + " ", START_DATE, END_DATE));
@@ -46,7 +46,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_the_school_error_without_adding_when_the_school_does_not_exist()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldNotFindSchool(schoolId);
+        this.ShouldNotFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
@@ -63,7 +63,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_the_school_error_before_validating_the_data_when_both_fail()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldNotFindSchool(schoolId);
+        this.ShouldNotFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(Guid.Empty, schoolId, " ", END_DATE, START_DATE));
@@ -75,7 +75,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_id_required_without_adding_when_the_school_year_id_is_empty()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             Guid.Empty,
@@ -91,7 +91,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_school_required_without_adding_when_the_school_id_is_empty()
     {
-        this.QueryBus.ShouldFindSchool(Guid.Empty);
+        this.ShouldFindSchool(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
@@ -109,7 +109,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_label_required_without_adding_when_the_label_is_blank(string label)
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(GuidMother.Random(), schoolId, label, START_DATE, END_DATE));
@@ -122,7 +122,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_invalid_date_range_without_adding_when_the_end_date_equals_the_start_date()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
@@ -139,7 +139,7 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task return_invalid_date_range_without_adding_when_the_end_date_is_before_the_start_date()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
@@ -156,7 +156,8 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     public async Task accept_an_end_date_one_day_after_the_start_date()
     {
         Guid schoolId = GuidMother.Random();
-        this.QueryBus.ShouldFindSchool(schoolId);
+        this.ShouldFindSchool(schoolId);
+        this.ShouldCaptureAddedSchoolYears();
 
         Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),

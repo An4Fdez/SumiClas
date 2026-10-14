@@ -21,7 +21,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     public async Task archive_the_school_year_when_it_is_active()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
+        this.ShouldFetchSchoolYears(schoolYear);
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
@@ -35,7 +35,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     public async Task raise_the_archived_event_with_the_school_year_id_and_the_clock_time()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
+        this.ShouldFetchSchoolYears(schoolYear);
 
         await this._useCase.ExecuteAsync(SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
@@ -49,7 +49,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     public async Task return_archived_and_raise_no_second_event_when_the_school_year_is_archived_twice()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
+        this.ShouldFetchSchoolYears(schoolYear);
         await this._useCase.ExecuteAsync(SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
         Result result = await this._useCase.ExecuteAsync(
@@ -64,7 +64,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     public async Task return_archived_without_raising_events_when_the_school_year_was_stored_archived()
     {
         SchoolYear schoolYear = SchoolYearMother.Archived(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
+        this.ShouldFetchSchoolYears(schoolYear);
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
@@ -76,7 +76,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_not_found_when_the_school_year_does_not_exist()
     {
-        this.ShouldReturn(SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
         Result result = await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(GuidMother.Random()));

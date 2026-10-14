@@ -6,7 +6,6 @@ using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Domain;
-using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 
 [TestFixture]
@@ -25,8 +24,8 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         string newName = StringMother.Random("class");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, StringMother.Random("old"));
-        this.ShouldReturn(schoolClass);
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, "  " + newName + " "));
@@ -39,6 +38,8 @@ public class ClassRenameShould : ClassesUnitTestCase
     [Test]
     public async Task return_not_found_without_asking_the_school_year_when_the_class_does_not_exist()
     {
+        this.ShouldFetchNoClasses();
+
         Result result = await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(GuidMother.Random(), StringMother.Random("class")));
 
@@ -53,8 +54,8 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
-        this.ShouldReturn(schoolClass);
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
         Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, newName));
 
@@ -68,8 +69,8 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
-        this.ShouldReturn(schoolClass);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
@@ -83,8 +84,8 @@ public class ClassRenameShould : ClassesUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, StringMother.Random("old"));
-        this.ShouldReturn(schoolClass);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, " "));
 
@@ -97,8 +98,8 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
-        this.ShouldReturn(schoolClass);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));

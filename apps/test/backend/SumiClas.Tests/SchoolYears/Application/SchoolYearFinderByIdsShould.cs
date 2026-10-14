@@ -25,7 +25,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Guid schoolId = GuidMother.Random();
         string label = StringMother.Random("year");
-        this.ShouldReturn(SchoolYearMother.Detailed(
+        this.ShouldSearchSchoolYears(SchoolYearMother.Detailed(
             schoolYearId,
             schoolId,
             label,
@@ -49,7 +49,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     public async Task return_the_active_status_name_for_an_active_school_year()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldReturn(schoolYear);
+        this.ShouldSearchSchoolYears(schoolYear);
 
         IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
             SchoolYearFinderByIdsQueryMother.WithIds(schoolYear.Id));
@@ -62,7 +62,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     {
         SchoolYear requested = SchoolYearMother.Active(GuidMother.Random());
         SchoolYear otherRequested = SchoolYearMother.Archived(GuidMother.Random());
-        this.ShouldReturn(requested, otherRequested, SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldSearchSchoolYears(requested, otherRequested, SchoolYearMother.Active(GuidMother.Random()));
 
         IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
             SchoolYearFinderByIdsQueryMother.WithIds(requested.Id, GuidMother.Random(), otherRequested.Id));
@@ -73,7 +73,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_empty_when_no_school_year_matches_the_ids()
     {
-        this.ShouldReturn(SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldSearchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
         IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
             SchoolYearFinderByIdsQueryMother.WithIds(GuidMother.Random()));
@@ -84,7 +84,7 @@ public class SchoolYearFinderByIdsShould : SchoolYearsUnitTestCase
     [Test]
     public async Task return_empty_when_no_ids_are_requested()
     {
-        this.ShouldReturn(SchoolYearMother.Active(GuidMother.Random()));
+        this.ShouldSearchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
         IReadOnlyCollection<SchoolYearResponse> result = await this._useCase.ExecuteAsync(
             SchoolYearFinderByIdsQueryMother.WithIds());

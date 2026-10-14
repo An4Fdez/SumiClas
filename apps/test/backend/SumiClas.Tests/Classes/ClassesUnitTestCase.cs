@@ -2,12 +2,12 @@ namespace SumiClas.Tests.Classes;
 
 using Moq;
 using SumiClas.Classes.Domain;
+using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
 
 public abstract class ClassesUnitTestCase : UnitTestCase
 {
-    private readonly List<Class> _stored = [];
     private readonly List<Class> _added = [];
 
     protected Mock<IClassRepository> Repository { get; } = new();
@@ -17,24 +17,44 @@ public abstract class ClassesUnitTestCase : UnitTestCase
     [SetUp]
     public void ClassesSetUp()
     {
-        this._stored.Clear();
         this._added.Clear();
         this.Repository.Reset();
-        this.Repository
+    }
+
+    protected void ShouldFetchClasses(params Class[] classes)
+        => this.Repository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _)
-                => this._stored.FirstOrDefault(schoolClass => schoolClass.Id == id));
-        this.Repository
+                => classes.FirstOrDefault(schoolClass => schoolClass.Id == id));
+
+    protected void ShouldSearchClasses(params Class[] classes)
+        => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Class>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((ISpecification<Class> specification, CancellationToken _)
-                => InMemorySearch.Run(this._stored, specification));
-        this.Repository
+                => InMemorySearch.Run(classes, specification));
+
+    protected void ShouldFetchNoClasses()
+        => this.ShouldFetchClasses();
+
+    protected void ShouldCaptureAddedClasses()
+        => this.Repository
             .Setup(repository => repository.AddAsync(It.IsAny<Class>(), It.IsAny<CancellationToken>()))
             .Callback<Class, CancellationToken>((schoolClass, _) => this._added.Add(schoolClass))
             .Returns(Task.CompletedTask);
-    }
 
-    protected void ShouldReturn(params Class[] classes) => this._stored.AddRange(classes);
+    protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(error));
 }

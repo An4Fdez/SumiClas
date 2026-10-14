@@ -23,7 +23,7 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
         string name = StringMother.Random("class");
         Class requested = ClassMother.With(GuidMother.Random(), schoolYearId, name);
         Class otherRequested = ClassMother.InSchoolYear(GuidMother.Random());
-        this.ShouldReturn(requested, otherRequested, ClassMother.InSchoolYear(GuidMother.Random()));
+        this.ShouldSearchClasses(requested, otherRequested, ClassMother.InSchoolYear(GuidMother.Random()));
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderByIdsQueryMother.WithIds(requested.Id, otherRequested.Id));
@@ -38,7 +38,7 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
     public async Task skip_the_ids_that_do_not_exist()
     {
         Class existing = ClassMother.InSchoolYear(GuidMother.Random());
-        this.ShouldReturn(existing);
+        this.ShouldSearchClasses(existing);
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderByIdsQueryMother.WithIds(GuidMother.Random(), existing.Id));
@@ -49,7 +49,7 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
     [Test]
     public async Task return_empty_when_no_class_matches_the_ids()
     {
-        this.ShouldReturn(ClassMother.InSchoolYear(GuidMother.Random()));
+        this.ShouldSearchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderByIdsQueryMother.WithIds(GuidMother.Random()));
@@ -60,7 +60,7 @@ public class ClassFinderByIdsShould : ClassesUnitTestCase
     [Test]
     public async Task return_empty_when_no_ids_are_requested()
     {
-        this.ShouldReturn(ClassMother.InSchoolYear(GuidMother.Random()));
+        this.ShouldSearchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
 
         IReadOnlyCollection<ClassResponse> result = await this._useCase.ExecuteAsync(
             ClassFinderByIdsQueryMother.WithIds());
