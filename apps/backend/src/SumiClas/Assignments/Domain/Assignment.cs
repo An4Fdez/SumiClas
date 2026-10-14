@@ -21,7 +21,7 @@ public sealed class Assignment : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    private Assignment(
+    public Assignment(
         Guid id,
         Guid classId,
         Guid subjectId,
@@ -30,7 +30,8 @@ public sealed class Assignment : AggregateRoot
         DateOnly dueDate,
         Guid authorId,
         bool isProposal,
-        DateTimeOffset createdAt) : base(id)
+        DateTimeOffset createdAt,
+        IEnumerable<AssignmentComment> comments) : base(id)
     {
         ClassId = classId;
         SubjectId = subjectId;
@@ -40,6 +41,12 @@ public sealed class Assignment : AggregateRoot
         AuthorId = authorId;
         IsProposal = isProposal;
         CreatedAt = createdAt;
+        _comments.AddRange(comments);
+    }
+
+    private Assignment()
+    {
+        // For reflection purposes (EF Core materialization)
     }
 
     public static Result<Assignment> Create(
@@ -68,7 +75,8 @@ public sealed class Assignment : AggregateRoot
             dueDate,
             authorId,
             isProposal,
-            clock.UtcNow);
+            clock.UtcNow,
+            []);
 
         return Result<Assignment>.Success(assignment);
     }

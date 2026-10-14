@@ -19,14 +19,15 @@ public sealed class ClassExpense : AggregateRoot
     public Guid AuthorId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
-    private ClassExpense(
+    public ClassExpense(
         Guid id,
         Guid classId,
         string item,
         decimal totalAmount,
         Guid? relatedEventId,
         Guid authorId,
-        DateTimeOffset createdAt) : base(id)
+        DateTimeOffset createdAt,
+        IEnumerable<ExpenseParticipant> participants) : base(id)
     {
         ClassId = classId;
         Item = item;
@@ -34,6 +35,12 @@ public sealed class ClassExpense : AggregateRoot
         RelatedEventId = relatedEventId;
         AuthorId = authorId;
         CreatedAt = createdAt;
+        _participants.AddRange(participants);
+    }
+
+    private ClassExpense()
+    {
+        // For reflection purposes (EF Core materialization)
     }
 
     public static Result<ClassExpense> Create(
@@ -54,11 +61,15 @@ public sealed class ClassExpense : AggregateRoot
             return Result<ClassExpense>.Failure(validation.Error!);
         }
 
-        var expense = new ClassExpense(id, classId, item.Trim(), totalAmount, relatedEventId, authorId, clock.UtcNow);
-        foreach (var guardianId in distinctParticipantIds)
-        {
-            expense._participants.Add(new ExpenseParticipant(guardianId, false));
-        }
+        var expense = new ClassExpense(
+            id,
+            classId,
+            item.Trim(),
+            totalAmount,
+            relatedEventId,
+            authorId,
+            clock.UtcNow,
+            distinctParticipantIds.Select(guardianId => new ExpenseParticipant(guardianId, false)));
 
         return Result<ClassExpense>.Success(expense);
     }

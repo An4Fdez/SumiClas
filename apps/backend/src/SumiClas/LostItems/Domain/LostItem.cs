@@ -29,11 +29,12 @@ public sealed class LostItem : AggregateRoot
     public Guid AuthorId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
-    private LostItem(
+    public LostItem(
         Guid id,
         ItemScope scope,
         Guid? classId,
         ItemStatus status,
+        bool recovered,
         string description,
         string? photoUrl,
         bool photoPrivacyConfirmed,
@@ -43,7 +44,7 @@ public sealed class LostItem : AggregateRoot
         Scope = scope;
         ClassId = classId;
         Status = status;
-        Recovered = false;
+        Recovered = recovered;
         Description = description;
         PhotoUrl = photoUrl;
         PhotoPrivacyConfirmed = photoPrivacyConfirmed;
@@ -73,6 +74,7 @@ public sealed class LostItem : AggregateRoot
             scope,
             scope == ItemScope.Class ? classId : null,
             status,
+            false,
             description.Trim(),
             string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim(),
             photoPrivacyConfirmed,

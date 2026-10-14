@@ -15,10 +15,9 @@ public sealed class Student : AggregateRoot
         _guardians.AddRange(guardians);
     }
 
-    /// <summary>EF Core materialization only — the real constructor takes firstGuardian, which doesn't map to a single property.</summary>
     private Student()
     {
-        Name = null!;
+        // For reflection purposes (EF Core materialization)
     }
 
     /// <summary>

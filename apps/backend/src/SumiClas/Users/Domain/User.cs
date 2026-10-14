@@ -29,12 +29,9 @@ public sealed class User : AggregateRoot
         _classRoles.AddRange(classRoles);
     }
 
-    /// <summary>EF Core materialization only — constructor parameters can never bind to an owned-type navigation (Email), even when named to match.</summary>
     private User()
     {
-        FullName = null!;
-        Email = null!;
-        PasswordHash = null!;
+        // For reflection purposes (EF Core materialization)
     }
 
     public static Result<User> Register(Guid id, string fullName, Email email, string passwordHash, IClock clock)

@@ -12,7 +12,7 @@ public sealed class AssignmentComment : Entity
     public string Text { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
-    private AssignmentComment(Guid id, Guid authorId, string text, DateTimeOffset createdAt) : base(id)
+    public AssignmentComment(Guid id, Guid authorId, string text, DateTimeOffset createdAt) : base(id)
     {
         AuthorId = authorId;
         Text = text;
