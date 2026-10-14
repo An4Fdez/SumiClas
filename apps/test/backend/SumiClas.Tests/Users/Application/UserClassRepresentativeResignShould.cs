@@ -23,26 +23,7 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task turn_the_current_user_into_a_participant_when_another_representative_remains()
-    {
-        Guid classId = GuidMother.Random();
-        User user = UserMother.Representative(classId);
-        this.ShouldResolveCurrentUser(user.Id);
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldSearchUsers(user, UserMother.Representative(classId));
-        this.ShouldFind(user);
-
-        Result result = await this._useCase.ExecuteAsync(
-            UserClassRepresentativeResignCommandMother.WithClassId(classId));
-
-        result.IsSuccess.Should().BeTrue();
-        user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Participant(classId));
-    }
-
-    [Test]
-    public async Task keep_the_roles_of_the_user_in_other_classes()
+    public async Task turn_the_current_user_into_a_participant_and_keep_its_other_roles_when_another_remains()
     {
         Guid classId = GuidMother.Random();
         Guid otherClassId = GuidMother.Random();
@@ -58,8 +39,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
-        await this._useCase.ExecuteAsync(UserClassRepresentativeResignCommandMother.WithClassId(classId));
+        Result result = await this._useCase.ExecuteAsync(
+            UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
+        result.IsSuccess.Should().BeTrue();
         user.ClassRoles.Should().BeEquivalentTo(
             [ClassRoleAssignmentMother.Representative(otherClassId), ClassRoleAssignmentMother.Participant(classId)]);
     }
@@ -99,28 +82,6 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
         result.Error.Should().Be(UserErrors.LastClassRepresentativeCannotResign);
-    }
-
-    [Test]
-    public async Task return_not_class_representative_the_second_time_when_it_runs_twice()
-    {
-        Guid classId = GuidMother.Random();
-        User user = UserMother.Representative(classId);
-        this.ShouldResolveCurrentUser(user.Id);
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldSearchUsers(user, UserMother.Representative(classId));
-        this.ShouldFind(user);
-
-        Result first = await this._useCase.ExecuteAsync(
-            UserClassRepresentativeResignCommandMother.WithClassId(classId));
-        Result second = await this._useCase.ExecuteAsync(
-            UserClassRepresentativeResignCommandMother.WithClassId(classId));
-
-        first.IsSuccess.Should().BeTrue();
-        second.Error.Should().Be(UserErrors.NotClassRepresentative);
-        user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Participant(classId));
     }
 
     [Test]

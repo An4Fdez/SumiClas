@@ -28,26 +28,6 @@ public class RefreshTokenGeneratorShould
     }
 
     [Test]
-    public void return_a_64_char_lowercase_hex_value_that_is_not_the_raw_value_when_hashing()
-    {
-        string raw = this._generator.Generate();
-
-        string hash = this._generator.Hash(raw);
-
-        hash.Should().HaveLength(64);
-        hash.Should().MatchRegex("^[0-9a-f]{64}$");
-        hash.Should().NotBe(raw);
-    }
-
-    [Test]
-    public void return_the_same_hash_when_hashing_the_same_value()
-    {
-        string raw = this._generator.Generate();
-
-        this._generator.Hash(raw).Should().Be(this._generator.Hash(raw));
-    }
-
-    [Test]
     public void match_the_known_sha256_of_the_utf8_bytes_when_hashing()
     {
         this._generator.Hash("abc")

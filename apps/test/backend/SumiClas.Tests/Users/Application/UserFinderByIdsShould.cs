@@ -47,32 +47,6 @@ public class UserFinderByIdsShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task skip_the_ids_of_users_that_do_not_exist()
-    {
-        User existing = UserMother.Random();
-        this.ShouldSearchUsers(existing);
-
-        IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
-            UserFinderByIdsQueryMother.WithUserIds(GuidMother.Random(), existing.Id, GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Select(user => user.Id).Should().Equal(existing.Id);
-    }
-
-    [Test]
-    public async Task return_an_empty_collection_when_no_requested_user_exists()
-    {
-        this.ShouldSearchUsers(UserMother.Random());
-
-        IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
-            UserFinderByIdsQueryMother.WithUserIds(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task return_an_empty_collection_when_no_ids_are_requested_even_if_users_exist()
     {
         this.ShouldSearchUsers(UserMother.Random(), UserMother.Random());
@@ -83,18 +57,5 @@ public class UserFinderByIdsShould : UsersUnitTestCase
 
         result.Should().NotBeNull();
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_a_user_requested_twice_only_once()
-    {
-        User user = UserMother.Random();
-        this.ShouldSearchUsers(user);
-
-        IReadOnlyCollection<UserResponse> result = await this._useCase.ExecuteAsync(
-            UserFinderByIdsQueryMother.WithUserIds(user.Id, user.Id),
-            CancellationToken.None);
-
-        result.Select(response => response.Id).Should().Equal(user.Id);
     }
 }

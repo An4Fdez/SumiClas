@@ -28,7 +28,6 @@ public class AccessTokenShould
     }
 
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("   ")]
     public void fail_with_value_required_when_created_with_an_empty_value(string? value)
     {

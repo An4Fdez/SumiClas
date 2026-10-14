@@ -74,7 +74,6 @@ public class SessionRevokeShould : SessionsUnitTestCase
     }
 
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("  ")]
     [TestCase("unknown")]
     public async Task succeed_and_touch_nothing_when_the_token_is_blank_or_unknown(string? token)

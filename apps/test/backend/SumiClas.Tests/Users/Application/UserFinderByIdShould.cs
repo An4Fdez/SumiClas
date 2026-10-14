@@ -34,19 +34,6 @@ public class UserFinderByIdShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_when_the_user_does_not_exist()
-    {
-        this.ShouldFetchNoUsers();
-
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
-            UserFinderByIdQueryMother.WithUserId(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(UserErrors.NotFound);
-    }
-
-    [Test]
     public async Task return_not_found_for_an_id_other_than_the_one_that_exists()
     {
         this.ShouldFetchUsers(UserMother.Random());

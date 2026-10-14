@@ -55,23 +55,6 @@ public abstract class UsersUnitTestCase : UnitTestCase
             .Setup(repository => repository.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-    protected void ShouldHaveSaved(
-        Guid id,
-        string fullName,
-        string email,
-        string passwordHash,
-        DateTimeOffset changedAt)
-        => this.Repository.Verify(
-            repository => repository.AddAsync(
-                It.Is<User>(user =>
-                    user.Id == id
-                    && user.FullName == fullName
-                    && user.Email.Value == email
-                    && user.PasswordHash == passwordHash
-                    && user.PasswordChangedAt == changedAt),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
     protected void ShouldNotHaveSaved()
         => this.Repository.Verify(
             repository => repository.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),

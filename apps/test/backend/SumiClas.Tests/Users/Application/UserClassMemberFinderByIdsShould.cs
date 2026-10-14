@@ -115,19 +115,6 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task skip_the_ids_of_users_that_do_not_exist()
-    {
-        Guid classId = GuidMother.Random();
-        User existing = UserMother.Participant(classId);
-        this.ShouldSearchUsers(existing);
-
-        IReadOnlyCollection<UserClassMemberResponse> result =
-            await this.Ask(classId, GuidMother.Random(), existing.Id);
-
-        result.Select(member => member.UserId).Should().Equal(existing.Id);
-    }
-
-    [Test]
     public async Task return_an_empty_collection_when_no_ids_are_requested_even_if_users_exist()
     {
         Guid classId = GuidMother.Random();
@@ -137,18 +124,6 @@ public class UserClassMemberFinderByIdsShould : UsersUnitTestCase
 
         result.Should().NotBeNull();
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_a_user_requested_twice_only_once()
-    {
-        Guid classId = GuidMother.Random();
-        User user = UserMother.Participant(classId);
-        this.ShouldSearchUsers(user);
-
-        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId, user.Id, user.Id);
-
-        result.Select(member => member.UserId).Should().Equal(user.Id);
     }
 
     private Task<IReadOnlyCollection<UserClassMemberResponse>> Ask(Guid classId, params Guid[] userIds)

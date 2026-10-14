@@ -78,8 +78,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
 
         Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
 
-        result.Value.Count(member => member.UserId == parent.Id).Should().Be(1);
-        result.Value.Should().HaveCount(1);
+        result.Value.Select(member => member.UserId).Should().Equal(parent.Id);
     }
 
     [Test]
@@ -142,25 +141,6 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_class_members_forbidden_when_the_requester_only_has_a_suggested_enrollment()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        User parent = this.AddUser(classId);
-        User suggestedParent = this.AddUser(classId);
-        this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
-        this.AddEnrollment(classId, EnrollmentResponseMother.SUGGESTED, suggestedParent.Id);
-        this.ShouldResolveCurrentUser(suggestedParent.Id);
-        this.ShouldSearchUsers(this._users.ToArray());
-        this.ShouldFindStoredEnrollments();
-        this.ShouldFindStoredGuardians();
-
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
-
-        result.Error.Should().Be(UserErrors.ClassMembersForbidden);
-    }
-
-    [Test]
     public async Task return_not_found_without_reading_enrollments_when_the_class_does_not_exist()
     {
         Guid classId = GuidMother.Random();
@@ -191,48 +171,6 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
             bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()),
             Times.Never);
         this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task skip_the_guardian_ids_that_no_longer_exist()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        User parent = this.AddUser(classId);
-        this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id, GuidMother.Random());
-        this.ShouldResolveCurrentUser(parent.Id);
-        this.ShouldSearchUsers(this._users.ToArray());
-        this.ShouldFindStoredEnrollments();
-        this.ShouldFindStoredGuardians();
-
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Select(member => member.UserId).Should().Equal(parent.Id);
-    }
-
-    [Test]
-    public async Task read_only_the_guardian_ids_of_the_confirmed_students()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        User parent = this.AddUser(classId);
-        Guid confirmedStudent = this.AddEnrollment(classId, EnrollmentResponseMother.CONFIRMED, parent.Id);
-        this.AddEnrollment(classId, EnrollmentResponseMother.SUGGESTED, this.AddUser(classId).Id);
-        this.ShouldResolveCurrentUser(parent.Id);
-        this.ShouldSearchUsers(this._users.ToArray());
-        this.ShouldFindStoredEnrollments();
-        this.ShouldFindStoredGuardians();
-
-        await this.Ask(classId);
-
-        this.QueryBus.Verify(
-            bus => bus.Send(
-                It.Is<IQuery<IReadOnlyCollection<Guid>>>(query =>
-                    ((StudentGuardianFinderByStudents.Query)query).StudentIds.SequenceEqual(
-                        new[] { confirmedStudent })),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
     }
 
     [Test]

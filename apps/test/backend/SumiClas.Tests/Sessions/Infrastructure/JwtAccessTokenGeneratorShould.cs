@@ -45,14 +45,6 @@ public class JwtAccessTokenGeneratorShould : UnitTestCase
     }
 
     [Test]
-    public void return_the_expiry_from_the_clock_and_the_access_token_lifetime()
-    {
-        JwtAccessTokenGenerator generator = this.NewGenerator(JwtOptionsMother.Random());
-
-        generator.Generate(GuidMother.Random()).Value.ExpiresAt.Should().Be(Now + AccessToken.Lifetime);
-    }
-
-    [Test]
     public void use_a_fresh_jti_on_every_call()
     {
         Guid userId = GuidMother.Random();

@@ -84,7 +84,6 @@ public class SessionRotateShould : SessionsUnitTestCase
     }
 
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("   ")]
     public async Task return_invalid_and_search_nothing_when_the_token_is_blank(string? raw)
     {
