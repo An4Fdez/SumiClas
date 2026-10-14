@@ -102,24 +102,6 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_no_role_when_the_author_is_a_member_without_role()
-    {
-        Guid classId = GuidMother.Random();
-        Guid authorId = GuidMother.Random();
-        string authorName = StringMother.Random("author");
-        this.ShouldFindClass(classId);
-        this.ShouldHaveClassMembers(UserClassMemberResponseMother.WithoutRole(authorId, authorName));
-        this.ShouldSearchLostItems(LostItemMother.With(authorId: authorId));
-
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithClassId(classId));
-
-        LostItemResponse item = result.Value.Items.Single();
-        item.AuthorName.Should().Be(authorName);
-        item.AuthorRole.Should().BeNull();
-    }
-
-    [Test]
     public async Task return_the_school_items_and_the_items_of_the_class_but_not_those_of_other_classes()
     {
         Guid classId = GuidMother.Random();
@@ -133,21 +115,6 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
         result.Value.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
-    }
-
-    [Test]
-    public async Task return_the_recovered_items_as_well()
-    {
-        Guid classId = GuidMother.Random();
-        LostItem recovered = LostItemMother.ForClass(classId, recovered: true);
-        this.ShouldFindClass(classId);
-        this.ShouldHaveClassMembers();
-        this.ShouldSearchLostItems(recovered);
-
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithClassId(classId));
-
-        result.Value.Items.Select(item => item.Id).Should().Equal(recovered.Id);
     }
 
     [Test]

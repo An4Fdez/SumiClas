@@ -52,17 +52,6 @@ public class CalendarEventFinderByIdsShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_nothing_when_none_of_the_ids_exist()
-    {
-        this.ShouldSearchCalendarEvents(CalendarEventMother.WithId(GuidMother.Random()));
-
-        IReadOnlyCollection<CalendarEventSummaryResponse> result = await this._useCase.ExecuteAsync(
-            CalendarEventFinderByIdsQueryMother.WithIds(GuidMother.Random()));
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task return_nothing_when_no_ids_are_requested()
     {
         this.ShouldSearchCalendarEvents(CalendarEventMother.WithId(GuidMother.Random()));

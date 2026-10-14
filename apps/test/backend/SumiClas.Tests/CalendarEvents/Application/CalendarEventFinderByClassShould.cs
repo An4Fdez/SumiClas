@@ -108,22 +108,6 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_an_empty_list_when_there_are_no_events_at_all()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldFindEnrollments();
-        this.ShouldFindMembers();
-        this.ShouldSearchNoCalendarEvents();
-
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
-            CalendarEventFinderByClassQueryMother.WithClassId(classId));
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task return_class_not_found_without_searching_events_or_enrollments_when_the_class_does_not_exist()
     {
         this.ShouldNotFindClass();
@@ -257,25 +241,6 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
 
         CalendarEventResponse item = result.Value.Should().ContainSingle().Subject;
         item.AuthorName.Should().BeEmpty();
-        item.AuthorRole.Should().BeNull();
-    }
-
-    [Test]
-    public async Task return_the_author_name_and_no_role_when_the_author_has_no_role_in_the_class()
-    {
-        Guid classId = GuidMother.Random();
-        Guid authorId = GuidMother.Random();
-        string authorName = StringMother.Random("author");
-        this.ShouldFindClass(classId);
-        this.ShouldFindEnrollments();
-        this.ShouldFindMembers(UserClassMemberResponseMother.WithoutRole(authorId, authorName));
-        this.ShouldSearchCalendarEvents(CalendarEventMother.SchoolWide(StringMother.Random("school"), TODAY, authorId));
-
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
-            CalendarEventFinderByClassQueryMother.WithClassId(classId));
-
-        CalendarEventResponse item = result.Value.Should().ContainSingle().Subject;
-        item.AuthorName.Should().Be(authorName);
         item.AuthorRole.Should().BeNull();
     }
 

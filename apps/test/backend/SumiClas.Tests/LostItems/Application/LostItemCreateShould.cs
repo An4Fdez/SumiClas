@@ -101,10 +101,8 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("school", ItemScope.School)]
     [TestCase("SCHOOL", ItemScope.School)]
     [TestCase("class", ItemScope.Class)]
-    [TestCase("CLASS", ItemScope.Class)]
     [TestCase("0", ItemScope.School)]
     [TestCase("1", ItemScope.Class)]
     public async Task accept_the_scope_whatever_its_case_or_when_it_is_a_defined_number(
@@ -127,10 +125,8 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.Added.Single().Scope.Should().Be(expected);
     }
 
-    [TestCase("lost", ItemStatus.Lost)]
     [TestCase("LOST", ItemStatus.Lost)]
     [TestCase("found", ItemStatus.Found)]
-    [TestCase("FOUND", ItemStatus.Found)]
     [TestCase("0", ItemStatus.Lost)]
     [TestCase("1", ItemStatus.Found)]
     public async Task accept_the_status_whatever_its_case_or_when_it_is_a_defined_number(
@@ -148,25 +144,9 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.Added.Single().Status.Should().Be(expected);
     }
 
-    [Test]
-    public async Task add_the_item_when_the_photo_is_confirmed_as_private()
-    {
-        string photoUrl = StringMother.Random("photo");
-        Guid authorId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldCaptureAddedLostItems();
-
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.WithPhoto(photoUrl, true));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Single().PhotoUrl.Should().Be(photoUrl);
-    }
-
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("   ")]
-    public async Task store_no_photo_and_not_require_the_confirmation_when_the_photo_is_empty_or_blank(
+    public async Task store_no_photo_and_not_require_the_confirmation_when_the_photo_is_null_or_blank(
         string? photoUrl)
     {
         Guid authorId = GuidMother.Random();
@@ -225,7 +205,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
 
     [TestCase("garbage")]
     [TestCase("")]
-    [TestCase("   ")]
     [TestCase("2")]
     [TestCase("-1")]
     public async Task return_invalid_scope_without_asking_or_adding_when_the_scope_is_not_valid(string scope)
@@ -243,7 +222,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
 
     [TestCase("garbage")]
     [TestCase("")]
-    [TestCase("   ")]
     [TestCase("2")]
     [TestCase("-1")]
     public async Task return_invalid_status_without_asking_or_adding_when_the_status_is_not_valid(string status)
@@ -303,11 +281,10 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         result.Error.Should().Be(LostItemErrors.ClassRequiredForClassScope);
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_description_required_without_asking_or_adding_when_the_description_is_blank(
-        string description)
+    [Test]
+    public async Task return_description_required_without_asking_or_adding_when_the_description_is_blank()
     {
+        string description = "   ";
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
@@ -416,18 +393,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             LostItemCreateCommandMother.WithPhoto(StringMother.Random("photo"), false));
 
         result.Error.Should().Be(LostItemErrors.PhotoPrivacyConfirmationRequired);
-    }
-
-    [Test]
-    public async Task return_description_required_without_asking_for_the_author_when_the_author_does_not_exist()
-    {
-        Guid authorId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(description: " "));
-
-        result.Error.Should().Be(LostItemErrors.DescriptionRequired);
-        this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]

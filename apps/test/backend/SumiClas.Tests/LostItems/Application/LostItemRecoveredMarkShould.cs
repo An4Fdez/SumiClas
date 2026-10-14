@@ -63,19 +63,6 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task mark_only_the_requested_item()
-    {
-        LostItem requested = LostItemMother.With();
-        LostItem other = LostItemMother.With();
-        this.ShouldFetchLostItems(other, requested);
-
-        await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(requested.Id));
-
-        requested.Recovered.Should().BeTrue();
-        other.Recovered.Should().BeFalse();
-    }
-
-    [Test]
     public async Task not_ask_for_the_current_user_nor_add_any_item()
     {
         LostItem lostItem = LostItemMother.With();

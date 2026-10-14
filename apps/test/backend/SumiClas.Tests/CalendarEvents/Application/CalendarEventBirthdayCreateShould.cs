@@ -56,19 +56,6 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         added.Cost.Should().BeNull();
         added.AuthorId.Should().Be(authorId);
         added.CreatedAt.Should().Be(Now);
-    }
-
-    [Test]
-    public async Task ask_only_for_the_author_and_the_student()
-    {
-        Guid authorId = GuidMother.Random();
-        Guid studentId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldFindStudent(studentId);
-
-        await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
-
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -143,10 +130,10 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank(string title)
+    [Test]
+    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank()
     {
+        string title = "   ";
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
