@@ -22,7 +22,7 @@ public class EnrollmentFinderByClassShould : EnrollmentsUnitTestCase
         Guid classId = GuidMother.Random();
         Enrollment confirmed = EnrollmentMother.Confirmed(GuidMother.Random(), classId);
         Enrollment suggested = EnrollmentMother.Suggested(GuidMother.Random(), classId);
-        this.ShouldReturn(
+        this.ShouldSearchEnrollments(
             confirmed,
             suggested,
             EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
@@ -40,7 +40,7 @@ public class EnrollmentFinderByClassShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_empty_when_the_class_has_no_enrollments()
     {
-        this.ShouldReturn(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
+        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
 
         IReadOnlyCollection<EnrollmentResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentFinderByClassQueryMother.WithClassId(GuidMother.Random()));

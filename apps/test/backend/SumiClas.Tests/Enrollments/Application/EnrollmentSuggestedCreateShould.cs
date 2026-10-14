@@ -10,7 +10,6 @@ using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Enrollments.Domain;
-using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Domain;
 
@@ -33,10 +32,19 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        this.AddConfirmed(oldClassId);
-        this.AddConfirmed(oldClassId);
-        this.AddConfirmed(oldClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId));
+        this.ShouldCaptureAddedEnrollments();
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -53,9 +61,17 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        this.AddConfirmed(oldClassId);
-        this.ShouldReturn(EnrollmentMother.Suggested(GuidMother.Random(), oldClassId));
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Suggested(GuidMother.Random(), oldClassId));
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -65,10 +81,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_suggest_forbidden_when_the_current_user_is_not_a_representative()
     {
+        this.ShouldCaptureAddedEnrollments();
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId, isRepresentative: false);
-        this.AddConfirmed(oldClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldNotHaveClassRepresentative();
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -93,7 +114,7 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     public async Task return_same_class_without_any_lookup_when_both_classes_are_the_same()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldResolveClasses(GuidMother.Random(), classId);
+        this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result<EnrollmentSuggestedCreateResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentSuggestedCreateCommandMother.WithClasses(classId, classId));
@@ -106,7 +127,7 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     public async Task return_class_required_when_the_class_id_is_empty()
     {
         Guid oldClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, GuidMother.Random());
+        this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result<EnrollmentSuggestedCreateResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentSuggestedCreateCommandMother.WithClasses(Guid.Empty, oldClassId));
@@ -117,10 +138,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_that_failure_when_the_new_school_year_is_archived()
     {
+        this.ShouldCaptureAddedEnrollments();
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
         Error archived = ErrorMother.With(code: "SchoolYear.Archived");
-        this.ShouldResolveClasses(oldClassId, newClassId, newYearError: archived);
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldFailEnsuringSchoolYearIsActive(newYearId, archived);
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -131,9 +157,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_same_school_year_when_the_classes_belong_to_the_same_school_year()
     {
+        Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
         Guid otherOldClassId = GuidMother.Random();
-        this.ShouldResolveClasses(GuidMother.Random(), newClassId, otherOldClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId, otherOldClassId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
 
         Result<EnrollmentSuggestedCreateResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentSuggestedCreateCommandMother.WithClasses(newClassId, otherOldClassId));
@@ -144,10 +176,16 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_different_school_when_the_classes_belong_to_different_schools()
     {
+        this.ShouldCaptureAddedEnrollments();
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId, inSameSchool: false);
-        this.AddConfirmed(oldClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId, inSameSchool: false);
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -160,10 +198,19 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        Guid alreadySuggested = this.AddConfirmed(oldClassId);
-        this.AddConfirmed(oldClassId);
-        this.ShouldReturn(EnrollmentMother.Suggested(alreadySuggested, newClassId));
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        Guid alreadySuggested = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Confirmed(alreadySuggested, oldClassId),
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Suggested(alreadySuggested, newClassId));
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -175,10 +222,19 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        Guid movedByTheGuardian = this.AddConfirmed(oldClassId);
-        this.AddConfirmed(oldClassId);
-        this.ShouldReturn(EnrollmentMother.Confirmed(movedByTheGuardian, newClassId));
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        Guid movedByTheGuardian = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Confirmed(movedByTheGuardian, oldClassId),
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Confirmed(movedByTheGuardian, newClassId));
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
@@ -190,9 +246,18 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
-        this.AddConfirmed(oldClassId);
-        this.AddConfirmed(oldClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId));
+        this.ShouldCaptureAddedEnrollments();
 
         Result<EnrollmentSuggestedCreateResponse> first = await this.Suggest(newClassId, oldClassId);
         Result<EnrollmentSuggestedCreateResponse> second = await this.Suggest(newClassId, oldClassId);
@@ -207,60 +272,54 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
-        this.ShouldResolveClasses(oldClassId, newClassId);
+        Guid oldYearId = GuidMother.Random();
+        Guid newYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
+        this.ShouldEnsureSchoolYearIsActive(newYearId);
+        this.ShouldHaveClassRepresentative();
+        this.ShouldFindSchoolYears(oldYearId, newYearId);
+        this.ShouldSearchNoEnrollments();
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
         result.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Nothing());
     }
 
-    private Guid AddConfirmed(Guid classId)
-    {
-        Guid studentId = GuidMother.Random();
-        this.ShouldReturn(EnrollmentMother.Confirmed(studentId, classId));
-        return studentId;
-    }
-
     private Task<Result<EnrollmentSuggestedCreateResponse>> Suggest(Guid newClassId, Guid oldClassId)
         => this._useCase.ExecuteAsync(EnrollmentSuggestedCreateCommandMother.WithClasses(newClassId, oldClassId));
 
-    private void ShouldResolveClasses(
+    private void ShouldFindClasses(
         Guid oldClassId,
+        Guid oldYearId,
         Guid newClassId,
-        Guid? otherOldClassId = null,
-        bool isRepresentative = true,
-        bool inSameSchool = true,
-        Error? newYearError = null)
-    {
-        Guid schoolId = GuidMother.Random();
-        Guid previousSchoolId = inSameSchool ? schoolId : GuidMother.Random();
-        Guid oldYearId = GuidMother.Random();
-        Guid newYearId = GuidMother.Random();
-        Guid otherClassId = otherOldClassId ?? GuidMother.Random();
-
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.QueryBus
+        Guid newYearId,
+        Guid? sameYearAsNewClassId = null)
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
             .Returns<IQuery<Result<ClassResponse>>, CancellationToken>((query, _) =>
                 Task.FromResult(Result<ClassResponse>.Success(ClassOf(
                     ((ClassFinderById.Query)query).ClassId,
                     oldClassId,
                     newClassId,
-                    otherClassId,
+                    sameYearAsNewClassId,
                     oldYearId,
                     newYearId))));
-        if (newYearError is null)
-        {
-            this.QueryBus.ShouldEnsureSchoolYearIsActive(newYearId);
-        }
-        else
-        {
-            this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(newYearId, newYearError);
-        }
 
-        this.QueryBus
+    private void ShouldHaveClassRepresentative()
+        => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<IQuery<bool>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(isRepresentative);
+            .ReturnsAsync(true);
+
+    private void ShouldNotHaveClassRepresentative()
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<bool>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+    private void ShouldFindSchoolYears(Guid oldYearId, Guid newYearId, bool inSameSchool = true)
+    {
+        Guid schoolId = GuidMother.Random();
+        Guid previousSchoolId = inSameSchool ? schoolId : GuidMother.Random();
         this.QueryBus
             .Setup(bus => bus.Send(
                 It.IsAny<IQuery<IReadOnlyCollection<SchoolYearResponse>>>(),
@@ -270,18 +329,20 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
                 SchoolYearResponseMother.Archived(oldYearId, previousSchoolId),
                 SchoolYearResponseMother.Active(newYearId, schoolId),
             });
-        this.QueryBus
+    }
+
+    private void ShouldFindClassesOfNewSchoolYear(Guid newClassId, Guid newYearId)
+        => this.QueryBus
             .Setup(bus => bus.Send(
                 It.IsAny<IQuery<IReadOnlyCollection<ClassResponse>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ClassResponse> { ClassResponseMother.With(newClassId, newYearId) });
-    }
 
     private static ClassResponse ClassOf(
         Guid classId,
         Guid oldClassId,
         Guid newClassId,
-        Guid otherOldClassId,
+        Guid? sameYearAsNewClassId,
         Guid oldYearId,
         Guid newYearId)
     {
@@ -290,9 +351,9 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
             return ClassResponseMother.With(newClassId, newYearId);
         }
 
-        if (classId == otherOldClassId)
+        if (classId == sameYearAsNewClassId)
         {
-            return ClassResponseMother.With(otherOldClassId, newYearId);
+            return ClassResponseMother.With(classId, newYearId);
         }
 
         return ClassResponseMother.With(oldClassId, oldYearId);

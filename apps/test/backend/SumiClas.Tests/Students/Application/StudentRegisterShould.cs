@@ -6,7 +6,6 @@ using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Students.Domain;
-using SumiClas.Tests.Users;
 using SumiClas.Users.Domain;
 
 [TestFixture]
@@ -31,7 +30,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
         string firstSurname = StringMother.Random("Surname");
         string secondSurname = StringMother.Random("Second");
         this.ShouldResolveCurrentUser(guardianId);
-        this.QueryBus.ShouldFindUser(guardianId);
+        this.ShouldFindUser(guardianId);
+        this.ShouldCaptureAddedStudents();
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             studentId,
@@ -55,7 +55,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         this.ShouldResolveCurrentUser(guardianId);
-        this.QueryBus.ShouldFindUser(guardianId);
+        this.ShouldFindUser(guardianId);
+        this.ShouldCaptureAddedStudents();
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             GuidMother.Random(),
@@ -75,7 +76,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         this.ShouldResolveCurrentUser(guardianId);
-        this.QueryBus.ShouldFindUser(guardianId);
+        this.ShouldFindUser(guardianId);
+        this.ShouldCaptureAddedStudents();
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
 
@@ -88,7 +90,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         this.ShouldResolveCurrentUser(guardianId);
-        this.QueryBus.ShouldFindUser(guardianId);
+        this.ShouldFindUser(guardianId);
+        this.ShouldCaptureAddedStudents();
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("1"));
 
@@ -103,6 +106,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [TestCase("-1")]
     public async Task return_invalid_guardian_role_without_asking_or_adding_when_the_role_is_not_valid(string role)
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
@@ -115,6 +119,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [Test]
     public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldHaveNoCurrentUser();
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("Uncle"));
@@ -128,6 +133,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [TestCase("   ")]
     public async Task return_name_required_without_asking_or_adding_when_the_first_name_is_blank(string firstName)
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -142,6 +148,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [TestCase("   ")]
     public async Task return_first_surname_required_without_asking_or_adding_when_it_is_blank(string firstSurname)
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -180,6 +187,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [Test]
     public async Task return_id_required_without_asking_or_adding_when_the_student_id_is_empty()
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(Guid.Empty));
@@ -207,6 +215,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [Test]
     public async Task return_first_guardian_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
+        this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
@@ -219,9 +228,10 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [Test]
     public async Task return_user_not_found_without_adding_when_the_current_user_does_not_exist()
     {
+        this.ShouldCaptureAddedStudents();
         Guid guardianId = GuidMother.Random();
         this.ShouldResolveCurrentUser(guardianId);
-        this.QueryBus.ShouldNotFindUser(guardianId);
+        this.ShouldNotFindUser(guardianId);
 
         Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
 

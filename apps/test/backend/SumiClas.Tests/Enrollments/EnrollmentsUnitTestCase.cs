@@ -1,13 +1,20 @@
 namespace SumiClas.Tests.Enrollments;
 
 using Moq;
+using SumiClas.Classes.Application;
+using SumiClas.Classes.Domain;
 using SumiClas.Enrollments.Domain;
+using SumiClas.SchoolYears.Application;
+using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Application;
+using SumiClas.Students.Domain;
+using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Shared;
+using SumiClas.Tests.Students.Application;
 
 public abstract class EnrollmentsUnitTestCase : UnitTestCase
 {
-    private readonly List<Enrollment> _stored = [];
     private readonly List<Enrollment> _added = [];
 
     protected Mock<IEnrollmentRepository> Repository { get; } = new();
@@ -17,28 +24,78 @@ public abstract class EnrollmentsUnitTestCase : UnitTestCase
     [SetUp]
     public void EnrollmentsSetUp()
     {
-        this._stored.Clear();
         this._added.Clear();
         this.Repository.Reset();
-        this.Repository
+    }
+
+    protected void ShouldFetchEnrollments(params Enrollment[] enrollments)
+        => this.Repository
             .Setup(repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _)
-                => this._stored.FirstOrDefault(enrollment => enrollment.Id == id));
-        this.Repository
+                => enrollments.FirstOrDefault(enrollment => enrollment.Id == id));
+
+    protected void ShouldSearchEnrollments(params Enrollment[] enrollments)
+        => this.Repository
             .Setup(repository => repository.SearchAsync(
                 It.IsAny<ISpecification<Enrollment>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((ISpecification<Enrollment> specification, CancellationToken _)
-                => (IReadOnlyCollection<Enrollment>)this._stored.Where(specification.Criteria.Compile()).ToList());
-        this.Repository
-            .Setup(repository => repository.AddAsync(It.IsAny<Enrollment>(), It.IsAny<CancellationToken>()))
-            .Callback<Enrollment, CancellationToken>((enrollment, _) =>
-            {
-                this._added.Add(enrollment);
-                this._stored.Add(enrollment);
-            })
-            .Returns(Task.CompletedTask);
-    }
+                => (IReadOnlyCollection<Enrollment>)enrollments.Concat(this._added)
+                    .Where(specification.Criteria.Compile()).ToList());
 
-    protected void ShouldReturn(params Enrollment[] enrollments) => this._stored.AddRange(enrollments);
+    protected void ShouldSearchNoEnrollments()
+        => this.ShouldSearchEnrollments();
+
+    protected void ShouldCaptureAddedEnrollments()
+        => this.Repository
+            .Setup(repository => repository.AddAsync(It.IsAny<Enrollment>(), It.IsAny<CancellationToken>()))
+            .Callback<Enrollment, CancellationToken>((enrollment, _) => this._added.Add(enrollment))
+            .Returns(Task.CompletedTask);
+
+    protected void ShouldFindClassInSchoolYear(Guid classId, Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+
+    protected void ShouldFindClassesOfSchoolYear(Guid schoolYearId, params Guid[] classIds)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(classIds.Select(classId => ClassResponseMother.With(classId, schoolYearId)).ToList());
+
+    protected void ShouldNotFindClass()
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ClassResponse>.Failure(ClassErrors.NotFound));
+
+    protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(error));
+
+    protected void ShouldFindStudent(Guid studentId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<StudentFinderById.Query>(query => query.StudentId == studentId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<StudentFinderById.StudentResponse>.Success(StudentResponseMother.WithId(studentId)));
+
+    protected void ShouldNotFindStudent(Guid studentId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<StudentFinderById.Query>(query => query.StudentId == studentId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<StudentFinderById.StudentResponse>.Failure(StudentErrors.NotFound));
 }

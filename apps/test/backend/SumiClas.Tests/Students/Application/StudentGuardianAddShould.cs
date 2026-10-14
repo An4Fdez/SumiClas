@@ -6,7 +6,6 @@ using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Students.Domain;
-using SumiClas.Tests.Users;
 using SumiClas.Users.Domain;
 
 [TestFixture]
@@ -28,9 +27,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid newGuardianId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldFindUser(newGuardianId);
+        this.ShouldFindUser(newGuardianId);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, newGuardianId, nameof(GuardianRole.Father)));
@@ -48,9 +47,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid newGuardianId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(motherId, currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldFindUser(newGuardianId);
+        this.ShouldFindUser(newGuardianId);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, newGuardianId, nameof(GuardianRole.Guardian)));
@@ -68,9 +67,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid newGuardianId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldFindUser(newGuardianId);
+        this.ShouldFindUser(newGuardianId);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, newGuardianId, role));
@@ -86,7 +85,6 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     public async Task return_invalid_guardian_role_without_fetching_or_asking_when_the_role_is_not_valid(string role)
     {
         Student student = StudentMother.GuardedBy(GuidMother.Random());
-        this.ShouldReturn(student);
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -101,7 +99,6 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     public async Task return_unauthenticated_without_fetching_or_asking_when_there_is_no_current_user()
     {
         Student student = StudentMother.GuardedBy(GuidMother.Random());
-        this.ShouldReturn(student);
         this.ShouldHaveNoCurrentUser();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -115,7 +112,7 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     [Test]
     public async Task return_not_found_without_asking_for_the_guardian_when_the_student_does_not_exist()
     {
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldFetchStudents(StudentMother.GuardedBy(GuidMother.Random()));
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -133,7 +130,7 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     {
         Guid motherId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(motherId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -150,9 +147,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid newGuardianId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldNotFindUser(newGuardianId);
+        this.ShouldNotFindUser(newGuardianId);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, newGuardianId, nameof(GuardianRole.Father)));
@@ -166,9 +163,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     {
         Guid currentId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldFindUser(currentId);
+        this.ShouldFindUser(currentId);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, currentId, nameof(GuardianRole.Father)));
@@ -182,9 +179,9 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
     {
         Guid currentId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
-        this.QueryBus.ShouldFindUser(Guid.Empty);
+        this.ShouldFindUser(Guid.Empty);
 
         Result result = await this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, Guid.Empty, nameof(GuardianRole.Father)));

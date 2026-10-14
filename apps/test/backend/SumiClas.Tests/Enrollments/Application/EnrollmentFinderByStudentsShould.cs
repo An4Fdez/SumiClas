@@ -24,7 +24,7 @@ public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
         Enrollment suggested = EnrollmentMother.Suggested(firstStudentId, GuidMother.Random());
         Enrollment confirmed = EnrollmentMother.Confirmed(firstStudentId, GuidMother.Random());
         Enrollment ofSecondStudent = EnrollmentMother.Confirmed(secondStudentId, GuidMother.Random());
-        this.ShouldReturn(
+        this.ShouldSearchEnrollments(
             suggested,
             confirmed,
             ofSecondStudent,
@@ -44,7 +44,7 @@ public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_empty_when_there_are_no_student_ids_even_if_enrollments_exist()
     {
-        this.ShouldReturn(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
+        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
 
         IReadOnlyCollection<EnrollmentResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentFinderByStudentsQueryMother.WithoutStudents());
@@ -55,7 +55,7 @@ public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_empty_when_the_student_ids_are_unknown()
     {
-        this.ShouldReturn(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
+        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
 
         IReadOnlyCollection<EnrollmentResponse> result = await this._useCase.ExecuteAsync(
             EnrollmentFinderByStudentsQueryMother.WithStudentIds(GuidMother.Random()));

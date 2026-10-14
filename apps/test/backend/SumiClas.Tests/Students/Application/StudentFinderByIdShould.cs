@@ -23,7 +23,7 @@ public class StudentFinderByIdShould : StudentsUnitTestCase
     {
         Student requested = StudentMother.GuardedBy(GuidMother.Random());
         Student other = StudentMother.GuardedBy(GuidMother.Random());
-        this.ShouldReturn(other, requested);
+        this.ShouldFetchStudents(other, requested);
 
         Result<StudentFinderById.StudentResponse> result = await this._useCase.ExecuteAsync(
             StudentFinderByIdQueryMother.WithStudentId(requested.Id));
@@ -34,7 +34,7 @@ public class StudentFinderByIdShould : StudentsUnitTestCase
     [Test]
     public async Task return_not_found_when_the_student_does_not_exist()
     {
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldFetchStudents(StudentMother.GuardedBy(GuidMother.Random()));
 
         Result<StudentFinderById.StudentResponse> result = await this._useCase.ExecuteAsync(
             StudentFinderByIdQueryMother.WithStudentId(GuidMother.Random()));

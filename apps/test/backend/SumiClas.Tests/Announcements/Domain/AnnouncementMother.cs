@@ -23,6 +23,8 @@ public static class AnnouncementMother
             null,
             createdAt);
 
+    public static Announcement WithId(Guid id) => With(UnitTestCase.Now, id: id);
+
     public static Announcement SchoolWide(string title, DateTimeOffset createdAt, Guid? authorId = null)
         => With(title: title, createdAt: createdAt, authorId: authorId);
 

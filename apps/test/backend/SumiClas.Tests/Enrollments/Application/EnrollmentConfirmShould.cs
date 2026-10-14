@@ -6,9 +6,7 @@ using SumiClas.Enrollments.Application;
 using SumiClas.Enrollments.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
-using SumiClas.Tests.Classes;
 using SumiClas.Tests.Enrollments.Domain;
-using SumiClas.Tests.SchoolYears;
 using SumiClas.Tests.Shared;
 
 [TestFixture]
@@ -27,10 +25,14 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     [Test]
     public async Task confirm_the_suggested_enrollment_with_the_clock_time()
     {
+        this.ShouldCaptureAddedEnrollments();
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(enrollment);
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId);
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldSearchEnrollments(enrollment);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
         Result result = await this._useCase.ExecuteAsync(
@@ -50,8 +52,11 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment otherSuggested = EnrollmentMother.Suggested(studentId, GuidMother.Random());
-        this.ShouldReturn(enrollment, otherSuggested);
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId, otherSuggested.ClassId);
+        this.ShouldFetchEnrollments(enrollment, otherSuggested);
+        this.ShouldSearchEnrollments(enrollment, otherSuggested);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, otherSuggested.ClassId);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -67,8 +72,12 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
-        this.ShouldReturn(enrollment, EnrollmentMother.Confirmed(studentId, GuidMother.Random()));
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId);
+        Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
+        this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -82,8 +91,12 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(enrollment, EnrollmentMother.Confirmed(GuidMother.Random(), enrollment.ClassId));
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId);
+        Enrollment confirmedOfAnother = EnrollmentMother.Confirmed(GuidMother.Random(), enrollment.ClassId);
+        this.ShouldFetchEnrollments(enrollment, confirmedOfAnother);
+        this.ShouldSearchEnrollments(enrollment, confirmedOfAnother);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -99,8 +112,11 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
-        this.ShouldReturn(enrollment, confirmedElsewhere);
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId, confirmedElsewhere.ClassId);
+        this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, confirmedElsewhere.ClassId);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -115,8 +131,11 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(enrollment);
-        this.ShouldResolveSchoolYearOf(enrollment, schoolYearId);
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldSearchEnrollments(enrollment);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
         Result result = await this._useCase.ExecuteAsync(
@@ -133,10 +152,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
-        this.ShouldReturn(enrollment, confirmedElsewhere);
-        this.QueryBus.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.QueryBus.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, confirmedElsewhere.ClassId);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -150,9 +168,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     {
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(enrollment);
-        this.QueryBus.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.QueryBus.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -165,8 +183,8 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     public async Task return_class_not_found_without_confirming_when_the_class_does_not_exist()
     {
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(enrollment);
-        this.QueryBus.ShouldNotFindClass();
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
@@ -178,19 +196,12 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     [Test]
     public async Task return_not_found_without_asking_other_modules_when_the_enrollment_does_not_exist()
     {
-        this.ShouldReturn(EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random()));
+        this.ShouldFetchEnrollments(EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random()));
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(GuidMother.Random()));
 
         result.Error.Should().Be(EnrollmentErrors.NotFound);
         this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    private void ShouldResolveSchoolYearOf(Enrollment enrollment, Guid schoolYearId, params Guid[] otherClassIds)
-    {
-        this.QueryBus.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.QueryBus.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.QueryBus.ShouldFindClassesOfSchoolYear(schoolYearId, [enrollment.ClassId, .. otherClassIds]);
     }
 }

@@ -23,7 +23,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid otherId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId, otherId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
 
         Result result = await this._useCase.ExecuteAsync(StudentGuardianRemoveCommandMother.With(student.Id, otherId));
@@ -38,7 +38,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
         Guid currentId = GuidMother.Random();
         Guid otherId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId, otherId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -53,7 +53,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
     {
         Guid currentId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -68,7 +68,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
     {
         Guid currentId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(currentId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(currentId);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -84,7 +84,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
         Guid motherId = GuidMother.Random();
         Guid fatherId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(motherId, fatherId);
-        this.ShouldReturn(student);
+        this.ShouldFetchStudents(student);
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -97,7 +97,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
     [Test]
     public async Task return_not_found_when_the_student_does_not_exist()
     {
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldFetchStudents(StudentMother.GuardedBy(GuidMother.Random()));
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
@@ -110,7 +110,6 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
     public async Task return_unauthenticated_without_fetching_the_student_when_there_is_no_current_user()
     {
         Student student = StudentMother.GuardedBy(GuidMother.Random(), GuidMother.Random());
-        this.ShouldReturn(student);
         this.ShouldHaveNoCurrentUser();
 
         Result result = await this._useCase.ExecuteAsync(

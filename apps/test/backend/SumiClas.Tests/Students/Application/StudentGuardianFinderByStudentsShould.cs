@@ -25,7 +25,7 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
         Student requested = StudentMother.GuardedBy(motherA, father);
         Student other = StudentMother.GuardedBy(motherB);
         Student[] students = [requested, other];
-        this.ShouldReturn(students);
+        this.ShouldSearchStudents(students);
 
         IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
             StudentGuardianFinderByStudentsQueryMother.WithStudentIds(requested.Id),
@@ -41,7 +41,7 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
         Guid mother = GuidMother.Random();
         Student first = StudentMother.GuardedBy(mother);
         Student second = StudentMother.GuardedBy(mother);
-        this.ShouldReturn(first, second);
+        this.ShouldSearchStudents(first, second);
 
         IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
             StudentGuardianFinderByStudentsQueryMother.WithStudentIds(first.Id, second.Id),
@@ -64,7 +64,7 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
     [Test]
     public async Task return_empty_when_the_student_ids_are_unknown()
     {
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldSearchStudents(StudentMother.GuardedBy(GuidMother.Random()));
 
         IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
             StudentGuardianFinderByStudentsQueryMother.WithStudentIds(GuidMother.Random()),
@@ -78,7 +78,7 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
     {
         Guid mother = GuidMother.Random();
         Student known = StudentMother.GuardedBy(mother);
-        this.ShouldReturn(known, StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldSearchStudents(known, StudentMother.GuardedBy(GuidMother.Random()));
 
         IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
             StudentGuardianFinderByStudentsQueryMother.WithStudentIds(known.Id, GuidMother.Random()),
@@ -94,7 +94,7 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
         Guid father = GuidMother.Random();
         Guid grandmother = GuidMother.Random();
         Student student = StudentMother.GuardedBy(mother, father, grandmother);
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
 
         IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
             StudentGuardianFinderByStudentsQueryMother.WithStudentIds(student.Id),

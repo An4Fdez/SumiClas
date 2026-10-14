@@ -36,7 +36,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
         ClassResponse schoolClass = ClassResponseMother.With(GuidMother.Random(), schoolYearId);
         SchoolResponse school = SchoolResponseMother.WithId(GuidMother.Random());
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(EnrollmentResponseMother.ConfirmedFor(student.Id, schoolClass.Id));
         this.ShouldFindClasses(schoolClass);
@@ -54,9 +54,12 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         Student student = StudentMother.GuardedBy(GuidMother.Random(), guardianId);
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindNothingElsewhere();
+        this.ShouldFindEnrollments();
+        this.ShouldFindClasses();
+        this.ShouldFindSchoolYears();
+        this.ShouldFindSchools();
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
@@ -69,9 +72,12 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Guid guardianId = GuidMother.Random();
         Student own = StudentMother.GuardedBy(guardianId);
         Student other = StudentMother.GuardedBy(GuidMother.Random());
-        this.ShouldReturn(other, own);
+        this.ShouldSearchStudents(other, own);
         this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindNothingElsewhere();
+        this.ShouldFindEnrollments();
+        this.ShouldFindClasses();
+        this.ShouldFindSchoolYears();
+        this.ShouldFindSchools();
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
@@ -82,12 +88,15 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     public async Task order_the_children_by_first_name()
     {
         Guid guardianId = GuidMother.Random();
-        this.ShouldReturn(
+        this.ShouldSearchStudents(
             StudentMother.Named(guardianId, "Zoe", "Perez"),
             StudentMother.Named(guardianId, "Ana", "Perez"),
             StudentMother.Named(guardianId, "Marta", "Perez"));
         this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindNothingElsewhere();
+        this.ShouldFindEnrollments();
+        this.ShouldFindClasses();
+        this.ShouldFindSchoolYears();
+        this.ShouldFindSchools();
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
@@ -99,9 +108,12 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindNothingElsewhere();
+        this.ShouldFindEnrollments();
+        this.ShouldFindClasses();
+        this.ShouldFindSchoolYears();
+        this.ShouldFindSchools();
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
@@ -113,7 +125,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(EnrollmentResponseMother.SuggestedFor(student.Id, GuidMother.Random()));
         this.ShouldFindClasses();
@@ -135,7 +147,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
         ClassResponse schoolClass = ClassResponseMother.With(GuidMother.Random(), schoolYearId);
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(EnrollmentResponseMother.ConfirmedFor(student.Id, schoolClass.Id));
         this.ShouldFindClasses(schoolClass);
@@ -152,7 +164,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     {
         Guid guardianId = GuidMother.Random();
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(EnrollmentResponseMother.ConfirmedFor(student.Id, GuidMother.Random()));
         this.ShouldFindClasses();
@@ -171,7 +183,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
         ClassResponse schoolClass = ClassResponseMother.With(GuidMother.Random(), schoolYearId);
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(EnrollmentResponseMother.ConfirmedFor(student.Id, schoolClass.Id));
         this.ShouldFindClasses(schoolClass);
@@ -193,7 +205,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         ClassResponse archivedClass = ClassResponseMother.With(GuidMother.Random(), archivedYearId);
         ClassResponse activeClass = ClassResponseMother.With(GuidMother.Random(), activeYearId);
         SchoolResponse school = SchoolResponseMother.WithId(GuidMother.Random());
-        this.ShouldReturn(student);
+        this.ShouldSearchStudents(student);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(
             EnrollmentResponseMother.ConfirmedFor(student.Id, archivedClass.Id),
@@ -222,7 +234,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Student suggested = StudentMother.GuardedBy(guardianId);
         ClassResponse activeClass = ClassResponseMother.With(GuidMother.Random(), activeYearId);
         ClassResponse archivedClass = ClassResponseMother.With(GuidMother.Random(), archivedYearId);
-        this.ShouldReturn(first, sibling, archived, suggested);
+        this.ShouldSearchStudents(first, sibling, archived, suggested);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments(
             EnrollmentResponseMother.ConfirmedFor(first.Id, activeClass.Id),
@@ -264,7 +276,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     public async Task return_empty_without_asking_other_modules_when_the_current_user_has_no_students()
     {
         Guid guardianId = GuidMother.Random();
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
+        this.ShouldSearchStudents(StudentMother.GuardedBy(GuidMother.Random()));
         this.ShouldResolveCurrentUser(guardianId);
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
@@ -277,7 +289,6 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     [Test]
     public async Task return_unauthenticated_without_searching_or_asking_when_there_is_no_current_user()
     {
-        this.ShouldReturn(StudentMother.GuardedBy(GuidMother.Random()));
         this.ShouldHaveNoCurrentUser();
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
@@ -292,14 +303,6 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
 
     private Task<Result<IReadOnlyCollection<ChildResponse>>> FindChildren()
         => this._useCase.ExecuteAsync(new StudentFinderByCurrentGuardian.Query());
-
-    private void ShouldFindNothingElsewhere()
-    {
-        this.ShouldFindEnrollments();
-        this.ShouldFindClasses();
-        this.ShouldFindSchoolYears();
-        this.ShouldFindSchools();
-    }
 
     private void ShouldFindEnrollments(params EnrollmentResponse[] enrollments)
         => this.QueryBus
