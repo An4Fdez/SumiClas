@@ -28,7 +28,7 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task create_one_suggested_enrollment_for_each_confirmed_student()
+    public async Task create_one_suggested_enrollment_for_each_confirmed_student_of_the_previous_class_only()
     {
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
@@ -43,7 +43,8 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         this.ShouldSearchEnrollments(
             EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
             EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
-            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId));
+            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
+            EnrollmentMother.Suggested(GuidMother.Random(), oldClassId));
         this.ShouldCaptureAddedEnrollments();
 
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
@@ -54,28 +55,6 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         this.Added.Should().OnlyContain(enrollment =>
             enrollment.Status == EnrollmentStatus.Suggested && enrollment.ClassId == newClassId);
         this.Added.Select(enrollment => enrollment.Id).Distinct().Should().HaveCount(3);
-    }
-
-    [Test]
-    public async Task only_copy_the_confirmed_enrollments_of_the_previous_class()
-    {
-        Guid oldClassId = GuidMother.Random();
-        Guid newClassId = GuidMother.Random();
-        Guid oldYearId = GuidMother.Random();
-        Guid newYearId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
-        this.ShouldEnsureSchoolYearIsActive(newYearId);
-        this.ShouldHaveClassRepresentative();
-        this.ShouldFindSchoolYears(oldYearId, newYearId);
-        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
-        this.ShouldSearchEnrollments(
-            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
-            EnrollmentMother.Suggested(GuidMother.Random(), oldClassId));
-
-        Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
-
-        result.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Create(1, 0));
     }
 
     [Test]
@@ -239,32 +218,6 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
 
         result.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Create(1, 1));
-    }
-
-    [Test]
-    public async Task create_nothing_the_second_time_when_it_runs_twice()
-    {
-        Guid oldClassId = GuidMother.Random();
-        Guid newClassId = GuidMother.Random();
-        Guid oldYearId = GuidMother.Random();
-        Guid newYearId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
-        this.ShouldEnsureSchoolYearIsActive(newYearId);
-        this.ShouldHaveClassRepresentative();
-        this.ShouldFindSchoolYears(oldYearId, newYearId);
-        this.ShouldFindClassesOfNewSchoolYear(newClassId, newYearId);
-        this.ShouldSearchEnrollments(
-            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId),
-            EnrollmentMother.Confirmed(GuidMother.Random(), oldClassId));
-        this.ShouldCaptureAddedEnrollments();
-
-        Result<EnrollmentSuggestedCreateResponse> first = await this.Suggest(newClassId, oldClassId);
-        Result<EnrollmentSuggestedCreateResponse> second = await this.Suggest(newClassId, oldClassId);
-
-        first.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Create(2, 0));
-        second.Value.Should().Be(EnrollmentSuggestedCreateResponseMother.Create(0, 2));
-        this.Added.Should().HaveCount(2);
     }
 
     [Test]

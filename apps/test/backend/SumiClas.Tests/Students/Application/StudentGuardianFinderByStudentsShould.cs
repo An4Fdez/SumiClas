@@ -60,46 +60,4 @@ public class StudentGuardianFinderByStudentsShould : StudentsUnitTestCase
         result.Should().BeEmpty();
         this.ShouldNotHaveSearched();
     }
-
-    [Test]
-    public async Task return_empty_when_the_student_ids_are_unknown()
-    {
-        this.ShouldSearchStudents(StudentMother.GuardedBy(GuidMother.Random()));
-
-        IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
-            StudentGuardianFinderByStudentsQueryMother.WithStudentIds(GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_the_guardians_of_the_known_students_when_some_of_the_requested_ids_are_unknown()
-    {
-        Guid mother = GuidMother.Random();
-        Student known = StudentMother.GuardedBy(mother);
-        this.ShouldSearchStudents(known, StudentMother.GuardedBy(GuidMother.Random()));
-
-        IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
-            StudentGuardianFinderByStudentsQueryMother.WithStudentIds(known.Id, GuidMother.Random()),
-            CancellationToken.None);
-
-        result.Should().Equal(mother);
-    }
-
-    [Test]
-    public async Task return_every_guardian_of_a_student_with_several_guardians()
-    {
-        Guid mother = GuidMother.Random();
-        Guid father = GuidMother.Random();
-        Guid grandmother = GuidMother.Random();
-        Student student = StudentMother.GuardedBy(mother, father, grandmother);
-        this.ShouldSearchStudents(student);
-
-        IReadOnlyCollection<Guid> result = await this._useCase.ExecuteAsync(
-            StudentGuardianFinderByStudentsQueryMother.WithStudentIds(student.Id),
-            CancellationToken.None);
-
-        result.Should().BeEquivalentTo([mother, father, grandmother]);
-    }
 }

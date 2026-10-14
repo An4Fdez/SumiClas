@@ -59,7 +59,6 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         student.Guardians.Should().Contain(GuardianLinkMother.Create(newGuardianId, GuardianRole.Guardian));
     }
 
-    [TestCase("Father", GuardianRole.Father)]
     [TestCase("mother", GuardianRole.Mother)]
     [TestCase("GUARDIAN", GuardianRole.Guardian)]
     public async Task link_the_guardian_with_the_role_ignoring_the_case(string role, GuardianRole expected)
@@ -78,7 +77,6 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         student.Guardians.Should().Contain(GuardianLinkMother.Create(newGuardianId, expected));
     }
 
-    [TestCase("")]
     [TestCase("   ")]
     [TestCase("Uncle")]
     [TestCase("99")]

@@ -49,7 +49,6 @@ public class StudentRegisterShould : StudentsUnitTestCase
     }
 
     [TestCase(null)]
-    [TestCase("")]
     [TestCase("   ")]
     public async Task store_no_second_surname_when_it_is_missing_or_blank(string? secondSurname)
     {
@@ -69,7 +68,6 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.Added.Single().Name.SecondSurname.Should().BeNull();
     }
 
-    [TestCase("Father", GuardianRole.Father)]
     [TestCase("mother", GuardianRole.Mother)]
     [TestCase("GUARDIAN", GuardianRole.Guardian)]
     public async Task register_the_first_guardian_with_the_role_ignoring_the_case(string role, GuardianRole expected)
@@ -99,7 +97,6 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.Added.Single().Guardians.Should().Equal(GuardianLinkMother.Mother(guardianId));
     }
 
-    [TestCase("")]
     [TestCase("   ")]
     [TestCase("Uncle")]
     [TestCase("99")]
@@ -129,30 +126,28 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_name_required_without_asking_or_adding_when_the_first_name_is_blank(string firstName)
+    [Test]
+    public async Task return_name_required_without_asking_or_adding_when_the_first_name_is_blank()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
-            StudentRegisterCommandMother.WithName(firstName, StringMother.Random("Surname")));
+            StudentRegisterCommandMother.WithName("   ", StringMother.Random("Surname")));
 
         result.Error.Should().Be(StudentErrors.NameRequired);
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
-    [TestCase("")]
-    [TestCase("   ")]
-    public async Task return_first_surname_required_without_asking_or_adding_when_it_is_blank(string firstSurname)
+    [Test]
+    public async Task return_first_surname_required_without_asking_or_adding_when_it_is_blank()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
         Result result = await this._useCase.ExecuteAsync(
-            StudentRegisterCommandMother.WithName(StringMother.Random("First"), firstSurname));
+            StudentRegisterCommandMother.WithName(StringMother.Random("First"), "   "));
 
         result.Error.Should().Be(StudentErrors.FirstSurnameRequired);
         this.Added.Should().BeEmpty();

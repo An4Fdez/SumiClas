@@ -76,31 +76,6 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_newest_announcements_first_and_a_next_cursor_on_the_first_page()
-    {
-        Guid classId = GuidMother.Random();
-        Guid authorId = GuidMother.Random();
-        string titlePrefix = StringMother.Random("notice");
-        this.ShouldFindClass(classId);
-        this.ShouldFindNoMembers();
-        this.ShouldFindNoCalendarEvents();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldSearchAnnouncements(
-            SchoolNotice(authorId, titlePrefix, 1),
-            ClassNotice(classId, authorId, titlePrefix, 3),
-            SchoolNotice(authorId, titlePrefix, 2),
-            ClassNotice(classId, authorId, titlePrefix, 4));
-
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
-            AnnouncementFinderByClassQueryMother.WithLimit(classId, 3),
-            CancellationToken.None);
-
-        result.Value.Items.Select(item => item.Title)
-            .Should().Equal(TitleOf(titlePrefix, 4), TitleOf(titlePrefix, 3), TitleOf(titlePrefix, 2));
-        result.Value.NextCursor.Should().NotBeNull();
-    }
-
-    [Test]
     public async Task return_only_what_comes_after_the_boundary_when_following_the_next_cursor()
     {
         Guid classId = GuidMother.Random();
@@ -123,6 +98,8 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             AnnouncementFinderByClassQueryMother.WithCursor(classId, 2, firstPage.Value.NextCursor!),
             CancellationToken.None);
 
+        firstPage.Value.Items.Select(item => item.Title)
+            .Should().Equal(TitleOf(titlePrefix, 4), TitleOf(titlePrefix, 3));
         secondPage.Value.Items.Select(item => item.Title)
             .Should().Equal(TitleOf(titlePrefix, 2), TitleOf(titlePrefix, 1));
         secondPage.Value.NextCursor.Should().BeNull();
@@ -215,7 +192,6 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(51)]
-    [TestCase(500)]
     public async Task return_invalid_limit_when_the_limit_is_out_of_range(int limit)
     {
         Guid classId = GuidMother.Random();

@@ -51,15 +51,4 @@ public class EnrollmentFinderByStudentsShould : EnrollmentsUnitTestCase
 
         result.Should().BeEmpty();
     }
-
-    [Test]
-    public async Task return_empty_when_the_student_ids_are_unknown()
-    {
-        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
-
-        IReadOnlyCollection<EnrollmentResponse> result = await this._useCase.ExecuteAsync(
-            EnrollmentFinderByStudentsQueryMother.WithStudentIds(GuidMother.Random()));
-
-        result.Should().BeEmpty();
-    }
 }

@@ -23,16 +23,20 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task confirm_the_suggested_enrollment_with_the_clock_time()
+    public async Task confirm_the_suggested_enrollment_with_the_clock_time_ignoring_the_unrelated_enrollments()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid schoolYearId = GuidMother.Random();
-        Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        this.ShouldFetchEnrollments(enrollment);
-        this.ShouldSearchEnrollments(enrollment);
+        Guid studentId = GuidMother.Random();
+        Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
+        Enrollment otherSuggested = EnrollmentMother.Suggested(studentId, GuidMother.Random());
+        Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
+        Enrollment confirmedOfAnother = EnrollmentMother.Confirmed(GuidMother.Random(), enrollment.ClassId);
+        this.ShouldFetchEnrollments(enrollment, otherSuggested, confirmedElsewhere, confirmedOfAnother);
+        this.ShouldSearchEnrollments(enrollment, otherSuggested, confirmedElsewhere, confirmedOfAnother);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
+        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, otherSuggested.ClassId);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
         Result result = await this._useCase.ExecuteAsync(
@@ -40,69 +44,10 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         enrollment.Status.Should().Be(EnrollmentStatus.Confirmed);
+        otherSuggested.Status.Should().Be(EnrollmentStatus.Suggested);
         enrollment.ConfirmedAt.Should().Be(Now + TimeSpan.FromDays(1));
         enrollment.CreatedAt.Should().Be(Now);
         this.Added.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task confirm_the_enrollment_when_the_student_only_has_other_suggested_enrollments_in_the_school_year()
-    {
-        Guid schoolYearId = GuidMother.Random();
-        Guid studentId = GuidMother.Random();
-        Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
-        Enrollment otherSuggested = EnrollmentMother.Suggested(studentId, GuidMother.Random());
-        this.ShouldFetchEnrollments(enrollment, otherSuggested);
-        this.ShouldSearchEnrollments(enrollment, otherSuggested);
-        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, otherSuggested.ClassId);
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
-
-        result.IsSuccess.Should().BeTrue();
-        enrollment.Status.Should().Be(EnrollmentStatus.Confirmed);
-        otherSuggested.Status.Should().Be(EnrollmentStatus.Suggested);
-    }
-
-    [Test]
-    public async Task confirm_the_enrollment_when_the_student_is_confirmed_only_in_a_class_of_another_school_year()
-    {
-        Guid schoolYearId = GuidMother.Random();
-        Guid studentId = GuidMother.Random();
-        Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
-        Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
-        this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
-        this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
-        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
-
-        result.IsSuccess.Should().BeTrue();
-        enrollment.Status.Should().Be(EnrollmentStatus.Confirmed);
-    }
-
-    [Test]
-    public async Task confirm_the_enrollment_when_only_another_student_is_confirmed_in_the_school_year()
-    {
-        Guid schoolYearId = GuidMother.Random();
-        Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
-        Enrollment confirmedOfAnother = EnrollmentMother.Confirmed(GuidMother.Random(), enrollment.ClassId);
-        this.ShouldFetchEnrollments(enrollment, confirmedOfAnother);
-        this.ShouldSearchEnrollments(enrollment, confirmedOfAnother);
-        this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
-
-        result.IsSuccess.Should().BeTrue();
-        enrollment.Status.Should().Be(EnrollmentStatus.Confirmed);
     }
 
     [Test]

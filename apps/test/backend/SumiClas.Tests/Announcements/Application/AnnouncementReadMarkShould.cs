@@ -23,12 +23,14 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task add_a_receipt_for_the_current_user_with_the_clock_time()
+    public async Task add_a_receipt_for_the_current_user_with_the_clock_time_only_to_the_requested_announcement()
     {
+        this.ShouldCaptureAddedAnnouncements();
         Guid announcementId = GuidMother.Random();
         Guid readerId = GuidMother.Random();
         Announcement announcement = AnnouncementMother.WithId(announcementId);
-        this.ShouldFetchAnnouncements(announcement);
+        Announcement other = AnnouncementMother.WithId(GuidMother.Random());
+        this.ShouldFetchAnnouncements(other, announcement);
         this.ShouldResolveCurrentUser(readerId);
         this.ShouldFindUser(readerId);
 
@@ -39,6 +41,8 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         AnnouncementReadReceipt receipt = announcement.ReadReceipts.Should().ContainSingle().Subject;
         receipt.UserId.Should().Be(readerId);
         receipt.ReadAt.Should().Be(Now);
+        other.ReadReceipts.Should().BeEmpty();
+        this.Added.Should().BeEmpty();
     }
 
     [Test]
@@ -85,38 +89,6 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
             .Should().Be(Now.AddHours(2));
         announcement.ReadReceipts.Single(receipt => receipt.UserId == firstReaderId).ReadAt
             .Should().Be(Now);
-    }
-
-    [Test]
-    public async Task mark_only_the_requested_announcement()
-    {
-        Guid announcementId = GuidMother.Random();
-        Announcement requested = AnnouncementMother.WithId(announcementId);
-        Announcement other = AnnouncementMother.WithId(GuidMother.Random());
-        this.ShouldFetchAnnouncements(other, requested);
-        Guid readerId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(readerId);
-        this.ShouldFindUser(readerId);
-
-        await this._useCase.ExecuteAsync(AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
-
-        requested.ReadReceipts.Should().HaveCount(1);
-        other.ReadReceipts.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task not_add_any_announcement_to_the_repository()
-    {
-        this.ShouldCaptureAddedAnnouncements();
-        Guid announcementId = GuidMother.Random();
-        this.ShouldFetchAnnouncements(AnnouncementMother.WithId(announcementId));
-        Guid readerId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(readerId);
-        this.ShouldFindUser(readerId);
-
-        await this._useCase.ExecuteAsync(AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
-
-        this.Added.Should().BeEmpty();
     }
 
     [Test]

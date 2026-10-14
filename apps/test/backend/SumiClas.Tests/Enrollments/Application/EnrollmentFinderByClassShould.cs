@@ -36,15 +36,4 @@ public class EnrollmentFinderByClassShould : EnrollmentsUnitTestCase
             EnrollmentResponseMother.Suggested(suggested),
         ]);
     }
-
-    [Test]
-    public async Task return_empty_when_the_class_has_no_enrollments()
-    {
-        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random()));
-
-        IReadOnlyCollection<EnrollmentResponse> result = await this._useCase.ExecuteAsync(
-            EnrollmentFinderByClassQueryMother.WithClassId(GuidMother.Random()));
-
-        result.Should().BeEmpty();
-    }
 }

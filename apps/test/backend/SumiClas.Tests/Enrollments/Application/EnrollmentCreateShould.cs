@@ -26,7 +26,7 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task add_a_confirmed_enrollment_with_the_command_ids_and_the_clock_time()
+    public async Task add_a_confirmed_enrollment_with_the_command_ids_and_the_clock_time_ignoring_other_enrollments()
     {
         Guid enrollmentId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
@@ -36,7 +36,10 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
-        this.ShouldSearchNoEnrollments();
+        this.ShouldSearchEnrollments(
+            EnrollmentMother.Suggested(studentId, classId),
+            EnrollmentMother.Confirmed(studentId, GuidMother.Random()),
+            EnrollmentMother.Confirmed(GuidMother.Random(), classId));
         this.ShouldCaptureAddedEnrollments();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -51,66 +54,6 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         added.CreatedAt.Should().Be(Now);
         added.ConfirmedAt.Should().Be(Now);
         added.DomainEvents.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task add_the_enrollment_when_the_student_only_has_a_suggested_enrollment_in_the_school_year()
-    {
-        Guid studentId = GuidMother.Random();
-        Guid classId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
-        this.ShouldSearchEnrollments(EnrollmentMother.Suggested(studentId, classId));
-        this.ShouldCaptureAddedEnrollments();
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Should().ContainSingle();
-    }
-
-    [Test]
-    public async Task add_the_enrollment_when_the_student_is_confirmed_only_in_a_class_of_another_school_year()
-    {
-        Guid studentId = GuidMother.Random();
-        Guid classId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
-        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(studentId, GuidMother.Random()));
-        this.ShouldCaptureAddedEnrollments();
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Should().ContainSingle();
-    }
-
-    [Test]
-    public async Task add_the_enrollment_when_only_another_student_is_confirmed_in_the_school_year()
-    {
-        Guid studentId = GuidMother.Random();
-        Guid classId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
-        this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
-        this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(GuidMother.Random(), classId));
-        this.ShouldCaptureAddedEnrollments();
-
-        Result result = await this._useCase.ExecuteAsync(
-            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Should().ContainSingle();
     }
 
     [Test]

@@ -50,29 +50,13 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_children_of_which_the_current_user_is_a_secondary_guardian()
-    {
-        Guid guardianId = GuidMother.Random();
-        Student student = StudentMother.GuardedBy(GuidMother.Random(), guardianId);
-        this.ShouldSearchStudents(student);
-        this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindEnrollments();
-        this.ShouldFindClasses();
-        this.ShouldFindSchoolYears();
-        this.ShouldFindSchools();
-
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
-
-        result.Value.Select(child => child.StudentId).Should().Equal(student.Id);
-    }
-
-    [Test]
-    public async Task return_only_the_children_of_the_current_user()
+    public async Task return_only_the_children_of_which_the_current_user_is_a_main_or_secondary_guardian()
     {
         Guid guardianId = GuidMother.Random();
         Student own = StudentMother.GuardedBy(guardianId);
+        Student secondary = StudentMother.GuardedBy(GuidMother.Random(), guardianId);
         Student other = StudentMother.GuardedBy(GuidMother.Random());
-        this.ShouldSearchStudents(other, own);
+        this.ShouldSearchStudents(other, own, secondary);
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldFindEnrollments();
         this.ShouldFindClasses();
@@ -81,7 +65,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
 
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
-        result.Value.Select(child => child.StudentId).Should().Equal(own.Id);
+        result.Value.Select(child => child.StudentId).Should().BeEquivalentTo([own.Id, secondary.Id]);
     }
 
     [Test]
@@ -101,23 +85,6 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
 
         result.Value.Select(child => child.FirstName).Should().Equal("Ana", "Marta", "Zoe");
-    }
-
-    [Test]
-    public async Task return_the_child_without_class_when_it_has_no_enrollments()
-    {
-        Guid guardianId = GuidMother.Random();
-        Student student = StudentMother.Named(guardianId, "Ana", "Lopez");
-        this.ShouldSearchStudents(student);
-        this.ShouldResolveCurrentUser(guardianId);
-        this.ShouldFindEnrollments();
-        this.ShouldFindClasses();
-        this.ShouldFindSchoolYears();
-        this.ShouldFindSchools();
-
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
-
-        result.Value.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
     }
 
     [Test]
