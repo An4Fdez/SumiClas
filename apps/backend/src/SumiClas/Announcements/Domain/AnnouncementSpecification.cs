@@ -9,6 +9,7 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         Guid? id = null,
         AnnouncementScope? scope = null,
         Guid? classId = null,
+        Guid? schoolId = null,
         string? title = null,
         string? body = null,
         Priority? priority = null,
@@ -21,6 +22,7 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         if (id is { } announcementId) AddCriteria(announcement => announcement.Id == announcementId);
         if (scope is { } announcementScope) AddCriteria(announcement => announcement.Scope == announcementScope);
         if (classId is { } schoolClass) AddCriteria(announcement => announcement.ClassId == schoolClass);
+        if (schoolId is { } school) AddCriteria(announcement => announcement.SchoolId == school);
         if (title is not null) AddCriteria(announcement => announcement.Title == title);
         if (body is not null) AddCriteria(announcement => announcement.Body == body);
         if (priority is { } announcementPriority) AddCriteria(announcement => announcement.Priority == announcementPriority);

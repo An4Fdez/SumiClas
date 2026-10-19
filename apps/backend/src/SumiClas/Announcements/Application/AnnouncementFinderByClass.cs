@@ -1,6 +1,7 @@
 using MediatR;
 using SumiClas.CalendarEvents.Application;
 using SumiClas.Classes.Application;
+using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
@@ -47,7 +48,14 @@ public static class AnnouncementFinderByClass
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(access.Error!);
             }
 
-            var candidates = (await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.School, page: page.Value), ct))
+            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+            if (school.IsFailure)
+            {
+                return Result<PagedResponse<AnnouncementResponse>>.Failure(school.Error!);
+            }
+
+            var candidates = (await repository.SearchAsync(
+                    new AnnouncementSpecification(scope: AnnouncementScope.School, schoolId: school.Value, page: page.Value), ct))
                 .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page.Value), ct))
                 .OrderByDescending(announcement => announcement.CreatedAt)
                 .ThenByDescending(announcement => announcement.Id, Pagination.IdComparer)

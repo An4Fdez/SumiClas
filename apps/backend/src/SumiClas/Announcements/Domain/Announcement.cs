@@ -12,6 +12,9 @@ public sealed class Announcement : AggregateRoot
     /// <summary>Only set when Scope == Class.</summary>
     public Guid? ClassId { get; private set; }
 
+    /// <summary>Only set when Scope == School: the school the announcement belongs to.</summary>
+    public Guid? SchoolId { get; private set; }
+
     public string Title { get; private set; }
     public string Body { get; private set; }
     public Priority Priority { get; private set; }
@@ -26,6 +29,7 @@ public sealed class Announcement : AggregateRoot
         Guid id,
         AnnouncementScope scope,
         Guid? classId,
+        Guid? schoolId,
         string title,
         string body,
         Priority priority,
@@ -35,6 +39,7 @@ public sealed class Announcement : AggregateRoot
     {
         Scope = scope;
         ClassId = classId;
+        SchoolId = schoolId;
         Title = title;
         Body = body;
         Priority = priority;
@@ -47,6 +52,7 @@ public sealed class Announcement : AggregateRoot
         Guid id,
         AnnouncementScope scope,
         Guid? classId,
+        Guid? schoolId,
         string title,
         string body,
         Priority priority,
@@ -54,7 +60,7 @@ public sealed class Announcement : AggregateRoot
         Guid? relatedEventId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, title, body, authorId);
+        var validation = Validate(id, scope, classId, schoolId, title, body, authorId);
         if (validation.IsFailure)
         {
             return Result<Announcement>.Failure(validation.Error!);
@@ -64,6 +70,7 @@ public sealed class Announcement : AggregateRoot
             id,
             scope,
             scope == AnnouncementScope.Class ? classId : null,
+            scope == AnnouncementScope.School ? schoolId : null,
             title.Trim(),
             body.Trim(),
             priority,
@@ -74,7 +81,7 @@ public sealed class Announcement : AggregateRoot
         return Result<Announcement>.Success(announcement);
     }
 
-    private static Result Validate(Guid id, AnnouncementScope scope, Guid? classId, string title, string body, Guid authorId)
+    private static Result Validate(Guid id, AnnouncementScope scope, Guid? classId, Guid? schoolId, string title, string body, Guid authorId)
     {
         if (id == Guid.Empty)
         {
@@ -83,6 +90,10 @@ public sealed class Announcement : AggregateRoot
         if (scope == AnnouncementScope.Class && (classId is null || classId == Guid.Empty))
         {
             return Result.Failure(AnnouncementErrors.ClassRequiredForClassScope);
+        }
+        if (scope == AnnouncementScope.School && (schoolId is null || schoolId == Guid.Empty))
+        {
+            return Result.Failure(AnnouncementErrors.SchoolRequiredForSchoolScope);
         }
         if (string.IsNullOrWhiteSpace(title))
         {

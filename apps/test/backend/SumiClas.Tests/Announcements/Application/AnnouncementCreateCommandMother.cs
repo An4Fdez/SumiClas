@@ -25,7 +25,7 @@ public static class AnnouncementCreateCommandMother
         Guid? relatedEventId = null)
         => With(
             id ?? GuidMother.Random(),
-            scope ?? "School",
+            scope ?? "Class",
             classId ?? GuidMother.Random(),
             title ?? StringMother.Random("Notice"),
             body ?? StringMother.Random("Body"),

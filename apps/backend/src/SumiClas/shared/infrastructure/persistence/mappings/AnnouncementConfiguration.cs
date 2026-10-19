@@ -19,6 +19,8 @@ public sealed class AnnouncementConfiguration : IEntityTypeConfiguration<Announc
 
         builder.Property(a => a.ClassId);
 
+        builder.Property(a => a.SchoolId);
+
         builder.Property(a => a.Title)
             .IsRequired()
             .HasMaxLength(200);

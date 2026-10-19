@@ -11,6 +11,10 @@ namespace SumiClas.Announcements.Application;
 
 public static class AnnouncementCreate
 {
+    /// <summary>
+    /// ClassId is always the class the announcement is published from, and the author must be its delegate. For a
+    /// school-wide announcement the class only gives the school the announcement belongs to; it is not stored.
+    /// </summary>
     public sealed record Command(
         Guid Id,
         string Scope,
@@ -41,19 +45,28 @@ public static class AnnouncementCreate
                 return Result.Failure(AnnouncementErrors.InvalidPriority);
             }
 
-            var creation = Announcement.Create(
+            // The school of a school-wide announcement is only known after looking up the class, so the aggregate is
+            // built twice: once only to validate the input before any IO (the school is provisional and discarded),
+            // and once with the real school.
+            var validation = Announcement.Create(
                 command.Id,
                 scope,
                 command.ClassId,
+                scope == AnnouncementScope.School ? Guid.NewGuid() : null,
                 command.Title,
                 command.Body,
                 priority,
                 authorId,
                 command.RelatedEventId,
                 clock);
-            if (creation.IsFailure)
+            if (validation.IsFailure)
             {
-                return Result.Failure(creation.Error!);
+                return Result.Failure(validation.Error!);
+            }
+
+            if (command.ClassId is not { } classId || classId == Guid.Empty)
+            {
+                return Result.Failure(AnnouncementErrors.ClassRequiredForSchoolScope);
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
@@ -71,29 +84,53 @@ public static class AnnouncementCreate
                 }
             }
 
-            if (scope == AnnouncementScope.Class)
+            var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
+            if (schoolClass.IsFailure)
             {
-                var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId!.Value), ct);
-                if (schoolClass.IsFailure)
-                {
-                    return Result.Failure(schoolClass.Error!);
-                }
-
-                var representative = await queryBus.Send(
-                    new UserClassRepresentativeEnsure.Query(authorId, command.ClassId!.Value), ct);
-                if (representative.IsFailure)
-                {
-                    return representative;
-                }
-
-                var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
-                if (schoolYear.IsFailure)
-                {
-                    return schoolYear;
-                }
+                return Result.Failure(schoolClass.Error!);
             }
 
-            await repository.AddAsync(creation.Value, ct);
+            var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
+            if (representative.IsFailure)
+            {
+                return representative;
+            }
+
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            if (schoolYear.IsFailure)
+            {
+                return schoolYear;
+            }
+
+            var announcement = validation.Value;
+            if (scope == AnnouncementScope.School)
+            {
+                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+                if (school.IsFailure)
+                {
+                    return Result.Failure(school.Error!);
+                }
+
+                var creation = Announcement.Create(
+                    command.Id,
+                    scope,
+                    command.ClassId,
+                    school.Value,
+                    command.Title,
+                    command.Body,
+                    priority,
+                    authorId,
+                    command.RelatedEventId,
+                    clock);
+                if (creation.IsFailure)
+                {
+                    return Result.Failure(creation.Error!);
+                }
+
+                announcement = creation.Value;
+            }
+
+            await repository.AddAsync(announcement, ct);
 
             return Result.Success();
         }

@@ -33,16 +33,23 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     {
         Guid announcementId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         string title = StringMother.Random("notice");
         string body = StringMother.Random("body");
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         this.ShouldCaptureAddedAnnouncements();
 
         Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.With(
             announcementId,
             "School",
-            null,
+            classId,
             "  " + title + " ",
             "\n" + body + "  ",
             "High",
@@ -53,6 +60,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         added.Id.Should().Be(announcementId);
         added.Scope.Should().Be(AnnouncementScope.School);
         added.ClassId.Should().BeNull();
+        added.SchoolId.Should().Be(schoolId);
         added.Title.Should().Be(title);
         added.Body.Should().Be(body);
         added.Priority.Should().Be(Priority.High);
@@ -85,33 +93,22 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task discard_the_class_id_and_not_ask_for_the_class_when_the_scope_is_school()
-    {
-        Guid authorId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldCaptureAddedAnnouncements();
-
-        Result result = await this._useCase.ExecuteAsync(
-            AnnouncementCreateCommandMother.Valid(scope: "School", classId: GuidMother.Random()));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Single().ClassId.Should().BeNull();
-        this.ShouldHaveAskedOnlyForTheAuthor();
-    }
-
-    [Test]
     public async Task keep_the_related_event_when_it_exists()
     {
         Guid eventId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindCalendarEvent(eventId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
         Result result = await this._useCase.ExecuteAsync(
-            AnnouncementCreateCommandMother.Valid(relatedEventId: eventId));
+            AnnouncementCreateCommandMother.Valid(classId: classId, relatedEventId: eventId));
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
@@ -129,6 +126,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, GuidMother.Random());
         this.ShouldCaptureAddedAnnouncements();
 
         await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: scope, classId: classId));
@@ -140,12 +138,17 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     [TestCase("NORMAL", Priority.Normal)]
     public async Task accept_the_priority_whatever_its_casing(string priority, Priority expected)
     {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
-        await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(priority: priority));
+        await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(classId: classId, priority: priority));
 
         this.Added.Single().Priority.Should().Be(expected);
     }
@@ -474,5 +477,62 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
 
         result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
         this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.With(
+                GuidMother.Random(),
+                "School",
+                null,
+                StringMother.Random("notice"),
+                StringMother.Random("body"),
+                "Normal",
+                null));
+
+        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForSchoolScope);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_school_year_not_found_without_adding_when_the_school_of_the_class_cannot_be_found()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "School", classId: Guid.Empty));
+
+        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForSchoolScope);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 }
