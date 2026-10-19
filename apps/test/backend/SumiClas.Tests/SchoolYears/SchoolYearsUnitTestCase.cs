@@ -1,12 +1,16 @@
 namespace SumiClas.Tests.SchoolYears;
 
 using Moq;
+using SumiClas.Classes.Application;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Schools.Application;
 using SumiClas.Schools.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Schools.Application;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 
 public abstract class SchoolYearsUnitTestCase : UnitTestCase
 {
@@ -66,4 +70,25 @@ public abstract class SchoolYearsUnitTestCase : UnitTestCase
                 It.Is<SchoolFinderById.Query>(query => query.SchoolId == schoolId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<SchoolResponse>.Failure(SchoolErrors.NotFound));
+
+    protected void ShouldFindClassesOfSchoolYear(Guid schoolYearId, params Guid[] classIds)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<ClassFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(classIds.Select(classId => ClassResponseMother.With(classId, schoolYearId)).ToList());
+
+    protected void ShouldAllowClassRepresentative(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldDenyClassRepresentative(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(UserErrors.ClassRepresentativeForbidden));
 }
