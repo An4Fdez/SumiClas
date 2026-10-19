@@ -1,5 +1,6 @@
 using MediatR;
 using SumiClas.Classes.Application;
+using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
@@ -46,7 +47,14 @@ public static class LostItemFinderByClass
                 return Result<PagedResponse<LostItemResponse>>.Failure(access.Error!);
             }
 
-            var candidates = (await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.School, page: page.Value), ct))
+            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+            if (school.IsFailure)
+            {
+                return Result<PagedResponse<LostItemResponse>>.Failure(school.Error!);
+            }
+
+            var candidates = (await repository.SearchAsync(
+                    new LostItemSpecification(scope: ItemScope.School, schoolId: school.Value, page: page.Value), ct))
                 .Concat(await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page.Value), ct))
                 .OrderByDescending(lostItem => lostItem.CreatedAt)
                 .ThenByDescending(lostItem => lostItem.Id, Pagination.IdComparer)

@@ -19,6 +19,8 @@ public sealed class LostItemConfiguration : IEntityTypeConfiguration<LostItem>
 
         builder.Property(i => i.ClassId);
 
+        builder.Property(i => i.SchoolId);
+
         builder.Property(i => i.Status)
             .HasConversion<string>()
             .HasMaxLength(30)

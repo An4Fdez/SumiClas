@@ -4,6 +4,7 @@ using AwesomeAssertions;
 using Moq;
 using SumiClas.LostItems.Application;
 using SumiClas.LostItems.Domain;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.LostItems.Domain;
@@ -32,12 +33,14 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_item_with_its_author_name_and_role()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         string authorName = StringMother.Random("author");
         string description = StringMother.Random("description");
         string photoUrl = StringMother.Random("photo");
-        LostItem lostItem = LostItemMother.With(
+        LostItem lostItem = LostItemMother.With(schoolId: schoolId, 
             scope: ItemScope.Class,
             classId: classId,
             status: ItemStatus.Found,
@@ -45,7 +48,8 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             description: description,
             photoUrl: photoUrl,
             authorId: authorId);
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -73,15 +77,18 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_school_item_without_class_nor_photo_and_with_the_participant_role()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers(
             UserClassMemberResponseMother.Participant(authorId, StringMother.Random("author")));
-        this.ShouldSearchLostItems(LostItemMother.With(authorId: authorId));
+        this.ShouldSearchLostItems(LostItemMother.With(schoolId: schoolId, authorId: authorId));
 
         Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
@@ -98,8 +105,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_an_empty_name_and_no_role_when_the_author_is_not_a_member_of_the_class()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -117,10 +127,13 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_school_items_and_the_items_of_the_class_but_not_those_of_other_classes()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        LostItem school = LostItemMother.With();
+        LostItem school = LostItemMother.With(schoolId: schoolId);
         LostItem mine = LostItemMother.ForClass(classId);
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -136,8 +149,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_an_empty_page_without_next_cursor_when_there_are_no_items()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -155,12 +171,15 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_school_and_class_items_interleaved_newest_first()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        LostItem schoolOld = LostItemMother.With(createdAt: Now.AddMinutes(1));
+        LostItem schoolOld = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(1));
         LostItem classMiddle = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(2));
-        LostItem schoolNew = LostItemMother.With(createdAt: Now.AddMinutes(3));
+        LostItem schoolNew = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(3));
         LostItem classNewest = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(4));
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -177,11 +196,14 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_newest_first_and_the_next_cursor_when_there_are_more_than_the_limit()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        LostItem minute1 = LostItemMother.With(createdAt: Now.AddMinutes(1));
+        LostItem minute1 = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(1));
         LostItem minute2 = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(2));
-        LostItem minute3 = LostItemMother.With(createdAt: Now.AddMinutes(3));
-        this.ShouldFindClass(classId);
+        LostItem minute3 = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(3));
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -200,14 +222,17 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_no_next_cursor_when_there_are_as_many_items_as_the_limit()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(
-            LostItemMother.With(createdAt: Now.AddMinutes(1)),
+            LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(1)),
             LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(2)));
 
         Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
@@ -220,12 +245,15 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_only_what_comes_after_the_boundary_when_following_the_next_cursor()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         LostItem minute1 = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(1));
-        LostItem minute2 = LostItemMother.With(createdAt: Now.AddMinutes(2));
+        LostItem minute2 = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(2));
         LostItem minute3 = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(3));
-        LostItem minute4 = LostItemMother.With(createdAt: Now.AddMinutes(4));
-        this.ShouldFindClass(classId);
+        LostItem minute4 = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(4));
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -244,15 +272,18 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task paginate_items_created_at_the_same_time_without_duplicates_or_gaps()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         LostItem[] tied =
         [
-            LostItemMother.With(),
+            LostItemMother.With(schoolId: schoolId),
             LostItemMother.ForClass(classId),
-            LostItemMother.With(),
+            LostItemMother.With(schoolId: schoolId),
             LostItemMother.ForClass(classId),
         ];
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -280,10 +311,13 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task order_items_created_at_the_same_time_by_descending_id()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        LostItem low = LostItemMother.With(id: Guid.Parse("00000000-0000-0000-0000-000000000001"));
+        LostItem low = LostItemMother.With(schoolId: schoolId, id: Guid.Parse("00000000-0000-0000-0000-000000000001"));
         LostItem high = LostItemMother.ForClass(classId, id: Guid.Parse("ff000000-0000-0000-0000-000000000000"));
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -299,14 +333,17 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task return_the_default_number_of_items_when_no_limit_is_given()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(Enumerable.Range(1, Pagination.DefaultLimit + 1)
-            .Select(minutes => LostItemMother.With(createdAt: Now.AddMinutes(minutes)))
+            .Select(minutes => LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(minutes)))
             .ToArray());
 
         Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
@@ -319,14 +356,17 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [Test]
     public async Task ask_for_the_members_only_of_the_returned_page_and_once_per_author()
     {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
-        LostItem first = LostItemMother.With(authorId: authorId, createdAt: Now.AddMinutes(4));
-        LostItem sameAuthor = LostItemMother.With(authorId: authorId, createdAt: Now.AddMinutes(3));
+        LostItem first = LostItemMother.With(schoolId: schoolId, authorId: authorId, createdAt: Now.AddMinutes(4));
+        LostItem sameAuthor = LostItemMother.With(schoolId: schoolId, authorId: authorId, createdAt: Now.AddMinutes(3));
         LostItem second = LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(2));
         Guid secondAuthorId = second.AuthorId;
-        LostItem cut = LostItemMother.With(createdAt: Now.AddMinutes(1));
-        this.ShouldFindClass(classId);
+        LostItem cut = LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(1));
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -372,6 +412,46 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
+    public async Task not_return_the_school_items_of_other_schools()
+    {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        LostItem mine = LostItemMother.With(schoolId: schoolId);
+        LostItem otherSchool = LostItemMother.With(schoolId: GuidMother.Random());
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldSearchLostItems(mine, otherSchool);
+
+        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+            LostItemFinderByClassQueryMother.WithClassId(classId));
+
+        result.Value.Items.Select(item => item.Id).Should().Equal(mine.Id);
+    }
+
+    [Test]
+    public async Task return_the_school_error_without_searching_when_the_school_of_the_class_cannot_be_found()
+    {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+
+        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+            LostItemFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(SchoolYearErrors.NotFound);
         this.ShouldNotHaveSearched();
     }
 

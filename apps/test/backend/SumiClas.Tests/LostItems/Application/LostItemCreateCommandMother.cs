@@ -23,7 +23,7 @@ public static class LostItemCreateCommandMother
         string? description = null)
         => With(
             id ?? GuidMother.Random(),
-            scope ?? "School",
+            scope ?? "Class",
             classId ?? GuidMother.Random(),
             status ?? "Lost",
             description ?? StringMother.Random("Item"),

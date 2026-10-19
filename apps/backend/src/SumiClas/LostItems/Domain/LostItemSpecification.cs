@@ -8,6 +8,7 @@ public sealed class LostItemSpecification : Specification<LostItem>
         Guid? id = null,
         ItemScope? scope = null,
         Guid? classId = null,
+        Guid? schoolId = null,
         ItemStatus? status = null,
         bool? recovered = null,
         string? description = null,
@@ -20,6 +21,7 @@ public sealed class LostItemSpecification : Specification<LostItem>
         if (id is { } itemId) AddCriteria(item => item.Id == itemId);
         if (scope is { } itemScope) AddCriteria(item => item.Scope == itemScope);
         if (classId is { } schoolClass) AddCriteria(item => item.ClassId == schoolClass);
+        if (schoolId is { } school) AddCriteria(item => item.SchoolId == school);
         if (status is { } itemStatus) AddCriteria(item => item.Status == itemStatus);
         if (recovered is { } isRecovered) AddCriteria(item => item.Recovered == isRecovered);
         if (description is not null) AddCriteria(item => item.Description == description);

@@ -9,6 +9,9 @@ public sealed class LostItem : AggregateRoot
     /// <summary>Only set when Scope == Class.</summary>
     public Guid? ClassId { get; private set; }
 
+    /// <summary>Only set when Scope == School: the school the lost item belongs to.</summary>
+    public Guid? SchoolId { get; private set; }
+
     /// <summary>"Busco" vs "He encontrado" (Spanish UI copy) — never changes after creation.</summary>
     public ItemStatus Status { get; private set; }
 
@@ -33,6 +36,7 @@ public sealed class LostItem : AggregateRoot
         Guid id,
         ItemScope scope,
         Guid? classId,
+        Guid? schoolId,
         ItemStatus status,
         bool recovered,
         string description,
@@ -43,6 +47,7 @@ public sealed class LostItem : AggregateRoot
     {
         Scope = scope;
         ClassId = classId;
+        SchoolId = schoolId;
         Status = status;
         Recovered = recovered;
         Description = description;
@@ -56,6 +61,7 @@ public sealed class LostItem : AggregateRoot
         Guid id,
         ItemScope scope,
         Guid? classId,
+        Guid? schoolId,
         ItemStatus status,
         string description,
         string? photoUrl,
@@ -63,7 +69,7 @@ public sealed class LostItem : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, description, photoUrl, photoPrivacyConfirmed, authorId);
+        var validation = Validate(id, scope, classId, schoolId, description, photoUrl, photoPrivacyConfirmed, authorId);
         if (validation.IsFailure)
         {
             return Result<LostItem>.Failure(validation.Error!);
@@ -73,6 +79,7 @@ public sealed class LostItem : AggregateRoot
             id,
             scope,
             scope == ItemScope.Class ? classId : null,
+            scope == ItemScope.School ? schoolId : null,
             status,
             false,
             description.Trim(),
@@ -88,6 +95,7 @@ public sealed class LostItem : AggregateRoot
         Guid id,
         ItemScope scope,
         Guid? classId,
+        Guid? schoolId,
         string description,
         string? photoUrl,
         bool photoPrivacyConfirmed,
@@ -100,6 +108,10 @@ public sealed class LostItem : AggregateRoot
         if (scope == ItemScope.Class && (classId is null || classId == Guid.Empty))
         {
             return Result.Failure(LostItemErrors.ClassRequiredForClassScope);
+        }
+        if (scope == ItemScope.School && (schoolId is null || schoolId == Guid.Empty))
+        {
+            return Result.Failure(LostItemErrors.SchoolRequiredForSchoolScope);
         }
         if (string.IsNullOrWhiteSpace(description))
         {
