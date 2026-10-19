@@ -8,8 +8,10 @@ using SumiClas.CalendarEvents.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Announcements.Domain;
+using SumiClas.Tests.CalendarEvents.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Application;
+using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
 using System.Text;
 
@@ -26,6 +28,147 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             this.Repository.Object,
             this.QueryBus.Object,
             this.UserProvider.Object);
+    }
+
+    [Test]
+    public async Task return_the_announcement_with_its_author_name_role_and_related_event()
+    {
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid eventId = GuidMother.Random();
+        string authorName = StringMother.Random("author");
+        string eventTitle = StringMother.Random("event");
+        Announcement announcement = AnnouncementMother.With(
+            Now,
+            scope: AnnouncementScope.Class,
+            classId: classId,
+            authorId: authorId,
+            relatedEventId: eventId);
+        this.ShouldFindClass(classId);
+        this.ShouldHaveClassMembers(UserClassMemberResponseMother.Representative(authorId, authorName));
+        this.ShouldFindCalendarEvents(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldSearchAnnouncements(announcement);
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        AnnouncementResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        item.Id.Should().Be(announcement.Id);
+        item.Scope.Should().Be("Class");
+        item.ClassId.Should().Be(classId);
+        item.Title.Should().Be(announcement.Title);
+        item.Body.Should().Be(announcement.Body);
+        item.Priority.Should().Be("Normal");
+        item.AuthorId.Should().Be(authorId);
+        item.AuthorName.Should().Be(authorName);
+        item.AuthorRole.Should().Be("ClassRepresentative");
+        item.CreatedAt.Should().Be(announcement.CreatedAt);
+        item.RelatedEvent.Should().Be(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
+        item.Read.Should().BeFalse();
+        result.Value.NextCursor.Should().BeNull();
+    }
+
+    [Test]
+    public async Task return_an_empty_name_no_role_and_no_event_when_the_author_and_the_event_are_not_found()
+    {
+        Guid classId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldFindCalendarEvents();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldSearchAnnouncements(AnnouncementMother.With(Now, relatedEventId: GuidMother.Random()));
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        AnnouncementResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        item.AuthorName.Should().BeEmpty();
+        item.AuthorRole.Should().BeNull();
+        item.RelatedEvent.Should().BeNull();
+    }
+
+    [Test]
+    public async Task mark_as_read_only_the_announcements_the_current_user_has_read()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldFindCalendarEvents();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldSearchAnnouncements(
+            AnnouncementMother.ReadBy(currentUserId, Now.AddMinutes(3)),
+            AnnouncementMother.ReadBy(GuidMother.Random(), Now.AddMinutes(2)),
+            AnnouncementMother.With(Now.AddMinutes(1)));
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        result.Value.Items.Select(item => item.Read).Should().Equal(true, false, false);
+    }
+
+    [Test]
+    public async Task return_the_school_announcements_and_the_ones_of_the_class_but_not_those_of_other_classes()
+    {
+        Guid classId = GuidMother.Random();
+        Announcement school = AnnouncementMother.With(Now);
+        Announcement mine = AnnouncementMother.ForClass(classId, StringMother.Random("notice"), Now);
+        Announcement other = AnnouncementMother.ForClass(GuidMother.Random(), StringMother.Random("notice"), Now);
+        this.ShouldFindClass(classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldFindCalendarEvents();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldSearchAnnouncements(school, mine, other);
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        result.Value.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
+    }
+
+    [Test]
+    public async Task ask_for_the_members_and_the_events_only_of_the_returned_page_and_once_each()
+    {
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid eventId = GuidMother.Random();
+        Announcement first = AnnouncementMother.With(Now.AddMinutes(4), authorId: authorId, relatedEventId: eventId);
+        Announcement sameAuthorAndEvent = AnnouncementMother.With(
+            Now.AddMinutes(3),
+            authorId: authorId,
+            relatedEventId: eventId);
+        Announcement second = AnnouncementMother.With(Now.AddMinutes(2));
+        Guid secondAuthorId = second.AuthorId;
+        Announcement cut = AnnouncementMother.With(Now.AddMinutes(1), relatedEventId: GuidMother.Random());
+        this.ShouldFindClass(classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldFindCalendarEvents();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+        this.ShouldSearchAnnouncements(first, sameAuthorAndEvent, second, cut);
+
+        await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithLimit(classId, 3),
+            CancellationToken.None);
+
+        this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<UserClassMemberFinderByIds.Query>(query => query.ClassId == classId
+                    && query.UserIds.Count == 2
+                    && query.UserIds.Contains(authorId)
+                    && query.UserIds.Contains(secondAuthorId)),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<CalendarEventFinderByIds.Query>(query => query.CalendarEventIds.Count == 1
+                    && query.CalendarEventIds.Contains(eventId)),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Test]
@@ -287,16 +430,24 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     private static string TitleOf(string titlePrefix, int minutes) => $"{titlePrefix}-{minutes}";
 
     private void ShouldFindNoMembers()
-        => this.QueryBus
-            .Setup(bus => bus.Send(
-                It.IsAny<IQuery<IReadOnlyCollection<UserClassMemberResponse>>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UserClassMemberResponse>());
+        => this.ShouldHaveClassMembers();
 
     private void ShouldFindNoCalendarEvents()
+        => this.ShouldFindCalendarEvents();
+
+    private void ShouldHaveClassMembers(params UserClassMemberResponse[] members)
         => this.QueryBus
-            .Setup(bus => bus.Send(
-                It.IsAny<IQuery<IReadOnlyCollection<CalendarEventSummaryResponse>>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<CalendarEventSummaryResponse>());
+            .Setup(bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserClassMemberFinderByIds.Query query, CancellationToken _)
+                => (IReadOnlyCollection<UserClassMemberResponse>)members
+                    .Where(member => query.UserIds.Contains(member.UserId))
+                    .ToList());
+
+    private void ShouldFindCalendarEvents(params CalendarEventSummaryResponse[] calendarEvents)
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<CalendarEventFinderByIds.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CalendarEventFinderByIds.Query query, CancellationToken _)
+                => (IReadOnlyCollection<CalendarEventSummaryResponse>)calendarEvents
+                    .Where(calendarEvent => query.CalendarEventIds.Contains(calendarEvent.Id))
+                    .ToList());
 }
