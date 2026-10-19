@@ -246,4 +246,45 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
     }
+
+    [Test]
+    public async Task mark_the_own_share_as_unpaid_when_the_user_is_in_the_class_without_being_a_delegate()
+    {
+        Guid expenseId = GuidMother.Random();
+        Guid guardianId = GuidMother.Random();
+        ClassExpense expense = ClassExpenseMother.With(
+            id: expenseId,
+            participants: [ExpenseParticipantMother.Paid(guardianId)]);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        this.ShouldResolveCurrentUser(guardianId);
+        this.ShouldAllowClassAccess(guardianId, expense.ClassId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFetchClassExpenses(expense);
+
+        Result result = await this._useCase.ExecuteAsync(ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
+
+        result.IsSuccess.Should().BeTrue();
+        expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_when_the_own_share_is_marked_without_being_in_the_class()
+    {
+        Guid expenseId = GuidMother.Random();
+        Guid guardianId = GuidMother.Random();
+        ClassExpense expense = ClassExpenseMother.With(
+            id: expenseId,
+            participants: [ExpenseParticipantMother.Paid(guardianId)]);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        this.ShouldResolveCurrentUser(guardianId);
+        this.ShouldDenyClassAccess(guardianId, expense.ClassId);
+        this.ShouldFetchClassExpenses(expense);
+
+        Result result = await this._useCase.ExecuteAsync(ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
+    }
 }

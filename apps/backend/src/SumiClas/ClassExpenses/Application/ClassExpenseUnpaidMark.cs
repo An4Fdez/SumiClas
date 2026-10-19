@@ -34,10 +34,13 @@ public static class ClassExpenseUnpaidMark
                 return Result.Failure(current.Error!);
             }
 
-            var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(current.Value, classExpense.ClassId), ct);
-            if (representative.IsFailure)
+            // A family marks its own share; marking someone else's is for the class delegate.
+            var permission = current.Value == command.GuardianId
+                ? await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, classExpense.ClassId), ct)
+                : await queryBus.Send(new UserClassRepresentativeEnsure.Query(current.Value, classExpense.ClassId), ct);
+            if (permission.IsFailure)
             {
-                return representative;
+                return permission;
             }
 
             var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
