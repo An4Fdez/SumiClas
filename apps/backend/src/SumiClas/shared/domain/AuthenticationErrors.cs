@@ -2,7 +2,7 @@ namespace SumiClas.Shared.Domain;
 
 public static class AuthenticationErrors
 {
-    public static readonly Error Unauthenticated = new("Authentication.Unauthenticated", "No se ha identificado al usuario.");
+    public static readonly Error Unauthenticated = new("Authentication.Unauthenticated", "No hemos podido identificar tu sesión. Inicia sesión de nuevo.");
 
     /// <summary>One message for an unknown email, a missing credential and a wrong password, so the login never says which one failed.</summary>
     public static readonly Error InvalidCredentials = new("Authentication.InvalidCredentials", "El correo electrónico o la contraseña no son correctos.");
