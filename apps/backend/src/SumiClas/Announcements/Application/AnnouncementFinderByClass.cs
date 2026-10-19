@@ -41,6 +41,12 @@ public static class AnnouncementFinderByClass
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(schoolClass.Error!);
             }
 
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            if (access.IsFailure)
+            {
+                return Result<PagedResponse<AnnouncementResponse>>.Failure(access.Error!);
+            }
+
             var candidates = (await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.School, page: page.Value), ct))
                 .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page.Value), ct))
                 .OrderByDescending(announcement => announcement.CreatedAt)

@@ -13,6 +13,7 @@ using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 using System.Text;
 
 [TestFixture]
@@ -47,7 +48,9 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindClass(classId);
         this.ShouldHaveClassMembers(UserClassMemberResponseMother.Representative(authorId, authorName));
         this.ShouldFindCalendarEvents(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(announcement);
 
         Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
@@ -77,7 +80,9 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(AnnouncementMother.With(Now, relatedEventId: GuidMother.Random()));
 
         Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
@@ -99,6 +104,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(
             AnnouncementMother.ReadBy(currentUserId, Now.AddMinutes(3)),
             AnnouncementMother.ReadBy(GuidMother.Random(), Now.AddMinutes(2)),
@@ -121,7 +127,9 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(school, mine, other);
 
         Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
@@ -148,7 +156,9 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(first, sameAuthorAndEvent, second, cut);
 
         await this._useCase.ExecuteAsync(
@@ -181,6 +191,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
         this.ShouldResolveCurrentUser(authorId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldSearchAnnouncementsSuccessively(
             [SchoolNotice(authorId, titlePrefix, 3), SchoolNotice(authorId, titlePrefix, 1)],
             [ClassNotice(classId, authorId, titlePrefix, 4), ClassNotice(classId, authorId, titlePrefix, 2)]);
@@ -206,6 +217,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
         this.ShouldResolveCurrentUser(authorId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldSearchAnnouncementsSuccessively(
             [SchoolNotice(authorId, titlePrefix, 1)],
             [ClassNotice(classId, authorId, titlePrefix, 2)]);
@@ -228,6 +240,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
         this.ShouldResolveCurrentUser(authorId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldSearchAnnouncements(
             SchoolNotice(authorId, titlePrefix, 1),
             ClassNotice(classId, authorId, titlePrefix, 3),
@@ -258,6 +271,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
         this.ShouldResolveCurrentUser(authorId);
+        this.ShouldAllowClassAccess(authorId, classId);
         Announcement[] tied =
         [
             SchoolNotice(authorId, titlePrefix, 5),
@@ -358,6 +372,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
         this.ShouldResolveCurrentUser(authorId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldSearchAnnouncements(Enumerable.Range(1, Pagination.DefaultLimit + 1)
             .Select(minutes => SchoolNotice(authorId, titlePrefix, minutes))
             .ToArray());
@@ -377,7 +392,9 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldFindClass(classId);
         this.ShouldFindNoMembers();
         this.ShouldFindNoCalendarEvents();
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         Announcement low = AnnouncementMother.With(
             id: Guid.Parse("00000000-0000-0000-0000-000000000001"),
             createdAt: Now);
@@ -404,6 +421,23 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
 
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.QueryBus.VerifyNoOtherCalls();
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassAccess(currentUserId, classId);
+
+        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
         this.ShouldNotHaveSearched();
     }
 

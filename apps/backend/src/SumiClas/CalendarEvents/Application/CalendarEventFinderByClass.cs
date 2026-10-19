@@ -18,7 +18,8 @@ public static class CalendarEventFinderByClass
 
     public sealed class Finder(
         ICalendarEventRepository repository,
-        IQueryBus queryBus) : IUseCase
+        IQueryBus queryBus,
+        IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -26,6 +27,18 @@ public static class CalendarEventFinderByClass
             if (schoolClass.IsFailure)
             {
                 return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(schoolClass.Error!);
+            }
+
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(current.Error!);
+            }
+
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            if (access.IsFailure)
+            {
+                return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(access.Error!);
             }
 
             var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);

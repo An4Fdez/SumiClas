@@ -13,6 +13,7 @@ using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 using System.Text;
 
 [TestFixture]
@@ -24,7 +25,10 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
 
     public ClassExpenseFinderByClassShould()
     {
-        this._useCase = new ClassExpenseFinderByClass.Finder(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new ClassExpenseFinderByClass.Finder(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -52,6 +56,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
                 ExpenseParticipantMother.Paid(betaId),
             ]);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers(
             UserClassMemberResponseMother.Representative(authorId, authorName),
             UserClassMemberResponseMother.Participant(alphaId, alphaName),
@@ -92,6 +99,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         ClassExpense withoutEvent = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(1));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(withEvent, withoutEvent);
@@ -112,6 +122,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchNoClassExpenses();
@@ -132,6 +145,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         ClassExpense minute2 = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(2));
         ClassExpense minute3 = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(3));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(minute1, minute3, minute2);
@@ -150,6 +166,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(
@@ -172,6 +191,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         ClassExpense minute3 = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(3));
         ClassExpense minute4 = ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(4));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(minute2, minute4, minute1, minute3);
@@ -196,6 +218,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             ClassExpenseMother.With(classId: classId),
         ];
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(tied);
@@ -229,6 +254,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             id: Guid.Parse("ff000000-0000-0000-0000-000000000000"),
             classId: classId);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(low, high);
@@ -244,6 +272,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(Enumerable.Range(1, Pagination.DefaultLimit + 1)
@@ -275,6 +306,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             relatedEventId: GuidMother.Random(),
             createdAt: Now.AddMinutes(1));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(cut, newest);
@@ -295,6 +329,36 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
                     && query.CalendarEventIds.Contains(eventId)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassAccess(currentUserId, classId);
+
+        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+            ClassExpenseFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    {
+        Guid classId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldHaveNoCurrentUser();
+
+        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+            ClassExpenseFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.ShouldNotHaveSearched();
     }
 
     [Test]

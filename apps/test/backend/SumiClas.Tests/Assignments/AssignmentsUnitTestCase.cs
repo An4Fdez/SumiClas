@@ -144,4 +144,18 @@ public abstract class AssignmentsUnitTestCase : UnitTestCase
                 It.Is<UserIsClassRepresentative.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
+
+    protected void ShouldAllowClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldDenyClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
 }

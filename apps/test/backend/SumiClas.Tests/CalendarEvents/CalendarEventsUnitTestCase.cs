@@ -121,4 +121,18 @@ public abstract class CalendarEventsUnitTestCase : UnitTestCase
                 It.Is<StudentFinderById.Query>(query => query.StudentId == studentId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<StudentFinderById.StudentResponse>.Failure(StudentErrors.NotFound));
+
+    protected void ShouldAllowClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldDenyClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
 }

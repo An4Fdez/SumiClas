@@ -13,7 +13,7 @@ public static class AssignmentFinderByClass
     /// <summary>The homework of the class with its subject and its comments, ordered by due date, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AssignmentResponse>>>;
 
-    public sealed class Finder(IAssignmentRepository repository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(IAssignmentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<PagedResponse<AssignmentResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -33,6 +33,18 @@ public static class AssignmentFinderByClass
             if (schoolClass.IsFailure)
             {
                 return Result<PagedResponse<AssignmentResponse>>.Failure(schoolClass.Error!);
+            }
+
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result<PagedResponse<AssignmentResponse>>.Failure(current.Error!);
+            }
+
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            if (access.IsFailure)
+            {
+                return Result<PagedResponse<AssignmentResponse>>.Failure(access.Error!);
             }
 
             var candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page.Value), ct);

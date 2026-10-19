@@ -7,6 +7,7 @@ using SumiClas.Subjects.Application;
 using SumiClas.Subjects.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Subjects.Domain;
+using SumiClas.Users.Domain;
 
 [TestFixture]
 public class SubjectFinderByClassShould : SubjectsUnitTestCase
@@ -15,7 +16,10 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
 
     public SubjectFinderByClassShould()
     {
-        this._useCase = new SubjectFinderByClass.Finder(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new SubjectFinderByClass.Finder(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -36,6 +40,9 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
             StringMother.Random("c"));
         this.ShouldSearchSubjects(third, SubjectMother.InClass(GuidMother.Random()), first, second);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
 
         Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
@@ -45,6 +52,36 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
             SubjectResponseMother.With(first.Id, classId, first.Label),
             SubjectResponseMother.With(second.Id, classId, second.Label),
             SubjectResponseMother.With(third.Id, classId, third.Label));
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassAccess(currentUserId, classId);
+
+        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+            SubjectFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    {
+        Guid classId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldHaveNoCurrentUser();
+
+        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+            SubjectFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.ShouldNotHaveSearched();
     }
 
     [Test]

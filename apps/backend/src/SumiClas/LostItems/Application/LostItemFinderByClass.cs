@@ -12,7 +12,7 @@ public static class LostItemFinderByClass
     /// <summary>School-wide lost and found items plus the ones of the class, newest first, one page at a time.</summary>
     public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<LostItemResponse>>>;
 
-    public sealed class Finder(ILostItemRepository repository, IQueryBus queryBus) : IUseCase
+    public sealed class Finder(ILostItemRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result<PagedResponse<LostItemResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
@@ -32,6 +32,18 @@ public static class LostItemFinderByClass
             if (schoolClass.IsFailure)
             {
                 return Result<PagedResponse<LostItemResponse>>.Failure(schoolClass.Error!);
+            }
+
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result<PagedResponse<LostItemResponse>>.Failure(current.Error!);
+            }
+
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            if (access.IsFailure)
+            {
+                return Result<PagedResponse<LostItemResponse>>.Failure(access.Error!);
             }
 
             var candidates = (await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.School, page: page.Value), ct))

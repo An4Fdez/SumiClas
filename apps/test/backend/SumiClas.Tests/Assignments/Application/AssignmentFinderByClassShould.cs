@@ -14,6 +14,7 @@ using SumiClas.Tests.Shared.Application;
 using SumiClas.Tests.Subjects.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 using System.Text;
 
 [TestFixture]
@@ -25,7 +26,10 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
 
     public AssignmentFinderByClassShould()
     {
-        this._useCase = new AssignmentFinderByClass.Finder(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new AssignmentFinderByClass.Finder(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -52,6 +56,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
                 AssignmentCommentMother.With(authorId, firstText, Now.AddMinutes(1)),
             ]);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId, SubjectResponseMother.With(subjectId, classId, subjectLabel));
         this.ShouldHaveClassMembers(
             UserClassMemberResponseMother.Participant(authorId, authorName),
@@ -93,6 +100,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             classId: classId,
             comments: [AssignmentCommentMother.With(commenterId, StringMother.Random("text"), Now)]);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(assignment);
@@ -114,6 +124,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchNoAssignments();
@@ -134,6 +147,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         Assignment day2 = AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(2));
         Assignment day3 = AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(3));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(day3, day1, day2);
@@ -152,6 +168,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(
@@ -174,6 +193,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         Assignment day3 = AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(3));
         Assignment day4 = AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(4));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(day4, day2, day1, day3);
@@ -198,6 +220,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             AssignmentMother.With(classId: classId),
         ];
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(tied);
@@ -231,6 +256,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             id: Guid.Parse("ff000000-0000-0000-0000-000000000000"),
             classId: classId);
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(high, low);
@@ -246,6 +274,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(Enumerable.Range(1, Pagination.DefaultLimit + 1)
@@ -281,6 +312,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             authorId: cutAuthorId,
             dueDate: AssignmentMother.SomeDay.AddDays(2));
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(cut, first);
@@ -302,6 +336,9 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFailFindingSubjectsOfClass(ClassErrors.NotFound);
         this.ShouldSearchAssignments(AssignmentMother.With(classId: classId));
 
@@ -309,6 +346,36 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
         result.Error.Should().Be(ClassErrors.NotFound);
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassAccess(currentUserId, classId);
+
+        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+            AssignmentFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    {
+        Guid classId = GuidMother.Random();
+        this.ShouldFindClass(classId);
+        this.ShouldHaveNoCurrentUser();
+
+        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+            AssignmentFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.ShouldNotHaveSearched();
     }
 
     [Test]

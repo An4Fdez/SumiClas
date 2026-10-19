@@ -134,4 +134,18 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
                 It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<CalendarEventSummaryResponse>.Failure(CalendarEventErrors.NotFound));
+
+    protected void ShouldAllowClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldDenyClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
 }

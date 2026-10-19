@@ -9,6 +9,8 @@ using SumiClas.Shared.Domain;
 using SumiClas.Subjects.Domain;
 using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 
 public abstract class SubjectsUnitTestCase : UnitTestCase
 {
@@ -84,4 +86,18 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure(error));
+
+    protected void ShouldAllowClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+    protected void ShouldDenyClassAccess(Guid userId, Guid classId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
 }

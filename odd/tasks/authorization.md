@@ -22,7 +22,7 @@ Que cada caso de uso expuesto por la API compruebe que quien lo ejecuta tiene de
 
 ## Tareas
 - [x] A0 Caso de uso `UserClassAccessEnsure` (módulo Users): `Result` de éxito si el usuario es delegado de la clase o tutor de un alumno con matrícula confirmada; si no, `User.ClassAccessForbidden` (403). Con tests.
-- [ ] A1 Lecturas por clase: `AnnouncementFinderByClass`, `AssignmentFinderByClass`, `CalendarEventFinderByClass`, `ClassExpenseFinderByClass`, `LostItemFinderByClass`, `SubjectFinderByClass`, `EnrollmentFinderByClass` y las lecturas de alumnos de una clase. Cada una consulta A0 con el usuario actual y devuelve `Unauthenticated` sin usuario. Con tests (y mutación).
+- [x] A1 Lecturas por clase: `AnnouncementFinderByClass`, `AssignmentFinderByClass`, `CalendarEventFinderByClass`, `ClassExpenseFinderByClass`, `LostItemFinderByClass` y `SubjectFinderByClass` (las únicas que expone la API; `EnrollmentFinderByClass` solo lo usan otros casos de uso). Cada una consulta A0 con el usuario actual y devuelve `Unauthenticated` sin usuario. Con tests (y mutación).
 - [ ] B1 Escrituras por pertenencia: `AssignmentCreate`, `AssignmentCommentAdd`, `ClassExpenseCreate` (y sus participantes deben ser de la clase), `LostItemCreate`, `CalendarEventBirthdayCreate` (solo el tutor del alumno), `AnnouncementReadMark`.
 - [ ] B2 Escrituras por rol: `AnnouncementCreate` y `CalendarEventCreate` de clase (solo delegado), `SubjectCreate`, `ClassRename`, `ClassExpensePaidMark`/`UnpaidMark`, marcas de objetos perdidos, `SchoolYearArchive`/`SchoolYearCreate`, `EnrollmentCreate`/`EnrollmentConfirm`/`EnrollmentSuggestedCreate` (solo sobre alumnos propios).
 - [ ] C Frontend: tratar el 403 en las pantallas que leen datos de clase; actualizar `AGENTS.md` (backend y raíz) y quitar el aviso de "no exponer esta API".
@@ -35,5 +35,8 @@ Que cada caso de uso expuesto por la API compruebe que quien lo ejecuta tiene de
 ## Progreso y evidencia
 - A0 hecho (sin commitear): `UserClassAccessEnsure` con 7 tests (representante de la clase, tutor con matrícula confirmada, matrícula solo sugerida, alumno de otra clase, representante de otra clase, otro usuario aunque la clase tenga delegado, ni tutor ni delegado). 8 mutaciones del caso de uso: sobrevivía una (quitar el id del usuario de la búsqueda de delegado, que dejaría pasar a cualquiera si la clase tiene delegado), cubierta con un test nuevo. 711 tests en verde con dos semillas. Los helpers `ShouldFindEnrollments`/`ShouldFindGuardians` pasan a `UsersUnitTestCase` porque los usan dos fixtures.
 
+- A1 hecho (sin commitear): los 6 lectores comprueban el usuario actual (`Unauthenticated` si no hay) y `UserClassAccessEnsure` tras comprobar que la clase existe; 403 si no pertenece. Cada fixture gana dos tests (acceso prohibido sin leer, sin usuario) y los helpers `ShouldAllowClassAccess`/`ShouldDenyClassAccess` por usuario y clase en su base. 24 mutaciones (quitar el chequeo, usuario o clase equivocados, quitar la autenticación): todas fallan. 722 tests en verde con dos semillas.
+- Seguimientos: `AssignmentFinderByClass` llama a `SubjectFinderByClass` por el bus y repite la comprobación con el mismo usuario (una consulta de más); el literal `"Confirmed"` del estado de matrícula se repite en 4 casos de uso (lo señaló la revisión).
+
 ## Siguiente paso
-A1: añadir la comprobación a los GET por clase, empezando por `AnnouncementFinderByClass`.
+B1: escrituras por pertenencia (deberes, comentarios, gastos, objetos perdidos, cumpleaños, marca de leído).
