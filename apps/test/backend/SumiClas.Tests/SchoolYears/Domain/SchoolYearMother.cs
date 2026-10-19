@@ -11,6 +11,9 @@ public static class SchoolYearMother
     public static SchoolYear Active(Guid id)
         => With(id, GuidMother.Random(), StringMother.Random("year"), Start, End, SchoolYearStatus.Active);
 
+    public static SchoolYear OfSchool(Guid schoolId)
+        => With(GuidMother.Random(), schoolId, StringMother.Random("year"), Start, End, SchoolYearStatus.Active);
+
     public static SchoolYear Archived(Guid id)
         => With(id, GuidMother.Random(), StringMother.Random("year"), Start, End, SchoolYearStatus.Archived);
 
