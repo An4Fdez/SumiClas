@@ -49,6 +49,9 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("RelatedEventId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Scope")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -123,6 +126,9 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.Property<string>("Location")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Scope")
                         .IsRequired()
@@ -284,6 +290,9 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("Recovered")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Scope")
                         .IsRequired()
