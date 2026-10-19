@@ -3,9 +3,11 @@ namespace SumiClas.Tests.Users;
 using Moq;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
+using SumiClas.Enrollments.Application;
 using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Application;
 using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Users.Domain;
@@ -90,6 +92,23 @@ public abstract class UsersUnitTestCase : UnitTestCase
                 It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+
+    protected void ShouldFindEnrollments(Guid classId, params EnrollmentResponse[] enrollments)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<EnrollmentFinderByClass.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(enrollments);
+
+    protected void ShouldFindGuardians(params (Guid StudentId, Guid GuardianId)[] guardianships)
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<StudentGuardianFinderByStudents.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StudentGuardianFinderByStudents.Query query, CancellationToken _)
+                => (IReadOnlyCollection<Guid>)guardianships
+                    .Where(guardianship => query.StudentIds.Contains(guardianship.StudentId))
+                    .Select(guardianship => guardianship.GuardianId)
+                    .Distinct()
+                    .ToList());
 
     protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
         => this.QueryBus

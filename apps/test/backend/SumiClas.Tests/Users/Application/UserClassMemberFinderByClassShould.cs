@@ -7,7 +7,6 @@ using SumiClas.Classes.Domain;
 using SumiClas.Enrollments.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
-using SumiClas.Students.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Application;
@@ -208,21 +207,4 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         => this._useCase.ExecuteAsync(
             UserClassMemberFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
-
-    private void ShouldFindEnrollments(Guid classId, params EnrollmentResponse[] enrollments)
-        => this.QueryBus
-            .Setup(bus => bus.Send(
-                It.Is<EnrollmentFinderByClass.Query>(query => query.ClassId == classId),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(enrollments);
-
-    private void ShouldFindGuardians(params (Guid StudentId, Guid GuardianId)[] guardianships)
-        => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<StudentGuardianFinderByStudents.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((StudentGuardianFinderByStudents.Query query, CancellationToken _)
-                => (IReadOnlyCollection<Guid>)guardianships
-                    .Where(guardianship => query.StudentIds.Contains(guardianship.StudentId))
-                    .Select(guardianship => guardianship.GuardianId)
-                    .Distinct()
-                    .ToList());
 }
