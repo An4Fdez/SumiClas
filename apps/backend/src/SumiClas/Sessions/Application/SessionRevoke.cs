@@ -14,7 +14,7 @@ public static class SessionRevoke
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(command.RefreshToken))
+            if (command.RefreshToken is null)
             {
                 return Result.Success();
             }

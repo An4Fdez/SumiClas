@@ -24,7 +24,11 @@ public abstract class SessionsUnitTestCase : UnitTestCase
     protected void ShouldHashTokens(Mock<IRefreshTokenGenerator> generator)
         => generator
             .Setup(refreshTokenGenerator => refreshTokenGenerator.Hash(It.IsAny<string>()))
-            .Returns<string>(HashOf);
+            .Returns<string>(raw =>
+            {
+                ArgumentNullException.ThrowIfNull(raw);
+                return HashOf(raw);
+            });
 
     protected void ShouldSearchSessions(params Session[] sessions)
         => this.Repository
