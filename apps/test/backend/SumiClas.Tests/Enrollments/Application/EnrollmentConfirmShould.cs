@@ -6,6 +6,7 @@ using SumiClas.Enrollments.Application;
 using SumiClas.Enrollments.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Domain;
 using SumiClas.Tests.Enrollments.Domain;
 using SumiClas.Tests.Shared;
 
@@ -19,7 +20,8 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this._useCase = new EnrollmentConfirm.Confirm(
             this.Repository.Object,
             this.QueryBus.Object,
-            this.Clock.Object);
+            this.Clock.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -33,6 +35,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
         Enrollment confirmedOfAnother = EnrollmentMother.Confirmed(GuidMother.Random(), enrollment.ClassId);
         this.ShouldFetchEnrollments(enrollment, otherSuggested, confirmedElsewhere, confirmedOfAnother);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldSearchEnrollments(enrollment, otherSuggested, confirmedElsewhere, confirmedOfAnother);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
@@ -58,6 +63,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
@@ -77,6 +85,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldSearchEnrollments(enrollment);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
@@ -98,6 +109,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Enrollment enrollment = EnrollmentMother.Suggested(studentId, GuidMother.Random());
         Enrollment confirmedElsewhere = EnrollmentMother.Confirmed(studentId, GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment, confirmedElsewhere);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldSearchEnrollments(enrollment, confirmedElsewhere);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
@@ -116,6 +130,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldFindClassInSchoolYear(enrollment.ClassId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
@@ -131,6 +148,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     {
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -150,5 +170,38 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
 
         result.Error.Should().Be(EnrollmentErrors.NotFound);
         this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_guardian_access_forbidden_without_confirming_when_the_user_is_not_the_guardian()
+    {
+        Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldFailEnsuringStudentGuardian(
+            enrollment.StudentId,
+            currentUserId,
+            StudentErrors.GuardianAccessForbidden);
+
+        Result result = await this._useCase.ExecuteAsync(
+            EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
+
+        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_confirming_when_there_is_no_current_user()
+    {
+        Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
+        this.ShouldFetchEnrollments(enrollment);
+        this.ShouldHaveNoCurrentUser();
+
+        Result result = await this._useCase.ExecuteAsync(
+            EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
     }
 }

@@ -4,6 +4,8 @@ using SumiClas.Enrollments.Domain;
 using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Application;
+using SumiClas.Users.Application;
 
 namespace SumiClas.Enrollments.Application;
 
@@ -11,7 +13,7 @@ public static class EnrollmentConfirm
 {
     public sealed record Command(Guid EnrollmentId) : IRequest<Result>, ICommand;
 
-    public sealed class Confirm(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock) : IUseCase
+    public sealed class Confirm(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -19,6 +21,18 @@ public static class EnrollmentConfirm
             if (enrollment is null)
             {
                 return Result.Failure(EnrollmentErrors.NotFound);
+            }
+
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            var guardian = await queryBus.Send(new StudentGuardianEnsure.Query(enrollment.StudentId, current.Value), ct);
+            if (guardian.IsFailure)
+            {
+                return guardian;
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(enrollment.ClassId), ct);

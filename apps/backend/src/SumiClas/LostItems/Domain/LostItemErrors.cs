@@ -5,6 +5,7 @@ namespace SumiClas.LostItems.Domain;
 public static class LostItemErrors
 {
     public static readonly Error IdRequired = new("LostItem.IdRequired", "El identificador del objeto no puede estar vacío.");
+    public static readonly Error MarkForbidden = new("LostItem.MarkForbidden", "Solo el autor del objeto perdido puede cambiar su estado.");
     public static readonly Error NotFound = new("LostItem.NotFound", "No se ha encontrado el objeto.");
     public static readonly Error InvalidScope = new("LostItem.InvalidScope", "El alcance del objeto no es válido.");
     public static readonly Error InvalidStatus = new("LostItem.InvalidStatus", "El estado del objeto no es válido.");

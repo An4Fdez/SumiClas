@@ -22,7 +22,8 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this._useCase = new EnrollmentCreate.Create(
             this.Repository.Object,
             this.QueryBus.Object,
-            this.Clock.Object);
+            this.Clock.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -32,7 +33,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
@@ -64,7 +67,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid otherClassId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId, otherClassId);
@@ -83,7 +88,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId);
@@ -108,7 +115,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid otherClassId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId, otherClassId);
@@ -128,7 +137,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         Guid studentId = GuidMother.Random();
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
@@ -144,7 +155,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
-        this.ShouldFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldNotFindClass();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -159,7 +172,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
-        this.ShouldNotFindStudent(studentId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldFailEnsuringStudentGuardian(studentId, currentUserId, StudentErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, GuidMother.Random()));
@@ -223,5 +238,35 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
             EnrollmentCreateCommandMother.With(GuidMother.Random(), Guid.Empty, Guid.Empty));
 
         result.Error.Should().Be(EnrollmentErrors.StudentRequired);
+    }
+
+    [Test]
+    public async Task return_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
+    {
+        this.ShouldCaptureAddedEnrollments();
+        Guid studentId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldFailEnsuringStudentGuardian(studentId, currentUserId, StudentErrors.GuardianAccessForbidden);
+
+        Result result = await this._useCase.ExecuteAsync(
+            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, GuidMother.Random()));
+
+        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
+    {
+        this.ShouldCaptureAddedEnrollments();
+        this.ShouldHaveNoCurrentUser();
+
+        Result result = await this._useCase.ExecuteAsync(
+            EnrollmentCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), GuidMother.Random()));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
     }
 }

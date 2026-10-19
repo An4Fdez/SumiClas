@@ -18,7 +18,10 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
 
     public LostItemRecoveredMarkShould()
     {
-        this._useCase = new LostItemRecoveredMark.Mark(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new LostItemRecoveredMark.Mark(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -26,6 +29,7 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     {
         LostItem lostItem = LostItemMother.With();
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
@@ -43,6 +47,7 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
@@ -55,6 +60,7 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     {
         LostItem lostItem = LostItemMother.With(recovered: true);
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
@@ -63,15 +69,15 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task not_ask_for_the_current_user_nor_add_any_item()
+    public async Task not_add_any_item()
     {
         LostItem lostItem = LostItemMother.With();
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
         this.ShouldCaptureAddedLostItems();
 
         await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        this.UserProvider.VerifyNoOtherCalls();
         this.Added.Should().BeEmpty();
     }
 
@@ -93,6 +99,7 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         LostItem lostItem = LostItemMother.ForClass(GuidMother.Random());
         this.ShouldNotFindClass();
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
@@ -112,6 +119,7 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
@@ -128,10 +136,37 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
         this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
         Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
+        lostItem.Recovered.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task return_mark_forbidden_and_keep_the_state_when_the_user_is_not_the_author()
+    {
+        LostItem lostItem = LostItemMother.With(recovered: false);
+        this.ShouldFetchLostItems(lostItem);
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+
+        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+
+        result.Error.Should().Be(LostItemErrors.MarkForbidden);
+        lostItem.Recovered.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_and_keep_the_state_when_there_is_no_current_user()
+    {
+        LostItem lostItem = LostItemMother.With(recovered: false);
+        this.ShouldFetchLostItems(lostItem);
+        this.ShouldHaveNoCurrentUser();
+
+        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         lostItem.Recovered.Should().BeFalse();
     }
 }

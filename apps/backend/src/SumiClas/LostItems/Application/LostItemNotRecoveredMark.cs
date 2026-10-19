@@ -4,6 +4,7 @@ using SumiClas.LostItems.Domain;
 using SumiClas.SchoolYears.Application;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
+using SumiClas.Users.Application;
 
 namespace SumiClas.LostItems.Application;
 
@@ -11,7 +12,7 @@ public static class LostItemNotRecoveredMark
 {
     public sealed record Command(Guid LostItemId) : IRequest<Result>, ICommand;
 
-    public sealed class Mark(ILostItemRepository repository, IQueryBus queryBus) : IUseCase
+    public sealed class Mark(ILostItemRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
@@ -19,6 +20,17 @@ public static class LostItemNotRecoveredMark
             if (lostItem is null)
             {
                 return Result.Failure(LostItemErrors.NotFound);
+            }
+
+            var current = userProvider.GetCurrentUserId();
+            if (current.IsFailure)
+            {
+                return Result.Failure(current.Error!);
+            }
+
+            if (lostItem.AuthorId != current.Value)
+            {
+                return Result.Failure(LostItemErrors.MarkForbidden);
             }
 
             if (lostItem.ClassId is { } classId)
