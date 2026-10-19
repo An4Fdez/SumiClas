@@ -9,12 +9,14 @@ export function ItemCard({
   item,
   className,
   recovered,
+  canToggleRecovered,
   onOpen,
   onToggleRecovered,
 }: {
   item: LostItem;
   className?: string;
   recovered: boolean;
+  canToggleRecovered: boolean;
   onOpen: () => void;
   onToggleRecovered: () => void;
 }) {
@@ -28,22 +30,34 @@ export function ItemCard({
         recovered ? 'opacity-60' : ''
       }`}
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleRecovered();
-        }}
-        aria-label={recovered ? 'Marcar como no recuperado' : 'Marcar como recuperado'}
-        title={recovered ? 'Marcar como no recuperado' : 'Marcar como recuperado'}
-        className={`absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full border transition-colors ${
-          recovered
-            ? 'border-mint-500 bg-mint-500 text-white'
-            : 'border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800'
-        }`}
-      >
-        {recovered && <Check className="h-3.5 w-3.5" />}
-      </button>
+      {!canToggleRecovered && recovered && (
+        <span
+          aria-label="Recuperado"
+          title="Recuperado"
+          className="absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full border border-mint-500 bg-mint-500 text-white"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </span>
+      )}
+
+      {canToggleRecovered && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleRecovered();
+          }}
+          aria-label={recovered ? 'Marcar como no recuperado' : 'Marcar como recuperado'}
+          title={recovered ? 'Marcar como no recuperado' : 'Marcar como recuperado'}
+          className={`absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full border transition-colors ${
+            recovered
+              ? 'border-mint-500 bg-mint-500 text-white'
+              : 'border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800'
+          }`}
+        >
+          {recovered && <Check className="h-3.5 w-3.5" />}
+        </button>
+      )}
 
       <button type="button" onClick={onOpen} className="flex w-full items-start gap-3 p-4 pr-11 text-left">
         {item.photoUrl && (

@@ -23,7 +23,7 @@ const scopeFilters: { value: ScopeFilter; label: string }[] = [
 const TRANSIENT_CLIENT_ERRORS = [408, 429];
 
 export default function LostAndFound() {
-  const { currentChild } = useChildContext();
+  const { currentChild, currentUserId } = useChildContext();
   const classId = currentChild?.classId;
   const repository = useLostItemRepository();
   const ids = useWizardIds();
@@ -175,6 +175,7 @@ export default function LostAndFound() {
                 item={item}
                 className={item.classId ? currentChild?.className : undefined}
                 recovered={item.recovered}
+                canToggleRecovered={item.authorId === currentUserId}
                 onOpen={() => setOpenItemId(item.id)}
                 onToggleRecovered={() => setRecovered(item.id, !item.recovered)}
               />
@@ -206,6 +207,7 @@ export default function LostAndFound() {
           item={openItem}
           className={openItem.classId ? currentChild?.className : undefined}
           recovered={openItem.recovered}
+          canToggleRecovered={openItem.authorId === currentUserId}
           onToggleRecovered={() => setRecovered(openItem.id, !openItem.recovered)}
           onClose={() => setOpenItemId(null)}
         />

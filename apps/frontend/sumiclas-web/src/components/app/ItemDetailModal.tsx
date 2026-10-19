@@ -10,12 +10,14 @@ export function ItemDetailModal({
   item,
   className,
   recovered,
+  canToggleRecovered,
   onToggleRecovered,
   onClose,
 }: {
   item: LostItem;
   className?: string;
   recovered: boolean;
+  canToggleRecovered: boolean;
   onToggleRecovered: () => void;
   onClose: () => void;
 }) {
@@ -66,18 +68,27 @@ export function ItemDetailModal({
           {[item.authorName, roleLabel(item.authorRole), formatRelativeDate(item.createdAt)].filter(Boolean).join(' · ')}
         </p>
 
-        <button
-          type="button"
-          onClick={onToggleRecovered}
-          className={`mt-4 inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-            recovered
-              ? 'border-mint-500 bg-mint-50 text-mint-700 dark:border-mint-500 dark:bg-mint-900/20 dark:text-mint-300'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-          }`}
-        >
-          <Check className="h-4 w-4" />
-          {recovered ? 'Recuperado' : 'Marcar como recuperado'}
-        </button>
+        {!canToggleRecovered && recovered && (
+          <p className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-mint-500 bg-mint-50 px-3 py-2 text-sm font-semibold text-mint-700 dark:border-mint-500 dark:bg-mint-900/20 dark:text-mint-300">
+            <Check className="h-4 w-4" />
+            Recuperado
+          </p>
+        )}
+
+        {canToggleRecovered && (
+          <button
+            type="button"
+            onClick={onToggleRecovered}
+            className={`mt-4 inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
+              recovered
+                ? 'border-mint-500 bg-mint-50 text-mint-700 dark:border-mint-500 dark:bg-mint-900/20 dark:text-mint-300'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Check className="h-4 w-4" />
+            {recovered ? 'Recuperado' : 'Marcar como recuperado'}
+          </button>
+        )}
       </div>
     </div>
   );
