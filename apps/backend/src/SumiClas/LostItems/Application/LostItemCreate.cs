@@ -69,6 +69,12 @@ public static class LostItemCreate
                     return Result.Failure(schoolClass.Error!);
                 }
 
+                var access = await queryBus.Send(new UserClassAccessEnsure.Query(authorId, command.ClassId.Value), ct);
+                if (access.IsFailure)
+                {
+                    return access;
+                }
+
                 var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
                 if (schoolYear.IsFailure)
                 {

@@ -44,6 +44,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(other, assignment);
         this.ShouldCaptureAddedAssignments();
@@ -65,7 +66,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task not_check_that_the_author_belongs_to_the_class_nor_is_the_representative()
+    public async Task not_require_the_author_to_be_the_class_representative()
     {
         Guid assignmentId = GuidMother.Random();
         Assignment assignment = AssignmentMother.With(id: assignmentId);
@@ -74,6 +75,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
@@ -83,9 +85,6 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         result.IsSuccess.Should().BeTrue();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserIsClassRepresentative.Query>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -170,6 +169,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFetchAssignments(assignment);
 
@@ -190,6 +190,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFetchAssignments(assignment);
 
@@ -209,6 +210,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
@@ -228,6 +230,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldFindUser(Guid.Empty);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldAllowClassAccess(Guid.Empty, assignment.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
@@ -235,5 +238,25 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
             AssignmentCommentAddCommandMother.WithText(assignmentId, "  "));
 
         result.Error.Should().Be(AssignmentErrors.CommentAuthorRequired);
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_commenting_when_the_user_does_not_belong_to_the_class()
+    {
+        Guid assignmentId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Assignment assignment = AssignmentMother.With(id: assignmentId);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
+        this.ShouldDenyClassAccess(authorId, assignment.ClassId);
+        this.ShouldFetchAssignments(assignment);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AssignmentCommentAddCommandMother.WithText(assignmentId, StringMother.Random("comment")));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        assignment.Comments.Should().BeEmpty();
     }
 }

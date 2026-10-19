@@ -1,11 +1,13 @@
 namespace SumiClas.Tests.Announcements.Application;
 
 using AwesomeAssertions;
+using Moq;
 using SumiClas.Announcements.Application;
 using SumiClas.Announcements.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Announcements.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Application;
 using SumiClas.Users.Domain;
 
 [TestFixture]
@@ -120,6 +122,68 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
 
         result.Error.Should().Be(AnnouncementErrors.NotFound);
         this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task add_the_receipt_of_a_class_announcement_when_the_user_belongs_to_the_class()
+    {
+        Guid announcementId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid readerId = GuidMother.Random();
+        Announcement announcement = AnnouncementMother.With(
+            Now,
+            id: announcementId,
+            scope: AnnouncementScope.Class,
+            classId: classId);
+        this.ShouldFetchAnnouncements(announcement);
+        this.ShouldResolveCurrentUser(readerId);
+        this.ShouldFindUser(readerId);
+        this.ShouldAllowClassAccess(readerId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
+
+        result.IsSuccess.Should().BeTrue();
+        announcement.ReadReceipts.Should().ContainSingle().Which.UserId.Should().Be(readerId);
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_adding_a_receipt_when_the_user_is_not_in_the_class()
+    {
+        Guid announcementId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid readerId = GuidMother.Random();
+        Announcement announcement = AnnouncementMother.With(
+            Now,
+            id: announcementId,
+            scope: AnnouncementScope.Class,
+            classId: classId);
+        this.ShouldFetchAnnouncements(announcement);
+        this.ShouldResolveCurrentUser(readerId);
+        this.ShouldFindUser(readerId);
+        this.ShouldDenyClassAccess(readerId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        announcement.ReadReceipts.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task not_ask_for_class_access_when_the_announcement_is_for_the_whole_school()
+    {
+        Guid announcementId = GuidMother.Random();
+        Guid readerId = GuidMother.Random();
+        this.ShouldFetchAnnouncements(AnnouncementMother.WithId(announcementId));
+        this.ShouldResolveCurrentUser(readerId);
+        this.ShouldFindUser(readerId);
+
+        await this._useCase.ExecuteAsync(AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
+
+        this.QueryBus.Verify(
+            bus => bus.Send(It.IsAny<UserClassAccessEnsure.Query>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]

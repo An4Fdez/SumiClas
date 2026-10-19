@@ -40,6 +40,12 @@ public static class AssignmentCommentAdd
                 return Result.Failure(schoolClass.Error!);
             }
 
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, assignment.ClassId), ct);
+            if (access.IsFailure)
+            {
+                return access;
+            }
+
             var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {

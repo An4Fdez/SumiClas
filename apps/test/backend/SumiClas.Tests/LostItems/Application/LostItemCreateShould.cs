@@ -70,6 +70,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
@@ -115,6 +116,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
@@ -168,7 +170,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task not_check_that_the_author_belongs_to_the_class_nor_that_is_representative()
+    public async Task not_require_the_author_to_be_the_class_representative()
     {
         Guid classId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
@@ -176,6 +178,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
@@ -183,9 +186,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
 
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserIsClassRepresentative.Query>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -439,6 +439,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldCaptureAddedLostItems();
 
@@ -458,6 +459,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
         this.ShouldCaptureAddedLostItems();
 
@@ -466,5 +468,39 @@ public class LostItemCreateShould : LostItemsUnitTestCase
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
         this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_class_access_forbidden_without_adding_when_the_author_does_not_belong_to_the_class()
+    {
+        this.ShouldCaptureAddedLostItems();
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassAccess(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            LostItemCreateCommandMother.Valid(scope: "Class", classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task not_ask_for_class_access_when_the_lost_item_is_for_the_whole_school()
+    {
+        this.ShouldCaptureAddedLostItems();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+
+        await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "School"));
+
+        this.QueryBus.Verify(
+            bus => bus.Send(It.IsAny<UserClassAccessEnsure.Query>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

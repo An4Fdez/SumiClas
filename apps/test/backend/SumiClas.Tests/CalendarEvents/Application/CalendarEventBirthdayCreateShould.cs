@@ -34,7 +34,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         string title = StringMother.Random("birthday");
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
-        this.ShouldFindStudent(studentId);
+        this.ShouldEnsureStudentGuardian(studentId, authorId);
         this.ShouldCaptureAddedCalendarEvents();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -60,7 +60,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
             bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()),
             Times.Once);
         this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<StudentFinderById.Query>(), It.IsAny<CancellationToken>()),
+            bus => bus.Send(It.IsAny<StudentGuardianEnsure.Query>(), It.IsAny<CancellationToken>()),
             Times.Once);
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -75,7 +75,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
-        this.ShouldFindStudent(studentId);
+        this.ShouldEnsureStudentGuardian(studentId, authorId);
         this.ShouldCaptureAddedCalendarEvents();
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(
@@ -282,12 +282,29 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
-        this.ShouldNotFindStudent(studentId);
+        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, StudentErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
 
         result.Error.Should().Be(StudentErrors.NotFound);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
+    {
+        this.ShouldCaptureAddedCalendarEvents();
+        Guid studentId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, StudentErrors.GuardianAccessForbidden);
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
+
+        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
         this.Added.Should().BeEmpty();
     }
 }

@@ -44,6 +44,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSubject(subjectId, classId);
         this.ShouldCaptureAddedAssignments();
@@ -81,6 +82,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSubject(subjectId, classId);
         this.ShouldCaptureAddedAssignments();
@@ -104,6 +106,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSubject(subjectId, classId);
         this.ShouldCaptureAddedAssignments();
@@ -129,6 +132,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSubject(subjectId, classId);
         this.ShouldCaptureAddedAssignments();
@@ -271,6 +275,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldCaptureAddedAssignments();
 
@@ -293,6 +298,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
         this.ShouldCaptureAddedAssignments();
 
@@ -312,6 +318,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldNotFindSubject(subjectId);
         this.ShouldCaptureAddedAssignments();
@@ -334,6 +341,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassAccess(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSubject(subjectId, GuidMother.Random());
         this.ShouldCaptureAddedAssignments();
@@ -350,4 +358,22 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         => this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserIsClassRepresentative.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+    [Test]
+    public async Task return_class_access_forbidden_without_adding_when_the_author_does_not_belong_to_the_class()
+    {
+        this.ShouldCaptureAddedAssignments();
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassAccess(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        this.Added.Should().BeEmpty();
+    }
 }

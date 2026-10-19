@@ -108,19 +108,19 @@ public abstract class CalendarEventsUnitTestCase : UnitTestCase
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
 
-    protected void ShouldFindStudent(Guid studentId)
+    protected void ShouldEnsureStudentGuardian(Guid studentId, Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<StudentFinderById.Query>(query => query.StudentId == studentId),
+                It.Is<StudentGuardianEnsure.Query>(query => query.StudentId == studentId && query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<StudentFinderById.StudentResponse>.Success(StudentResponseMother.WithId(studentId)));
+            .ReturnsAsync(Result.Success());
 
-    protected void ShouldNotFindStudent(Guid studentId)
+    protected void ShouldFailEnsuringStudentGuardian(Guid studentId, Guid userId, Error error)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<StudentFinderById.Query>(query => query.StudentId == studentId),
+                It.Is<StudentGuardianEnsure.Query>(query => query.StudentId == studentId && query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<StudentFinderById.StudentResponse>.Failure(StudentErrors.NotFound));
+            .ReturnsAsync(Result.Failure(error));
 
     protected void ShouldAllowClassAccess(Guid userId, Guid classId)
         => this.QueryBus

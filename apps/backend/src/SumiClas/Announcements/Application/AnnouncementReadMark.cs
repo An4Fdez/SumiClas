@@ -33,6 +33,15 @@ public static class AnnouncementReadMark
                 return Result.Failure(reader.Error!);
             }
 
+            if (announcement.ClassId is { } classId)
+            {
+                var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, classId), ct);
+                if (access.IsFailure)
+                {
+                    return access;
+                }
+            }
+
             return announcement.MarkAsReadBy(current.Value, clock);
         }
     }
