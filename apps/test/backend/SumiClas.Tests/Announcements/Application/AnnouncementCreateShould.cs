@@ -535,4 +535,43 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
+
+    [Test]
+    public async Task return_representative_forbidden_without_adding_the_school_announcement_when_not_a_delegate()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassRepresentative(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_school_year_archived_without_adding_the_school_announcement_when_the_class_is_archived()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(SchoolYearErrors.Archived);
+        this.Added.Should().BeEmpty();
+    }
 }

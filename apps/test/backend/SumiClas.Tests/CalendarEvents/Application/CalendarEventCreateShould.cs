@@ -544,7 +544,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_representative_forbidden_without_adding_the_school_event_when_the_author_is_not_a_delegate()
+    public async Task return_representative_forbidden_without_adding_the_school_event_when_not_a_delegate()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
