@@ -3,9 +3,11 @@ namespace SumiClas.Tests.CalendarEvents.Application;
 using AwesomeAssertions;
 using Moq;
 using SumiClas.CalendarEvents.Application;
+using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
 using SumiClas.Enrollments.Application;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.CalendarEvents.Domain;
 using SumiClas.Tests.Shared;
@@ -37,14 +39,17 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         string schoolTitle = StringMother.Random("school");
         string classTitle = StringMother.Random("class");
         string birthdayTitle = StringMother.Random("birthday");
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindEnrollments(classId, EnrollmentResponseMother.ConfirmedFor(enrolledStudentId, classId));
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(
-            CalendarEventMother.SchoolWide(schoolTitle, TODAY, GuidMother.Random()),
+            CalendarEventMother.SchoolWide(schoolId, schoolTitle, TODAY, GuidMother.Random()),
             CalendarEventMother.ForClass(classId, classTitle, TODAY, GuidMother.Random()),
             CalendarEventMother.ForClass(
                 GuidMother.Random(),
@@ -72,7 +77,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         Guid suggestedStudentId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -92,19 +100,71 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
+    public async Task not_return_the_school_events_of_other_schools()
+    {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        CalendarEvent mine = CalendarEventMother.SchoolWide(
+            schoolId,
+            StringMother.Random("mine"),
+            TODAY,
+            GuidMother.Random());
+        CalendarEvent otherSchool = CalendarEventMother.SchoolWide(
+            GuidMother.Random(),
+            StringMother.Random("other"),
+            TODAY,
+            GuidMother.Random());
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldFindEnrollments(classId);
+        this.ShouldFindMembers();
+        this.ShouldSearchCalendarEvents(mine, otherSchool);
+
+        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+            CalendarEventFinderByClassQueryMother.WithClassId(classId));
+
+        result.Value.Select(item => item.Id).Should().Equal(mine.Id);
+    }
+
+    [Test]
+    public async Task return_the_school_error_without_searching_when_the_school_of_the_class_cannot_be_found()
+    {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+
+        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+            CalendarEventFinderByClassQueryMother.WithClassId(classId));
+
+        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        this.ShouldHaveSearched(0);
+    }
+
+    [Test]
     public async Task return_only_the_school_and_class_events_without_searching_birthdays_when_nobody_is_enrolled()
     {
         Guid classId = GuidMother.Random();
         string schoolTitle = StringMother.Random("school");
         string classTitle = StringMother.Random("class");
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindEnrollments(classId);
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(
-            CalendarEventMother.SchoolWide(schoolTitle, TODAY, GuidMother.Random()),
+            CalendarEventMother.SchoolWide(schoolId, schoolTitle, TODAY, GuidMother.Random()),
             CalendarEventMother.ForClass(classId, classTitle, TODAY, GuidMother.Random()),
             CalendarEventMother.Birthday(
                 GuidMother.Random(),
@@ -171,19 +231,22 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     {
         Guid classId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindEnrollments(classId, EnrollmentResponseMother.ConfirmedFor(studentId, classId));
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(
-            CalendarEventMother.SchoolWide("march-10-2027", new DateOnly(2027, 3, 10), GuidMother.Random()),
+            CalendarEventMother.SchoolWide(schoolId, "march-10-2027", new DateOnly(2027, 3, 10), GuidMother.Random()),
             CalendarEventMother.ForClass(classId, "december-2026", new DateOnly(2026, 12, 1), GuidMother.Random()),
             CalendarEventMother.Birthday(studentId, "birthday-december", 12, 25, GuidMother.Random()),
             CalendarEventMother.ForClass(classId, "january-2027", new DateOnly(2027, 1, 5), GuidMother.Random()),
             CalendarEventMother.Birthday(studentId, "birthday-march-20", 3, 20, GuidMother.Random()),
-            CalendarEventMother.SchoolWide("march-2-2027", new DateOnly(2027, 3, 2), GuidMother.Random()),
+            CalendarEventMother.SchoolWide(schoolId, "march-2-2027", new DateOnly(2027, 3, 2), GuidMother.Random()),
             CalendarEventMother.Birthday(studentId, "birthday-march-1", 3, 1, GuidMother.Random()));
 
         Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
@@ -209,7 +272,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         string cost = StringMother.Random("cost");
         string authorName = StringMother.Random("author");
         DateTimeOffset createdAt = Now.AddHours(-5);
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -252,7 +318,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
         string title = StringMother.Random("birthday");
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -281,7 +350,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     public async Task return_an_empty_author_name_and_no_role_when_the_author_is_not_a_known_user()
     {
         Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
@@ -289,7 +361,7 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         this.ShouldFindMembers(
             UserClassMemberResponseMother.Representative(GuidMother.Random(), StringMother.Random("other")));
         this.ShouldSearchCalendarEvents(
-            CalendarEventMother.SchoolWide(StringMother.Random("school"), TODAY, GuidMother.Random()));
+            CalendarEventMother.SchoolWide(schoolId, StringMother.Random("school"), TODAY, GuidMother.Random()));
 
         Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
@@ -305,14 +377,17 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid firstAuthorId = GuidMother.Random();
         Guid secondAuthorId = GuidMother.Random();
-        this.ShouldFindClass(classId);
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldFindEnrollments(classId);
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(
-            CalendarEventMother.SchoolWide(StringMother.Random("school"), TODAY, firstAuthorId),
+            CalendarEventMother.SchoolWide(schoolId, StringMother.Random("school"), TODAY, firstAuthorId),
             CalendarEventMother.ForClass(classId, StringMother.Random("class"), TODAY, firstAuthorId),
             CalendarEventMother.ForClass(classId, StringMother.Random("class"), TODAY, secondAuthorId));
 

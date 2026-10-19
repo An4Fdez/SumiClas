@@ -34,14 +34,21 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         string title = StringMother.Random("event");
         string location = StringMother.Random("place");
         string cost = StringMother.Random("cost");
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         this.ShouldCaptureAddedCalendarEvents();
 
         Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.With(
             eventId,
             "School",
-            null,
+            classId,
             "Trip",
             "  " + title + " ",
             new DateOnly(2027, 2, 28),
@@ -54,6 +61,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         added.Id.Should().Be(eventId);
         added.Scope.Should().Be(EventScope.School);
         added.ClassId.Should().BeNull();
+        added.SchoolId.Should().Be(schoolId);
         added.StudentId.Should().BeNull();
         added.Type.Should().Be(EventType.Trip);
         added.Title.Should().Be(title);
@@ -90,30 +98,19 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task discard_the_class_id_and_not_ask_for_the_class_when_the_scope_is_school()
-    {
-        Guid authorId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldCaptureAddedCalendarEvents();
-
-        Result result = await this._useCase.ExecuteAsync(
-            CalendarEventCreateCommandMother.Valid(scope: "School", classId: GuidMother.Random()));
-
-        result.IsSuccess.Should().BeTrue();
-        this.Added.Single().ClassId.Should().BeNull();
-        this.ShouldHaveAskedOnlyForTheAuthor();
-    }
-
-    [Test]
     public async Task add_the_event_with_the_time_left_empty_when_no_time_is_given()
     {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid());
+        await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(classId: classId));
 
         this.Added.Single().Time.Should().BeNull();
     }
@@ -122,15 +119,20 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     [TestCase("   ")]
     public async Task store_no_location_and_no_cost_when_they_are_null_or_blank(string? text)
     {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedCalendarEvents();
 
         await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.With(
             GuidMother.Random(),
-            "School",
-            null,
+            "Class",
+            classId,
             "Trip",
             StringMother.Random("event"),
             new DateOnly(2027, 2, 28),
@@ -155,6 +157,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, GuidMother.Random());
         this.ShouldCaptureAddedCalendarEvents();
 
         await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(scope: scope, classId: classId));
@@ -166,12 +169,17 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     [TestCase("MEETING", EventType.Meeting)]
     public async Task accept_the_type_whatever_its_casing(string type, EventType expected)
     {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(type: type));
+        await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(classId: classId, type: type));
 
         this.Added.Single().Type.Should().Be(expected);
     }
@@ -474,6 +482,103 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
             CalendarEventCreateCommandMother.ClassScopeWithClassId(classId));
 
         result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
+    {
+        this.ShouldCaptureAddedCalendarEvents();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventCreateCommandMother.With(
+                GuidMother.Random(),
+                "School",
+                null,
+                "Trip",
+                StringMother.Random("event"),
+                new DateOnly(2027, 2, 28),
+                null,
+                null,
+                null));
+
+        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForSchoolScope);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
+    {
+        this.ShouldCaptureAddedCalendarEvents();
+        this.ShouldResolveCurrentUser(GuidMother.Random());
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventCreateCommandMother.Valid(scope: "School", classId: Guid.Empty));
+
+        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForSchoolScope);
+        this.Added.Should().BeEmpty();
+        this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_school_year_not_found_without_adding_when_the_school_of_the_class_cannot_be_found()
+    {
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldCaptureAddedCalendarEvents();
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_representative_forbidden_without_adding_the_school_event_when_the_author_is_not_a_delegate()
+    {
+        this.ShouldCaptureAddedCalendarEvents();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassRepresentative(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_school_year_archived_without_adding_the_school_event_when_the_class_is_archived()
+    {
+        this.ShouldCaptureAddedCalendarEvents();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+
+        Result result = await this._useCase.ExecuteAsync(
+            CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        result.Error.Should().Be(SchoolYearErrors.Archived);
         this.Added.Should().BeEmpty();
     }
 }

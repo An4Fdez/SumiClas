@@ -11,6 +11,7 @@ public sealed class CalendarEventSpecification : Specification<CalendarEvent>
         Guid? id = null,
         EventScope? scope = null,
         Guid? classId = null,
+        Guid? schoolId = null,
         Guid? studentId = null,
         EventType? type = null,
         string? title = null,
@@ -28,6 +29,7 @@ public sealed class CalendarEventSpecification : Specification<CalendarEvent>
         if (id is { } eventId) AddCriteria(calendarEvent => calendarEvent.Id == eventId);
         if (scope is { } eventScope) AddCriteria(calendarEvent => calendarEvent.Scope == eventScope);
         if (classId is { } schoolClass) AddCriteria(calendarEvent => calendarEvent.ClassId == schoolClass);
+        if (schoolId is { } school) AddCriteria(calendarEvent => calendarEvent.SchoolId == school);
         if (studentId is { } student) AddCriteria(calendarEvent => calendarEvent.StudentId == student);
         if (type is { } eventType) AddCriteria(calendarEvent => calendarEvent.Type == eventType);
         if (title is not null) AddCriteria(calendarEvent => calendarEvent.Title == title);

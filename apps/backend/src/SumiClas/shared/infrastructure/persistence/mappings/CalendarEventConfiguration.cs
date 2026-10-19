@@ -19,6 +19,8 @@ public sealed class CalendarEventConfiguration : IEntityTypeConfiguration<Calend
 
         builder.Property(e => e.ClassId);
 
+        builder.Property(e => e.SchoolId);
+
         builder.Property(e => e.StudentId);
 
         builder.Property(e => e.Type)

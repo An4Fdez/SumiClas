@@ -27,7 +27,7 @@ public static class CalendarEventCreateCommandMother
         string? title = null)
         => With(
             id ?? GuidMother.Random(),
-            scope ?? "School",
+            scope ?? "Class",
             classId ?? GuidMother.Random(),
             type ?? "Trip",
             title ?? StringMother.Random("Event"),

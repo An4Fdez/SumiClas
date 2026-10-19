@@ -14,6 +14,7 @@ public static class CalendarEventMother
             id,
             EventScope.School,
             null,
+            GuidMother.Random(),
             null,
             EventType.Other,
             title,
@@ -24,11 +25,12 @@ public static class CalendarEventMother
             GuidMother.Random(),
             UnitTestCase.Now);
 
-    public static CalendarEvent SchoolWide(string title, DateOnly date, Guid authorId)
+    public static CalendarEvent SchoolWide(Guid schoolId, string title, DateOnly date, Guid authorId)
         => new(
             GuidMother.Random(),
             EventScope.School,
             null,
+            schoolId,
             null,
             EventType.Activity,
             title,
@@ -44,6 +46,7 @@ public static class CalendarEventMother
             GuidMother.Random(),
             EventScope.Class,
             classId,
+            null,
             null,
             EventType.Meeting,
             title,
@@ -68,6 +71,7 @@ public static class CalendarEventMother
             EventScope.Class,
             classId,
             null,
+            null,
             EventType.Trip,
             title,
             EventDateMother.On(date),
@@ -81,6 +85,7 @@ public static class CalendarEventMother
         => new(
             GuidMother.Random(),
             EventScope.Class,
+            null,
             null,
             studentId,
             EventType.Birthday,

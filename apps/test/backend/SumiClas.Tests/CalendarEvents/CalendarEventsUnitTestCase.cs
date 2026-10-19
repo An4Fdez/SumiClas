@@ -101,6 +101,20 @@ public abstract class CalendarEventsUnitTestCase : UnitTestCase
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure(error));
 
+    protected void ShouldFindSchoolOfSchoolYear(Guid schoolYearId, Guid schoolId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolIdFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Guid>.Success(schoolId));
+
+    protected void ShouldFailFindingSchoolOfSchoolYear(Guid schoolYearId, Error error)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<SchoolIdFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Guid>.Failure(error));
+
     protected void ShouldFindClass(Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(

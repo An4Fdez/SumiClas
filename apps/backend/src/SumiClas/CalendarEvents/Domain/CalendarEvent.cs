@@ -9,6 +9,9 @@ public sealed class CalendarEvent : AggregateRoot
     /// <summary>Set only for non-Birthday events with Scope == Class.</summary>
     public Guid? ClassId { get; private set; }
 
+    /// <summary>Set only for non-Birthday events with Scope == School: the school the event belongs to.</summary>
+    public Guid? SchoolId { get; private set; }
+
     /// <summary>
     /// Set only for Birthday events. A birthday follows the (permanent) Student, never a
     /// fixed Class — Classes are recreated every SchoolYear, so a Class reference would
@@ -34,6 +37,7 @@ public sealed class CalendarEvent : AggregateRoot
         Guid id,
         EventScope scope,
         Guid? classId,
+        Guid? schoolId,
         Guid? studentId,
         EventType type,
         string title,
@@ -46,6 +50,7 @@ public sealed class CalendarEvent : AggregateRoot
     {
         Scope = scope;
         ClassId = classId;
+        SchoolId = schoolId;
         StudentId = studentId;
         Type = type;
         Title = title;
@@ -67,6 +72,7 @@ public sealed class CalendarEvent : AggregateRoot
         Guid id,
         EventScope scope,
         Guid? classId,
+        Guid? schoolId,
         EventType type,
         string title,
         DateOnly date,
@@ -76,7 +82,7 @@ public sealed class CalendarEvent : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, type, title, authorId);
+        var validation = Validate(id, scope, classId, schoolId, type, title, authorId);
         if (validation.IsFailure)
         {
             return Result<CalendarEvent>.Failure(validation.Error!);
@@ -88,6 +94,7 @@ public sealed class CalendarEvent : AggregateRoot
             id,
             scope,
             scope == EventScope.Class ? classId : null,
+            scope == EventScope.School ? schoolId : null,
             null,
             type,
             title.Trim(),
@@ -101,7 +108,7 @@ public sealed class CalendarEvent : AggregateRoot
         return Result<CalendarEvent>.Success(calendarEvent);
     }
 
-    private static Result Validate(Guid id, EventScope scope, Guid? classId, EventType type, string title, Guid authorId)
+    private static Result Validate(Guid id, EventScope scope, Guid? classId, Guid? schoolId, EventType type, string title, Guid authorId)
     {
         if (id == Guid.Empty)
         {
@@ -114,6 +121,10 @@ public sealed class CalendarEvent : AggregateRoot
         if (scope == EventScope.Class && (classId is null || classId == Guid.Empty))
         {
             return Result.Failure(CalendarEventErrors.ClassRequiredForClassScope);
+        }
+        if (scope == EventScope.School && (schoolId is null || schoolId == Guid.Empty))
+        {
+            return Result.Failure(CalendarEventErrors.SchoolRequiredForSchoolScope);
         }
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -154,6 +165,7 @@ public sealed class CalendarEvent : AggregateRoot
         var birthday = new CalendarEvent(
             id,
             EventScope.Class,
+            null,
             null,
             studentId,
             EventType.Birthday,
