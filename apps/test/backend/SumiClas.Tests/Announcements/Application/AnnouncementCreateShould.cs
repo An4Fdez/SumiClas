@@ -71,6 +71,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
@@ -126,6 +127,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
@@ -417,6 +419,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -436,6 +439,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -451,5 +455,24 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
             bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()),
             Times.Once);
         this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassRepresentative(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "Class", classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
     }
 }

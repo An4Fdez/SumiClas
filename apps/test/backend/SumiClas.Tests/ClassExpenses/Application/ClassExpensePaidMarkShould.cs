@@ -10,6 +10,7 @@ using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.ClassExpenses.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Domain;
 
 [TestFixture]
 public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
@@ -18,7 +19,10 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
 
     public ClassExpensePaidMarkShould()
     {
-        this._useCase = new ClassExpensePaidMark.Mark(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new ClassExpensePaidMark.Mark(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -39,6 +43,9 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
         ClassExpense other = ClassExpenseMother.With(participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(other, expense);
 
@@ -65,6 +72,9 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
             participants: [ExpenseParticipantMother.Paid(guardianId)]);
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
 
@@ -76,7 +86,7 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task not_ask_for_the_current_user_nor_add_any_expense()
+    public async Task not_add_any_expense()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -85,13 +95,15 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
             participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
         this.ShouldCaptureAddedClassExpenses();
 
         await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
 
-        this.UserProvider.VerifyNoOtherCalls();
         this.Added.Should().BeEmpty();
     }
 
@@ -138,6 +150,9 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
             id: expenseId,
             participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFetchClassExpenses(expense);
 
@@ -155,6 +170,9 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         ClassExpense expense = ClassExpenseMother.With(id: expenseId);
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldFetchClassExpenses(expense);
 
@@ -174,6 +192,9 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
             participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
 
@@ -181,6 +202,46 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
             ClassExpensePaidMarkCommandMother.With(expenseId, GuidMother.Random()));
 
         result.Error.Should().Be(ClassExpenseErrors.NotAParticipant);
+        expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
+    }
+
+    [Test]
+    public async Task return_class_representative_forbidden_without_marking_when_the_user_is_not_a_delegate()
+    {
+        Guid expenseId = GuidMother.Random();
+        Guid guardianId = GuidMother.Random();
+        ClassExpense expense = ClassExpenseMother.With(
+            id: expenseId,
+            participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
+        Guid schoolYearId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassRepresentative(currentUserId, expense.ClassId);
+        this.ShouldFetchClassExpenses(expense);
+
+        Result result = await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_marking_when_there_is_no_current_user()
+    {
+        Guid expenseId = GuidMother.Random();
+        Guid guardianId = GuidMother.Random();
+        ClassExpense expense = ClassExpenseMother.With(
+            id: expenseId,
+            participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
+        this.ShouldHaveNoCurrentUser();
+        this.ShouldFetchClassExpenses(expense);
+
+        Result result = await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
     }
 }

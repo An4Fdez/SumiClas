@@ -7,6 +7,7 @@ using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Domain;
 
 [TestFixture]
 public class ClassRenameShould : ClassesUnitTestCase
@@ -15,7 +16,10 @@ public class ClassRenameShould : ClassesUnitTestCase
 
     public ClassRenameShould()
     {
-        this._useCase = new ClassRename.Rename(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new ClassRename.Rename(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -25,6 +29,9 @@ public class ClassRenameShould : ClassesUnitTestCase
         string newName = StringMother.Random("class");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, StringMother.Random("old"));
         this.ShouldFetchClasses(schoolClass);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -54,6 +61,9 @@ public class ClassRenameShould : ClassesUnitTestCase
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
         this.ShouldFetchClasses(schoolClass);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
         Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, "   "));
@@ -69,6 +79,9 @@ public class ClassRenameShould : ClassesUnitTestCase
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
         this.ShouldFetchClasses(schoolClass);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -84,6 +97,9 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid schoolYearId = GuidMother.Random();
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, StringMother.Random("old"));
         this.ShouldFetchClasses(schoolClass);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, " "));
@@ -98,12 +114,47 @@ public class ClassRenameShould : ClassesUnitTestCase
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
         this.ShouldFetchClasses(schoolClass);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
         result.Error.Should().Be(SchoolYearErrors.NotFound);
+        schoolClass.Name.Should().Be(oldName);
+    }
+
+    [Test]
+    public async Task return_class_representative_forbidden_and_keep_the_name_when_the_user_is_not_a_delegate()
+    {
+        string oldName = StringMother.Random("old");
+        Class schoolClass = ClassMother.With(GuidMother.Random(), GuidMother.Random(), oldName);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassRepresentative(currentUserId, schoolClass.Id);
+
+        Result result = await this._useCase.ExecuteAsync(
+            ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        schoolClass.Name.Should().Be(oldName);
+    }
+
+    [Test]
+    public async Task return_unauthenticated_and_keep_the_name_when_there_is_no_current_user()
+    {
+        string oldName = StringMother.Random("old");
+        Class schoolClass = ClassMother.With(GuidMother.Random(), GuidMother.Random(), oldName);
+        this.ShouldFetchClasses(schoolClass);
+        this.ShouldHaveNoCurrentUser();
+
+        Result result = await this._useCase.ExecuteAsync(
+            ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         schoolClass.Name.Should().Be(oldName);
     }
 }

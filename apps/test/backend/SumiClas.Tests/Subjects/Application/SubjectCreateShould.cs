@@ -7,6 +7,7 @@ using SumiClas.Shared.Domain;
 using SumiClas.Subjects.Application;
 using SumiClas.Subjects.Domain;
 using SumiClas.Tests.Shared;
+using SumiClas.Users.Domain;
 
 [TestFixture]
 public class SubjectCreateShould : SubjectsUnitTestCase
@@ -15,7 +16,10 @@ public class SubjectCreateShould : SubjectsUnitTestCase
 
     public SubjectCreateShould()
     {
-        this._useCase = new SubjectCreate.Create(this.Repository.Object, this.QueryBus.Object);
+        this._useCase = new SubjectCreate.Create(
+            this.Repository.Object,
+            this.QueryBus.Object,
+            this.UserProvider.Object);
     }
 
     [Test]
@@ -26,6 +30,9 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         string label = StringMother.Random("subject");
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedSubjects();
 
@@ -62,6 +69,9 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -78,6 +88,9 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassRepresentative(currentUserId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
         Result result = await this._useCase.ExecuteAsync(
@@ -121,5 +134,39 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         result.Error.Should().Be(SubjectErrors.ClassRequired);
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task return_class_representative_forbidden_without_adding_when_the_user_is_not_a_delegate()
+    {
+        this.ShouldCaptureAddedSubjects();
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldDenyClassRepresentative(currentUserId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(
+            SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_unauthenticated_without_adding_when_there_is_no_current_user()
+    {
+        this.ShouldCaptureAddedSubjects();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldHaveNoCurrentUser();
+
+        Result result = await this._useCase.ExecuteAsync(
+            SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
+
+        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        this.Added.Should().BeEmpty();
     }
 }

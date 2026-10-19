@@ -73,6 +73,13 @@ public static class CalendarEventCreate
                     return Result.Failure(schoolClass.Error!);
                 }
 
+                var representative = await queryBus.Send(
+                    new UserClassRepresentativeEnsure.Query(authorId, command.ClassId!.Value), ct);
+                if (representative.IsFailure)
+                {
+                    return representative;
+                }
+
                 var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
                 if (schoolYear.IsFailure)
                 {

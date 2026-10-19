@@ -6,6 +6,7 @@ public static class ClassExpenseErrors
 {
     public static readonly Error IdRequired = new("ClassExpense.IdRequired", "El identificador del gasto no puede estar vacío.");
     public static readonly Error NotFound = new("ClassExpense.NotFound", "No se ha encontrado el gasto.");
+    public static readonly Error ParticipantNotInClass = new("ClassExpense.ParticipantNotInClass", "Alguno de los participantes no pertenece a la clase.");
     public static readonly Error ParticipantNotFound = new("ClassExpense.ParticipantNotFound", "Alguno de los participantes no existe.");
     public static readonly Error ClassRequired = new("ClassExpense.ClassRequired", "El gasto debe pertenecer a una clase.");
     public static readonly Error ItemRequired = new("ClassExpense.ItemRequired", "El concepto del gasto no puede estar vacío.");

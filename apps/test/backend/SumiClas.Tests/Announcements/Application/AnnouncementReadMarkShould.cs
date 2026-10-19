@@ -175,12 +175,16 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     {
         Guid announcementId = GuidMother.Random();
         Guid readerId = GuidMother.Random();
-        this.ShouldFetchAnnouncements(AnnouncementMother.WithId(announcementId));
+        Announcement announcement = AnnouncementMother.WithId(announcementId);
+        this.ShouldFetchAnnouncements(announcement);
         this.ShouldResolveCurrentUser(readerId);
         this.ShouldFindUser(readerId);
 
-        await this._useCase.ExecuteAsync(AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
+        Result result = await this._useCase.ExecuteAsync(
+            AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
+        result.IsSuccess.Should().BeTrue();
+        announcement.ReadReceipts.Should().ContainSingle();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserClassAccessEnsure.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);

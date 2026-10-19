@@ -497,8 +497,10 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
 
-        await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "School"));
+        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "School"));
 
+        result.IsSuccess.Should().BeTrue();
+        this.Added.Should().ContainSingle();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserClassAccessEnsure.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);

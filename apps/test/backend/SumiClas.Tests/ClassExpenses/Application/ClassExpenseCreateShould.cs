@@ -45,8 +45,11 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
+        this.ShouldAllowClassAccess(firstGuardianId, classId);
+        this.ShouldAllowClassAccess(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.With(
@@ -83,13 +86,19 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
+        this.ShouldAllowClassAccess(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldFindCalendarEvent(eventId);
 
         Result result = await this._useCase.ExecuteAsync(
-            ClassExpenseCreateCommandMother.Valid(classId: classId, relatedEventId: eventId));
+            ClassExpenseCreateCommandMother.Valid(
+                classId: classId,
+                participantIds: [guardianId],
+                relatedEventId: eventId));
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
@@ -106,8 +115,11 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
+        this.ShouldAllowClassAccess(firstGuardianId, classId);
+        this.ShouldAllowClassAccess(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
@@ -136,38 +148,64 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
+        this.ShouldAllowClassAccess(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(
-            ClassExpenseCreateCommandMother.Valid(classId: classId, totalAmount: smallest));
+            ClassExpenseCreateCommandMother.Valid(
+                classId: classId,
+                participantIds: [guardianId],
+                totalAmount: smallest));
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Single().TotalAmount.Should().Be(smallest);
     }
 
     [Test]
-    public async Task not_check_that_the_participants_belong_to_the_class_nor_that_the_author_is_representative()
+    public async Task return_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
     {
+        this.ShouldCaptureAddedClassExpenses();
         Guid classId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldDenyClassRepresentative(authorId, classId);
+
+        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
+
+        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task return_participant_not_in_class_without_adding_when_a_participant_does_not_belong_to_the_class()
+    {
+        this.ShouldCaptureAddedClassExpenses();
+        Guid classId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid memberId = GuidMother.Random();
+        Guid outsiderId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
-        this.ShouldCaptureAddedClassExpenses();
+        this.ShouldAllowClassAccess(memberId, classId);
+        this.ShouldDenyClassAccess(outsiderId, classId);
 
-        await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
+        Result result = await this._useCase.ExecuteAsync(
+            ClassExpenseCreateCommandMother.Valid(classId: classId, participantIds: [memberId, outsiderId]));
 
-        this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<UserIsClassRepresentative.Query>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        result.Error.Should().Be(ClassExpenseErrors.ParticipantNotInClass);
+        this.Added.Should().BeEmpty();
     }
 
     [Test]
@@ -332,6 +370,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
         this.ShouldCaptureAddedClassExpenses();
 
@@ -353,6 +392,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
         this.ShouldCaptureAddedClassExpenses();
 
@@ -373,6 +413,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindOnlyUsers(existingGuardianId);
         this.ShouldCaptureAddedClassExpenses();
@@ -399,13 +440,19 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
+        this.ShouldAllowClassAccess(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldNotFindCalendarEvent(eventId);
 
         Result result = await this._useCase.ExecuteAsync(
-            ClassExpenseCreateCommandMother.Valid(classId: classId, relatedEventId: eventId));
+            ClassExpenseCreateCommandMother.Valid(
+                classId: classId,
+                participantIds: [guardianId],
+                relatedEventId: eventId));
 
         result.Error.Should().Be(CalendarEventErrors.NotFound);
         this.Added.Should().BeEmpty();
