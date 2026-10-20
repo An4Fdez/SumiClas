@@ -20,10 +20,14 @@ builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
 builder.Services.AddSumiClasApiSecurity(builder.Configuration);
 builder.Services.AddSumiClasRateLimiting(builder.Configuration);
+builder.Services.AddSumiClasExceptionHandling();
 
 
 var app = builder.Build();
 app.ApplySumiClasMigrations();
+
+// First in the pipeline, so it also catches what comes out of the rest of the middleware and of the endpoints.
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 // HTTPS only: nothing listens on plain HTTP, so there is no HTTP-to-HTTPS redirection to configure.
