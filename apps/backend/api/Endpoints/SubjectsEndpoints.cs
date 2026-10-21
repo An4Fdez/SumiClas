@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Subjects.Application;
+using SumiClas.Subjects.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -15,22 +16,24 @@ public sealed class SubjectsEndpoints : IEndpoints
 
         subjects.MapPost("/", async (SubjectCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new SubjectCreate.Command(request.Id, request.ClassId, request.Label), ct);
+            await sender.Send(new SubjectCreate.Command(request.Id, request.ClassId, request.Label), ct);
 
-            return result.IsSuccess
-                ? Results.StatusCode(StatusCodes.Status201Created)
-                : result.ToProblem();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("SubjectCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<SubjectExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<SubjectExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
+            .Maps<SubjectExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
+            .RequiresClass()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         subjects.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new SubjectFinderByClass.Query(classId), ct)).ToOk())
+            Results.Ok(await sender.Send(new SubjectFinderByClass.Query(classId), ct)))
             .WithName("SubjectFinderByClass")
             .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .RequiresClass();
     }
 }

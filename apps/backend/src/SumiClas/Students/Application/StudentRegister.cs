@@ -13,52 +13,33 @@ public static class StudentRegister
         string FirstName,
         string FirstSurname,
         string? SecondSurname,
-        string FirstGuardianRole) : IRequest<Result>, ICommand;
+        string FirstGuardianRole) : IRequest, ICommand;
 
     public sealed class Register(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
+            var guardianId = userProvider.GetCurrentUserId().OrThrow();
 
-            var guardianId = current.Value;
             if (!Enum.TryParse<GuardianRole>(command.FirstGuardianRole, ignoreCase: true, out var role)
                 || !Enum.IsDefined(role))
             {
-                return Result.Failure(StudentErrors.InvalidGuardianRole);
+                throw new StudentExceptions.InvalidGuardianRole();
             }
 
             var name = StudentName.Create(command.FirstName, command.FirstSurname, command.SecondSurname);
-            if (name.IsFailure)
-            {
-                return Result.Failure(name.Error!);
-            }
 
-            var registration = Student.Register(command.Id, name.Value, guardianId, role);
-            if (registration.IsFailure)
-            {
-                return Result.Failure(registration.Error!);
-            }
+            var student = Student.Register(command.Id, name, guardianId, role);
 
-            var guardian = await queryBus.Send(new UserFinderById.Query(guardianId), ct);
-            if (guardian.IsFailure)
-            {
-                return Result.Failure(guardian.Error!);
-            }
+            (await queryBus.Send(new UserFinderById.Query(guardianId), ct)).OrThrow();
 
-            await repository.AddAsync(registration.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(student, ct);
         }
     }
 
-    public sealed class Handler(Register register) : IRequestHandler<Command, Result>
+    public sealed class Handler(Register register) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => register.ExecuteAsync(command, ct);
     }
 }

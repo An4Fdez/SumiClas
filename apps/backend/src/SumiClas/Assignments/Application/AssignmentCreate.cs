@@ -59,11 +59,7 @@ public static class AssignmentCreate
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var subject = await queryBus.Send(new SubjectFinderById.Query(command.SubjectId), ct);
-            if (subject.IsFailure)
-            {
-                return Result.Failure(subject.Error!);
-            }
-            if (subject.Value.ClassId != command.ClassId)
+            if (subject.ClassId != command.ClassId)
             {
                 return Result.Failure(AssignmentErrors.SubjectNotInClass);
             }

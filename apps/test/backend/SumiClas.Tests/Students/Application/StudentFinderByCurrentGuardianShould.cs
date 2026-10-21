@@ -43,10 +43,8 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears(SchoolYearResponseMother.Active(schoolYearId, school.Id));
         this.ShouldFindSchools(school);
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Equal(ChildResponseMother.InSchool(student.Id, "Ana", "L.", schoolClass, school));
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
+        result.Should().Equal(ChildResponseMother.InSchool(student.Id, "Ana", "L.", schoolClass, school));
     }
 
     [Test]
@@ -63,9 +61,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears();
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Select(child => child.StudentId).Should().BeEquivalentTo([own.Id, secondary.Id]);
+        result.Select(child => child.StudentId).Should().BeEquivalentTo([own.Id, secondary.Id]);
     }
 
     [Test]
@@ -82,9 +80,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears();
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Select(child => child.FirstName).Should().Equal("Ana", "Marta", "Zoe");
+        result.Select(child => child.FirstName).Should().Equal("Ana", "Marta", "Zoe");
     }
 
     [Test]
@@ -99,9 +97,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears();
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
+        result.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
         this.QueryBus.Verify(
             bus => bus.Send(It.Is<ClassFinderByIds.Query>(query => query.ClassIds.Count == 0), CancellationToken.None),
             Times.Once);
@@ -121,9 +119,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears(SchoolYearResponseMother.Archived(schoolYearId, GuidMother.Random()));
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
+        result.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
     }
 
     [Test]
@@ -138,9 +136,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears();
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
+        result.Should().Equal(ChildResponseMother.WithoutClass(student.Id, "Ana", "L."));
     }
 
     [Test]
@@ -157,9 +155,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldFindSchoolYears(SchoolYearResponseMother.Active(schoolYearId, GuidMother.Random()));
         this.ShouldFindSchools();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Should().Equal(ChildResponseMother.InClass(student.Id, "Ana", "L.", schoolClass));
+        result.Should().Equal(ChildResponseMother.InClass(student.Id, "Ana", "L.", schoolClass));
     }
 
     [Test]
@@ -183,9 +181,9 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
             SchoolYearResponseMother.Active(activeYearId, school.Id));
         this.ShouldFindSchools(school);
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
 
-        result.Value.Should().Equal(ChildResponseMother.InSchool(student.Id, "Ana", "L.", activeClass, school));
+        result.Should().Equal(ChildResponseMother.InSchool(student.Id, "Ana", "L.", activeClass, school));
     }
 
     [Test]
@@ -246,21 +244,20 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
         this.ShouldSearchStudents(StudentMother.GuardedBy(GuidMother.Random()));
         this.ShouldResolveCurrentUser(guardianId);
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        IReadOnlyCollection<ChildResponse> result = await this.FindChildren();
+        result.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_unauthenticated_without_searching_or_asking_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_searching_or_asking_when_there_is_no_current_user()
     {
         this.ShouldHaveNoCurrentUser();
 
-        Result<IReadOnlyCollection<ChildResponse>> result = await this.FindChildren();
+        Func<Task> act = () => this.FindChildren();
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.ShouldNotHaveSearched();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -268,7 +265,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
     private static bool HasIds(IReadOnlyCollection<Guid> actual, params Guid[] expected)
         => actual.Count == expected.Length && expected.All(actual.Contains);
 
-    private Task<Result<IReadOnlyCollection<ChildResponse>>> FindChildren()
+    private Task<IReadOnlyCollection<ChildResponse>> FindChildren()
         => this._useCase.ExecuteAsync(new StudentFinderByCurrentGuardian.Query());
 
     private void ShouldFindEnrollments(params EnrollmentResponse[] enrollments)

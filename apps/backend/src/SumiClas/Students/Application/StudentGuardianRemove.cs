@@ -7,36 +7,29 @@ namespace SumiClas.Students.Application;
 
 public static class StudentGuardianRemove
 {
-    public sealed record Command(Guid StudentId, Guid GuardianId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid StudentId, Guid GuardianId) : IRequest, ICommand;
 
     public sealed class Remove(IStudentRepository repository, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
+            var current = userProvider.GetCurrentUserId().OrThrow();
+
+            var student = await repository.GetByIdAsync(command.StudentId, ct)
+                ?? throw new StudentExceptions.NotFound();
+
+            if (student.Guardians.All(guardian => guardian.GuardianId != current))
             {
-                return Result.Failure(current.Error!);
+                throw new StudentExceptions.GuardianChangeForbidden();
             }
 
-            var student = await repository.GetByIdAsync(command.StudentId, ct);
-            if (student is null)
-            {
-                return Result.Failure(StudentErrors.NotFound);
-            }
-
-            if (student.Guardians.All(guardian => guardian.GuardianId != current.Value))
-            {
-                return Result.Failure(StudentErrors.GuardianChangeForbidden);
-            }
-
-            return student.RemoveGuardian(command.GuardianId);
+            student.RemoveGuardian(command.GuardianId);
         }
     }
 
-    public sealed class Handler(Remove remove) : IRequestHandler<Command, Result>
+    public sealed class Handler(Remove remove) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => remove.ExecuteAsync(command, ct);
     }
 }

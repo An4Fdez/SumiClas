@@ -334,21 +334,20 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_subjects_error_when_the_subjects_of_the_class_cannot_be_found()
+    public async Task throw_the_subjects_failure_when_the_subjects_of_the_class_cannot_be_found()
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
-        Error subjectsError = ErrorMother.Random();
-        this.ShouldFailFindingSubjectsOfClass(subjectsError);
+        this.ShouldFailFindingSubjectsOfClass(new ClassExceptions.NotFound());
         this.ShouldSearchAssignments(AssignmentMother.With(classId: classId));
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(subjectsError);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
     }
 
     [Test]
@@ -454,12 +453,12 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<SubjectFinderByClass.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<IReadOnlyCollection<SubjectResponse>>.Success(subjects));
+            .ReturnsAsync(subjects);
 
-    private void ShouldFailFindingSubjectsOfClass(Error error)
+    private void ShouldFailFindingSubjectsOfClass(Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<SubjectFinderByClass.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<IReadOnlyCollection<SubjectResponse>>.Failure(error));
+            .ThrowsAsync(exception);
 
     private void ShouldHaveClassMembers(params UserClassMemberResponse[] members)
         => this.QueryBus

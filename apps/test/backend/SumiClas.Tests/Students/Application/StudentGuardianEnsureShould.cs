@@ -1,6 +1,7 @@
 namespace SumiClas.Tests.Students.Application;
 
 using AwesomeAssertions;
+using MediatR;
 using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Students.Domain;
@@ -25,9 +26,9 @@ public class StudentGuardianEnsureShould : StudentsUnitTestCase
         Student student = StudentMother.GuardedBy(guardianId);
         this.ShouldFetchStudents(student);
 
-        Result result = await this.Ask(student.Id, guardianId);
+        Func<Task> act = () => this.Ask(student.Id, guardianId);
 
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
@@ -37,9 +38,9 @@ public class StudentGuardianEnsureShould : StudentsUnitTestCase
         Student student = StudentMother.GuardedBy(GuidMother.Random(), otherGuardianId);
         this.ShouldFetchStudents(student);
 
-        Result result = await this.Ask(student.Id, otherGuardianId);
+        Func<Task> act = () => this.Ask(student.Id, otherGuardianId);
 
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
@@ -48,9 +49,9 @@ public class StudentGuardianEnsureShould : StudentsUnitTestCase
         Student student = StudentMother.GuardedBy(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchStudents(student);
 
-        Result result = await this.Ask(student.Id, GuidMother.Random());
+        Func<Task> act = () => this.Ask(student.Id, GuidMother.Random());
 
-        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        await act.Should().ThrowAsync<StudentExceptions.GuardianAccessForbidden>();
     }
 
     [Test]
@@ -61,21 +62,21 @@ public class StudentGuardianEnsureShould : StudentsUnitTestCase
         Student other = StudentMother.GuardedBy(guardianId);
         this.ShouldFetchStudents(requested, other);
 
-        Result result = await this.Ask(requested.Id, guardianId);
+        Func<Task> act = () => this.Ask(requested.Id, guardianId);
 
-        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        await act.Should().ThrowAsync<StudentExceptions.GuardianAccessForbidden>();
     }
 
     [Test]
-    public async Task return_not_found_when_the_student_does_not_exist()
+    public async Task throw_not_found_when_the_student_does_not_exist()
     {
         this.ShouldFetchStudents(StudentMother.GuardedBy(GuidMother.Random()));
 
-        Result result = await this.Ask(GuidMother.Random(), GuidMother.Random());
+        Func<Task> act = () => this.Ask(GuidMother.Random(), GuidMother.Random());
 
-        result.Error.Should().Be(StudentErrors.NotFound);
+        await act.Should().ThrowAsync<StudentExceptions.NotFound>();
     }
 
-    private Task<Result> Ask(Guid studentId, Guid userId)
+    private Task<Unit> Ask(Guid studentId, Guid userId)
         => this._useCase.ExecuteAsync(StudentGuardianEnsureQueryMother.With(studentId, userId));
 }

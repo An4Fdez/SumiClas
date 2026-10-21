@@ -168,18 +168,18 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_student_not_found_without_asking_for_the_class_when_the_student_does_not_exist()
+    public async Task throw_student_not_found_without_asking_for_the_class_when_the_student_does_not_exist()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldFailEnsuringStudentGuardian(studentId, currentUserId, StudentErrors.NotFound);
+        this.ShouldFailEnsuringStudentGuardian(studentId, currentUserId, new StudentExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, GuidMother.Random()));
 
-        result.Error.Should().Be(StudentErrors.NotFound);
+        await act.Should().ThrowAsync<StudentExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),
@@ -241,18 +241,21 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
+    public async Task throw_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldFailEnsuringStudentGuardian(studentId, currentUserId, StudentErrors.GuardianAccessForbidden);
+        this.ShouldFailEnsuringStudentGuardian(
+            studentId,
+            currentUserId,
+            new StudentExceptions.GuardianAccessForbidden());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, GuidMother.Random()));
 
-        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        await act.Should().ThrowAsync<StudentExceptions.GuardianAccessForbidden>();
         this.Added.Should().BeEmpty();
     }
 

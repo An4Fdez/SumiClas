@@ -29,11 +29,7 @@ public static class EnrollmentCreate
                 return Result.Failure(current.Error!);
             }
 
-            var guardian = await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, current.Value), ct);
-            if (guardian.IsFailure)
-            {
-                return guardian;
-            }
+            await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, current.Value), ct);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 

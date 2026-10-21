@@ -275,36 +275,36 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_student_not_found_without_adding_when_the_student_does_not_exist()
+    public async Task throw_student_not_found_without_adding_when_the_student_does_not_exist()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid studentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
-        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, StudentErrors.NotFound);
+        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, new StudentExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
 
-        result.Error.Should().Be(StudentErrors.NotFound);
+        await act.Should().ThrowAsync<StudentExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
+    public async Task throw_guardian_access_forbidden_without_adding_when_the_user_is_not_a_guardian_of_the_student()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid studentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFindUser(authorId);
-        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, StudentErrors.GuardianAccessForbidden);
+        this.ShouldFailEnsuringStudentGuardian(studentId, authorId, new StudentExceptions.GuardianAccessForbidden());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
 
-        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        await act.Should().ThrowAsync<StudentExceptions.GuardianAccessForbidden>();
         this.Added.Should().BeEmpty();
     }
 }

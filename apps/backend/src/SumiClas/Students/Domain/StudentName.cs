@@ -15,29 +15,24 @@ public sealed class StudentName : ValueObject
         SecondSurname = secondSurname;
     }
 
-    public static Result<StudentName> Create(string firstName, string firstSurname, string? secondSurname = null)
+    public static StudentName Create(string firstName, string firstSurname, string? secondSurname = null)
     {
-        var validation = Validate(firstName, firstSurname);
-        if (validation.IsFailure)
-        {
-            return Result<StudentName>.Failure(validation.Error!);
-        }
+        Validate(firstName, firstSurname);
 
         var normalizedSecondSurname = string.IsNullOrWhiteSpace(secondSurname) ? null : secondSurname.Trim();
-        return Result<StudentName>.Success(new StudentName(firstName.Trim(), firstSurname.Trim(), normalizedSecondSurname));
+        return new StudentName(firstName.Trim(), firstSurname.Trim(), normalizedSecondSurname);
     }
 
-    private static Result Validate(string firstName, string firstSurname)
+    private static void Validate(string firstName, string firstSurname)
     {
         if (string.IsNullOrWhiteSpace(firstName))
         {
-            return Result.Failure(StudentErrors.NameRequired);
+            throw new StudentExceptions.NameRequired();
         }
         if (string.IsNullOrWhiteSpace(firstSurname))
         {
-            return Result.Failure(StudentErrors.FirstSurnameRequired);
+            throw new StudentExceptions.FirstSurnameRequired();
         }
-        return Result.Success();
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

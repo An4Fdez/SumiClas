@@ -1,6 +1,5 @@
 using MediatR;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 using SumiClas.Students.Domain;
 using SumiClas.Students.Domain.Services;
 
@@ -8,28 +7,27 @@ namespace SumiClas.Students.Application;
 
 public static class StudentGuardianEnsure
 {
-    /// <summary>Succeeds when the user is a guardian of the student. Other use cases ask this before acting on a student.</summary>
-    public sealed record Query(Guid StudentId, Guid UserId) : IQuery<Result>;
+    /// <summary>Completes when the user is a guardian of the student. Other use cases ask this before acting on a student.</summary>
+    public sealed record Query(Guid StudentId, Guid UserId) : IQuery<Unit>;
 
     public sealed class Ensure(StudentFinder finder) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var found = await finder.FindByIdAsync(query.StudentId, ct);
-            if (found.IsFailure)
+            var student = await finder.FindByIdAsync(query.StudentId, ct);
+
+            if (student.Guardians.All(guardian => guardian.GuardianId != query.UserId))
             {
-                return Result.Failure(found.Error!);
+                throw new StudentExceptions.GuardianAccessForbidden();
             }
 
-            return found.Value.Guardians.Any(guardian => guardian.GuardianId == query.UserId)
-                ? Result.Success()
-                : Result.Failure(StudentErrors.GuardianAccessForbidden);
+            return Unit.Value;
         }
     }
 
-    public sealed class Handler(Ensure ensure) : IRequestHandler<Query, Result>
+    public sealed class Handler(Ensure ensure) : IRequestHandler<Query, Unit>
     {
-        public Task<Result> Handle(Query query, CancellationToken ct)
+        public Task<Unit> Handle(Query query, CancellationToken ct)
             => ensure.ExecuteAsync(query, ct);
     }
 }

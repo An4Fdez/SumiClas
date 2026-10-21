@@ -44,11 +44,7 @@ public static class CalendarEventBirthdayCreate
                 return Result.Failure(author.Error!);
             }
 
-            var guardian = await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, authorId), ct);
-            if (guardian.IsFailure)
-            {
-                return guardian;
-            }
+            await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, authorId), ct);
 
             await repository.AddAsync(creation.Value, ct);
 

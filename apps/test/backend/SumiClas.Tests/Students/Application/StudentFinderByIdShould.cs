@@ -25,20 +25,20 @@ public class StudentFinderByIdShould : StudentsUnitTestCase
         Student other = StudentMother.GuardedBy(GuidMother.Random());
         this.ShouldFetchStudents(other, requested);
 
-        Result<StudentFinderById.StudentResponse> result = await this._useCase.ExecuteAsync(
+        StudentFinderById.StudentResponse result = await this._useCase.ExecuteAsync(
             StudentFinderByIdQueryMother.WithStudentId(requested.Id));
 
-        result.Value.Should().Be(StudentResponseMother.WithId(requested.Id));
+        result.Should().Be(StudentResponseMother.WithId(requested.Id));
     }
 
     [Test]
-    public async Task return_not_found_when_the_student_does_not_exist()
+    public async Task throw_not_found_when_the_student_does_not_exist()
     {
         this.ShouldFetchStudents(StudentMother.GuardedBy(GuidMother.Random()));
 
-        Result<StudentFinderById.StudentResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentFinderByIdQueryMother.WithStudentId(GuidMother.Random()));
 
-        result.Error.Should().Be(StudentErrors.NotFound);
+        await act.Should().ThrowAsync<StudentExceptions.NotFound>();
     }
 }

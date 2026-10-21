@@ -13,14 +13,14 @@ public sealed class GuardianLink : ValueObject
         Role = role;
     }
 
-    public static Result<GuardianLink> Create(Guid guardianId, GuardianRole role)
+    public static GuardianLink Create(Guid guardianId, GuardianRole role)
     {
         if (guardianId == Guid.Empty)
         {
-            return Result<GuardianLink>.Failure(StudentErrors.GuardianIdRequired);
+            throw new StudentExceptions.GuardianIdRequired();
         }
 
-        return Result<GuardianLink>.Success(new GuardianLink(guardianId, role));
+        return new GuardianLink(guardianId, role);
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

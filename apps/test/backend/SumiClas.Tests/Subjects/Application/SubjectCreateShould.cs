@@ -36,10 +36,9 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedSubjects();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(subjectId, classId, "  " + label + " "));
 
-        result.IsSuccess.Should().BeTrue();
         Subject added = this.Added.Single();
         added.Id.Should().Be(subjectId);
         added.ClassId.Should().Be(classId);
@@ -101,43 +100,43 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_label_required_without_asking_or_adding_when_the_label_is_blank()
+    public async Task throw_label_required_without_asking_or_adding_when_the_label_is_blank()
     {
         this.ShouldCaptureAddedSubjects();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), "   "));
 
-        result.Error.Should().Be(SubjectErrors.LabelRequired);
+        await act.Should().ThrowAsync<SubjectExceptions.LabelRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_every_field_is_invalid()
+    public async Task throw_id_required_without_asking_or_adding_when_every_field_is_invalid()
     {
         this.ShouldCaptureAddedSubjects();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(Guid.Empty, Guid.Empty, " "));
 
-        result.Error.Should().Be(SubjectErrors.IdRequired);
+        await act.Should().ThrowAsync<SubjectExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_id_and_the_label_are_invalid()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_id_and_the_label_are_invalid()
     {
         this.ShouldCaptureAddedSubjects();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), Guid.Empty, " "));
 
-        result.Error.Should().Be(SubjectErrors.ClassRequired);
+        await act.Should().ThrowAsync<SubjectExceptions.ClassRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_without_adding_when_the_user_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_without_adding_when_the_user_is_not_a_delegate()
     {
         this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
@@ -147,15 +146,16 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldDenyClassRepresentative(currentUserId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_unauthenticated_without_adding_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_adding_when_there_is_no_current_user()
     {
         this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
@@ -163,10 +163,11 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.Added.Should().BeEmpty();
     }
 }

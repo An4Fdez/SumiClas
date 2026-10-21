@@ -33,14 +33,13 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.ShouldFindUser(guardianId);
         this.ShouldCaptureAddedStudents();
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
+        await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             studentId,
             "  " + firstName + " ",
             " " + firstSurname + "  ",
             "  " + secondSurname + " ",
             nameof(GuardianRole.Father)));
 
-        result.IsSuccess.Should().BeTrue();
         Student added = this.Added.Single();
         added.Id.Should().Be(studentId);
         added.Name.Should().Be(StudentNameMother.With(firstName, firstSurname, secondSurname));
@@ -57,14 +56,13 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.ShouldFindUser(guardianId);
         this.ShouldCaptureAddedStudents();
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
+        await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             GuidMother.Random(),
             StringMother.Random("First"),
             StringMother.Random("Surname"),
             secondSurname,
             nameof(GuardianRole.Mother)));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Name.SecondSurname.Should().BeNull();
     }
 
@@ -77,9 +75,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.ShouldFindUser(guardianId);
         this.ShouldCaptureAddedStudents();
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
+        await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Guardians.Should().Equal(GuardianLinkMother.Create(guardianId, expected));
     }
 
@@ -91,9 +88,8 @@ public class StudentRegisterShould : StudentsUnitTestCase
         this.ShouldFindUser(guardianId);
         this.ShouldCaptureAddedStudents();
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("1"));
+        await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("1"));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Guardians.Should().Equal(GuardianLinkMother.Mother(guardianId));
     }
 
@@ -101,136 +97,138 @@ public class StudentRegisterShould : StudentsUnitTestCase
     [TestCase("Uncle")]
     [TestCase("99")]
     [TestCase("-1")]
-    public async Task return_invalid_guardian_role_without_asking_or_adding_when_the_role_is_not_valid(string role)
+    public async Task throw_invalid_guardian_role_without_asking_or_adding_when_the_role_is_not_valid(string role)
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole(role));
 
-        result.Error.Should().Be(StudentErrors.InvalidGuardianRole);
+        await act.Should().ThrowAsync<StudentExceptions.InvalidGuardianRole>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("Uncle"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("Uncle"));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_name_required_without_asking_or_adding_when_the_first_name_is_blank()
+    public async Task throw_name_required_without_asking_or_adding_when_the_first_name_is_blank()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentRegisterCommandMother.WithName("   ", StringMother.Random("Surname")));
 
-        result.Error.Should().Be(StudentErrors.NameRequired);
+        await act.Should().ThrowAsync<StudentExceptions.NameRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_first_surname_required_without_asking_or_adding_when_it_is_blank()
+    public async Task throw_first_surname_required_without_asking_or_adding_when_it_is_blank()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentRegisterCommandMother.WithName(StringMother.Random("First"), "   "));
 
-        result.Error.Should().Be(StudentErrors.FirstSurnameRequired);
+        await act.Should().ThrowAsync<StudentExceptions.FirstSurnameRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_name_required_when_the_first_name_and_the_first_surname_are_blank()
+    public async Task throw_name_required_when_the_first_name_and_the_first_surname_are_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithName(" ", " "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithName(" ", " "));
 
-        result.Error.Should().Be(StudentErrors.NameRequired);
+        await act.Should().ThrowAsync<StudentExceptions.NameRequired>();
     }
 
     [Test]
-    public async Task return_invalid_guardian_role_when_the_role_and_the_name_are_both_invalid()
+    public async Task throw_invalid_guardian_role_when_the_role_and_the_name_are_both_invalid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             GuidMother.Random(),
             string.Empty,
             string.Empty,
             null,
             "Uncle"));
 
-        result.Error.Should().Be(StudentErrors.InvalidGuardianRole);
+        await act.Should().ThrowAsync<StudentExceptions.InvalidGuardianRole>();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_student_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_student_id_is_empty()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(Guid.Empty));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(Guid.Empty));
 
-        result.Error.Should().Be(StudentErrors.IdRequired);
+        await act.Should().ThrowAsync<StudentExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_name_required_when_the_student_id_is_empty_and_the_name_is_blank()
+    public async Task throw_name_required_when_the_student_id_is_empty_and_the_name_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.With(
             Guid.Empty,
             string.Empty,
             StringMother.Random("Surname"),
             null,
             nameof(GuardianRole.Mother)));
 
-        result.Error.Should().Be(StudentErrors.NameRequired);
+        await act.Should().ThrowAsync<StudentExceptions.NameRequired>();
     }
 
     [Test]
-    public async Task return_first_guardian_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_first_guardian_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldCaptureAddedStudents();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
 
-        result.Error.Should().Be(StudentErrors.FirstGuardianRequired);
+        await act.Should().ThrowAsync<StudentExceptions.FirstGuardianRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_user_not_found_without_adding_when_the_current_user_does_not_exist()
+    public async Task throw_user_not_found_without_adding_when_the_current_user_does_not_exist()
     {
         this.ShouldCaptureAddedStudents();
         Guid guardianId = GuidMother.Random();
         this.ShouldResolveCurrentUser(guardianId);
         this.ShouldNotFindUser(guardianId);
 
-        Result result = await this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
+        Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.NotFound);
         this.Added.Should().BeEmpty();
     }
 }

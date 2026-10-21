@@ -52,7 +52,7 @@ public sealed class UsersEndpoints : IEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         users.MapGet("/me/students", async (ISender sender, CancellationToken ct) =>
-            (await sender.Send(new StudentFinderByCurrentGuardian.Query(), ct)).ToOk())
+            Results.Ok(await sender.Send(new StudentFinderByCurrentGuardian.Query(), ct)))
             .WithName("StudentFinderByCurrentGuardian")
             .Produces<IReadOnlyCollection<ChildResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);

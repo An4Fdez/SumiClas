@@ -50,11 +50,7 @@ public static class AssignmentFinderByClass
                 assignment => Pagination.CursorOf(assignment.DueDate, assignment.Id));
 
             var subjects = await queryBus.Send(new SubjectFinderByClass.Query(query.ClassId), ct);
-            if (subjects.IsFailure)
-            {
-                return Result<PagedResponse<AssignmentResponse>>.Failure(subjects.Error!);
-            }
-            var subjectLabels = subjects.Value.ToDictionary(subject => subject.Id, subject => subject.Label);
+            var subjectLabels = subjects.ToDictionary(subject => subject.Id, subject => subject.Label);
 
             var authorIds = assignments
                 .Select(assignment => assignment.AuthorId)

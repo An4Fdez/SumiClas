@@ -12,23 +12,19 @@ namespace SumiClas.Students.Application;
 public static class StudentFinderByCurrentGuardian
 {
     /// <summary>The students of the current user (as guardian), with their current class and school.</summary>
-    public sealed record Query : IQuery<Result<IReadOnlyCollection<ChildResponse>>>;
+    public sealed record Query : IQuery<IReadOnlyCollection<ChildResponse>>;
 
     public sealed class Finder(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<ChildResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<IReadOnlyCollection<ChildResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<IReadOnlyCollection<ChildResponse>>.Failure(current.Error!);
-            }
+            var current = userProvider.GetCurrentUserId().OrThrow();
 
-            var students = await repository.SearchAsync(new StudentSpecification(guardianId: current.Value), ct);
+            var students = await repository.SearchAsync(new StudentSpecification(guardianId: current), ct);
             var studentIds = students.Select(student => student.Id).ToList();
             if (studentIds.Count == 0)
             {
-                return Result<IReadOnlyCollection<ChildResponse>>.Success(new List<ChildResponse>());
+                return new List<ChildResponse>();
             }
 
             var enrollments = (await queryBus.Send(new EnrollmentFinderByStudents.Query(studentIds), ct))
@@ -48,7 +44,7 @@ public static class StudentFinderByCurrentGuardian
                 new SchoolFinderByIds.Query(activeYears.Values.Select(schoolYear => schoolYear.SchoolId).Distinct().ToList()), ct))
                 .ToDictionary(school => school.Id);
 
-            IReadOnlyCollection<ChildResponse> response = students
+            return students
                 .OrderBy(student => student.Name.FirstName)
                 .Select(student =>
                 {
@@ -70,14 +66,12 @@ public static class StudentFinderByCurrentGuardian
                         school?.Name);
                 })
                 .ToList();
-
-            return Result<IReadOnlyCollection<ChildResponse>>.Success(response);
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<ChildResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<ChildResponse>>
     {
-        public Task<Result<IReadOnlyCollection<ChildResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<IReadOnlyCollection<ChildResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

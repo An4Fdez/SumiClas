@@ -44,11 +44,9 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
 
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<SubjectResponse> result = await this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Equal(
+        result.Should().Equal(
             SubjectResponseMother.With(first.Id, classId, first.Label),
             SubjectResponseMother.With(second.Id, classId, second.Label),
             SubjectResponseMother.With(third.Id, classId, third.Label));
@@ -56,7 +54,7 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    public async Task throw_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
     {
         Guid classId = GuidMother.Random();
         Guid currentUserId = GuidMother.Random();
@@ -64,24 +62,26 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldDenyClassAccess(currentUserId, classId);
 
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.ClassAccessForbidden);
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
         this.ShouldHaveNoCurrentUser();
 
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.ShouldNotHaveSearched();
     }
 

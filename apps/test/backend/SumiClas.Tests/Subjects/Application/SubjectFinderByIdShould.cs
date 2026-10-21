@@ -25,21 +25,19 @@ public class SubjectFinderByIdShould : SubjectsUnitTestCase
         Subject subject = SubjectMother.InClass(classId);
         this.ShouldFetchSubjects(SubjectMother.InClass(classId), subject);
 
-        Result<SubjectResponse> result = await this._useCase.ExecuteAsync(
+        SubjectResponse result = await this._useCase.ExecuteAsync(
             SubjectFinderByIdQueryMother.WithSubjectId(subject.Id));
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(SubjectResponseMother.With(subject.Id, classId, subject.Label));
+        result.Should().Be(SubjectResponseMother.With(subject.Id, classId, subject.Label));
     }
 
     [Test]
-    public async Task return_not_found_when_the_subject_does_not_exist()
+    public async Task throw_not_found_when_the_subject_does_not_exist()
     {
         this.ShouldFetchSubjects(SubjectMother.InClass(GuidMother.Random()));
 
-        Result<SubjectResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectFinderByIdQueryMother.WithSubjectId(GuidMother.Random()));
 
-        result.Error.Should().Be(SubjectErrors.NotFound);
+        await act.Should().ThrowAsync<SubjectExceptions.NotFound>();
     }
 }

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Students.Application;
+using SumiClas.Students.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -22,7 +23,7 @@ public sealed class StudentsEndpoints : IEndpoints
 
         students.MapPost("/", async (StudentRegisterRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(
+            await sender.Send(
                 new StudentRegister.Command(
                     request.Id,
                     request.FirstName,
@@ -31,39 +32,55 @@ public sealed class StudentsEndpoints : IEndpoints
                     request.FirstGuardianRole),
                 ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("StudentRegister")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<StudentExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.NameRequired>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.FirstSurnameRequired>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.FirstGuardianRequired>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.InvalidGuardianRole>(StatusCodes.Status400BadRequest)
+            .ConflictsOnSave();
 
         students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new StudentGuardianAdd.Command(studentId, request.GuardianId, request.Role), ct);
+            await sender.Send(new StudentGuardianAdd.Command(studentId, request.GuardianId, request.Role), ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("StudentGuardianAdd")
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Maps<StudentExceptions.InvalidGuardianRole>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.GuardianIdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.GuardianAlreadyLinked>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<StudentExceptions.GuardianChangeForbidden>(StatusCodes.Status403Forbidden)
+            .ConflictsOnSave();
 
         students.MapDelete("/{studentId:guid}/guardians/{guardianId:guid}", async (Guid studentId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new StudentGuardianRemove.Command(studentId, guardianId), ct);
+            await sender.Send(new StudentGuardianRemove.Command(studentId, guardianId), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("StudentGuardianRemove")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Maps<StudentExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<StudentExceptions.GuardianChangeForbidden>(StatusCodes.Status403Forbidden)
+            .Maps<StudentExceptions.GuardianNotLinked>(StatusCodes.Status400BadRequest)
+            .Maps<StudentExceptions.AtLeastOneGuardianRequired>(StatusCodes.Status400BadRequest)
+            .ConflictsOnSave();
     }
 }

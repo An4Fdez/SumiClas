@@ -173,7 +173,7 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_guardian_access_forbidden_without_confirming_when_the_user_is_not_the_guardian()
+    public async Task throw_guardian_access_forbidden_without_confirming_when_the_user_is_not_the_guardian()
     {
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
         Guid currentUserId = GuidMother.Random();
@@ -182,12 +182,12 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this.ShouldFailEnsuringStudentGuardian(
             enrollment.StudentId,
             currentUserId,
-            StudentErrors.GuardianAccessForbidden);
+            new StudentExceptions.GuardianAccessForbidden());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.Error.Should().Be(StudentErrors.GuardianAccessForbidden);
+        await act.Should().ThrowAsync<StudentExceptions.GuardianAccessForbidden>();
         enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
     }
 

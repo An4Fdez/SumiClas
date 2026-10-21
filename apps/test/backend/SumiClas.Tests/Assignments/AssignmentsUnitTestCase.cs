@@ -129,15 +129,14 @@ public abstract class AssignmentsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<SubjectFinderById.Query>(query => query.SubjectId == subjectId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<SubjectResponse>.Success(
-                SubjectResponseMother.With(subjectId, classId, StringMother.Random("subject"))));
+            .ReturnsAsync(SubjectResponseMother.With(subjectId, classId, StringMother.Random("subject")));
 
     protected void ShouldNotFindSubject(Guid subjectId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SubjectFinderById.Query>(query => query.SubjectId == subjectId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<SubjectResponse>.Failure(SubjectErrors.NotFound));
+            .ThrowsAsync(new SubjectExceptions.NotFound());
 
     protected void ShouldHaveClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus

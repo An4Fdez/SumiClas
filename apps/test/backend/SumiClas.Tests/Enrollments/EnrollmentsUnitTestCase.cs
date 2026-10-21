@@ -91,13 +91,13 @@ public abstract class EnrollmentsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<StudentGuardianEnsure.Query>(query => query.StudentId == studentId && query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
-    protected void ShouldFailEnsuringStudentGuardian(Guid studentId, Guid userId, Error error)
+    protected void ShouldFailEnsuringStudentGuardian(Guid studentId, Guid userId, Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<StudentGuardianEnsure.Query>(query => query.StudentId == studentId && query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
+            .ThrowsAsync(exception);
 
 }

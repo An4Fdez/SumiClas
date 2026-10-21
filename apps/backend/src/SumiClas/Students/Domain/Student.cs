@@ -24,68 +24,47 @@ public sealed class Student : AggregateRoot
     /// A Student is always registered by a guardian (section 7.2 of the domain doc):
     /// it never exists without at least one guardian, not even transiently.
     /// </summary>
-    public static Result<Student> Register(Guid id, StudentName name, Guid firstGuardianId, GuardianRole firstGuardianRole)
+    public static Student Register(Guid id, StudentName name, Guid firstGuardianId, GuardianRole firstGuardianRole)
     {
-        var validation = Validate(id, firstGuardianId);
-        if (validation.IsFailure)
-        {
-            return Result<Student>.Failure(validation.Error!);
-        }
+        Validate(id, firstGuardianId);
 
         var guardianLink = GuardianLink.Create(firstGuardianId, firstGuardianRole);
-        if (guardianLink.IsFailure)
-        {
-            return Result<Student>.Failure(guardianLink.Error!);
-        }
 
-        var student = new Student(id, name, [guardianLink.Value]);
-        return Result<Student>.Success(student);
+        return new Student(id, name, [guardianLink]);
     }
 
-    private static Result Validate(Guid id, Guid firstGuardianId)
+    private static void Validate(Guid id, Guid firstGuardianId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(StudentErrors.IdRequired);
+            throw new StudentExceptions.IdRequired();
         }
         if (firstGuardianId == Guid.Empty)
         {
-            return Result.Failure(StudentErrors.FirstGuardianRequired);
+            throw new StudentExceptions.FirstGuardianRequired();
         }
-        return Result.Success();
     }
 
-    public Result AddGuardian(Guid guardianId, GuardianRole role)
+    public void AddGuardian(Guid guardianId, GuardianRole role)
     {
         if (_guardians.Any(g => g.GuardianId == guardianId))
         {
-            return Result.Failure(StudentErrors.GuardianAlreadyLinked);
+            throw new StudentExceptions.GuardianAlreadyLinked();
         }
 
-        var guardianLink = GuardianLink.Create(guardianId, role);
-        if (guardianLink.IsFailure)
-        {
-            return Result.Failure(guardianLink.Error!);
-        }
-
-        _guardians.Add(guardianLink.Value);
-        return Result.Success();
+        _guardians.Add(GuardianLink.Create(guardianId, role));
     }
 
-    public Result RemoveGuardian(Guid guardianId)
+    public void RemoveGuardian(Guid guardianId)
     {
-        var link = _guardians.FirstOrDefault(g => g.GuardianId == guardianId);
-        if (link is null)
-        {
-            return Result.Failure(StudentErrors.GuardianNotLinked);
-        }
+        var link = _guardians.FirstOrDefault(g => g.GuardianId == guardianId)
+            ?? throw new StudentExceptions.GuardianNotLinked();
 
         if (_guardians.Count == 1)
         {
-            return Result.Failure(StudentErrors.AtLeastOneGuardianRequired);
+            throw new StudentExceptions.AtLeastOneGuardianRequired();
         }
 
         _guardians.Remove(link);
-        return Result.Success();
     }
 }

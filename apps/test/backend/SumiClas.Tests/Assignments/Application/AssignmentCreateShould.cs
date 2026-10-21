@@ -309,7 +309,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_subject_not_found_without_asking_about_the_representative_when_it_does_not_exist()
+    public async Task throw_subject_not_found_without_asking_about_the_representative_when_it_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -323,10 +323,10 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldNotFindSubject(subjectId);
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: classId, subjectId: subjectId));
 
-        result.Error.Should().Be(SubjectErrors.NotFound);
+        await act.Should().ThrowAsync<SubjectExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.ShouldNotHaveAskedWhetherTheAuthorIsRepresentative();
     }

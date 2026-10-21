@@ -8,47 +8,36 @@ namespace SumiClas.Students.Application;
 
 public static class StudentGuardianAdd
 {
-    public sealed record Command(Guid StudentId, Guid GuardianId, string Role) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid StudentId, Guid GuardianId, string Role) : IRequest, ICommand;
 
     public sealed class Add(IStudentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
+            var current = userProvider.GetCurrentUserId().OrThrow();
 
             if (!Enum.TryParse<GuardianRole>(command.Role, ignoreCase: true, out var role) || !Enum.IsDefined(role))
             {
-                return Result.Failure(StudentErrors.InvalidGuardianRole);
+                throw new StudentExceptions.InvalidGuardianRole();
             }
 
-            var student = await repository.GetByIdAsync(command.StudentId, ct);
-            if (student is null)
+            var student = await repository.GetByIdAsync(command.StudentId, ct)
+                ?? throw new StudentExceptions.NotFound();
+
+            if (student.Guardians.All(guardian => guardian.GuardianId != current))
             {
-                return Result.Failure(StudentErrors.NotFound);
+                throw new StudentExceptions.GuardianChangeForbidden();
             }
 
-            if (student.Guardians.All(guardian => guardian.GuardianId != current.Value))
-            {
-                return Result.Failure(StudentErrors.GuardianChangeForbidden);
-            }
+            (await queryBus.Send(new UserFinderById.Query(command.GuardianId), ct)).OrThrow();
 
-            var guardianUser = await queryBus.Send(new UserFinderById.Query(command.GuardianId), ct);
-            if (guardianUser.IsFailure)
-            {
-                return Result.Failure(guardianUser.Error!);
-            }
-
-            return student.AddGuardian(command.GuardianId, role);
+            student.AddGuardian(command.GuardianId, role);
         }
     }
 
-    public sealed class Handler(Add add) : IRequestHandler<Command, Result>
+    public sealed class Handler(Add add) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => add.ExecuteAsync(command, ct);
     }
 }
