@@ -8,6 +8,8 @@ namespace SumiClas.Api.Http;
 /// declared for it (see <see cref="DomainExceptionEndpointExtensions.Maps{TException}"/>) and its code in the
 /// <c>code</c> extension. A domain exception the endpoint did not declare is a programming mistake: it is logged as an
 /// error and answered as a plain 500.
+/// Temporary bridge: a <see cref="ResultFailureException"/> needs no declaration, it is answered with the status the
+/// old <see cref="ResultExtensions"/> mapping gives its code.
 /// </summary>
 public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IExceptionHandler
 {
@@ -16,6 +18,13 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         if (exception is not DomainException domain)
         {
             return false;
+        }
+
+        if (domain is ResultFailureException legacy)
+        {
+            logger.LogInformation("Failed result {Code} thrown by a use case answered.", legacy.Code);
+            await legacy.Error.ToProblem().ExecuteAsync(http);
+            return true;
         }
 
         // The exception handler middleware clears the endpoint of the request before it calls the handlers;

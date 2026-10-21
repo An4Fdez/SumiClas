@@ -3,6 +3,7 @@ namespace SumiClas.Tests.Shared.Application;
 using AwesomeAssertions;
 using Moq;
 using SumiClas.Shared.Application;
+using SumiClas.Tests.Api;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared.Domain;
 
@@ -159,6 +160,99 @@ public class UnitOfWorkBehaviorShould
 
         response.IsFailure.Should().BeTrue();
         this.VerifyNeverSaved();
+    }
+
+    [Test]
+    public async Task dispatch_events_save_and_commit_when_a_command_that_returns_a_value_succeeds()
+    {
+        this.ShouldDispatchEvents();
+        int value = System.Random.Shared.Next();
+
+        int response = await this.HandleConvertedAsync(() => Task.FromResult(value));
+
+        response.Should().Be(value);
+        this.VerifyBeganOnce();
+        this.VerifyDispatchedOnce();
+        this.VerifySavedOnce();
+        this.VerifyCommittedOnce();
+        this.VerifyNeverRolledBack();
+    }
+
+    [Test]
+    public async Task roll_back_and_propagate_the_domain_exception_when_a_command_that_returns_a_value_throws_it()
+    {
+        Func<Task> act = () => this.HandleConvertedAsync(() => throw new SampleExceptions.NotFound());
+
+        await act.Should().ThrowAsync<SampleExceptions.NotFound>();
+        this.VerifyRolledBackOnce();
+        this.VerifyNeverCommitted();
+        this.VerifyNeverDispatched();
+        this.VerifyNeverSaved();
+    }
+
+    [Test]
+    public async Task roll_back_and_throw_the_error_of_the_event_handler_when_a_command_that_returns_a_value_succeeds()
+    {
+        Error dispatchError = ErrorMother.Random();
+        this.ShouldFailDispatching(dispatchError);
+
+        Func<Task> act = () => this.HandleConvertedAsync(() => Task.FromResult(System.Random.Shared.Next()));
+
+        (await act.Should().ThrowAsync<ResultFailureException>()).Which.Error.Should().Be(dispatchError);
+        this.VerifyRolledBackOnce();
+        this.VerifyNeverCommitted();
+        this.VerifyNeverSaved();
+    }
+
+    [Test]
+    public async Task roll_back_and_throw_shared_already_exists_when_saving_violates_a_unique_key_without_a_result()
+    {
+        this.ShouldDispatchEvents();
+        this.ShouldThrowSaving(DuplicateKeyExceptionMother.With(StringMother.Random("constraint")));
+
+        Func<Task> act = () => this.HandleConvertedAsync(() => Task.FromResult(System.Random.Shared.Next()));
+
+        (await act.Should().ThrowAsync<SharedExceptions.AlreadyExists>())
+            .Which.Code.Should().Be("Shared.AlreadyExists");
+        this.VerifyRolledBackOnce();
+        this.VerifyNeverCommitted();
+    }
+
+    [Test]
+    public async Task roll_back_and_throw_shared_concurrency_conflict_when_saving_loses_a_race_without_a_result()
+    {
+        this.ShouldDispatchEvents();
+        this.ShouldThrowSaving(ConcurrencyConflictExceptionMother.Random());
+
+        Func<Task> act = () => this.HandleConvertedAsync(() => Task.FromResult(System.Random.Shared.Next()));
+
+        (await act.Should().ThrowAsync<SharedExceptions.ConcurrencyConflict>())
+            .Which.Code.Should().Be("Shared.ConcurrencyConflict");
+        this.VerifyRolledBackOnce();
+        this.VerifyNeverCommitted();
+    }
+
+    [Test]
+    public async Task only_save_when_there_is_an_active_transaction_and_a_command_that_returns_a_value_succeeds()
+    {
+        this.ShouldHaveActiveTransaction();
+        int value = System.Random.Shared.Next();
+
+        int response = await this.HandleConvertedAsync(() => Task.FromResult(value));
+
+        response.Should().Be(value);
+        this.VerifySavedOnce();
+        this.VerifyNeverBegan();
+        this.VerifyNeverCommitted();
+    }
+
+    private async Task<int> HandleConvertedAsync(Func<Task<int>> handler)
+    {
+        UnitOfWorkBehavior<UnitOfWorkCommandMother.ConvertedCommand, int> behavior = new(
+            this._unitOfWork.Object,
+            this._dispatcher.Object);
+
+        return await behavior.Handle(UnitOfWorkCommandMother.Converted(), _ => handler(), CancellationToken.None);
     }
 
     private async Task<Result> HandlePlainAsync(Func<Task<Result>> handler)

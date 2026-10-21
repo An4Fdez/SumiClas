@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using SumiClas.Api.Http;
+using SumiClas.Shared.Domain;
+using SumiClas.Tests.Shared.Domain;
 using System.Text.Json;
 
 [TestFixture]
@@ -92,6 +94,30 @@ public class DomainExceptionHandlerShould : ApiUnitTestCase
 
         handled.Should().BeTrue();
         http.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+
+    [TestCase("Test.NotFound", StatusCodes.Status404NotFound)]
+    [TestCase("Test.AlreadyExists", StatusCodes.Status409Conflict)]
+    [TestCase("Test.Forbidden", StatusCodes.Status403Forbidden)]
+    [TestCase("Test.Invalid", StatusCodes.Status400BadRequest)]
+    public async Task answer_a_failed_result_thrown_by_a_use_case_with_the_status_of_its_code_without_a_declaration(
+        string code,
+        int expected)
+    {
+        Error error = ErrorMother.With(code);
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+        http.SetEndpoint(EndpointMother.Declaring());
+
+        bool handled = await this._handler.TryHandleAsync(
+            http,
+            new ResultFailureException(error),
+            CancellationToken.None);
+
+        handled.Should().BeTrue();
+        http.Response.StatusCode.Should().Be(expected);
+        JsonElement body = await ReadBodyAsync(http);
+        body.GetProperty("code").GetString().Should().Be(code);
+        body.GetProperty("detail").GetString().Should().Be(error.Message);
     }
 
     [Test]
