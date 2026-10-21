@@ -24,12 +24,8 @@ public static class ClassExpenseCreate
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            var authorId = current.Value;
+            var authorId = current;
 
             var creation = ClassExpense.Create(
                 command.Id,

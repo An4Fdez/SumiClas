@@ -256,8 +256,7 @@ public class StudentFinderByCurrentGuardianShould : StudentsUnitTestCase
 
         Func<Task> act = () => this.FindChildren();
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveSearched();
         this.QueryBus.VerifyNoOtherCalls();
     }

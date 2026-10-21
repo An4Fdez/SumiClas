@@ -32,12 +32,8 @@ public static class ClassExpenseFinderByClass
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<PagedResponse<ClassExpenseResponse>>.Failure(current.Error!);
-            }
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
             if (access.IsFailure)
             {
                 return Result<PagedResponse<ClassExpenseResponse>>.Failure(access.Error!);

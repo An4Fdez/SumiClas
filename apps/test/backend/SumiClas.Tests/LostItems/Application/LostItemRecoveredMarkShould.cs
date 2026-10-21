@@ -158,15 +158,15 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_and_keep_the_state_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_and_keep_the_state_when_there_is_no_current_user()
     {
         LostItem lostItem = LostItemMother.With(recovered: false);
         this.ShouldFetchLostItems(lostItem);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         lostItem.Recovered.Should().BeFalse();
     }
 }

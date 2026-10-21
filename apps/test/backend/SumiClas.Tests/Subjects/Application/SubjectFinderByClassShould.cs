@@ -80,8 +80,7 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveSearched();
     }
 

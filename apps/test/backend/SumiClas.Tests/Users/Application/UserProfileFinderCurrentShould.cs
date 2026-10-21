@@ -25,10 +25,10 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
     {
         this.ShouldHaveNoCurrentUser();
 
-        Result<UserProfileResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             new UserProfileFinderCurrent.Query());
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveFetched();
     }
 

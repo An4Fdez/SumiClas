@@ -23,12 +23,8 @@ public static class LostItemNotRecoveredMark
             }
 
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            if (lostItem.AuthorId != current.Value)
+            if (lostItem.AuthorId != current)
             {
                 return Result.Failure(LostItemErrors.MarkForbidden);
             }

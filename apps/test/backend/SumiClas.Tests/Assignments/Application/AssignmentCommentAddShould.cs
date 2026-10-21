@@ -89,16 +89,16 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_fetching_or_asking_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_fetching_or_asking_when_there_is_no_current_user()
     {
         Guid assignmentId = GuidMother.Random();
         Assignment assignment = AssignmentMother.With(id: assignmentId);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         assignment.Comments.Should().BeEmpty();
         this.ShouldNotHaveFetched();
         this.QueryBus.VerifyNoOtherCalls();

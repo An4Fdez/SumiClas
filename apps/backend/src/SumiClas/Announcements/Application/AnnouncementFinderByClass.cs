@@ -19,10 +19,6 @@ public static class AnnouncementFinderByClass
         public async Task<Result<PagedResponse<AnnouncementResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<PagedResponse<AnnouncementResponse>>.Failure(current.Error!);
-            }
 
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
             if (pageRequest.IsFailure)
@@ -38,7 +34,7 @@ public static class AnnouncementFinderByClass
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
             if (access.IsFailure)
             {
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(access.Error!);
@@ -76,7 +72,7 @@ public static class AnnouncementFinderByClass
                     authors.GetValueOrDefault(announcement.AuthorId)?.ClassRole,
                     announcement.CreatedAt,
                     announcement.RelatedEventId is { } relatedEventId ? events.GetValueOrDefault(relatedEventId) : null,
-                    announcement.ReadReceipts.Any(receipt => receipt.UserId == current.Value)))
+                    announcement.ReadReceipts.Any(receipt => receipt.UserId == current)))
                 .ToList();
 
             return Result<PagedResponse<AnnouncementResponse>>.Success(new PagedResponse<AnnouncementResponse>(items, nextCursor));

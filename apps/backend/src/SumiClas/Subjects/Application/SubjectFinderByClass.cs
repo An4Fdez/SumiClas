@@ -17,7 +17,7 @@ public static class SubjectFinderByClass
         {
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             (await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct)).OrThrow();
 

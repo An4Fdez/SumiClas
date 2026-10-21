@@ -79,15 +79,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_when_there_is_no_current_user()
     {
         this.ShouldHaveNoCurrentUser();
 
-        Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(
+        Func<Task> act = () => this.Suggest(
             GuidMother.Random(),
             GuidMother.Random());
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
     }
 
     [Test]

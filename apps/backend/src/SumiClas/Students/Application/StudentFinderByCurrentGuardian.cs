@@ -18,7 +18,7 @@ public static class StudentFinderByCurrentGuardian
     {
         public async Task<IReadOnlyCollection<ChildResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             var students = await repository.SearchAsync(new StudentSpecification(guardianId: current), ct);
             var studentIds = students.Select(student => student.Id).ToList();

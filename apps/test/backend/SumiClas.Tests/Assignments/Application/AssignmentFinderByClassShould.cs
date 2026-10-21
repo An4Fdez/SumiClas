@@ -367,16 +367,16 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
         this.ShouldHaveNoCurrentUser();
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveSearched();
     }
 

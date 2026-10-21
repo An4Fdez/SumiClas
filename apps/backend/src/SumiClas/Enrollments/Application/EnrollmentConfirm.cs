@@ -24,12 +24,8 @@ public static class EnrollmentConfirm
             }
 
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            await queryBus.Send(new StudentGuardianEnsure.Query(enrollment.StudentId, current.Value), ct);
+            await queryBus.Send(new StudentGuardianEnsure.Query(enrollment.StudentId, current), ct);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(enrollment.ClassId), ct);
 

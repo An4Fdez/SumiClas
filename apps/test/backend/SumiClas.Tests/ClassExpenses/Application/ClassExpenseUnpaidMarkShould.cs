@@ -228,7 +228,7 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_marking_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_marking_when_there_is_no_current_user()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -240,10 +240,10 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldHaveNoCurrentUser();
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
     }
 

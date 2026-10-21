@@ -23,10 +23,6 @@ public static class EnrollmentSuggestedCreate
         public async Task<Result<EnrollmentSuggestedCreateResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(current.Error!);
-            }
 
             if (command.ClassId == Guid.Empty || command.PreviousClassId == Guid.Empty)
             {
@@ -47,7 +43,7 @@ public static class EnrollmentSuggestedCreate
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(newSchoolYearId), ct);
 
-            var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current.Value, command.ClassId), ct);
+            var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, command.ClassId), ct);
             if (!isRepresentative)
             {
                 return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.SuggestForbidden);

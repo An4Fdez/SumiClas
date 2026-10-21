@@ -29,10 +29,10 @@ public abstract class UnitTestCase
     protected void ShouldResolveCurrentUser(Guid userId)
         => this.UserProvider
             .Setup(provider => provider.GetCurrentUserId())
-            .Returns(Result<Guid>.Success(userId));
+            .Returns(userId);
 
     protected void ShouldHaveNoCurrentUser()
         => this.UserProvider
             .Setup(provider => provider.GetCurrentUserId())
-            .Returns(Result<Guid>.Failure(AuthenticationErrors.Unauthenticated));
+            .Throws(new AuthenticationExceptions.Unauthenticated());
 }

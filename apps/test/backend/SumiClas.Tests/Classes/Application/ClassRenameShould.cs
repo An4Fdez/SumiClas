@@ -154,8 +154,7 @@ public class ClassRenameShould : ClassesUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         schoolClass.Name.Should().Be(oldName);
     }
 }

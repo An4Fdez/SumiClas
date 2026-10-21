@@ -74,8 +74,7 @@ public class ClassCreateShould : ClassesUnitTestCase
             GuidMother.Random(),
             StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

@@ -117,8 +117,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
 
         Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithRole("Uncle"));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

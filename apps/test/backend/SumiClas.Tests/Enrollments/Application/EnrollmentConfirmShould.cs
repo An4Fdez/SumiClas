@@ -192,16 +192,16 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_confirming_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_confirming_when_there_is_no_current_user()
     {
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
     }
 }

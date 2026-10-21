@@ -8,12 +8,12 @@ public sealed class JwtUserProvider(IHttpContextAccessor httpContextAccessor) : 
 {
     private const string UserIdClaim = "sub";
 
-    public Result<Guid> GetCurrentUserId()
+    public Guid GetCurrentUserId()
     {
         var userIdHttp = httpContextAccessor.HttpContext?.User.FindFirst(UserIdClaim)?.Value;
 
         return Guid.TryParse(userIdHttp, out var userId) && userId != Guid.Empty
-            ? Result<Guid>.Success(userId)
-            : Result<Guid>.Failure(AuthenticationErrors.Unauthenticated);
+            ? userId
+            : throw new AuthenticationExceptions.Unauthenticated();
     }
 }

@@ -113,8 +113,7 @@ public class StudentGuardianRemoveShould : StudentsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentGuardianRemoveCommandMother.With(student.Id, GuidMother.Random()));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveFetched();
         student.Guardians.Should().HaveCount(2);
     }

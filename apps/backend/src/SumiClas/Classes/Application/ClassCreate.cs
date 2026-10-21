@@ -15,7 +15,7 @@ public static class ClassCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             var schoolClass = Class.Create(command.Id, command.SchoolYearId, command.Name, current, clock);
 

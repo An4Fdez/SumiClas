@@ -19,7 +19,7 @@ public static class StudentRegister
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var guardianId = userProvider.GetCurrentUserId().OrThrow();
+            var guardianId = userProvider.GetCurrentUserId();
 
             if (!Enum.TryParse<GuardianRole>(command.FirstGuardianRole, ignoreCase: true, out var role)
                 || !Enum.IsDefined(role))

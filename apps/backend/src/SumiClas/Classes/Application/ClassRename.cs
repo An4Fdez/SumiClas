@@ -18,7 +18,7 @@ public static class ClassRename
             var schoolClass = await repository.GetByIdAsync(command.ClassId, ct)
                 ?? throw new ClassExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             (await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct)).OrThrow();
 

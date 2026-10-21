@@ -31,6 +31,7 @@ public sealed class ClassesEndpoints : IEndpoints
             .Maps<ClassExceptions.SchoolYearRequired>(StatusCodes.Status400BadRequest)
             .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
             .Maps<ClassExceptions.CreatorRequired>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
             .RequiresActiveSchoolYear()
             .ConflictsOnSave();
 
@@ -44,6 +45,7 @@ public sealed class ClassesEndpoints : IEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem()
             .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
             .RequiresClass()
             .RequiresActiveSchoolYear()
             .ConflictsOnSave();

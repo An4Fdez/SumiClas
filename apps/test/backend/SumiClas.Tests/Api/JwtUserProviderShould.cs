@@ -24,10 +24,9 @@ public class JwtUserProviderShould
         Guid userId = GuidMother.Random();
         this.ShouldHaveHttpContext(HttpContextMother.WithSubject(userId.ToString()));
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Guid actual = this._provider.GetCurrentUserId();
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(userId);
+        actual.Should().Be(userId);
     }
 
     [Test]
@@ -36,10 +35,9 @@ public class JwtUserProviderShould
         Guid userId = GuidMother.Random();
         this.ShouldHaveHttpContext(HttpContextMother.WithClaim("jti", userId.ToString()));
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Func<Guid> act = this._provider.GetCurrentUserId;
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        act.Should().Throw<AuthenticationExceptions.Unauthenticated>();
     }
 
     [Test]
@@ -47,9 +45,9 @@ public class JwtUserProviderShould
     {
         this.ShouldHaveHttpContext(null);
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Func<Guid> act = this._provider.GetCurrentUserId;
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        act.Should().Throw<AuthenticationExceptions.Unauthenticated>();
     }
 
     [TestCase("not-a-guid")]
@@ -58,10 +56,9 @@ public class JwtUserProviderShould
     {
         this.ShouldHaveHttpContext(HttpContextMother.WithSubject(sub));
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Func<Guid> act = this._provider.GetCurrentUserId;
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        act.Should().Throw<AuthenticationExceptions.Unauthenticated>();
     }
 
     [Test]
@@ -72,9 +69,9 @@ public class JwtUserProviderShould
         context.Request.Headers["X-User-Id"] = userId.ToString();
         this.ShouldHaveHttpContext(context);
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Func<Guid> act = this._provider.GetCurrentUserId;
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        act.Should().Throw<AuthenticationExceptions.Unauthenticated>();
     }
 
     [Test]
@@ -85,9 +82,9 @@ public class JwtUserProviderShould
         context.Request.Headers["X-User-Id"] = GuidMother.Random().ToString();
         this.ShouldHaveHttpContext(context);
 
-        Result<Guid> result = this._provider.GetCurrentUserId();
+        Guid actual = this._provider.GetCurrentUserId();
 
-        result.Value.Should().Be(userId);
+        actual.Should().Be(userId);
     }
 
     private void ShouldHaveHttpContext(HttpContext? context)

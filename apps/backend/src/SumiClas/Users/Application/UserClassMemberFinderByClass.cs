@@ -23,10 +23,6 @@ public static class UserClassMemberFinderByClass
         public async Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(current.Error!);
-            }
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -43,7 +39,7 @@ public static class UserClassMemberFinderByClass
             var memberIds = guardianIds.Concat(delegates.Select(user => user.Id)).Distinct().ToList();
 
             var users = await repository.SearchAsync(new UserSpecification(ids: memberIds), ct);
-            if (users.All(user => user.Id != current.Value))
+            if (users.All(user => user.Id != current))
             {
                 return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(UserErrors.ClassMembersForbidden);
             }

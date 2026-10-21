@@ -9,6 +9,6 @@ namespace SumiClas.Shared.Application;
 /// </summary>
 public interface IUserProvider
 {
-    /// <summary>The current user id, or <see cref="AuthenticationErrors.Unauthenticated"/> when nobody is identified.</summary>
-    Result<Guid> GetCurrentUserId();
+    /// <summary>The current user id; throws <see cref="AuthenticationExceptions.Unauthenticated"/> when nobody is identified.</summary>
+    Guid GetCurrentUserId();
 }

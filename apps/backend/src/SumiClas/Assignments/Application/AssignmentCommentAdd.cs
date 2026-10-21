@@ -17,10 +17,6 @@ public static class AssignmentCommentAdd
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
             var assignment = await repository.GetByIdAsync(command.AssignmentId, ct);
             if (assignment is null)
@@ -28,7 +24,7 @@ public static class AssignmentCommentAdd
                 return Result.Failure(AssignmentErrors.NotFound);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(current.Value), ct);
+            var author = await queryBus.Send(new UserFinderById.Query(current), ct);
             if (author.IsFailure)
             {
                 return Result.Failure(author.Error!);
@@ -36,7 +32,7 @@ public static class AssignmentCommentAdd
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, assignment.ClassId), ct);
+            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, assignment.ClassId), ct);
             if (access.IsFailure)
             {
                 return access;
@@ -44,7 +40,7 @@ public static class AssignmentCommentAdd
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            return assignment.AddComment(current.Value, command.Text, clock);
+            return assignment.AddComment(current, command.Text, clock);
         }
     }
 

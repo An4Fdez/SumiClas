@@ -20,7 +20,7 @@ public static class SubjectCreate
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             (await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct)).OrThrow();
 

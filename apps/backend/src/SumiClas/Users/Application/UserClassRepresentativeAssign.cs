@@ -20,12 +20,8 @@ public static class UserClassRepresentativeAssign
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            var actingUserId = current.Value;
+            var actingUserId = current;
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);

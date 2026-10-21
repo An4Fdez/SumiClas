@@ -350,16 +350,16 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_reading_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
     {
         Guid classId = GuidMother.Random();
         this.ShouldFindClass(classId);
         this.ShouldHaveNoCurrentUser();
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveSearched();
     }
 

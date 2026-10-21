@@ -26,6 +26,7 @@ public sealed class SubjectsEndpoints : IEndpoints
             .Maps<SubjectExceptions.IdRequired>(StatusCodes.Status400BadRequest)
             .Maps<SubjectExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
             .Maps<SubjectExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
             .RequiresClass()
             .RequiresActiveSchoolYear()
             .ConflictsOnSave();
@@ -34,6 +35,7 @@ public sealed class SubjectsEndpoints : IEndpoints
             Results.Ok(await sender.Send(new SubjectFinderByClass.Query(classId), ct)))
             .WithName("SubjectFinderByClass")
             .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK)
+            .RequiresSession()
             .RequiresClass();
     }
 }

@@ -15,12 +15,8 @@ public static class UserProfileFinderCurrent
         public async Task<Result<UserProfileResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result<UserProfileResponse>.Failure(current.Error!);
-            }
 
-            var found = await finder.FindByIdAsync(current.Value, ct);
+            var found = await finder.FindByIdAsync(current, ct);
             if (found.IsFailure)
             {
                 return Result<UserProfileResponse>.Failure(found.Error!);

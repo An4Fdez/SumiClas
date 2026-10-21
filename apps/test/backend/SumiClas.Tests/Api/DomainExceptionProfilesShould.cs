@@ -63,6 +63,20 @@ public class DomainExceptionProfilesShould
         ]);
     }
 
+    [Test]
+    public async Task declare_an_unidentified_user_as_401()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresSession();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(
+                typeof(AuthenticationExceptions.Unauthenticated),
+                StatusCodes.Status401Unauthorized),
+        ]);
+    }
+
     private static IReadOnlyList<DomainExceptionStatus> DeclaredBy(WebApplication app)
         => ((IEndpointRouteBuilder)app).DataSources
             .SelectMany(source => source.Endpoints)

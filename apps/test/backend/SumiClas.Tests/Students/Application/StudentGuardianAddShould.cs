@@ -99,8 +99,7 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, GuidMother.Random(), "Uncle"));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.ShouldNotHaveFetched();
         this.QueryBus.VerifyNoOtherCalls();
     }

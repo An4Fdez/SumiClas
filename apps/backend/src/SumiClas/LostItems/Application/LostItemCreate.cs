@@ -28,12 +28,8 @@ public static class LostItemCreate
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            var authorId = current.Value;
+            var authorId = current;
 
             if (!Enum.TryParse<ItemScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {

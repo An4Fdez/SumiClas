@@ -180,14 +180,14 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_any_read_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_any_read_when_there_is_no_current_user()
     {
         Guid classId = GuidMother.Random();
         this.ShouldHaveNoCurrentUser();
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        Func<Task> act = () => this.Ask(classId);
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<IQuery<ClassResponse>>(), It.IsAny<CancellationToken>()),
             Times.Never);

@@ -94,17 +94,17 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_reading_the_announcement_or_asking_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_reading_the_announcement_or_asking_when_there_is_no_current_user()
     {
         Guid announcementId = GuidMother.Random();
         Announcement announcement = AnnouncementMother.WithId(announcementId);
         this.ShouldFetchAnnouncements(announcement);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         announcement.ReadReceipts.Should().BeEmpty();
         this.ShouldNotHaveRead();
         this.QueryBus.VerifyNoOtherCalls();

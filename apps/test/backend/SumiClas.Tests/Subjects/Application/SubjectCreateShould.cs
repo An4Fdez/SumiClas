@@ -166,8 +166,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.Added.Should().BeEmpty();
     }
 }

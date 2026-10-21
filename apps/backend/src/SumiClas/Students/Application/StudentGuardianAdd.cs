@@ -14,7 +14,7 @@ public static class StudentGuardianAdd
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             if (!Enum.TryParse<GuardianRole>(command.Role, ignoreCase: true, out var role) || !Enum.IsDefined(role))
             {

@@ -20,7 +20,7 @@ public static class SchoolYearArchive
             var schoolYear = await repository.GetByIdAsync(command.SchoolYearId, ct)
                 ?? throw new SchoolYearExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId().OrThrow();
+            var current = userProvider.GetCurrentUserId();
 
             var classes = await queryBus.Send(new ClassFinderBySchoolYear.Query(command.SchoolYearId), ct);
             foreach (var schoolClass in classes)

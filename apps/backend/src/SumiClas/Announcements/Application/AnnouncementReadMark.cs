@@ -16,10 +16,6 @@ public static class AnnouncementReadMark
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
             var announcement = await repository.GetByIdAsync(command.AnnouncementId, ct);
             if (announcement is null)
@@ -27,7 +23,7 @@ public static class AnnouncementReadMark
                 return Result.Failure(AnnouncementErrors.NotFound);
             }
 
-            var reader = await queryBus.Send(new UserFinderById.Query(current.Value), ct);
+            var reader = await queryBus.Send(new UserFinderById.Query(current), ct);
             if (reader.IsFailure)
             {
                 return Result.Failure(reader.Error!);
@@ -35,14 +31,14 @@ public static class AnnouncementReadMark
 
             if (announcement.ClassId is { } classId)
             {
-                var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, classId), ct);
+                var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, classId), ct);
                 if (access.IsFailure)
                 {
                     return access;
                 }
             }
 
-            return announcement.MarkAsReadBy(current.Value, clock);
+            return announcement.MarkAsReadBy(current, clock);
         }
     }
 

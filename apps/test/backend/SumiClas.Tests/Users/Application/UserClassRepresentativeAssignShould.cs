@@ -138,14 +138,14 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
     {
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(GuidMother.Random(), GuidMother.Random()));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.QueryBus.VerifyNoOtherCalls();
         this.ShouldNotHaveSearched();
         this.ShouldNotHaveFetched();

@@ -90,14 +90,14 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: 13));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: 13));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

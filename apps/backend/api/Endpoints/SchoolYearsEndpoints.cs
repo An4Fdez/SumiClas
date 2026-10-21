@@ -45,6 +45,7 @@ public sealed class SchoolYearsEndpoints : IEndpoints
             .WithName("SchoolYearArchive")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .RequiresSession()
             .Maps<SchoolYearExceptions.NotFound>(StatusCodes.Status404NotFound)
             .Maps<SchoolYearExceptions.Archived>(StatusCodes.Status400BadRequest)
             .ConflictsOnSave();

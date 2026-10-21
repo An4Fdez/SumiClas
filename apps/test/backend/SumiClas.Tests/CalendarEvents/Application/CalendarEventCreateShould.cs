@@ -185,15 +185,15 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: StringMother.Random("scope")));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

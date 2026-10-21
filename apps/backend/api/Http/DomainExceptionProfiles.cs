@@ -11,6 +11,10 @@ namespace SumiClas.Api.Http;
 /// </summary>
 public static class DomainExceptionProfiles
 {
+    /// <summary>The endpoint acts on behalf of the current user, so nobody may be identified.</summary>
+    public static RouteHandlerBuilder RequiresSession(this RouteHandlerBuilder builder)
+        => builder.Maps<AuthenticationExceptions.Unauthenticated>(StatusCodes.Status401Unauthorized);
+
     /// <summary>The unit of work raises these when saving a command: a duplicated key or a lost race.</summary>
     public static RouteHandlerBuilder ConflictsOnSave(this RouteHandlerBuilder builder)
         => builder

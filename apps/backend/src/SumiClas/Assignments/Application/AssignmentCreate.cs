@@ -25,12 +25,8 @@ public static class AssignmentCreate
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
 
-            var authorId = current.Value;
+            var authorId = current;
 
             // IsProposal depends on a lookup, so the aggregate is built twice: once only to validate the
             // input before any IO (the provisional flag is discarded), and once with the real flag.
