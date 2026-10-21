@@ -414,7 +414,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
@@ -422,9 +422,9 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldNotFindClass();
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "Class"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "Class"));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<SchoolYearEnsureIsActive.Query>(), It.IsAny<CancellationToken>()),

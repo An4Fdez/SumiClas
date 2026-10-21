@@ -23,10 +23,6 @@ public static class ClassExpensePaidMark
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -43,7 +39,7 @@ public static class ClassExpensePaidMark
                 return permission;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;

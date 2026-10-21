@@ -28,11 +28,7 @@ public static class UserClassMemberFinderByClass
                 return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(current.Error!);
             }
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(schoolClass.Error!);
-            }
+            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
             var studentIds = enrollments

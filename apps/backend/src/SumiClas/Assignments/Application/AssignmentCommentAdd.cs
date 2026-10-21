@@ -35,10 +35,6 @@ public static class AssignmentCommentAdd
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, assignment.ClassId), ct);
             if (access.IsFailure)
@@ -46,7 +42,7 @@ public static class AssignmentCommentAdd
                 return access;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;

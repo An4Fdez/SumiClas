@@ -52,6 +52,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         result.Value.Select(member => member.FullName).Should().Equal(representativeName, anaName, zoeName);
         result.Value.Select(member => member.ClassRole)
             .Should().Equal("ClassRepresentative", "Participant", "Participant");
+        this.ShouldHaveAskedForClass(classId);
     }
 
     [Test]
@@ -162,15 +163,15 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_reading_enrollments_when_the_class_does_not_exist()
+    public async Task throw_not_found_without_reading_enrollments_when_the_class_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldNotFindClass();
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        Func<Task> act = () => this.Ask(classId);
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.QueryBus.Verify(
             bus => bus.Send(
                 It.IsAny<IQuery<IReadOnlyCollection<EnrollmentResponse>>>(),
@@ -188,7 +189,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
 
         result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.QueryBus.Verify(
-            bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()),
+            bus => bus.Send(It.IsAny<IQuery<ClassResponse>>(), It.IsAny<CancellationToken>()),
             Times.Never);
         this.ShouldNotHaveSearched();
     }

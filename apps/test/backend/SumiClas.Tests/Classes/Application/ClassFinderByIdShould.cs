@@ -28,24 +28,21 @@ public class ClassFinderByIdShould : ClassesUnitTestCase
             ClassMother.InSchoolYear(GuidMother.Random()),
             ClassMother.With(classId, schoolYearId, name));
 
-        Result<ClassResponse> result = await this._useCase.ExecuteAsync(
+        ClassResponse result = await this._useCase.ExecuteAsync(
             ClassFinderByIdQueryMother.WithClassId(classId));
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(classId);
-        result.Value.SchoolYearId.Should().Be(schoolYearId);
-        result.Value.Name.Should().Be(name);
+        result.Id.Should().Be(classId);
+        result.SchoolYearId.Should().Be(schoolYearId);
+        result.Name.Should().Be(name);
     }
 
     [Test]
-    public async Task return_not_found_when_the_class_does_not_exist()
+    public async Task throw_not_found_when_the_class_does_not_exist()
     {
         this.ShouldFetchClasses(ClassMother.InSchoolYear(GuidMother.Random()));
 
-        Result<ClassResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassFinderByIdQueryMother.WithClassId(GuidMother.Random()));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
     }
 }

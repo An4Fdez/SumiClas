@@ -37,10 +37,6 @@ public static class AnnouncementFinderByClass
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<PagedResponse<AnnouncementResponse>>.Failure(schoolClass.Error!);
-            }
 
             var access = await queryBus.Send(new UserClassAccessEnsure.Query(current.Value, query.ClassId), ct);
             if (access.IsFailure)
@@ -48,7 +44,7 @@ public static class AnnouncementFinderByClass
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(access.Error!);
             }
 
-            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
             if (school.IsFailure)
             {
                 return Result<PagedResponse<AnnouncementResponse>>.Failure(school.Error!);

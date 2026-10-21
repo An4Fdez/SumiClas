@@ -85,10 +85,6 @@ public static class AnnouncementCreate
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
             if (representative.IsFailure)
@@ -96,7 +92,7 @@ public static class AnnouncementCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;
@@ -105,7 +101,7 @@ public static class AnnouncementCreate
             var announcement = validation.Value;
             if (scope == AnnouncementScope.School)
             {
-                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
                 if (school.IsFailure)
                 {
                     return Result.Failure(school.Error!);

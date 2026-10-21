@@ -27,12 +27,8 @@ public static class UserClassRepresentativeAssign
 
             var actingUserId = current.Value;
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;

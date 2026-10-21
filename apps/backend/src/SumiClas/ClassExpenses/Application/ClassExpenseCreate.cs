@@ -52,10 +52,6 @@ public static class ClassExpenseCreate
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, command.ClassId), ct);
             if (representative.IsFailure)
@@ -63,7 +59,7 @@ public static class ClassExpenseCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;

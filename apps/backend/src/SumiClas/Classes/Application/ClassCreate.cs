@@ -9,39 +9,25 @@ namespace SumiClas.Classes.Application;
 public static class ClassCreate
 {
     /// <summary>The current user creates the class and becomes its first delegate, through the ClassCreatedDomainEvent.</summary>
-    public sealed record Command(Guid Id, Guid SchoolYearId, string Name) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid Id, Guid SchoolYearId, string Name) : IRequest, ICommand;
 
     public sealed class Create(IClassRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
+            var current = userProvider.GetCurrentUserId().OrThrow();
 
-            var creation = Class.Create(command.Id, command.SchoolYearId, command.Name, current.Value, clock);
-            if (creation.IsFailure)
-            {
-                return Result.Failure(creation.Error!);
-            }
+            var schoolClass = Class.Create(command.Id, command.SchoolYearId, command.Name, current, clock);
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(command.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            (await queryBus.Send(new SchoolYearEnsureIsActive.Query(command.SchoolYearId), ct)).OrThrow();
 
-            await repository.AddAsync(creation.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(schoolClass, ct);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

@@ -39,19 +39,11 @@ public static class EnrollmentSuggestedCreate
             }
 
             var newClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
-            if (newClass.IsFailure)
-            {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(newClass.Error!);
-            }
 
             var previousClass = await queryBus.Send(new ClassFinderById.Query(command.PreviousClassId), ct);
-            if (previousClass.IsFailure)
-            {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(previousClass.Error!);
-            }
 
-            var newSchoolYearId = newClass.Value.SchoolYearId;
-            var previousSchoolYearId = previousClass.Value.SchoolYearId;
+            var newSchoolYearId = newClass.SchoolYearId;
+            var previousSchoolYearId = previousClass.SchoolYearId;
 
             var active = await queryBus.Send(new SchoolYearEnsureIsActive.Query(newSchoolYearId), ct);
             if (active.IsFailure)

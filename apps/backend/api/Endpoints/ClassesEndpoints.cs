@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Classes.Application;
+using SumiClas.Classes.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -17,33 +18,39 @@ public sealed class ClassesEndpoints : IEndpoints
 
         classes.MapPost("/", async (ClassCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new ClassCreate.Command(request.Id, request.SchoolYearId, request.Name), ct);
+            await sender.Send(new ClassCreate.Command(request.Id, request.SchoolYearId, request.Name), ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("ClassCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<ClassExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExceptions.SchoolYearRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExceptions.CreatorRequired>(StatusCodes.Status400BadRequest)
+            .ConflictsOnSave();
 
         classes.MapPut("/{classId:guid}/name", async (Guid classId, ClassRenameRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new ClassRename.Command(classId, request.Name), ct);
+            await sender.Send(new ClassRename.Command(classId, request.Name), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("ClassRename")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
+            .RequiresClass()
+            .ConflictsOnSave();
 
         classes.MapGet("/{classId:guid}", async (Guid classId, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new ClassFinderById.Query(classId), ct)).ToOk())
+            Results.Ok(await sender.Send(new ClassFinderById.Query(classId), ct)))
             .WithName("ClassFinderById")
             .Produces<ClassResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .RequiresClass();
 
         classes.MapGet("/", async (Guid schoolYearId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct)))

@@ -57,7 +57,7 @@ public abstract class EnrollmentsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+            .ReturnsAsync(ClassResponseMother.With(classId, schoolYearId));
 
     protected void ShouldFindClassesOfSchoolYear(Guid schoolYearId, params Guid[] classIds)
         => this.QueryBus
@@ -68,8 +68,8 @@ public abstract class EnrollmentsUnitTestCase : UnitTestCase
 
     protected void ShouldNotFindClass()
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ClassResponse>.Failure(ClassErrors.NotFound));
+            .Setup(bus => bus.Send(It.IsAny<IQuery<ClassResponse>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ClassExceptions.NotFound());
 
     protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
         => this.QueryBus

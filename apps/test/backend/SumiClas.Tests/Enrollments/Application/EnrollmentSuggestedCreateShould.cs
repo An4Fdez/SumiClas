@@ -249,15 +249,15 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
         Guid newYearId,
         Guid? sameYearAsNewClassId = null)
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
-            .Returns<IQuery<Result<ClassResponse>>, CancellationToken>((query, _) =>
-                Task.FromResult(Result<ClassResponse>.Success(ClassOf(
+            .Setup(bus => bus.Send(It.IsAny<IQuery<ClassResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns<IQuery<ClassResponse>, CancellationToken>((query, _) =>
+                Task.FromResult(ClassOf(
                     ((ClassFinderById.Query)query).ClassId,
                     oldClassId,
                     newClassId,
                     sameYearAsNewClassId,
                     oldYearId,
-                    newYearId))));
+                    newYearId)));
 
     private void ShouldHaveClassRepresentative()
         => this.QueryBus

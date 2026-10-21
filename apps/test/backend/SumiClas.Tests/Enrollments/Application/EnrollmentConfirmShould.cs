@@ -144,7 +144,7 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_confirming_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_confirming_when_the_class_does_not_exist()
     {
         Enrollment enrollment = EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random());
         this.ShouldFetchEnrollments(enrollment);
@@ -153,10 +153,10 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this.ShouldEnsureStudentGuardian(enrollment.StudentId, currentUserId);
         this.ShouldNotFindClass();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
     }
 

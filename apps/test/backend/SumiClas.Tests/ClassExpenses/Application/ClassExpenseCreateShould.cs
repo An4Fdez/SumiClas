@@ -344,7 +344,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
@@ -352,9 +352,9 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldNotFindClass();
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid());
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<SchoolYearEnsureIsActive.Query>(), It.IsAny<CancellationToken>()),

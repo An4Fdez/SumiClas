@@ -29,11 +29,7 @@ public static class AssignmentFinderByClass
                 return Result<PagedResponse<AssignmentResponse>>.Failure(page.Error!);
             }
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<PagedResponse<AssignmentResponse>>.Failure(schoolClass.Error!);
-            }
+            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)

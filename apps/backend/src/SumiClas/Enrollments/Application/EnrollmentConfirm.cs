@@ -36,12 +36,8 @@ public static class EnrollmentConfirm
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(enrollment.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
-            var schoolYearId = schoolClass.Value.SchoolYearId;
+            var schoolYearId = schoolClass.SchoolYearId;
 
             var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolYearId), ct);
             if (schoolYear.IsFailure)

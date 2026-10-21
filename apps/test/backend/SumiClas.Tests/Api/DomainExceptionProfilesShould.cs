@@ -1,0 +1,45 @@
+namespace SumiClas.Tests.Api;
+
+using AwesomeAssertions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using SumiClas.Api.Http;
+using SumiClas.Classes.Domain;
+using SumiClas.Shared.Domain;
+
+[TestFixture]
+public class DomainExceptionProfilesShould
+{
+    [Test]
+    public async Task declare_the_conflicts_of_saving_a_command_as_409()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").ConflictsOnSave();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(SharedExceptions.AlreadyExists), StatusCodes.Status409Conflict),
+            new DomainExceptionStatus(typeof(SharedExceptions.ConcurrencyConflict), StatusCodes.Status409Conflict),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_missing_class_as_404()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresClass();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(ClassExceptions.NotFound), StatusCodes.Status404NotFound),
+        ]);
+    }
+
+    private static IReadOnlyList<DomainExceptionStatus> DeclaredBy(WebApplication app)
+        => ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints)
+            .Single()
+            .Metadata
+            .GetOrderedMetadata<DomainExceptionStatus>();
+}

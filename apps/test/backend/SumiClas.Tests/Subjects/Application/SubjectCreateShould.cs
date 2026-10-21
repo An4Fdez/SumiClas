@@ -48,17 +48,17 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_adding_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_adding_when_the_class_does_not_exist()
     {
         this.ShouldCaptureAddedSubjects();
         this.ShouldNotFindClass();
 
-        Result result = await this._useCase.ExecuteAsync(SubjectCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SubjectCreateCommandMother.With(
             GuidMother.Random(),
             GuidMother.Random(),
             StringMother.Random("subject")));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 

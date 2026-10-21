@@ -52,6 +52,7 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
             SubjectResponseMother.With(first.Id, classId, first.Label),
             SubjectResponseMother.With(second.Id, classId, second.Label),
             SubjectResponseMother.With(third.Id, classId, third.Label));
+        this.ShouldHaveAskedForClass(classId);
     }
 
     [Test]
@@ -85,15 +86,15 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_searching_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_searching_when_the_class_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         this.ShouldNotFindClass();
 
-        Result<IReadOnlyCollection<SubjectResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 }

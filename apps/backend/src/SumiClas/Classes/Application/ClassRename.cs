@@ -9,43 +9,28 @@ namespace SumiClas.Classes.Application;
 
 public static class ClassRename
 {
-    public sealed record Command(Guid ClassId, string Name) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid ClassId, string Name) : IRequest, ICommand;
 
     public sealed class Rename(IClassRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var schoolClass = await repository.GetByIdAsync(command.ClassId, ct);
-            if (schoolClass is null)
-            {
-                return Result.Failure(ClassErrors.NotFound);
-            }
+            var schoolClass = await repository.GetByIdAsync(command.ClassId, ct)
+                ?? throw new ClassExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId();
-            if (current.IsFailure)
-            {
-                return Result.Failure(current.Error!);
-            }
+            var current = userProvider.GetCurrentUserId().OrThrow();
 
-            var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(current.Value, command.ClassId), ct);
-            if (representative.IsFailure)
-            {
-                return representative;
-            }
+            (await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct)).OrThrow();
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            (await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct)).OrThrow();
 
-            return schoolClass.Rename(command.Name);
+            schoolClass.Rename(command.Name);
         }
     }
 
-    public sealed class Handler(Rename rename) : IRequestHandler<Command, Result>
+    public sealed class Handler(Rename rename) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => rename.ExecuteAsync(command, ct);
     }
 }

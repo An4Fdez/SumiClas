@@ -2,6 +2,7 @@ namespace SumiClas.Tests.Announcements.Application;
 
 using AwesomeAssertions;
 using Moq;
+using SumiClas.Classes.Domain;
 using SumiClas.Announcements.Application;
 using SumiClas.Announcements.Domain;
 using SumiClas.CalendarEvents.Application;
@@ -507,17 +508,17 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_class_error_when_the_class_is_unknown()
+    public async Task throw_the_class_error_when_the_class_is_unknown()
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldNotFindClass();
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        result.Error!.Code.Should().Be("Class.NotFound");
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
     }
 
     private static Announcement SchoolNotice(Guid schoolId, Guid authorId, string titlePrefix, int minutes)

@@ -2,6 +2,7 @@ namespace SumiClas.Tests.ClassExpenses.Application;
 
 using AwesomeAssertions;
 using Moq;
+using SumiClas.Classes.Domain;
 using SumiClas.CalendarEvents.Application;
 using SumiClas.ClassExpenses.Application;
 using SumiClas.ClassExpenses.Domain;
@@ -85,6 +86,7 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             new ExpenseParticipantResponse(betaId, betaName, true),
             new ExpenseParticipantResponse(gammaId, gammaName, true));
         result.Value.NextCursor.Should().BeNull();
+        this.ShouldHaveAskedForClass(classId);
     }
 
     [Test]
@@ -362,14 +364,14 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_the_class_error_without_searching_when_the_class_is_unknown()
+    public async Task throw_the_class_error_without_searching_when_the_class_is_unknown()
     {
         this.ShouldNotFindClass();
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(GuidMother.Random()));
 
-        result.Error!.Code.Should().Be("Class.NotFound");
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

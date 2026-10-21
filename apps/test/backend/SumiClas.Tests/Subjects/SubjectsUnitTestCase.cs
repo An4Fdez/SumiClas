@@ -59,19 +59,26 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.WithId(classId)));
+            .ReturnsAsync(ClassResponseMother.WithId(classId));
 
     protected void ShouldNotFindClass()
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<IQuery<Result<ClassResponse>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ClassResponse>.Failure(ClassErrors.NotFound));
+            .Setup(bus => bus.Send(It.IsAny<IQuery<ClassResponse>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ClassExceptions.NotFound());
+
+    protected void ShouldHaveAskedForClass(Guid classId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
     protected void ShouldFindClassInSchoolYear(Guid classId, Guid schoolYearId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<ClassFinderById.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ClassResponse>.Success(ClassResponseMother.With(classId, schoolYearId)));
+            .ReturnsAsync(ClassResponseMother.With(classId, schoolYearId));
 
     protected void ShouldEnsureSchoolYearIsActive(Guid schoolYearId)
         => this.QueryBus

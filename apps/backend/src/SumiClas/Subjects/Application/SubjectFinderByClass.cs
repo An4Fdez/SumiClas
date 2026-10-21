@@ -15,11 +15,7 @@ public static class SubjectFinderByClass
     {
         public async Task<Result<IReadOnlyCollection<SubjectResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<IReadOnlyCollection<SubjectResponse>>.Failure(schoolClass.Error!);
-            }
+            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)

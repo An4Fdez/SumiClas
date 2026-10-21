@@ -2,6 +2,7 @@ namespace SumiClas.Tests.LostItems.Application;
 
 using AwesomeAssertions;
 using Moq;
+using SumiClas.Classes.Domain;
 using SumiClas.LostItems.Application;
 using SumiClas.LostItems.Domain;
 using SumiClas.SchoolYears.Domain;
@@ -456,14 +457,14 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_class_error_without_searching_when_the_class_is_unknown()
+    public async Task throw_the_class_error_without_searching_when_the_class_is_unknown()
     {
         this.ShouldNotFindClass();
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(GuidMother.Random()));
 
-        result.Error!.Code.Should().Be("Class.NotFound");
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

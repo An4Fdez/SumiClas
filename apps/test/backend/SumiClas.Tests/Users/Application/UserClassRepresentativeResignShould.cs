@@ -138,15 +138,15 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_reading_users_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_reading_users_when_the_class_does_not_exist()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldNotFindClass();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(GuidMother.Random()));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldNotHaveSearched();
         this.ShouldNotHaveFetched();
     }

@@ -25,10 +25,6 @@ public static class CalendarEventFinderByClass
         public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(schoolClass.Error!);
-            }
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -42,7 +38,7 @@ public static class CalendarEventFinderByClass
                 return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(access.Error!);
             }
 
-            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
             if (school.IsFailure)
             {
                 return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(school.Error!);

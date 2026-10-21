@@ -23,10 +23,6 @@ public static class SubjectCreate
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)
@@ -40,7 +36,7 @@ public static class SubjectCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;

@@ -32,10 +32,9 @@ public class ClassCreateShould : ClassesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedClasses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassCreateCommandMother.With(classId, schoolYearId, "  " + name + " "));
 
-        result.IsSuccess.Should().BeTrue();
         Class added = this.Added.Single();
         added.Id.Should().Be(classId);
         added.SchoolYearId.Should().Be(schoolYearId);
@@ -65,116 +64,119 @@ public class ClassCreateShould : ClassesUnitTestCase
     }
 
     [Test]
-    public async Task return_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_without_asking_or_adding_when_there_is_no_current_user()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             GuidMother.Random(),
             StringMother.Random("class")));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_class_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_class_id_is_empty()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             Guid.Empty,
             GuidMother.Random(),
             StringMother.Random("class")));
 
-        result.Error.Should().Be(ClassErrors.IdRequired);
+        await act.Should().ThrowAsync<ClassExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_school_year_required_without_asking_or_adding_when_the_school_year_id_is_empty()
+    public async Task throw_school_year_required_without_asking_or_adding_when_the_school_year_id_is_empty()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             Guid.Empty,
             StringMother.Random("class")));
 
-        result.Error.Should().Be(ClassErrors.SchoolYearRequired);
+        await act.Should().ThrowAsync<ClassExceptions.SchoolYearRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_name_required_without_asking_or_adding_when_the_name_is_blank()
+    public async Task throw_name_required_without_asking_or_adding_when_the_name_is_blank()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             GuidMother.Random(),
             "   "));
 
-        result.Error.Should().Be(ClassErrors.NameRequired);
+        await act.Should().ThrowAsync<ClassExceptions.NameRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_creator_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_creator_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldCaptureAddedClasses();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             GuidMother.Random(),
             StringMother.Random("class")));
 
-        result.Error.Should().Be(ClassErrors.CreatorRequired);
+        await act.Should().ThrowAsync<ClassExceptions.CreatorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_school_year_archived_without_adding_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_without_adding_when_the_school_year_is_archived()
     {
         this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             schoolYearId,
             StringMother.Random("class")));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(SchoolYearErrors.Archived);
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
         this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
-        Result result = await this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             schoolYearId,
             StringMother.Random("class")));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(SchoolYearErrors.NotFound);
         this.Added.Should().BeEmpty();
     }
 }

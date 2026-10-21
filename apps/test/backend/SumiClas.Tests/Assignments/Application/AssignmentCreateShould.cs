@@ -247,7 +247,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         Guid subjectId = GuidMother.Random();
@@ -256,9 +256,9 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldNotFindClass();
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(subjectId: subjectId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(subjectId: subjectId));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<SchoolYearEnsureIsActive.Query>(), It.IsAny<CancellationToken>()),

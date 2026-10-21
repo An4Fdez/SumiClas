@@ -211,14 +211,14 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_searching_events_or_enrollments_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_searching_events_or_enrollments_when_the_class_does_not_exist()
     {
         this.ShouldNotFindClass();
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(GuidMother.Random()));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldHaveSearched(0);
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),

@@ -11,6 +11,7 @@ using SumiClas.Subjects.Application;
 using SumiClas.Tests.Assignments.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Application;
+using SumiClas.Tests.Shared.Domain;
 using SumiClas.Tests.Subjects.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
@@ -89,6 +90,7 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         item.Comments.Select(comment => comment.Id)
             .Should().Equal(assignment.Comments.OrderBy(comment => comment.CreatedAt).Select(comment => comment.Id));
         result.Value.NextCursor.Should().BeNull();
+        this.ShouldHaveAskedForClass(classId);
     }
 
     [Test]
@@ -339,13 +341,14 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
-        this.ShouldFailFindingSubjectsOfClass(ClassErrors.NotFound);
+        Error subjectsError = ErrorMother.Random();
+        this.ShouldFailFindingSubjectsOfClass(subjectsError);
         this.ShouldSearchAssignments(AssignmentMother.With(classId: classId));
 
         Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        result.Error.Should().Be(subjectsError);
     }
 
     [Test]
@@ -379,14 +382,14 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_class_error_when_the_class_is_unknown()
+    public async Task throw_the_class_error_when_the_class_is_unknown()
     {
         this.ShouldNotFindClass();
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(GuidMother.Random()));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

@@ -34,28 +34,27 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, "  " + newName + " "));
 
-        result.IsSuccess.Should().BeTrue();
         schoolClass.Name.Should().Be(newName);
         schoolClass.SchoolYearId.Should().Be(schoolYearId);
     }
 
     [Test]
-    public async Task return_not_found_without_asking_the_school_year_when_the_class_does_not_exist()
+    public async Task throw_not_found_without_asking_the_school_year_when_the_class_does_not_exist()
     {
         this.ShouldFetchNoClasses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(GuidMother.Random(), StringMother.Random("class")));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_name_required_and_keep_the_name_when_the_new_name_is_blank()
+    public async Task throw_name_required_and_keep_the_name_when_the_new_name_is_blank()
     {
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
@@ -66,14 +65,14 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
 
-        Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, "   "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, "   "));
 
-        result.Error.Should().Be(ClassErrors.NameRequired);
+        await act.Should().ThrowAsync<ClassExceptions.NameRequired>();
         schoolClass.Name.Should().Be(oldName);
     }
 
     [Test]
-    public async Task return_school_year_archived_and_keep_the_name_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_and_keep_the_name_when_the_school_year_is_archived()
     {
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
@@ -84,15 +83,16 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(SchoolYearErrors.Archived);
         schoolClass.Name.Should().Be(oldName);
     }
 
     [Test]
-    public async Task return_school_year_archived_before_validating_the_name_when_both_fail()
+    public async Task throw_school_year_archived_before_validating_the_name_when_both_fail()
     {
         Guid schoolYearId = GuidMother.Random();
         Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, StringMother.Random("old"));
@@ -102,13 +102,14 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
 
-        Result result = await this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, " "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, " "));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(SchoolYearErrors.Archived);
     }
 
     [Test]
-    public async Task return_school_year_not_found_and_keep_the_name_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_and_keep_the_name_when_the_school_year_does_not_exist()
     {
         Guid schoolYearId = GuidMother.Random();
         string oldName = StringMother.Random("old");
@@ -119,15 +120,16 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
         this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(SchoolYearErrors.NotFound);
         schoolClass.Name.Should().Be(oldName);
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_and_keep_the_name_when_the_user_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_and_keep_the_name_when_the_user_is_not_a_delegate()
     {
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), GuidMother.Random(), oldName);
@@ -136,25 +138,27 @@ public class ClassRenameShould : ClassesUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldDenyClassRepresentative(currentUserId, schoolClass.Id);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
         schoolClass.Name.Should().Be(oldName);
     }
 
     [Test]
-    public async Task return_unauthenticated_and_keep_the_name_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_and_keep_the_name_when_there_is_no_current_user()
     {
         string oldName = StringMother.Random("old");
         Class schoolClass = ClassMother.With(GuidMother.Random(), GuidMother.Random(), oldName);
         this.ShouldFetchClasses(schoolClass);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         schoolClass.Name.Should().Be(oldName);
     }
 }

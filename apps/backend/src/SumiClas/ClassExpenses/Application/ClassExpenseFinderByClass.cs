@@ -29,11 +29,7 @@ public static class ClassExpenseFinderByClass
                 return Result<PagedResponse<ClassExpenseResponse>>.Failure(page.Error!);
             }
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result<PagedResponse<ClassExpenseResponse>>.Failure(schoolClass.Error!);
-            }
+            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             var current = userProvider.GetCurrentUserId();
             if (current.IsFailure)

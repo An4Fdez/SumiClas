@@ -120,7 +120,7 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
+    public async Task throw_class_not_found_without_asking_for_the_school_year_when_the_class_does_not_exist()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -130,10 +130,10 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldNotFindClass();
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.Error.Should().Be(ClassErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
         expense.Participants.Single().HasPaid.Should().BeTrue();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<SchoolYearEnsureIsActive.Query>(), It.IsAny<CancellationToken>()),

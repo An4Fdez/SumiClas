@@ -75,10 +75,6 @@ public static class LostItemCreate
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
-            if (schoolClass.IsFailure)
-            {
-                return Result.Failure(schoolClass.Error!);
-            }
 
             var access = await queryBus.Send(new UserClassAccessEnsure.Query(authorId, classId), ct);
             if (access.IsFailure)
@@ -86,7 +82,7 @@ public static class LostItemCreate
                 return access;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             if (schoolYear.IsFailure)
             {
                 return schoolYear;
@@ -95,7 +91,7 @@ public static class LostItemCreate
             var lostItem = validation.Value;
             if (scope == ItemScope.School)
             {
-                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.Value.SchoolYearId), ct);
+                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
                 if (school.IsFailure)
                 {
                     return Result.Failure(school.Error!);

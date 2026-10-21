@@ -36,12 +36,8 @@ public static class LostItemRecoveredMark
             if (lostItem.ClassId is { } classId)
             {
                 var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
-                if (schoolClass.IsFailure)
-                {
-                    return Result.Failure(schoolClass.Error!);
-                }
 
-                var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.Value.SchoolYearId), ct);
+                var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
                 if (schoolYear.IsFailure)
                 {
                     return schoolYear;
