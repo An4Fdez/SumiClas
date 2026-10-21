@@ -31,7 +31,7 @@ public sealed class School : AggregateRoot
         Phone = phone;
     }
 
-    public static Result<School> Create(
+    public static School Create(
         Guid id,
         string name,
         string officialCode,
@@ -40,13 +40,9 @@ public sealed class School : AggregateRoot
         string? address = null,
         string? phone = null)
     {
-        var validation = Validate(id, name, officialCode, localityId, postalCodeId);
-        if (validation.IsFailure)
-        {
-            return Result<School>.Failure(validation.Error!);
-        }
+        Validate(id, name, officialCode, localityId, postalCodeId);
 
-        var school = new School(
+        return new School(
             id,
             name.Trim(),
             TextNormalizer.Normalize(name),
@@ -55,31 +51,29 @@ public sealed class School : AggregateRoot
             postalCodeId,
             address,
             string.IsNullOrWhiteSpace(phone) ? null : phone.Trim());
-        return Result<School>.Success(school);
     }
 
-    private static Result Validate(Guid id, string name, string officialCode, Guid localityId, Guid? postalCodeId)
+    private static void Validate(Guid id, string name, string officialCode, Guid localityId, Guid? postalCodeId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(SchoolErrors.IdRequired);
+            throw new SchoolExceptions.IdRequired();
         }
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result.Failure(SchoolErrors.NameRequired);
+            throw new SchoolExceptions.NameRequired();
         }
         if (string.IsNullOrWhiteSpace(officialCode))
         {
-            return Result.Failure(SchoolErrors.OfficialCodeRequired);
+            throw new SchoolExceptions.OfficialCodeRequired();
         }
         if (localityId == Guid.Empty)
         {
-            return Result.Failure(SchoolErrors.LocalityRequired);
+            throw new SchoolExceptions.LocalityRequired();
         }
         if (postalCodeId == Guid.Empty)
         {
-            return Result.Failure(SchoolErrors.PostalCodeInvalid);
+            throw new SchoolExceptions.PostalCodeInvalid();
         }
-        return Result.Success();
     }
 }

@@ -33,7 +33,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         School inMalaga = SchoolMother.InLocality(schoolName, localityId);
         this.ShouldSearchSchools(inMalaga, SchoolMother.InLocality(schoolName, otherLocalityId));
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId)).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(localityId);
 
         result.Select(school => school.Id).Should().Equal(inMalaga.Id);
         result.Single().LocalityId.Should().Be(localityId);
@@ -53,7 +53,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         this.ShouldFindPostalCodes([PostalCodeResponseMother.With(postalCodeId, localityId, postalCode)]);
         this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), localityId, postalCodeId));
 
-        SchoolResponse school = (await this.Find(localityId)).Value.Single();
+        SchoolResponse school = (await this.Find(localityId)).Single();
 
         school.ProvinceId.Should().Be(provinceId);
         school.ProvinceName.Should().Be(provinceName);
@@ -72,7 +72,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         this.ShouldFindProvinces([ProvinceResponseMother.With(provinceId, StringMother.Random("province"))]);
         this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), localityId));
 
-        SchoolResponse school = (await this.Find(localityId)).Value.Single();
+        SchoolResponse school = (await this.Find(localityId)).Single();
 
         school.PostalCodeId.Should().BeNull();
         school.PostalCode.Should().BeNull();
@@ -110,7 +110,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         School match = SchoolMother.InLocality("CEIP Peña Blanca", localityId);
         this.ShouldSearchSchools(match, SchoolMother.InLocality(StringMother.Random("other"), localityId));
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId, "  PENA bla ")).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(localityId, "  PENA bla ");
 
         result.Select(school => school.Id).Should().Equal(match.Id);
     }
@@ -126,7 +126,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
         School match = SchoolMother.InLocality("CEIP Alamos", localityId);
         this.ShouldSearchSchools(match);
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId, "Álamos")).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(localityId, "Álamos");
 
         result.Select(school => school.Id).Should().Equal(match.Id);
     }
@@ -145,7 +145,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
             SchoolMother.InLocality(lastName, localityId),
             SchoolMother.InLocality(firstName, localityId));
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId, "  ")).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(localityId, "  ");
 
         result.Select(school => school.Name).Should().Equal(firstName, lastName);
     }
@@ -155,7 +155,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     {
         this.ShouldSearchSchools(SchoolMother.InLocality(StringMother.Random("school"), GuidMother.Random()));
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(GuidMother.Random())).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(GuidMother.Random());
 
         result.Should().BeEmpty();
         this.ShouldNotHaveAskedLocalities();
@@ -173,7 +173,7 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
             .Select(index => SchoolMother.InLocality(NameOf(index), localityId))
             .ToArray());
 
-        IReadOnlyCollection<SchoolResponse> result = (await this.Find(localityId)).Value;
+        IReadOnlyCollection<SchoolResponse> result = await this.Find(localityId);
 
         result.Should().HaveCount(SchoolFinderByLocality.MaxResults);
         result.First().Name.Should().Be(NameOf(0));
@@ -186,19 +186,18 @@ public class SchoolFinderByLocalityShould : SchoolsUnitTestCase
     {
         Guid? id = localityId is null ? null : Guid.Parse(localityId);
 
-        Result<IReadOnlyCollection<SchoolResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolFinderByLocalityQueryMother.WithoutLocality(id),
             CancellationToken.None);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(SchoolErrors.LocalityFilterRequired);
+        await act.Should().ThrowAsync<SchoolExceptions.LocalityFilterRequired>();
         this.ShouldNotHaveSearched();
         this.ShouldNotHaveAskedAnyModule();
     }
 
     private static string NameOf(int index) => $"school-{index:000}";
 
-    private Task<Result<IReadOnlyCollection<SchoolResponse>>> Find(Guid localityId, string? name = null)
+    private Task<IReadOnlyCollection<SchoolResponse>> Find(Guid localityId, string? name = null)
         => this._useCase.ExecuteAsync(
             SchoolFinderByLocalityQueryMother.With(localityId, name),
             CancellationToken.None);

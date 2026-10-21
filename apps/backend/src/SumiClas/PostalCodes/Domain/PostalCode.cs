@@ -15,23 +15,23 @@ public sealed class PostalCode : AggregateRoot
         Code = code;
     }
 
-    public static Result<PostalCode> Create(Guid id, Guid localityId, string code)
+    public static PostalCode Create(Guid id, Guid localityId, string code)
     {
         if (id == Guid.Empty)
         {
-            return Result<PostalCode>.Failure(PostalCodeErrors.IdRequired);
+            throw new PostalCodeExceptions.IdRequired();
         }
         if (localityId == Guid.Empty)
         {
-            return Result<PostalCode>.Failure(PostalCodeErrors.LocalityRequired);
+            throw new PostalCodeExceptions.LocalityRequired();
         }
 
         var trimmed = code?.Trim() ?? string.Empty;
         if (trimmed.Length != Length || !trimmed.All(char.IsAsciiDigit))
         {
-            return Result<PostalCode>.Failure(PostalCodeErrors.CodeInvalid);
+            throw new PostalCodeExceptions.CodeInvalid();
         }
 
-        return Result<PostalCode>.Success(new PostalCode(id, localityId, trimmed));
+        return new PostalCode(id, localityId, trimmed);
     }
 }

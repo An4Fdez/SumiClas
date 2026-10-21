@@ -1,5 +1,6 @@
 namespace SumiClas.Tests.SchoolYears;
 
+using MediatR;
 using Moq;
 using SumiClas.Classes.Application;
 using SumiClas.SchoolYears.Domain;
@@ -7,7 +8,6 @@ using SumiClas.Schools.Application;
 using SumiClas.Schools.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Application;
-using SumiClas.Tests.Schools.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Users.Application;
 using SumiClas.Users.Domain;
@@ -60,16 +60,16 @@ public abstract class SchoolYearsUnitTestCase : UnitTestCase
     protected void ShouldFindSchool(Guid schoolId)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<SchoolFinderById.Query>(query => query.SchoolId == schoolId),
+                It.Is<SchoolEnsure.Query>(query => query.SchoolId == schoolId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<SchoolResponse>.Success(SchoolResponseMother.WithId(schoolId)));
+            .ReturnsAsync(Unit.Value);
 
     protected void ShouldNotFindSchool(Guid schoolId)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<SchoolFinderById.Query>(query => query.SchoolId == schoolId),
+                It.Is<SchoolEnsure.Query>(query => query.SchoolId == schoolId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<SchoolResponse>.Failure(SchoolErrors.NotFound));
+            .ThrowsAsync(new SchoolExceptions.NotFound());
 
     protected void ShouldFindClassesOfSchoolYear(Guid schoolYearId, params Guid[] classIds)
         => this.QueryBus

@@ -43,33 +43,33 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_school_error_without_adding_when_the_school_does_not_exist()
+    public async Task propagate_the_school_not_found_without_adding_when_the_school_does_not_exist()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldNotFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
             schoolId,
             StringMother.Random("year"),
             START_DATE,
             END_DATE));
 
-        result.Error.Should().Be(SchoolErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_the_school_error_before_validating_the_data_when_both_fail()
+    public async Task propagate_the_school_not_found_before_validating_the_data_when_both_fail()
     {
         Guid schoolId = GuidMother.Random();
         this.ShouldNotFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(Guid.Empty, schoolId, " ", END_DATE, START_DATE));
 
-        result.Error.Should().Be(SchoolErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolExceptions.NotFound>();
     }
 
     [Test]

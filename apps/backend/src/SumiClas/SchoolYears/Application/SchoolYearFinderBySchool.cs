@@ -26,11 +26,7 @@ public static class SchoolYearFinderBySchool
                 status = parsed;
             }
 
-            var school = await queryBus.Send(new SchoolFinderById.Query(query.SchoolId), ct);
-            if (school.IsFailure)
-            {
-                return Result<IReadOnlyCollection<SchoolYearResponse>>.Failure(school.Error!);
-            }
+            await queryBus.Send(new SchoolEnsure.Query(query.SchoolId), ct);
 
             var schoolYears = await repository.SearchAsync(new SchoolYearSpecification(schoolId: query.SchoolId, status: status), ct);
             IReadOnlyCollection<SchoolYearResponse> response = schoolYears

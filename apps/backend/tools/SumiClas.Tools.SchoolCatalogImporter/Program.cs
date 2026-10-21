@@ -134,7 +134,7 @@ var newProvinces = 0;
 foreach (var (key, spellings) in provinceSpellings.OrderBy(p => p.Key, StringComparer.Ordinal))
 {
     if (provinces.ContainsKey(key)) continue;
-    var province = Province.Create(Guid.NewGuid(), MostFrequent(spellings)).Value;
+    var province = Province.Create(Guid.NewGuid(), MostFrequent(spellings));
     provinces[key] = province;
     db.Provinces.Add(province);
     newProvinces++;
@@ -149,7 +149,7 @@ foreach (var ((provinceKey, localityKey), spellings) in localitySpellings
 {
     var provinceId = provinces[provinceKey].Id;
     if (localities.ContainsKey((provinceId, localityKey))) continue;
-    var locality = Locality.Create(Guid.NewGuid(), provinceId, MostFrequent(spellings)).Value;
+    var locality = Locality.Create(Guid.NewGuid(), provinceId, MostFrequent(spellings));
     localities[(provinceId, localityKey)] = locality;
     db.Localities.Add(locality);
     newLocalities++;
@@ -165,7 +165,7 @@ foreach (var (provinceKey, localityKey, code) in postalPairs
 {
     var localityId = localities[(provinces[provinceKey].Id, localityKey)].Id;
     if (postalCodes.ContainsKey((localityId, code))) continue;
-    var postalCode = PostalCode.Create(Guid.NewGuid(), localityId, code).Value;
+    var postalCode = PostalCode.Create(Guid.NewGuid(), localityId, code);
     postalCodes[(localityId, code)] = postalCode;
     db.PostalCodes.Add(postalCode);
     newPostalCodes++;
@@ -206,15 +206,18 @@ foreach (var row in usable)
         name = name[..MaxNameLength];
     }
 
-    var candidate = School.Create(Guid.NewGuid(), name, row.Code, localityId, postalCodeId, address, phone);
-    if (candidate.IsFailure)
+    School wanted;
+    try
+    {
+        wanted = School.Create(Guid.NewGuid(), name, row.Code, localityId, postalCodeId, address, phone);
+    }
+    catch (DomainException invalid)
     {
         invalidSchools++;
-        Console.Error.WriteLine($"Skipped {row.Code}: {candidate.Error!.Code}");
+        Console.Error.WriteLine($"Skipped {row.Code}: {invalid.Code}");
         continue;
     }
 
-    var wanted = candidate.Value;
     if (!schools.TryGetValue(row.Code, out var current))
     {
         db.Schools.Add(wanted);

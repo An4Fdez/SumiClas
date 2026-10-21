@@ -15,21 +15,21 @@ public sealed class Locality : AggregateRoot
         NormalizedName = normalizedName;
     }
 
-    public static Result<Locality> Create(Guid id, Guid provinceId, string name)
+    public static Locality Create(Guid id, Guid provinceId, string name)
     {
         if (id == Guid.Empty)
         {
-            return Result<Locality>.Failure(LocalityErrors.IdRequired);
+            throw new LocalityExceptions.IdRequired();
         }
         if (provinceId == Guid.Empty)
         {
-            return Result<Locality>.Failure(LocalityErrors.ProvinceRequired);
+            throw new LocalityExceptions.ProvinceRequired();
         }
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result<Locality>.Failure(LocalityErrors.NameRequired);
+            throw new LocalityExceptions.NameRequired();
         }
 
-        return Result<Locality>.Success(new Locality(id, provinceId, name.Trim(), TextNormalizer.Normalize(name)));
+        return new Locality(id, provinceId, name.Trim(), TextNormalizer.Normalize(name));
     }
 }

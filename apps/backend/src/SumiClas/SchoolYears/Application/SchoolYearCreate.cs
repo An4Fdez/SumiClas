@@ -15,11 +15,7 @@ public static class SchoolYearCreate
     {
         public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var school = await queryBus.Send(new SchoolFinderById.Query(command.SchoolId), ct);
-            if (school.IsFailure)
-            {
-                return Result.Failure(school.Error!);
-            }
+            await queryBus.Send(new SchoolEnsure.Query(command.SchoolId), ct);
 
             var creation = SchoolYear.Create(command.Id, command.SchoolId, command.Label, command.StartDate, command.EndDate);
             if (creation.IsFailure)

@@ -131,15 +131,15 @@ public class SchoolYearFinderBySchoolShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_school_error_without_searching_when_the_school_does_not_exist()
+    public async Task propagate_the_school_not_found_without_searching_when_the_school_does_not_exist()
     {
         Guid schoolId = GuidMother.Random();
         this.ShouldNotFindSchool(schoolId);
 
-        Result<IReadOnlyCollection<SchoolYearResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearFinderBySchoolQueryMother.WithSchoolId(schoolId));
 
-        result.Error.Should().Be(SchoolErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

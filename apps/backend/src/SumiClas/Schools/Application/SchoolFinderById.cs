@@ -1,32 +1,27 @@
 using MediatR;
 using SumiClas.Schools.Domain.Services;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 
 namespace SumiClas.Schools.Application;
 
 public static class SchoolFinderById
 {
-    public sealed record Query(Guid SchoolId) : IQuery<Result<SchoolResponse>>;
+    public sealed record Query(Guid SchoolId) : IQuery<SchoolResponse>;
 
     public sealed class Finder(SchoolFinder finder, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result<SchoolResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<SchoolResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var found = await finder.FindByIdAsync(query.SchoolId, ct);
-            if (found.IsFailure)
-            {
-                return Result<SchoolResponse>.Failure(found.Error!);
-            }
+            var school = await finder.FindByIdAsync(query.SchoolId, ct);
 
-            var responses = await SchoolResponseFactory.CreateAsync(queryBus, [found.Value], ct);
-            return Result<SchoolResponse>.Success(responses.Single());
+            var responses = await SchoolResponseFactory.CreateAsync(queryBus, [school], ct);
+            return responses.Single();
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<SchoolResponse>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, SchoolResponse>
     {
-        public Task<Result<SchoolResponse>> Handle(Query query, CancellationToken ct)
+        public Task<SchoolResponse> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

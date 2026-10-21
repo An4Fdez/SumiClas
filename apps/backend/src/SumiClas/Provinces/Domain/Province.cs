@@ -13,17 +13,17 @@ public sealed class Province : AggregateRoot
         NormalizedName = normalizedName;
     }
 
-    public static Result<Province> Create(Guid id, string name)
+    public static Province Create(Guid id, string name)
     {
         if (id == Guid.Empty)
         {
-            return Result<Province>.Failure(ProvinceErrors.IdRequired);
+            throw new ProvinceExceptions.IdRequired();
         }
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result<Province>.Failure(ProvinceErrors.NameRequired);
+            throw new ProvinceExceptions.NameRequired();
         }
 
-        return Result<Province>.Success(new Province(id, name.Trim(), TextNormalizer.Normalize(name)));
+        return new Province(id, name.Trim(), TextNormalizer.Normalize(name));
     }
 }

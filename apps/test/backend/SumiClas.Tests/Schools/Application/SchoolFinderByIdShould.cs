@@ -39,12 +39,10 @@ public class SchoolFinderByIdShould : SchoolsUnitTestCase
         School school = SchoolMother.WithContact(schoolName, localityId, postalCodeId, address, phone);
         this.ShouldFetchSchools(school);
 
-        Result<SchoolResponse> result = await this._useCase.ExecuteAsync(
+        SchoolResponse response = await this._useCase.ExecuteAsync(
             SchoolFinderByIdQueryMother.WithSchoolId(school.Id),
             CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        SchoolResponse response = result.Value;
         response.Name.Should().Be(schoolName);
         response.ProvinceName.Should().Be(provinceName);
         response.LocalityName.Should().Be(localityName);
@@ -54,16 +52,15 @@ public class SchoolFinderByIdShould : SchoolsUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_other_modules_when_the_school_is_unknown()
+    public async Task throw_not_found_without_asking_other_modules_when_the_school_is_unknown()
     {
         this.ShouldFetchNoSchools();
 
-        Result<SchoolResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolFinderByIdQueryMother.Random(),
             CancellationToken.None);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(SchoolErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolExceptions.NotFound>();
         this.ShouldNotHaveAskedLocalities();
     }
 

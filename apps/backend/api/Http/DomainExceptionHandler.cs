@@ -8,8 +8,9 @@ namespace SumiClas.Api.Http;
 /// declared for it (see <see cref="DomainExceptionEndpointExtensions.Maps{TException}"/>) and its code in the
 /// <c>code</c> extension. A domain exception the endpoint did not declare is a programming mistake: it is logged as an
 /// error and answered as a plain 500.
-/// Temporary bridge: a <see cref="ResultFailureException"/> needs no declaration, it is answered with the status the
-/// old <see cref="ResultExtensions"/> mapping gives its code.
+/// Temporary bridge: a <see cref="ResultFailureException"/>, and any domain exception that comes out of an endpoint
+/// that declares none (not moved to exceptions yet), is answered with the status the old
+/// <see cref="ResultExtensions"/> mapping gives its code.
 /// </summary>
 public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IExceptionHandler
 {
@@ -20,19 +21,20 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
             return false;
         }
 
-        if (domain is ResultFailureException legacy)
-        {
-            logger.LogInformation("Failed result {Code} thrown by a use case answered.", legacy.Code);
-            await legacy.Error.ToProblem().ExecuteAsync(http);
-            return true;
-        }
-
         // The exception handler middleware clears the endpoint of the request before it calls the handlers;
         // the feature keeps the original one.
         Endpoint? endpoint = http.Features.Get<IExceptionHandlerFeature>()?.Endpoint ?? http.GetEndpoint();
-        DomainExceptionStatus? declared = endpoint?.Metadata
-            .GetOrderedMetadata<DomainExceptionStatus>()
+        IReadOnlyList<DomainExceptionStatus> declarations =
+            endpoint?.Metadata.GetOrderedMetadata<DomainExceptionStatus>() ?? [];
+        DomainExceptionStatus? declared = declarations
             .FirstOrDefault(status => status.ExceptionType == domain.GetType());
+
+        if (declared is null && (domain is ResultFailureException || (endpoint is not null && declarations.Count == 0)))
+        {
+            logger.LogInformation("Domain exception {Code} answered with the status of the old mapping.", domain.Code);
+            await new Error(domain.Code, domain.Message).ToProblem().ExecuteAsync(http);
+            return true;
+        }
 
         if (declared is null)
         {
