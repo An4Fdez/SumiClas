@@ -419,7 +419,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_adding_when_the_school_year_of_the_class_is_archived()
+    public async Task throw_school_year_archived_without_adding_when_the_school_year_of_the_class_is_archived()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
@@ -429,17 +429,17 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_of_the_class_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_of_the_class_does_not_exist()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
@@ -449,12 +449,12 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 
@@ -523,7 +523,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_of_the_class_cannot_be_found()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_of_the_class_cannot_be_found()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
@@ -534,12 +534,12 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedCalendarEvents();
-        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, new SchoolYearExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 
@@ -563,7 +563,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_adding_the_school_event_when_the_class_is_archived()
+    public async Task throw_school_year_archived_without_adding_the_school_event_when_the_class_is_archived()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
@@ -573,12 +573,12 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 }

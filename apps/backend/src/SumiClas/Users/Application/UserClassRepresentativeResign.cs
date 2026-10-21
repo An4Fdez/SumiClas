@@ -24,11 +24,7 @@ public static class UserClassRepresentativeResign
             var userId = current.Value;
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var user = await repository.GetByIdAsync(userId, ct);
             if (user is null)

@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SumiClas.Api.Http;
 using SumiClas.Classes.Domain;
+using SumiClas.Schools.Domain;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
 
 [TestFixture]
@@ -33,6 +35,31 @@ public class DomainExceptionProfilesShould
         DeclaredBy(app).Should().BeEquivalentTo(
         [
             new DomainExceptionStatus(typeof(ClassExceptions.NotFound), StatusCodes.Status404NotFound),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_missing_school_as_404()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresSchool();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(SchoolExceptions.NotFound), StatusCodes.Status404NotFound),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_missing_school_year_as_404_and_an_archived_one_as_400()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresActiveSchoolYear();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(SchoolYearExceptions.NotFound), StatusCodes.Status404NotFound),
+            new DomainExceptionStatus(typeof(SchoolYearExceptions.Archived), StatusCodes.Status400BadRequest),
         ]);
     }
 

@@ -86,26 +86,18 @@ public static class CalendarEventCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var calendarEvent = validation.Value;
             if (scope == EventScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
-                if (school.IsFailure)
-                {
-                    return Result.Failure(school.Error!);
-                }
 
                 var creation = CalendarEvent.Create(
                     command.Id,
                     scope,
                     command.ClassId,
-                    school.Value,
+                    school,
                     type,
                     command.Title,
                     command.Date,

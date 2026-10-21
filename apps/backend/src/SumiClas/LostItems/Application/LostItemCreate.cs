@@ -82,26 +82,18 @@ public static class LostItemCreate
                 return access;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var lostItem = validation.Value;
             if (scope == ItemScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
-                if (school.IsFailure)
-                {
-                    return Result.Failure(school.Error!);
-                }
 
                 var creation = LostItem.Create(
                     command.Id,
                     scope,
                     command.ClassId,
-                    school.Value,
+                    school,
                     status,
                     command.Description,
                     command.PhotoUrl,

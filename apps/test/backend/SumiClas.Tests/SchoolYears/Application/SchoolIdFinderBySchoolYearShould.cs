@@ -26,20 +26,20 @@ public class SchoolIdFinderBySchoolYearShould : SchoolYearsUnitTestCase
         SchoolYear other = SchoolYearMother.Active(GuidMother.Random());
         this.ShouldFetchSchoolYears(other, requested);
 
-        Result<Guid> result = await this._useCase.ExecuteAsync(
+        Guid result = await this._useCase.ExecuteAsync(
             SchoolIdFinderBySchoolYearQueryMother.WithSchoolYearId(requested.Id));
 
-        result.Value.Should().Be(schoolId);
+        result.Should().Be(schoolId);
     }
 
     [Test]
-    public async Task return_not_found_when_the_school_year_does_not_exist()
+    public async Task throw_not_found_when_the_school_year_does_not_exist()
     {
         this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
-        Result<Guid> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolIdFinderBySchoolYearQueryMother.WithSchoolYearId(GuidMother.Random()));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
     }
 }

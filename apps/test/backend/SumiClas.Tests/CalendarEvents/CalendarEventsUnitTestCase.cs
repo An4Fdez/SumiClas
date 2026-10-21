@@ -1,5 +1,6 @@
 namespace SumiClas.Tests.CalendarEvents;
 
+using MediatR;
 using Moq;
 using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Application;
@@ -92,28 +93,28 @@ public abstract class CalendarEventsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
-    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
+            .ThrowsAsync(exception);
 
     protected void ShouldFindSchoolOfSchoolYear(Guid schoolYearId, Guid schoolId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SchoolIdFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Guid>.Success(schoolId));
+            .ReturnsAsync(schoolId);
 
-    protected void ShouldFailFindingSchoolOfSchoolYear(Guid schoolYearId, Error error)
+    protected void ShouldFailFindingSchoolOfSchoolYear(Guid schoolYearId, Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SchoolIdFinderBySchoolYear.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Guid>.Failure(error));
+            .ThrowsAsync(exception);
 
     protected void ShouldFindClass(Guid classId)
         => this.QueryBus

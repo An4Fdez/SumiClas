@@ -141,7 +141,7 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_marking_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_without_marking_when_the_school_year_is_archived()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -153,18 +153,18 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         expense.Participants.Single().HasPaid.Should().BeTrue();
     }
 
     [Test]
-    public async Task return_school_year_archived_when_the_guardian_is_not_a_participant_and_it_is_archived()
+    public async Task throw_school_year_archived_when_the_guardian_is_not_a_participant_and_it_is_archived()
     {
         Guid expenseId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
@@ -173,13 +173,13 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, GuidMother.Random()));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
     }
 
     [Test]

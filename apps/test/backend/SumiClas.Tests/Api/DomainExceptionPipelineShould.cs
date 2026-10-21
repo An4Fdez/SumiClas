@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
+using SumiClas.SchoolYears.Domain;
 using System.Net;
 using System.Text.Json;
 
@@ -41,6 +42,22 @@ public class DomainExceptionPipelineShould
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         (await BodyOf(response)).TryGetProperty("code", out _).Should().BeFalse();
+    }
+
+    [TestCase("/not-yet-converted-archived", HttpStatusCode.BadRequest, "SchoolYear.Archived")]
+    [TestCase("/not-yet-converted-missing", HttpStatusCode.NotFound, "SchoolYear.NotFound")]
+    public async Task answer_with_the_status_of_its_code_a_domain_exception_from_an_endpoint_that_declares_none(
+        string path,
+        HttpStatusCode expected,
+        string code)
+    {
+        await using WebApplication app = await StartAsync();
+        using HttpClient client = ClientOf(app);
+
+        HttpResponseMessage response = await client.GetAsync(path);
+
+        response.StatusCode.Should().Be(expected);
+        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(code);
     }
 
     [Test]
@@ -85,6 +102,8 @@ public class DomainExceptionPipelineShould
         app.MapGet("/undeclared", IResult () => throw new SampleExceptions.Forbidden())
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
         app.MapGet("/unexpected", IResult () => throw new InvalidOperationException());
+        app.MapGet("/not-yet-converted-archived", IResult () => throw new SchoolYearExceptions.Archived());
+        app.MapGet("/not-yet-converted-missing", IResult () => throw new SchoolYearExceptions.NotFound());
         await app.StartAsync();
         return app;
     }

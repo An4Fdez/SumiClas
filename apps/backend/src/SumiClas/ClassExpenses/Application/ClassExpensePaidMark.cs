@@ -39,11 +39,7 @@ public static class ClassExpensePaidMark
                 return permission;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             return classExpense.MarkAsPaid(command.GuardianId);
         }

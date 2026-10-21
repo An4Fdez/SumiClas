@@ -22,7 +22,7 @@ public static class ClassRename
 
             (await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct)).OrThrow();
 
-            (await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct)).OrThrow();
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             schoolClass.Rename(command.Name);
         }

@@ -15,7 +15,7 @@ public sealed class SchoolsEndpoints : IEndpoints
             Results.Ok(await sender.Send(new SchoolFinderById.Query(schoolId), ct)))
             .WithName("SchoolFinderById")
             .Produces<SchoolResponse>(StatusCodes.Status200OK)
-            .Maps<SchoolExceptions.NotFound>(StatusCodes.Status404NotFound);
+            .RequiresSchool();
 
         schools.MapGet("/", async (Guid? localityId, string? name, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new SchoolFinderByLocality.Query(localityId, name), ct)))

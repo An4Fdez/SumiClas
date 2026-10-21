@@ -111,36 +111,36 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_marking_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_without_marking_when_the_school_year_is_archived()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         LostItem lostItem = LostItemMother.ForClass(classId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         lostItem.Recovered.Should().BeFalse();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_marking_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_marking_when_the_school_year_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         LostItem lostItem = LostItemMother.ForClass(classId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         lostItem.Recovered.Should().BeFalse();
     }
 

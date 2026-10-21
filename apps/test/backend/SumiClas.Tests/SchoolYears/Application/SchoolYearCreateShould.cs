@@ -29,10 +29,9 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
         this.ShouldFindSchool(schoolId);
         this.ShouldCaptureAddedSchoolYears();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(schoolYearId, schoolId, "  " + label + " ", START_DATE, END_DATE));
 
-        result.IsSuccess.Should().BeTrue();
         SchoolYear added = this.Added.Single();
         added.Id.Should().Be(schoolYearId);
         added.SchoolId.Should().Be(schoolId);
@@ -73,87 +72,87 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_without_adding_when_the_school_year_id_is_empty()
+    public async Task throw_id_required_without_adding_when_the_school_year_id_is_empty()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             Guid.Empty,
             schoolId,
             StringMother.Random("year"),
             START_DATE,
             END_DATE));
 
-        result.Error.Should().Be(SchoolYearErrors.IdRequired);
+        await act.Should().ThrowAsync<SchoolYearExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_required_without_adding_when_the_school_id_is_empty()
+    public async Task throw_school_required_without_adding_when_the_school_id_is_empty()
     {
         this.ShouldCaptureAddedSchoolYears();
         this.ShouldFindSchool(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
             Guid.Empty,
             StringMother.Random("year"),
             START_DATE,
             END_DATE));
 
-        result.Error.Should().Be(SchoolYearErrors.SchoolRequired);
+        await act.Should().ThrowAsync<SchoolYearExceptions.SchoolRequired>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_label_required_without_adding_when_the_label_is_blank()
+    public async Task throw_label_required_without_adding_when_the_label_is_blank()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearCreateCommandMother.With(GuidMother.Random(), schoolId, "   ", START_DATE, END_DATE));
 
-        result.Error.Should().Be(SchoolYearErrors.LabelRequired);
+        await act.Should().ThrowAsync<SchoolYearExceptions.LabelRequired>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_invalid_date_range_without_adding_when_the_end_date_equals_the_start_date()
+    public async Task throw_invalid_date_range_without_adding_when_the_end_date_equals_the_start_date()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
             schoolId,
             StringMother.Random("year"),
             START_DATE,
             START_DATE));
 
-        result.Error.Should().Be(SchoolYearErrors.InvalidDateRange);
+        await act.Should().ThrowAsync<SchoolYearExceptions.InvalidDateRange>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_invalid_date_range_without_adding_when_the_end_date_is_before_the_start_date()
+    public async Task throw_invalid_date_range_without_adding_when_the_end_date_is_before_the_start_date()
     {
         this.ShouldCaptureAddedSchoolYears();
         Guid schoolId = GuidMother.Random();
         this.ShouldFindSchool(schoolId);
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
             schoolId,
             StringMother.Random("year"),
             END_DATE,
             START_DATE));
 
-        result.Error.Should().Be(SchoolYearErrors.InvalidDateRange);
+        await act.Should().ThrowAsync<SchoolYearExceptions.InvalidDateRange>();
         this.Added.Should().BeEmpty();
     }
 
@@ -164,14 +163,13 @@ public class SchoolYearCreateShould : SchoolYearsUnitTestCase
         this.ShouldFindSchool(schoolId);
         this.ShouldCaptureAddedSchoolYears();
 
-        Result result = await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(SchoolYearCreateCommandMother.With(
             GuidMother.Random(),
             schoolId,
             StringMother.Random("year"),
             START_DATE,
             START_DATE.AddDays(1)));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Should().ContainSingle();
     }
 }

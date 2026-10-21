@@ -45,11 +45,7 @@ public static class EnrollmentSuggestedCreate
             var newSchoolYearId = newClass.SchoolYearId;
             var previousSchoolYearId = previousClass.SchoolYearId;
 
-            var active = await queryBus.Send(new SchoolYearEnsureIsActive.Query(newSchoolYearId), ct);
-            if (active.IsFailure)
-            {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(active.Error!);
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(newSchoolYearId), ct);
 
             var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current.Value, command.ClassId), ct);
             if (!isRepresentative)

@@ -166,35 +166,35 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_before_checking_the_acting_user_when_both_fail()
+    public async Task throw_school_year_archived_before_checking_the_acting_user_when_both_fail()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         User acting = UserMother.Participant(classId);
         this.ShouldResolveCurrentUser(acting.Id);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(GuidMother.Random(), classId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_reading_users_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_reading_users_when_the_school_year_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(GuidMother.Random(), classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.ShouldNotHaveFetched();
     }
 

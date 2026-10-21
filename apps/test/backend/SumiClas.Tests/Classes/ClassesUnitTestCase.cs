@@ -1,5 +1,6 @@
 namespace SumiClas.Tests.Classes;
 
+using MediatR;
 using Moq;
 using SumiClas.Classes.Domain;
 using SumiClas.SchoolYears.Application;
@@ -51,14 +52,14 @@ public abstract class ClassesUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
-    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
+            .ThrowsAsync(exception);
 
     protected void ShouldAllowClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus

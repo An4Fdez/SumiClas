@@ -31,6 +31,7 @@ public sealed class ClassesEndpoints : IEndpoints
             .Maps<ClassExceptions.SchoolYearRequired>(StatusCodes.Status400BadRequest)
             .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
             .Maps<ClassExceptions.CreatorRequired>(StatusCodes.Status400BadRequest)
+            .RequiresActiveSchoolYear()
             .ConflictsOnSave();
 
         classes.MapPut("/{classId:guid}/name", async (Guid classId, ClassRenameRequest request, ISender sender, CancellationToken ct) =>
@@ -44,6 +45,7 @@ public sealed class ClassesEndpoints : IEndpoints
             .ProducesValidationProblem()
             .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
             .RequiresClass()
+            .RequiresActiveSchoolYear()
             .ConflictsOnSave();
 
         classes.MapGet("/{classId:guid}", async (Guid classId, ISender sender, CancellationToken ct) =>

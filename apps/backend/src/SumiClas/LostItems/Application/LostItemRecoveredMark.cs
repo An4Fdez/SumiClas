@@ -37,11 +37,7 @@ public static class LostItemRecoveredMark
             {
                 var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
-                var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-                if (schoolYear.IsFailure)
-                {
-                    return schoolYear;
-                }
+                await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             }
 
             lostItem.MarkAsRecovered();

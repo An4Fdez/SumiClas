@@ -266,7 +266,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_asking_for_the_subject_when_it_is_archived()
+    public async Task throw_school_year_archived_without_asking_for_the_subject_when_it_is_archived()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -276,13 +276,13 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassAccess(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: classId, subjectId: subjectId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<SubjectFinderById.Query>(), It.IsAny<CancellationToken>()),
@@ -290,7 +290,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -299,12 +299,12 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassAccess(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(classId: classId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 

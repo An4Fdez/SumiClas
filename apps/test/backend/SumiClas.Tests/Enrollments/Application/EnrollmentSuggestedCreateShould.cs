@@ -6,6 +6,7 @@ using SumiClas.Classes.Application;
 using SumiClas.Enrollments.Application;
 using SumiClas.Enrollments.Domain;
 using SumiClas.SchoolYears.Application;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Application;
@@ -115,21 +116,20 @@ public class EnrollmentSuggestedCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_that_failure_when_the_new_school_year_is_archived()
+    public async Task throw_that_failure_when_the_new_school_year_is_archived()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid oldClassId = GuidMother.Random();
         Guid newClassId = GuidMother.Random();
         Guid oldYearId = GuidMother.Random();
         Guid newYearId = GuidMother.Random();
-        Error archived = ErrorMother.With(code: "SchoolYear.Archived");
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFindClasses(oldClassId, oldYearId, newClassId, newYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(newYearId, archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(newYearId, new SchoolYearExceptions.Archived());
 
-        Result<EnrollmentSuggestedCreateResponse> result = await this.Suggest(newClassId, oldClassId);
+        Func<Task> act = () => this.Suggest(newClassId, oldClassId);
 
-        result.Error.Should().Be(archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 

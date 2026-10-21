@@ -108,7 +108,7 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_school_year_failure_before_checking_the_existing_enrollments()
+    public async Task throw_the_school_year_failure_before_checking_the_existing_enrollments()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
@@ -119,19 +119,19 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId, otherClassId);
         this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(studentId, otherClassId));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
@@ -141,12 +141,12 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldEnsureStudentGuardian(studentId, currentUserId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 

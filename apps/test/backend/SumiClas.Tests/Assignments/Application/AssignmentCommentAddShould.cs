@@ -160,7 +160,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_commenting_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_without_commenting_when_the_school_year_is_archived()
     {
         Guid assignmentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
@@ -170,18 +170,18 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
         this.ShouldAllowClassAccess(authorId, assignment.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         assignment.Comments.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_year_archived_when_the_text_is_blank_and_the_school_year_is_archived()
+    public async Task throw_school_year_archived_when_the_text_is_blank_and_the_school_year_is_archived()
     {
         Guid assignmentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
@@ -191,13 +191,13 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
         this.ShouldAllowClassAccess(authorId, assignment.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, "  "));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
     }
 
     [Test]

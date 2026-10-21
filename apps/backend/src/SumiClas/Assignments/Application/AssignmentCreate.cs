@@ -56,11 +56,7 @@ public static class AssignmentCreate
                 return access;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var subject = await queryBus.Send(new SubjectFinderById.Query(command.SubjectId), ct);
             if (subject.IsFailure)

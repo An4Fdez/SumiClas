@@ -27,58 +27,50 @@ public sealed class SchoolYear : AggregateRoot
         Status = status;
     }
 
-    public static Result<SchoolYear> Create(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
+    public static SchoolYear Create(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
     {
-        var validation = Validate(id, schoolId, label, startDate, endDate);
-        if (validation.IsFailure)
-        {
-            return Result<SchoolYear>.Failure(validation.Error!);
-        }
+        Validate(id, schoolId, label, startDate, endDate);
 
-        var schoolYear = new SchoolYear(id, schoolId, label.Trim(), startDate, endDate, SchoolYearStatus.Active);
-        return Result<SchoolYear>.Success(schoolYear);
+        return new SchoolYear(id, schoolId, label.Trim(), startDate, endDate, SchoolYearStatus.Active);
     }
 
-    private static Result Validate(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
+    private static void Validate(Guid id, Guid schoolId, string label, DateOnly startDate, DateOnly endDate)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(SchoolYearErrors.IdRequired);
+            throw new SchoolYearExceptions.IdRequired();
         }
         if (schoolId == Guid.Empty)
         {
-            return Result.Failure(SchoolYearErrors.SchoolRequired);
+            throw new SchoolYearExceptions.SchoolRequired();
         }
         if (string.IsNullOrWhiteSpace(label))
         {
-            return Result.Failure(SchoolYearErrors.LabelRequired);
+            throw new SchoolYearExceptions.LabelRequired();
         }
         if (endDate <= startDate)
         {
-            return Result.Failure(SchoolYearErrors.InvalidDateRange);
+            throw new SchoolYearExceptions.InvalidDateRange();
         }
-        return Result.Success();
     }
 
     /// <summary>
     /// Guard used by any future module (via the MediatR QueryBus) before writing
     /// to anything hanging off a Class that belongs to this school year.
     /// </summary>
-    public Result EnsureIsActive()
+    public void EnsureIsActive()
     {
-        return IsArchived ? Result.Failure(SchoolYearErrors.Archived) : Result.Success();
+        if (IsArchived)
+        {
+            throw new SchoolYearExceptions.Archived();
+        }
     }
 
-    public Result Archive(IClock clock)
+    public void Archive(IClock clock)
     {
-        var activeCheck = EnsureIsActive();
-        if (activeCheck.IsFailure)
-        {
-            return activeCheck;
-        }
+        EnsureIsActive();
 
         Status = SchoolYearStatus.Archived;
         AddDomainEvent(new SchoolYearArchivedDomainEvent(Id, clock));
-        return Result.Success();
     }
 }

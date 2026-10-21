@@ -39,10 +39,6 @@ public static class CalendarEventFinderByClass
             }
 
             var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
-            if (school.IsFailure)
-            {
-                return Result<IReadOnlyCollection<CalendarEventResponse>>.Failure(school.Error!);
-            }
 
             var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
             var studentIds = enrollments
@@ -51,7 +47,7 @@ public static class CalendarEventFinderByClass
                 .Distinct()
                 .ToList();
 
-            var events = (await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.School, schoolId: school.Value), ct)).ToList();
+            var events = (await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.School, schoolId: school), ct)).ToList();
             events.AddRange(await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.Class, classId: query.ClassId), ct));
             if (studentIds.Count > 0)
             {

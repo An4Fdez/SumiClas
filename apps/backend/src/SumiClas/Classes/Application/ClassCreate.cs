@@ -19,7 +19,7 @@ public static class ClassCreate
 
             var schoolClass = Class.Create(command.Id, command.SchoolYearId, command.Name, current, clock);
 
-            (await queryBus.Send(new SchoolYearEnsureIsActive.Query(command.SchoolYearId), ct)).OrThrow();
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(command.SchoolYearId), ct);
 
             await repository.AddAsync(schoolClass, ct);
         }

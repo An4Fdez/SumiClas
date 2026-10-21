@@ -63,7 +63,7 @@ public class SubjectCreateShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_adding_when_the_school_year_is_archived()
+    public async Task throw_school_year_archived_without_adding_when_the_school_year_is_archived()
     {
         this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
@@ -72,17 +72,17 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
         this.ShouldCaptureAddedSubjects();
         Guid classId = GuidMother.Random();
@@ -91,12 +91,12 @@ public class SubjectCreateShould : SubjectsUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SubjectCreateCommandMother.With(GuidMother.Random(), classId, StringMother.Random("subject")));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 

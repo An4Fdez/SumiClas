@@ -1,5 +1,6 @@
 namespace SumiClas.Tests.Subjects;
 
+using MediatR;
 using Moq;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
@@ -85,14 +86,14 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
-    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Error error)
+    protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Exception exception)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
+            .ThrowsAsync(exception);
 
     protected void ShouldAllowClassAccess(Guid userId, Guid classId)
         => this.QueryBus

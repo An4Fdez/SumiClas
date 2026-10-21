@@ -1,28 +1,26 @@
 using MediatR;
 using SumiClas.SchoolYears.Domain.Services;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 
 namespace SumiClas.SchoolYears.Application;
 
 public static class SchoolYearEnsureIsActive
 {
-    public sealed record Query(Guid SchoolYearId) : IQuery<Result>;
+    public sealed record Query(Guid SchoolYearId) : IQuery<Unit>;
 
     public sealed class EnsureIsActive(SchoolYearFinder finder) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var found = await finder.FindByIdAsync(query.SchoolYearId, ct);
-            return found.IsFailure
-                ? Result.Failure(found.Error!)
-                : found.Value.EnsureIsActive();
+            var schoolYear = await finder.FindByIdAsync(query.SchoolYearId, ct);
+            schoolYear.EnsureIsActive();
+            return Unit.Value;
         }
     }
 
-    public sealed class Handler(EnsureIsActive ensureIsActive) : IRequestHandler<Query, Result>
+    public sealed class Handler(EnsureIsActive ensureIsActive) : IRequestHandler<Query, Unit>
     {
-        public Task<Result> Handle(Query query, CancellationToken ct)
+        public Task<Unit> Handle(Query query, CancellationToken ct)
             => ensureIsActive.ExecuteAsync(query, ct);
     }
 }

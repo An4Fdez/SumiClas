@@ -362,7 +362,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_archived_without_asking_for_the_participants_when_it_is_archived()
+    public async Task throw_school_year_archived_without_asking_for_the_participants_when_it_is_archived()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -371,12 +371,12 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserFinderByIds.Query>(), It.IsAny<CancellationToken>()),
@@ -384,7 +384,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
+    public async Task throw_school_year_not_found_without_adding_when_the_school_year_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -393,12 +393,12 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldAllowClassRepresentative(authorId, classId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 

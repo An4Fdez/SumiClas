@@ -150,15 +150,14 @@ public class ClassCreateShould : ClassesUnitTestCase
         this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
         Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             schoolYearId,
             StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
     }
 
@@ -168,15 +167,14 @@ public class ClassCreateShould : ClassesUnitTestCase
         this.ShouldCaptureAddedClasses();
         Guid schoolYearId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
         Func<Task> act = () => this._useCase.ExecuteAsync(ClassCreateCommandMother.With(
             GuidMother.Random(),
             schoolYearId,
             StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 }

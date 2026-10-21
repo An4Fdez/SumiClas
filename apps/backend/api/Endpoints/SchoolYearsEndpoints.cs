@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.SchoolYears.Application;
+using SumiClas.SchoolYears.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -20,33 +21,40 @@ public sealed class SchoolYearsEndpoints : IEndpoints
 
         schoolYears.MapPost("/", async (SchoolYearCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(
+            await sender.Send(
                 new SchoolYearCreate.Command(request.Id, request.SchoolId, request.Label, request.StartDate, request.EndDate), ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("SchoolYearCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<SchoolYearExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<SchoolYearExceptions.SchoolRequired>(StatusCodes.Status400BadRequest)
+            .Maps<SchoolYearExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
+            .Maps<SchoolYearExceptions.InvalidDateRange>(StatusCodes.Status400BadRequest)
+            .RequiresSchool()
+            .ConflictsOnSave();
 
         schoolYears.MapPost("/{schoolYearId:guid}/archive", async (Guid schoolYearId, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new SchoolYearArchive.Command(schoolYearId), ct);
+            await sender.Send(new SchoolYearArchive.Command(schoolYearId), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("SchoolYearArchive")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<SchoolYearExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<SchoolYearExceptions.Archived>(StatusCodes.Status400BadRequest)
+            .ConflictsOnSave();
 
         schoolYears.MapGet("/", async (Guid schoolId, string? status, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new SchoolYearFinderBySchool.Query(schoolId, status), ct)).ToOk())
+            Results.Ok(await sender.Send(new SchoolYearFinderBySchool.Query(schoolId, status), ct)))
             .WithName("SchoolYearFinderBySchool")
             .Produces<IReadOnlyCollection<SchoolYearResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<SchoolYearExceptions.InvalidStatus>(StatusCodes.Status400BadRequest)
+            .RequiresSchool();
     }
 }

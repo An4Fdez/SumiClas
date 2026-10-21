@@ -131,20 +131,20 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_school_error_without_searching_when_the_school_of_the_class_cannot_be_found()
+    public async Task throw_the_school_error_without_searching_when_the_school_of_the_class_cannot_be_found()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();
         Guid currentUserId = GuidMother.Random();
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, new SchoolYearExceptions.NotFound());
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassAccess(currentUserId, classId);
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.ShouldHaveSearched(0);
     }
 

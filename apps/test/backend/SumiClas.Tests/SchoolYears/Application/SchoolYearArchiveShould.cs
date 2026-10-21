@@ -35,10 +35,9 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldDenyClassRepresentative(currentUserId, otherClassId);
         this.ShouldAllowClassRepresentative(currentUserId, delegateClassId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        result.IsSuccess.Should().BeTrue();
         schoolYear.Status.Should().Be(SchoolYearStatus.Archived);
         schoolYear.IsArchived.Should().BeTrue();
     }
@@ -63,7 +62,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task return_archived_and_raise_no_second_event_when_the_school_year_is_archived_twice()
+    public async Task throw_archived_and_raise_no_second_event_when_the_school_year_is_archived_twice()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         Guid classId = GuidMother.Random();
@@ -74,16 +73,16 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldAllowClassRepresentative(currentUserId, classId);
         await this._useCase.ExecuteAsync(SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         schoolYear.Status.Should().Be(SchoolYearStatus.Archived);
         schoolYear.DomainEvents.Should().ContainSingle();
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_and_keep_it_active_when_the_user_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_and_keep_it_active_when_the_user_is_not_a_delegate()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         Guid firstClassId = GuidMother.Random();
@@ -95,51 +94,54 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldDenyClassRepresentative(currentUserId, firstClassId);
         this.ShouldDenyClassRepresentative(currentUserId, secondClassId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
         schoolYear.Status.Should().Be(SchoolYearStatus.Active);
         schoolYear.DomainEvents.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_and_keep_it_active_when_the_school_year_has_no_classes()
+    public async Task throw_class_representative_forbidden_and_keep_it_active_when_the_school_year_has_no_classes()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
         schoolYear.Status.Should().Be(SchoolYearStatus.Active);
     }
 
     [Test]
-    public async Task return_unauthenticated_and_keep_it_active_when_there_is_no_current_user()
+    public async Task throw_unauthenticated_and_keep_it_active_when_there_is_no_current_user()
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldHaveNoCurrentUser();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        result.Error.Should().Be(AuthenticationErrors.Unauthenticated);
+        (await act.Should().ThrowAsync<ResultFailureException>())
+            .Which.Error.Should().Be(AuthenticationErrors.Unauthenticated);
         schoolYear.Status.Should().Be(SchoolYearStatus.Active);
     }
 
     [Test]
-    public async Task return_not_found_when_the_school_year_does_not_exist()
+    public async Task throw_not_found_when_the_school_year_does_not_exist()
     {
         this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(GuidMother.Random()));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
     }
 }

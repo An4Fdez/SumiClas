@@ -81,13 +81,12 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         schoolClass.Name.Should().Be(oldName);
     }
 
@@ -100,12 +99,11 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.Archived);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
 
         Func<Task> act = () => this._useCase.ExecuteAsync(ClassRenameCommandMother.With(schoolClass.Id, " "));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
     }
 
     [Test]
@@ -118,13 +116,12 @@ public class ClassRenameShould : ClassesUnitTestCase
         Guid currentUserId = GuidMother.Random();
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, SchoolYearErrors.NotFound);
+        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.NotFound());
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         schoolClass.Name.Should().Be(oldName);
     }
 

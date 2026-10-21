@@ -59,11 +59,7 @@ public static class ClassExpenseCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var participantIds = creation.Value.Participants.Select(participant => participant.GuardianId).ToList();
             var participants = await queryBus.Send(new UserFinderByIds.Query(participantIds), ct);

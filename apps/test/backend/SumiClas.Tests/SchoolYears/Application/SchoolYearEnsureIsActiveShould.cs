@@ -24,32 +24,32 @@ public class SchoolYearEnsureIsActiveShould : SchoolYearsUnitTestCase
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         this.ShouldFetchSchoolYears(schoolYear, SchoolYearMother.Archived(GuidMother.Random()));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(schoolYear.Id));
 
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
-    public async Task return_archived_when_the_school_year_is_archived()
+    public async Task throw_archived_when_the_school_year_is_archived()
     {
         SchoolYear schoolYear = SchoolYearMother.Archived(GuidMother.Random());
         this.ShouldFetchSchoolYears(schoolYear, SchoolYearMother.Active(GuidMother.Random()));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(schoolYear.Id));
 
-        result.Error.Should().Be(SchoolYearErrors.Archived);
+        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
     }
 
     [Test]
-    public async Task return_not_found_when_the_school_year_does_not_exist()
+    public async Task throw_not_found_when_the_school_year_does_not_exist()
     {
         this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearEnsureIsActiveQueryMother.WithSchoolYearId(GuidMother.Random()));
 
-        result.Error.Should().Be(SchoolYearErrors.NotFound);
+        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
     }
 }

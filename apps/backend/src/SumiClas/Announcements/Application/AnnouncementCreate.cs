@@ -92,26 +92,18 @@ public static class AnnouncementCreate
                 return representative;
             }
 
-            var schoolYear = await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
-            if (schoolYear.IsFailure)
-            {
-                return schoolYear;
-            }
+            await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
             var announcement = validation.Value;
             if (scope == AnnouncementScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
-                if (school.IsFailure)
-                {
-                    return Result.Failure(school.Error!);
-                }
 
                 var creation = Announcement.Create(
                     command.Id,
                     scope,
                     command.ClassId,
-                    school.Value,
+                    school,
                     command.Title,
                     command.Body,
                     priority,
