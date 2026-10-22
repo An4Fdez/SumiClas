@@ -11,8 +11,8 @@ public static class WebApplicationMigrationExtensions
     /// </summary>
     public static WebApplication ApplySumiClasMigrations(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<SumiClasDbContext>();
+        using IServiceScope scope = app.Services.CreateScope();
+        SumiClasDbContext dbContext = scope.ServiceProvider.GetRequiredService<SumiClasDbContext>();
         dbContext.Database.Migrate();
 
         return app;

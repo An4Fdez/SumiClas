@@ -8,7 +8,7 @@ public sealed class ProvincesEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var provinces = app.MapGroup("/provinces").WithTags("Provinces");
+        RouteGroupBuilder provinces = app.MapGroup("/provinces").WithTags("Provinces");
 
         provinces.MapGet("/", async (ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new ProvinceFinderAll.Query(), ct)))

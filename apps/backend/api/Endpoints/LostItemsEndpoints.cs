@@ -19,7 +19,7 @@ public sealed class LostItemsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var lostItems = app.MapGroup("/lost-items").WithTags("LostItems");
+        RouteGroupBuilder lostItems = app.MapGroup("/lost-items").WithTags("LostItems");
 
         lostItems.MapPost("/", async (LostItemCreateRequest request, ISender sender, CancellationToken ct) =>
         {

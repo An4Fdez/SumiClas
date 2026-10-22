@@ -8,7 +8,7 @@ public sealed class SchoolsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var schools = app.MapGroup("/schools").WithTags("Schools");
+        RouteGroupBuilder schools = app.MapGroup("/schools").WithTags("Schools");
 
         schools.MapGet("/{schoolId:guid}", async (Guid schoolId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new SchoolFinderById.Query(schoolId), ct)))

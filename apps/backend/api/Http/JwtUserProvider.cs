@@ -10,9 +10,9 @@ public sealed class JwtUserProvider(IHttpContextAccessor httpContextAccessor) : 
 
     public Guid GetCurrentUserId()
     {
-        var userIdHttp = httpContextAccessor.HttpContext?.User.FindFirst(UserIdClaim)?.Value;
+        string? userIdHttp = httpContextAccessor.HttpContext?.User.FindFirst(UserIdClaim)?.Value;
 
-        return Guid.TryParse(userIdHttp, out var userId) && userId != Guid.Empty
+        return Guid.TryParse(userIdHttp, out Guid userId) && userId != Guid.Empty
             ? userId
             : throw new AuthenticationExceptions.Unauthenticated();
     }

@@ -26,7 +26,7 @@ public static class ApiSecurityServiceCollectionExtensions
                 o => RefreshCookie.TryParseSameSite(o.SameSite, out _),
                 "Jwt:RefreshCookie:SameSite debe ser Strict, Lax o None.")
             .Validate(
-                o => !RefreshCookie.TryParseSameSite(o.SameSite, out var sameSite) || sameSite != SameSiteMode.None || o.Secure,
+                o => !RefreshCookie.TryParseSameSite(o.SameSite, out SameSiteMode sameSite) || sameSite != SameSiteMode.None || o.Secure,
                 "Jwt:RefreshCookie:SameSite=None exige Jwt:RefreshCookie:Secure=true.")
             .ValidateOnStart();
 

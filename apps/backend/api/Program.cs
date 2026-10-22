@@ -1,8 +1,9 @@
 using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Endpoints;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -23,7 +24,7 @@ builder.Services.AddSumiClasRateLimiting(builder.Configuration);
 builder.Services.AddSumiClasExceptionHandling();
 
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 app.ApplySumiClasMigrations();
 
 // First in the pipeline, so it also catches what comes out of the rest of the middleware and of the endpoints.
@@ -42,7 +43,7 @@ app.UseSwaggerUI(swaggerUiOptions =>
 {
     if (app.DescribeApiVersions().Reverse().Any())
     {
-        foreach (var apiVersion in app.DescribeApiVersions().Reverse())
+        foreach (ApiVersionDescription apiVersion in app.DescribeApiVersions().Reverse())
         {
             swaggerUiOptions.SwaggerEndpoint($"/openapi/{apiVersion.GroupName}.json",
                 apiVersion.GroupName.ToUpperInvariant());

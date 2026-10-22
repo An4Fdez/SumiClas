@@ -18,7 +18,7 @@ public sealed class ClassExpensesEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var classExpenses = app.MapGroup("/class-expenses").WithTags("ClassExpenses");
+        RouteGroupBuilder classExpenses = app.MapGroup("/class-expenses").WithTags("ClassExpenses");
 
         classExpenses.MapPost("/", async (ClassExpenseCreateRequest request, ISender sender, CancellationToken ct) =>
         {

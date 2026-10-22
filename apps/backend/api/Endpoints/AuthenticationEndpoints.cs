@@ -24,11 +24,11 @@ public sealed class AuthenticationEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var authentication = app.MapGroup("/auth")
+        RouteGroupBuilder authentication = app.MapGroup("/auth")
             .WithTags("Authentication")
             .AllowAnonymous();
 
-        var credentials = authentication.MapGroup(string.Empty)
+        RouteGroupBuilder credentials = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthPolicy);
 
         credentials.MapPost("/register", async (AccountRegisterRequest request, ISender sender, CancellationToken ct) =>
@@ -50,7 +50,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 TimeProvider time,
                 CancellationToken ct) =>
         {
-            var session = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
+            SessionResponse session = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
 
             return Respond(session, response, cookieOptions.Value, time);
         })
@@ -59,7 +59,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
-        var session = authentication.MapGroup(string.Empty)
+        RouteGroupBuilder session = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthRefreshPolicy);
 
         session.MapPost("/refresh", async (
@@ -70,11 +70,11 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 TimeProvider time,
                 CancellationToken ct) =>
         {
-            var options = cookieOptions.Value;
-            var refreshToken = RefreshCookie.Read(request, options);
+            RefreshCookieOptions options = cookieOptions.Value;
+            string? refreshToken = RefreshCookie.Read(request, options);
             try
             {
-                var rotated = await sender.Send(new SessionRotate.Command(refreshToken), ct);
+                SessionResponse rotated = await sender.Send(new SessionRotate.Command(refreshToken), ct);
 
                 return Respond(rotated, response, options, time);
             }
@@ -105,7 +105,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 IOptions<RefreshCookieOptions> cookieOptions,
                 CancellationToken ct) =>
         {
-            var options = cookieOptions.Value;
+            RefreshCookieOptions options = cookieOptions.Value;
             await sender.Send(new SessionRevoke.Command(RefreshCookie.Read(request, options)), ct);
 
             RefreshCookie.Clear(response, options);

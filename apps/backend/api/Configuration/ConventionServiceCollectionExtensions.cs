@@ -10,16 +10,16 @@ public static class ConventionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRepositoriesByConvention(this IServiceCollection services, Assembly assembly)
     {
-        var repositories = assembly.GetTypes().Where(type =>
+        IEnumerable<Type> repositories = assembly.GetTypes().Where(type =>
             type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
             && type.Name.EndsWith("Repository", StringComparison.Ordinal));
 
-        foreach (var repository in repositories)
+        foreach (Type repository in repositories)
         {
-            var contracts = repository.GetInterfaces()
+            IEnumerable<Type> contracts = repository.GetInterfaces()
                 .Where(contract => contract.Name.EndsWith("Repository", StringComparison.Ordinal));
 
-            foreach (var contract in contracts)
+            foreach (Type contract in contracts)
             {
                 services.AddScoped(contract, repository);
             }
@@ -33,12 +33,12 @@ public static class ConventionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddDomainServicesByConvention(this IServiceCollection services, Assembly assembly)
     {
-        var domainServices = assembly.GetTypes().Where(type =>
+        IEnumerable<Type> domainServices = assembly.GetTypes().Where(type =>
             type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
             && type.Namespace is not null
             && type.Namespace.EndsWith(".Domain.Services", StringComparison.Ordinal));
 
-        foreach (var domainService in domainServices)
+        foreach (Type domainService in domainServices)
         {
             services.AddScoped(domainService);
         }
@@ -52,14 +52,14 @@ public static class ConventionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddDomainEventHandlersByConvention(this IServiceCollection services, Assembly assembly)
     {
-        var handlers = assembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false });
+        IEnumerable<Type> handlers = assembly.GetTypes().Where(type => type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false });
 
-        foreach (var handler in handlers)
+        foreach (Type handler in handlers)
         {
-            var contracts = handler.GetInterfaces().Where(contract =>
+            IEnumerable<Type> contracts = handler.GetInterfaces().Where(contract =>
                 contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>));
 
-            foreach (var contract in contracts)
+            foreach (Type contract in contracts)
             {
                 services.AddScoped(contract, handler);
             }
@@ -73,11 +73,11 @@ public static class ConventionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddUseCasesByConvention(this IServiceCollection services, Assembly assembly)
     {
-        var useCases = assembly.GetTypes().Where(type =>
+        IEnumerable<Type> useCases = assembly.GetTypes().Where(type =>
             type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
             && typeof(IUseCase).IsAssignableFrom(type));
 
-        foreach (var useCase in useCases)
+        foreach (Type useCase in useCases)
         {
             services.AddScoped(useCase);
         }

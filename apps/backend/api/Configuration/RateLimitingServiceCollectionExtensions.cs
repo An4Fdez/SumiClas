@@ -27,7 +27,7 @@ public static class RateLimitingServiceCollectionExtensions
             AddFixedWindowByIp(options, AuthRefreshPolicy, configuration, "RateLimiting:AuthRefresh", defaultPermitLimit: 30);
             options.OnRejected = async (context, ct) =>
             {
-                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
                 {
                     context.HttpContext.Response.Headers.RetryAfter =
                         ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
@@ -48,8 +48,8 @@ public static class RateLimitingServiceCollectionExtensions
     private static void AddFixedWindowByIp(
         RateLimiterOptions options, string policyName, IConfiguration configuration, string section, int defaultPermitLimit)
     {
-        var permitLimit = configuration.GetValue($"{section}:PermitLimit", defaultPermitLimit);
-        var window = TimeSpan.FromSeconds(configuration.GetValue($"{section}:WindowSeconds", 60));
+        int permitLimit = configuration.GetValue($"{section}:PermitLimit", defaultPermitLimit);
+        TimeSpan window = TimeSpan.FromSeconds(configuration.GetValue($"{section}:WindowSeconds", 60));
 
         options.AddPolicy(policyName, httpContext => RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",

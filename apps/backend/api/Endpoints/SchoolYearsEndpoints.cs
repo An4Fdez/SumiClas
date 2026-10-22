@@ -16,7 +16,7 @@ public sealed class SchoolYearsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var schoolYears = app.MapGroup("/school-years").WithTags("SchoolYears");
+        RouteGroupBuilder schoolYears = app.MapGroup("/school-years").WithTags("SchoolYears");
 
         schoolYears.MapPost("/", async (SchoolYearCreateRequest request, ISender sender, CancellationToken ct) =>
         {

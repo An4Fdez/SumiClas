@@ -9,7 +9,7 @@ public sealed class UsersEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var users = app.MapGroup("/users").WithTags("Users");
+        RouteGroupBuilder users = app.MapGroup("/users").WithTags("Users");
 
         users.MapPut(
             "/{userId:guid}/class-representative-roles/{classId:guid}",

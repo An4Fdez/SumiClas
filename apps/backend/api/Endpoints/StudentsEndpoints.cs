@@ -18,7 +18,7 @@ public sealed class StudentsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var students = app.MapGroup("/students").WithTags("Students");
+        RouteGroupBuilder students = app.MapGroup("/students").WithTags("Students");
 
         students.MapPost("/", async (StudentRegisterRequest request, ISender sender, CancellationToken ct) =>
         {

@@ -45,7 +45,7 @@ public static class OpenApiSecurityServiceCollectionExtensions
 
         public Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
         {
-            var isAnonymous = context.Description.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any();
+            bool isAnonymous = context.Description.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any();
             if (isAnonymous)
             {
                 return Task.CompletedTask;

@@ -20,7 +20,7 @@ public sealed class AssignmentsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var assignments = app.MapGroup("/assignments").WithTags("Assignments");
+        RouteGroupBuilder assignments = app.MapGroup("/assignments").WithTags("Assignments");
 
         assignments.MapPost("/", async (AssignmentCreateRequest request, ISender sender, CancellationToken ct) =>
         {

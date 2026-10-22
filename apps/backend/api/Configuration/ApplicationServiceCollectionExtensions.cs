@@ -1,3 +1,4 @@
+using System.Reflection;
 using SumiClas.Shared.Application;
 
 namespace SumiClas.Api.Configuration;
@@ -6,7 +7,7 @@ public static class ApplicationServiceCollectionExtensions
 {
     public static IServiceCollection AddSumiClasApplication(this IServiceCollection services)
     {
-        var assembly = typeof(IUnitOfWork).Assembly;
+        Assembly assembly = typeof(IUnitOfWork).Assembly;
 
         services.AddMediatR(configuration =>
         {

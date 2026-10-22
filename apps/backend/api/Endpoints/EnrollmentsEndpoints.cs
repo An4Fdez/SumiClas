@@ -12,7 +12,7 @@ public sealed class EnrollmentsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var enrollments = app.MapGroup("/enrollments").WithTags("Enrollments");
+        RouteGroupBuilder enrollments = app.MapGroup("/enrollments").WithTags("Enrollments");
 
         enrollments.MapPost("/", async (EnrollmentCreateRequest request, ISender sender, CancellationToken ct) =>
         {

@@ -5,13 +5,13 @@ public static class RefreshCookie
 {
     public static string? Read(HttpRequest request, RefreshCookieOptions options)
     {
-        var value = request.Cookies[options.Name];
+        string? value = request.Cookies[options.Name];
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     public static void Write(HttpResponse response, string rawValue, DateTimeOffset expiresAt, DateTimeOffset now, RefreshCookieOptions options)
     {
-        var cookie = BaseOptions(options);
+        CookieOptions cookie = BaseOptions(options);
         cookie.Expires = expiresAt;
         cookie.MaxAge = expiresAt - now;
         response.Cookies.Append(options.Name, rawValue, cookie);
@@ -19,7 +19,7 @@ public static class RefreshCookie
 
     public static void Clear(HttpResponse response, RefreshCookieOptions options)
     {
-        var cookie = BaseOptions(options);
+        CookieOptions cookie = BaseOptions(options);
         cookie.Expires = DateTimeOffset.UnixEpoch;
         cookie.MaxAge = TimeSpan.Zero;
         response.Cookies.Append(options.Name, string.Empty, cookie);
@@ -46,7 +46,7 @@ public static class RefreshCookie
 
     private static CookieOptions BaseOptions(RefreshCookieOptions options)
     {
-        TryParseSameSite(options.SameSite, out var sameSite);
+        TryParseSameSite(options.SameSite, out SameSiteMode sameSite);
 
         return new CookieOptions
         {

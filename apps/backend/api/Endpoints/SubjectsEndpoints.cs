@@ -11,7 +11,7 @@ public sealed class SubjectsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        var subjects = app.MapGroup("/subjects").WithTags("Subjects");
+        RouteGroupBuilder subjects = app.MapGroup("/subjects").WithTags("Subjects");
 
         subjects.MapPost("/", async (SubjectCreateRequest request, ISender sender, CancellationToken ct) =>
         {

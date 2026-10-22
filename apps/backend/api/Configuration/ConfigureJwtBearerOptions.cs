@@ -19,7 +19,7 @@ public sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions) :
             return;
         }
 
-        var jwt = jwtOptions.Value;
+        JwtOptions jwt = jwtOptions.Value;
 
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
