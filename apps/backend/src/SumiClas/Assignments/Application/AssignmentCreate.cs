@@ -18,11 +18,11 @@ public static class AssignmentCreate
         Guid SubjectId,
         string Title,
         string? Description,
-        DateOnly DueDate) : IRequest<Result>, ICommand;
+        DateOnly DueDate) : IRequest, ICommand;
 
     public sealed class Create(IAssignmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
@@ -30,13 +30,9 @@ public static class AssignmentCreate
 
             // IsProposal depends on a lookup, so the aggregate is built twice: once only to validate the
             // input before any IO (the provisional flag is discarded), and once with the real flag.
-            var validation = Assignment.Create(
+            Assignment.Create(
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
                 command.DueDate, authorId, isProposal: true, clock);
-            if (validation.IsFailure)
-            {
-                return Result.Failure(validation.Error!);
-            }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
@@ -49,29 +45,23 @@ public static class AssignmentCreate
             var subject = await queryBus.Send(new SubjectFinderById.Query(command.SubjectId), ct);
             if (subject.ClassId != command.ClassId)
             {
-                return Result.Failure(AssignmentErrors.SubjectNotInClass);
+                throw new AssignmentExceptions.SubjectNotInClass();
             }
 
             var isClassRepresentative = await queryBus.Send(
                 new UserIsClassRepresentative.Query(authorId, command.ClassId), ct);
 
-            var creation = Assignment.Create(
+            var assignment = Assignment.Create(
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
                 command.DueDate, authorId, isProposal: !isClassRepresentative, clock);
-            if (creation.IsFailure)
-            {
-                return Result.Failure(creation.Error!);
-            }
 
-            await repository.AddAsync(creation.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(assignment, ct);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

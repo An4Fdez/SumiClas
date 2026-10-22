@@ -66,10 +66,10 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             UserClassMemberResponseMother.Representative(commenterId, commenterName));
         this.ShouldSearchAssignments(assignment, AssignmentMother.With(classId: GuidMother.Random()));
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        AssignmentResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        AssignmentResponse item = result.Items.Should().ContainSingle().Subject;
         item.Id.Should().Be(assignment.Id);
         item.ClassId.Should().Be(classId);
         item.SubjectId.Should().Be(subjectId);
@@ -89,7 +89,7 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         item.Comments.Select(comment => comment.CreatedAt).Should().Equal(Now.AddMinutes(1), Now.AddMinutes(2));
         item.Comments.Select(comment => comment.Id)
             .Should().Equal(assignment.Comments.OrderBy(comment => comment.CreatedAt).Select(comment => comment.Id));
-        result.Value.NextCursor.Should().BeNull();
+        result.NextCursor.Should().BeNull();
         this.ShouldHaveAskedForClass(classId);
     }
 
@@ -109,10 +109,10 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(assignment);
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        AssignmentResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        AssignmentResponse item = result.Items.Should().ContainSingle().Subject;
         item.SubjectLabel.Should().BeEmpty();
         item.AuthorName.Should().BeEmpty();
         item.AuthorRole.Should().BeNull();
@@ -133,12 +133,11 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchNoAssignments();
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Items.Should().BeEmpty();
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().BeEmpty();
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -156,11 +155,11 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(day3, day1, day2);
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(day1.Id, day2.Id);
-        PageCursor.TryDecode(result.Value.NextCursor, out PageCursor cursor).Should().BeTrue();
+        result.Items.Select(item => item.Id).Should().Equal(day1.Id, day2.Id);
+        PageCursor.TryDecode(result.NextCursor, out PageCursor cursor).Should().BeTrue();
         cursor.Key.Should().Be(day2.DueDate.DayNumber);
         cursor.Id.Should().Be(day2.Id);
     }
@@ -179,11 +178,11 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(1)),
             AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(2)));
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().HaveCount(2);
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -201,14 +200,14 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldFindSubjectsOfClass(classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(day4, day2, day1, day3);
-        Result<PagedResponse<AssignmentResponse>> firstPage = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> firstPage = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithLimit(classId, 2));
 
-        Result<PagedResponse<AssignmentResponse>> secondPage = await this._useCase.ExecuteAsync(
-            AssignmentFinderByClassQueryMother.WithCursor(classId, 2, firstPage.Value.NextCursor!));
+        PagedResponse<AssignmentResponse> secondPage = await this._useCase.ExecuteAsync(
+            AssignmentFinderByClassQueryMother.WithCursor(classId, 2, firstPage.NextCursor!));
 
-        secondPage.Value.Items.Select(item => item.Id).Should().Equal(day3.Id, day4.Id);
-        secondPage.Value.NextCursor.Should().BeNull();
+        secondPage.Items.Select(item => item.Id).Should().Equal(day3.Id, day4.Id);
+        secondPage.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -233,10 +232,10 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
 
         for (int requested = 0; requested <= tied.Length; requested++)
         {
-            Result<PagedResponse<AssignmentResponse>> page = await this._useCase.ExecuteAsync(
+            PagedResponse<AssignmentResponse> page = await this._useCase.ExecuteAsync(
                 AssignmentFinderByClassQueryMother.With(classId, 1, cursor));
-            seen.AddRange(page.Value.Items.Select(item => item.Id));
-            cursor = page.Value.NextCursor;
+            seen.AddRange(page.Items.Select(item => item.Id));
+            cursor = page.NextCursor;
             if (cursor is null)
             {
                 break;
@@ -265,10 +264,10 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchAssignments(high, low);
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(low.Id, high.Id);
+        result.Items.Select(item => item.Id).Should().Equal(low.Id, high.Id);
     }
 
     [Test]
@@ -285,11 +284,11 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
             .Select(days => AssignmentMother.With(classId: classId, dueDate: AssignmentMother.SomeDay.AddDays(days)))
             .ToArray());
 
-        Result<PagedResponse<AssignmentResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
             AssignmentFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Should().HaveCount(Pagination.DefaultLimit);
-        result.Value.NextCursor.Should().NotBeNull();
+        result.Items.Should().HaveCount(Pagination.DefaultLimit);
+        result.NextCursor.Should().NotBeNull();
     }
 
     [Test]

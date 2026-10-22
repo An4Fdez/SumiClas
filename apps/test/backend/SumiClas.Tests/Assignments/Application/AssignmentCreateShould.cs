@@ -50,7 +50,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldCaptureAddedAssignments();
         this.ShouldHaveClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.With(
             assignmentId,
             classId,
             subjectId,
@@ -58,7 +58,6 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
             "\n" + description + "  ",
             dueDate));
 
-        result.IsSuccess.Should().BeTrue();
         Assignment added = this.Added.Single();
         added.Id.Should().Be(assignmentId);
         added.ClassId.Should().Be(classId);
@@ -88,10 +87,9 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldCaptureAddedAssignments();
         this.ShouldNotHaveClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: classId, subjectId: subjectId));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().IsProposal.Should().BeTrue();
     }
 
@@ -112,12 +110,11 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldCaptureAddedAssignments();
         this.ShouldNotHaveClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(
+        await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(
             classId: classId,
             subjectId: subjectId,
             description: description));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Description.Should().BeNull();
     }
 
@@ -138,12 +135,11 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldCaptureAddedAssignments();
         this.ShouldNotHaveClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(
+        await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(
             classId: classId,
             subjectId: subjectId,
             dueDate: pastDate));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().DueDate.Should().Be(pastDate);
     }
 
@@ -161,69 +157,69 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid());
 
-        result.Error.Should().Be(AssignmentErrors.AuthorRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_and_the_class_are_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_and_the_class_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(id: Guid.Empty, classId: Guid.Empty));
 
-        result.Error.Should().Be(AssignmentErrors.IdRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_and_the_subject_are_empty()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_and_the_subject_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: Guid.Empty, subjectId: Guid.Empty));
 
-        result.Error.Should().Be(AssignmentErrors.ClassRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.ClassRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_subject_required_without_asking_or_adding_when_the_subject_is_empty_and_title_blank()
+    public async Task throw_subject_required_without_asking_or_adding_when_the_subject_is_empty_and_title_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(subjectId: Guid.Empty, title: "  "));
 
-        result.Error.Should().Be(AssignmentErrors.SubjectRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.SubjectRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank_and_the_user_id_empty()
+    public async Task throw_title_required_without_asking_or_adding_when_the_title_is_blank_and_the_user_id_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(title: "  "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AssignmentCreateCommandMother.Valid(title: "  "));
 
-        result.Error.Should().Be(AssignmentErrors.TitleRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.TitleRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -332,7 +328,7 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_subject_not_in_class_without_asking_about_the_representative_for_a_foreign_subject()
+    public async Task throw_subject_not_in_class_without_asking_about_the_representative_for_a_foreign_subject()
     {
         Guid authorId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -346,10 +342,10 @@ public class AssignmentCreateShould : AssignmentsUnitTestCase
         this.ShouldFindSubject(subjectId, GuidMother.Random());
         this.ShouldCaptureAddedAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCreateCommandMother.Valid(classId: classId, subjectId: subjectId));
 
-        result.Error.Should().Be(AssignmentErrors.SubjectNotInClass);
+        await act.Should().ThrowAsync<AssignmentExceptions.SubjectNotInClass>();
         this.Added.Should().BeEmpty();
         this.ShouldNotHaveAskedWhetherTheAuthorIsRepresentative();
     }

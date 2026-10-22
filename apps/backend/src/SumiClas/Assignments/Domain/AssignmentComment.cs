@@ -19,28 +19,22 @@ public sealed class AssignmentComment : Entity
         CreatedAt = createdAt;
     }
 
-    internal static Result<AssignmentComment> Create(Guid authorId, string text, IClock clock)
+    internal static AssignmentComment Create(Guid authorId, string text, IClock clock)
     {
-        var validation = Validate(authorId, text);
-        if (validation.IsFailure)
-        {
-            return Result<AssignmentComment>.Failure(validation.Error!);
-        }
+        Validate(authorId, text);
 
-        var comment = new AssignmentComment(Guid.NewGuid(), authorId, text.Trim(), clock.UtcNow);
-        return Result<AssignmentComment>.Success(comment);
+        return new AssignmentComment(Guid.NewGuid(), authorId, text.Trim(), clock.UtcNow);
     }
 
-    private static Result Validate(Guid authorId, string text)
+    private static void Validate(Guid authorId, string text)
     {
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(AssignmentErrors.CommentAuthorRequired);
+            throw new AssignmentExceptions.CommentAuthorRequired();
         }
         if (string.IsNullOrWhiteSpace(text))
         {
-            return Result.Failure(AssignmentErrors.CommentTextRequired);
+            throw new AssignmentExceptions.CommentTextRequired();
         }
-        return Result.Success();
     }
 }

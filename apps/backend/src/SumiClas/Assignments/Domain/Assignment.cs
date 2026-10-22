@@ -49,7 +49,7 @@ public sealed class Assignment : AggregateRoot
         // For reflection purposes (EF Core materialization)
     }
 
-    public static Result<Assignment> Create(
+    public static Assignment Create(
         Guid id,
         Guid classId,
         Guid subjectId,
@@ -60,13 +60,9 @@ public sealed class Assignment : AggregateRoot
         bool isProposal,
         IClock clock)
     {
-        var validation = Validate(id, classId, subjectId, title, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<Assignment>.Failure(validation.Error!);
-        }
+        Validate(id, classId, subjectId, title, authorId);
 
-        var assignment = new Assignment(
+        return new Assignment(
             id,
             classId,
             subjectId,
@@ -77,44 +73,32 @@ public sealed class Assignment : AggregateRoot
             isProposal,
             clock.UtcNow,
             []);
-
-        return Result<Assignment>.Success(assignment);
     }
 
-    private static Result Validate(Guid id, Guid classId, Guid subjectId, string title, Guid authorId)
+    private static void Validate(Guid id, Guid classId, Guid subjectId, string title, Guid authorId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(AssignmentErrors.IdRequired);
+            throw new AssignmentExceptions.IdRequired();
         }
         if (classId == Guid.Empty)
         {
-            return Result.Failure(AssignmentErrors.ClassRequired);
+            throw new AssignmentExceptions.ClassRequired();
         }
         if (subjectId == Guid.Empty)
         {
-            return Result.Failure(AssignmentErrors.SubjectRequired);
+            throw new AssignmentExceptions.SubjectRequired();
         }
         if (string.IsNullOrWhiteSpace(title))
         {
-            return Result.Failure(AssignmentErrors.TitleRequired);
+            throw new AssignmentExceptions.TitleRequired();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(AssignmentErrors.AuthorRequired);
+            throw new AssignmentExceptions.AuthorRequired();
         }
-        return Result.Success();
     }
 
-    public Result AddComment(Guid authorId, string text, IClock clock)
-    {
-        var comment = AssignmentComment.Create(authorId, text, clock);
-        if (comment.IsFailure)
-        {
-            return Result.Failure(comment.Error!);
-        }
-
-        _comments.Add(comment.Value);
-        return Result.Success();
-    }
+    public void AddComment(Guid authorId, string text, IClock clock)
+        => _comments.Add(AssignmentComment.Create(authorId, text, clock));
 }

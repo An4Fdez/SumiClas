@@ -2,7 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Assignments.Application;
+using SumiClas.Assignments.Domain;
 using SumiClas.Shared.Application;
+using SumiClas.Shared.Domain;
+using SumiClas.Subjects.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -24,7 +27,7 @@ public sealed class AssignmentsEndpoints : IEndpoints
 
         assignments.MapPost("/", async (AssignmentCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(
+            await sender.Send(
                 new AssignmentCreate.Command(
                     request.Id,
                     request.ClassId,
@@ -34,32 +37,51 @@ public sealed class AssignmentsEndpoints : IEndpoints
                     request.DueDate),
                 ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("AssignmentCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<AssignmentExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.SubjectRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.TitleRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.SubjectNotInClass>(StatusCodes.Status400BadRequest)
+            .Maps<SubjectExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .RequiresSession()
+            .RequiresUser()
+            .RequiresClass()
+            .RequiresClassMembership()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         assignments.MapPost("/{assignmentId:guid}/comments", async (Guid assignmentId, AssignmentCommentAddRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new AssignmentCommentAdd.Command(assignmentId, request.Text), ct);
+            await sender.Send(new AssignmentCommentAdd.Command(assignmentId, request.Text), ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("AssignmentCommentAdd")
             .Produces(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<AssignmentExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<AssignmentExceptions.CommentAuthorRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AssignmentExceptions.CommentTextRequired>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresUser()
+            .RequiresClass()
+            .RequiresClassMembership()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         assignments.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new AssignmentFinderByClass.Query(classId, limit, cursor), ct)).ToOk())
+            Results.Ok(await sender.Send(new AssignmentFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("AssignmentFinderByClass")
             .Produces<PagedResponse<AssignmentResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<PaginationExceptions.InvalidLimit>(StatusCodes.Status400BadRequest)
+            .Maps<PaginationExceptions.InvalidCursor>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresClass()
+            .RequiresClassMembership();
     }
 }

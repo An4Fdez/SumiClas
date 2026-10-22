@@ -11,11 +11,11 @@ namespace SumiClas.Assignments.Application;
 public static class AssignmentFinderByClass
 {
     /// <summary>The homework of the class with its subject and its comments, ordered by due date, one page at a time.</summary>
-    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AssignmentResponse>>>;
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<PagedResponse<AssignmentResponse>>;
 
     public sealed class Finder(IAssignmentRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<PagedResponse<AssignmentResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<PagedResponse<AssignmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
@@ -70,13 +70,13 @@ public static class AssignmentFinderByClass
                         .ToList()))
                 .ToList();
 
-            return Result<PagedResponse<AssignmentResponse>>.Success(new PagedResponse<AssignmentResponse>(items, nextCursor));
+            return new PagedResponse<AssignmentResponse>(items, nextCursor);
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<AssignmentResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, PagedResponse<AssignmentResponse>>
     {
-        public Task<Result<PagedResponse<AssignmentResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<PagedResponse<AssignmentResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

@@ -50,10 +50,9 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldCaptureAddedAssignments();
         this.AdvanceClock(TimeSpan.FromHours(3));
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, "  " + text + "\n"));
 
-        result.IsSuccess.Should().BeTrue();
         assignment.Comments.Should().HaveCount(2);
         assignment.Comments.First().Should().BeSameAs(previous);
         AssignmentComment comment = assignment.Comments.Last();
@@ -79,10 +78,9 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
 
-        result.IsSuccess.Should().BeTrue();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserIsClassRepresentative.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -105,16 +103,16 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_when_the_assignment_does_not_exist()
+    public async Task throw_not_found_without_asking_when_the_assignment_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldFetchNoAssignments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithAssignmentId(GuidMother.Random()));
 
-        result.Error.Should().Be(AssignmentErrors.NotFound);
+        await act.Should().ThrowAsync<AssignmentExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
@@ -201,7 +199,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_comment_text_required_without_commenting_when_the_text_is_blank()
+    public async Task throw_comment_text_required_without_commenting_when_the_text_is_blank()
     {
         Guid assignmentId = GuidMother.Random();
         Assignment assignment = AssignmentMother.With(id: assignmentId);
@@ -214,15 +212,15 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, "   "));
 
-        result.Error.Should().Be(AssignmentErrors.CommentTextRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.CommentTextRequired>();
         assignment.Comments.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_comment_author_required_when_the_author_is_empty_and_the_text_is_blank()
+    public async Task throw_comment_author_required_when_the_author_is_empty_and_the_text_is_blank()
     {
         Guid assignmentId = GuidMother.Random();
         Assignment assignment = AssignmentMother.With(id: assignmentId);
@@ -234,10 +232,10 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, "  "));
 
-        result.Error.Should().Be(AssignmentErrors.CommentAuthorRequired);
+        await act.Should().ThrowAsync<AssignmentExceptions.CommentAuthorRequired>();
     }
 
     [Test]

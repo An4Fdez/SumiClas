@@ -10,19 +10,16 @@ namespace SumiClas.Assignments.Application;
 
 public static class AssignmentCommentAdd
 {
-    public sealed record Command(Guid AssignmentId, string Text) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid AssignmentId, string Text) : IRequest, ICommand;
 
     public sealed class Add(IAssignmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
-            var assignment = await repository.GetByIdAsync(command.AssignmentId, ct);
-            if (assignment is null)
-            {
-                return Result.Failure(AssignmentErrors.NotFound);
-            }
+            var assignment = await repository.GetByIdAsync(command.AssignmentId, ct)
+                ?? throw new AssignmentExceptions.NotFound();
 
             await queryBus.Send(new UserFinderById.Query(current), ct);
 
@@ -32,13 +29,13 @@ public static class AssignmentCommentAdd
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            return assignment.AddComment(current, command.Text, clock);
+            assignment.AddComment(current, command.Text, clock);
         }
     }
 
-    public sealed class Handler(Add add) : IRequestHandler<Command, Result>
+    public sealed class Handler(Add add) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => add.ExecuteAsync(command, ct);
     }
 }
