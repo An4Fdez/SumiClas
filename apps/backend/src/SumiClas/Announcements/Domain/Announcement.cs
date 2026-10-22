@@ -48,7 +48,7 @@ public sealed class Announcement : AggregateRoot
         CreatedAt = createdAt;
     }
 
-    public static Result<Announcement> Create(
+    public static Announcement Create(
         Guid id,
         AnnouncementScope scope,
         Guid? classId,
@@ -60,13 +60,9 @@ public sealed class Announcement : AggregateRoot
         Guid? relatedEventId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, schoolId, title, body, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<Announcement>.Failure(validation.Error!);
-        }
+        Validate(id, scope, classId, schoolId, title, body, authorId);
 
-        var announcement = new Announcement(
+        return new Announcement(
             id,
             scope,
             scope == AnnouncementScope.Class ? classId : null,
@@ -77,54 +73,44 @@ public sealed class Announcement : AggregateRoot
             authorId,
             relatedEventId,
             clock.UtcNow);
-
-        return Result<Announcement>.Success(announcement);
     }
 
-    private static Result Validate(Guid id, AnnouncementScope scope, Guid? classId, Guid? schoolId, string title, string body, Guid authorId)
+    private static void Validate(Guid id, AnnouncementScope scope, Guid? classId, Guid? schoolId, string title, string body, Guid authorId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(AnnouncementErrors.IdRequired);
+            throw new AnnouncementExceptions.IdRequired();
         }
         if (scope == AnnouncementScope.Class && (classId is null || classId == Guid.Empty))
         {
-            return Result.Failure(AnnouncementErrors.ClassRequiredForClassScope);
+            throw new AnnouncementExceptions.ClassRequiredForClassScope();
         }
         if (scope == AnnouncementScope.School && (schoolId is null || schoolId == Guid.Empty))
         {
-            return Result.Failure(AnnouncementErrors.SchoolRequiredForSchoolScope);
+            throw new AnnouncementExceptions.SchoolRequiredForSchoolScope();
         }
         if (string.IsNullOrWhiteSpace(title))
         {
-            return Result.Failure(AnnouncementErrors.TitleRequired);
+            throw new AnnouncementExceptions.TitleRequired();
         }
         if (string.IsNullOrWhiteSpace(body))
         {
-            return Result.Failure(AnnouncementErrors.BodyRequired);
+            throw new AnnouncementExceptions.BodyRequired();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(AnnouncementErrors.AuthorRequired);
+            throw new AnnouncementExceptions.AuthorRequired();
         }
-        return Result.Success();
     }
 
     /// <summary>Idempotent: if the user already has a receipt, does nothing.</summary>
-    public Result MarkAsReadBy(Guid userId, IClock clock)
+    public void MarkAsReadBy(Guid userId, IClock clock)
     {
         if (_readReceipts.Any(r => r.UserId == userId))
         {
-            return Result.Success();
+            return;
         }
 
-        var receipt = AnnouncementReadReceipt.Create(userId, clock);
-        if (receipt.IsFailure)
-        {
-            return Result.Failure(receipt.Error!);
-        }
-
-        _readReceipts.Add(receipt.Value);
-        return Result.Success();
+        _readReceipts.Add(AnnouncementReadReceipt.Create(userId, clock));
     }
 }

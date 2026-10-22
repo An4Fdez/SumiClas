@@ -18,16 +18,8 @@ public static class AssignmentFinderByClass
         public async Task<Result<PagedResponse<AssignmentResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
-            if (pageRequest.IsFailure)
-            {
-                return Result<PagedResponse<AssignmentResponse>>.Failure(pageRequest.Error!);
-            }
 
-            var page = Pagination.ByDate(pageRequest.Value);
-            if (page.IsFailure)
-            {
-                return Result<PagedResponse<AssignmentResponse>>.Failure(page.Error!);
-            }
+            var page = Pagination.ByDate(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -35,10 +27,10 @@ public static class AssignmentFinderByClass
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page.Value), ct);
+            var candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page), ct);
             var (assignments, nextCursor) = Pagination.Cut(
                 candidates.OrderBy(assignment => assignment.DueDate).ThenBy(assignment => assignment.Id, Pagination.IdComparer).ToList(),
-                pageRequest.Value.Limit,
+                pageRequest.Limit,
                 assignment => Pagination.CursorOf(assignment.DueDate, assignment.Id));
 
             var subjects = await queryBus.Send(new SubjectFinderByClass.Query(query.ClassId), ct);

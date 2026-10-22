@@ -1,8 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Announcements.Application;
+using SumiClas.Announcements.Domain;
+using SumiClas.CalendarEvents.Domain;
 using SumiClas.Api.Http;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Application;
+using SumiClas.Shared.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -23,7 +27,7 @@ public sealed class AnnouncementsEndpoints : IEndpoints
 
         announcements.MapPost("/", async (AnnouncementCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(
+            await sender.Send(
                 new AnnouncementCreate.Command(
                     request.Id,
                     request.Scope,
@@ -34,33 +38,51 @@ public sealed class AnnouncementsEndpoints : IEndpoints
                     request.RelatedEventId),
                 ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("AnnouncementCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<AnnouncementExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.InvalidScope>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.InvalidPriority>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.ClassRequiredForClassScope>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.ClassRequiredForSchoolScope>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.TitleRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.BodyRequired>(StatusCodes.Status400BadRequest)
+            .Maps<AnnouncementExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
+            .Maps<CalendarEventExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .RequiresSession()
+            .RequiresUser()
+            .RequiresClass()
+            .RequiresClassRepresentative()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         announcements.MapPut("/{announcementId:guid}/read", async (Guid announcementId, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new AnnouncementReadMark.Command(announcementId), ct);
+            await sender.Send(new AnnouncementReadMark.Command(announcementId), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("AnnouncementReadMark")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<AnnouncementExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<AnnouncementExceptions.ReadReceiptUserRequired>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresUser()
+            .RequiresClassMembership()
+            .ConflictsOnSave();
 
         announcements.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new AnnouncementFinderByClass.Query(classId, limit, cursor), ct)).ToOk())
+            Results.Ok(await sender.Send(new AnnouncementFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("AnnouncementFinderByClass")
             .Produces<PagedResponse<AnnouncementResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<PaginationExceptions.InvalidLimit>(StatusCodes.Status400BadRequest)
+            .Maps<PaginationExceptions.InvalidCursor>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresClass()
+            .RequiresClassMembership()
+            .Maps<SchoolYearExceptions.NotFound>(StatusCodes.Status404NotFound);
     }
 }

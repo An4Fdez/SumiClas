@@ -18,16 +18,8 @@ public static class ClassExpenseFinderByClass
         public async Task<Result<PagedResponse<ClassExpenseResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
-            if (pageRequest.IsFailure)
-            {
-                return Result<PagedResponse<ClassExpenseResponse>>.Failure(pageRequest.Error!);
-            }
 
-            var page = Pagination.ByCreatedAt(pageRequest.Value);
-            if (page.IsFailure)
-            {
-                return Result<PagedResponse<ClassExpenseResponse>>.Failure(page.Error!);
-            }
+            var page = Pagination.ByCreatedAt(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -35,10 +27,10 @@ public static class ClassExpenseFinderByClass
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page.Value), ct);
+            var candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page), ct);
             var (expenses, nextCursor) = Pagination.Cut(
                 candidates.OrderByDescending(expense => expense.CreatedAt).ThenByDescending(expense => expense.Id, Pagination.IdComparer).ToList(),
-                pageRequest.Value.Limit,
+                pageRequest.Limit,
                 expense => Pagination.CursorOf(expense.CreatedAt, expense.Id));
 
             var userIds = expenses

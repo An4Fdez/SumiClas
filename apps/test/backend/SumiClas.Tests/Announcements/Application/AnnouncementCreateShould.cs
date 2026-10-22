@@ -46,7 +46,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         this.ShouldCaptureAddedAnnouncements();
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.With(
             announcementId,
             "School",
             classId,
@@ -55,7 +55,6 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
             "High",
             null));
 
-        result.IsSuccess.Should().BeTrue();
         Announcement added = this.Added.Single();
         added.Id.Should().Be(announcementId);
         added.Scope.Should().Be(AnnouncementScope.School);
@@ -83,10 +82,9 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.IsSuccess.Should().BeTrue();
         Announcement added = this.Added.Single();
         added.Scope.Should().Be(AnnouncementScope.Class);
         added.ClassId.Should().Be(classId);
@@ -107,10 +105,9 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedAnnouncements();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(classId: classId, relatedEventId: eventId));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
         this.ShouldHaveAskedForCalendarEvent(eventId);
     }
@@ -170,187 +167,187 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
 
     [TestCase("")]
     [TestCase("7")]
-    public async Task return_invalid_scope_without_asking_or_adding_when_the_scope_is_not_a_known_one(string scope)
+    public async Task throw_invalid_scope_without_asking_or_adding_when_the_scope_is_not_a_known_one(string scope)
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: scope));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: scope));
 
-        result.Error.Should().Be(AnnouncementErrors.InvalidScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.InvalidScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [TestCase("")]
     [TestCase("9")]
-    public async Task return_invalid_priority_without_asking_or_adding_when_the_priority_is_not_a_known_one(
+    public async Task throw_invalid_priority_without_asking_or_adding_when_the_priority_is_not_a_known_one(
         string priority)
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(priority: priority));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(priority: priority));
 
-        result.Error.Should().Be(AnnouncementErrors.InvalidPriority);
+        await act.Should().ThrowAsync<AnnouncementExceptions.InvalidPriority>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_invalid_scope_when_both_the_scope_and_the_priority_are_invalid()
+    public async Task throw_invalid_scope_when_both_the_scope_and_the_priority_are_invalid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(
             scope: StringMother.Random("scope"),
             priority: StringMother.Random("priority")));
 
-        result.Error.Should().Be(AnnouncementErrors.InvalidScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.InvalidScope>();
     }
 
     [Test]
-    public async Task return_invalid_scope_when_the_scope_is_invalid_and_the_id_is_empty()
+    public async Task throw_invalid_scope_when_the_scope_is_invalid_and_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(id: Guid.Empty, scope: StringMother.Random("scope")));
 
-        result.Error.Should().Be(AnnouncementErrors.InvalidScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.InvalidScope>();
     }
 
     [Test]
-    public async Task return_invalid_priority_when_the_priority_is_invalid_and_the_id_is_empty()
+    public async Task throw_invalid_priority_when_the_priority_is_invalid_and_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(id: Guid.Empty, priority: StringMother.Random("priority")));
 
-        result.Error.Should().Be(AnnouncementErrors.InvalidPriority);
+        await act.Should().ThrowAsync<AnnouncementExceptions.InvalidPriority>();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_is_empty()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(id: Guid.Empty));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(id: Guid.Empty));
 
-        result.Error.Should().Be(AnnouncementErrors.IdRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.ClassScopeWithClassId(null));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.ClassScopeWithClassId(null));
 
-        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ClassRequiredForClassScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_scope_has_an_empty_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_scope_has_an_empty_class()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.ClassScopeWithClassId(Guid.Empty));
 
-        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ClassRequiredForClassScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank()
+    public async Task throw_title_required_without_asking_or_adding_when_the_title_is_blank()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(title: "   "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(title: "   "));
 
-        result.Error.Should().Be(AnnouncementErrors.TitleRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.TitleRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_body_required_without_asking_or_adding_when_the_body_is_blank()
+    public async Task throw_body_required_without_asking_or_adding_when_the_body_is_blank()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(body: "   "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(body: "   "));
 
-        result.Error.Should().Be(AnnouncementErrors.BodyRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.BodyRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid());
 
-        result.Error.Should().Be(AnnouncementErrors.AuthorRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_is_empty_and_the_class_is_missing()
+    public async Task throw_id_required_when_the_id_is_empty_and_the_class_is_missing()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.ClassScopeWithClassId(null, id: Guid.Empty));
 
-        result.Error.Should().Be(AnnouncementErrors.IdRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.IdRequired>();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_is_missing_and_the_title_is_blank()
+    public async Task throw_class_required_when_the_class_is_missing_and_the_title_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.ClassScopeWithClassId(null, title: "  "));
 
-        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ClassRequiredForClassScope>();
     }
 
     [Test]
-    public async Task return_title_required_when_the_title_and_the_body_are_blank()
+    public async Task throw_title_required_when_the_title_and_the_body_are_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(title: "  ", body: "  "));
 
-        result.Error.Should().Be(AnnouncementErrors.TitleRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.TitleRequired>();
     }
 
     [Test]
-    public async Task return_body_required_when_the_body_is_blank_and_the_current_user_id_is_empty()
+    public async Task throw_body_required_when_the_body_is_blank_and_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(body: "  "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(body: "  "));
 
-        result.Error.Should().Be(AnnouncementErrors.BodyRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.BodyRequired>();
     }
 
     [Test]
@@ -481,13 +478,13 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
     {
         this.ShouldCaptureAddedAnnouncements();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.With(
                 GuidMother.Random(),
                 "School",
@@ -497,7 +494,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
                 "Normal",
                 null));
 
-        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -524,15 +521,15 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
     {
         this.ShouldCaptureAddedAnnouncements();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementCreateCommandMother.Valid(scope: "School", classId: Guid.Empty));
 
-        result.Error.Should().Be(AnnouncementErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

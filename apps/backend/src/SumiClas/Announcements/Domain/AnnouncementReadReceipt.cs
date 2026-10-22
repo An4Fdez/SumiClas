@@ -18,14 +18,13 @@ public sealed class AnnouncementReadReceipt : Entity
         ReadAt = readAt;
     }
 
-    internal static Result<AnnouncementReadReceipt> Create(Guid userId, IClock clock)
+    internal static AnnouncementReadReceipt Create(Guid userId, IClock clock)
     {
         if (userId == Guid.Empty)
         {
-            return Result<AnnouncementReadReceipt>.Failure(AnnouncementErrors.ReadReceiptUserRequired);
+            throw new AnnouncementExceptions.ReadReceiptUserRequired();
         }
 
-        var receipt = new AnnouncementReadReceipt(Guid.NewGuid(), userId, clock.UtcNow);
-        return Result<AnnouncementReadReceipt>.Success(receipt);
+        return new AnnouncementReadReceipt(Guid.NewGuid(), userId, clock.UtcNow);
     }
 }

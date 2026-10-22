@@ -12,25 +12,17 @@ namespace SumiClas.Announcements.Application;
 public static class AnnouncementFinderByClass
 {
     /// <summary>School-wide announcements plus the ones of the class, newest first, one page at a time.</summary>
-    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<AnnouncementResponse>>>;
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<PagedResponse<AnnouncementResponse>>;
 
     public sealed class Finder(IAnnouncementRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<PagedResponse<AnnouncementResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<PagedResponse<AnnouncementResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
-            if (pageRequest.IsFailure)
-            {
-                return Result<PagedResponse<AnnouncementResponse>>.Failure(pageRequest.Error!);
-            }
 
-            var page = Pagination.ByCreatedAt(pageRequest.Value);
-            if (page.IsFailure)
-            {
-                return Result<PagedResponse<AnnouncementResponse>>.Failure(page.Error!);
-            }
+            var page = Pagination.ByCreatedAt(pageRequest);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -39,12 +31,12 @@ public static class AnnouncementFinderByClass
             var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
             var candidates = (await repository.SearchAsync(
-                    new AnnouncementSpecification(scope: AnnouncementScope.School, schoolId: school, page: page.Value), ct))
-                .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page.Value), ct))
+                    new AnnouncementSpecification(scope: AnnouncementScope.School, schoolId: school, page: page), ct))
+                .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page), ct))
                 .OrderByDescending(announcement => announcement.CreatedAt)
                 .ThenByDescending(announcement => announcement.Id, Pagination.IdComparer)
                 .ToList();
-            var (announcements, nextCursor) = Pagination.Cut(candidates, pageRequest.Value.Limit, announcement => Pagination.CursorOf(announcement.CreatedAt, announcement.Id));
+            var (announcements, nextCursor) = Pagination.Cut(candidates, pageRequest.Limit, announcement => Pagination.CursorOf(announcement.CreatedAt, announcement.Id));
 
             var authorIds = announcements.Select(announcement => announcement.AuthorId).Distinct().ToList();
             var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
@@ -71,13 +63,13 @@ public static class AnnouncementFinderByClass
                     announcement.ReadReceipts.Any(receipt => receipt.UserId == current)))
                 .ToList();
 
-            return Result<PagedResponse<AnnouncementResponse>>.Success(new PagedResponse<AnnouncementResponse>(items, nextCursor));
+            return new PagedResponse<AnnouncementResponse>(items, nextCursor);
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<AnnouncementResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, PagedResponse<AnnouncementResponse>>
     {
-        public Task<Result<PagedResponse<AnnouncementResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<PagedResponse<AnnouncementResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

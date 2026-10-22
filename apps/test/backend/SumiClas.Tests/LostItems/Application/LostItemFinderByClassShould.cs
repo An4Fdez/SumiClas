@@ -471,50 +471,50 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(51)]
-    public async Task return_invalid_limit_without_asking_for_the_class_when_the_limit_is_out_of_range(int limit)
+    public async Task throw_invalid_limit_without_asking_for_the_class_when_the_limit_is_out_of_range(int limit)
     {
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithLimit(GuidMother.Random(), limit));
 
-        result.Error!.Code.Should().Be("Pagination.InvalidLimit");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidLimit>();
         this.QueryBus.VerifyNoOtherCalls();
         this.ShouldNotHaveSearched();
     }
 
     [TestCase("garbage!")]
     [TestCase("")]
-    public async Task return_invalid_cursor_without_asking_for_the_class_when_the_cursor_is_invalid(string cursor)
+    public async Task throw_invalid_cursor_without_asking_for_the_class_when_the_cursor_is_invalid(string cursor)
     {
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithCursor(GuidMother.Random(), VALID_LIMIT, cursor));
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.QueryBus.VerifyNoOtherCalls();
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_invalid_cursor_when_the_cursor_key_cannot_be_parsed()
+    public async Task throw_invalid_cursor_when_the_cursor_key_cannot_be_parsed()
     {
         string cursor = Convert.ToBase64String(Encoding.UTF8.GetBytes("abc|" + GuidMother.Random())).TrimEnd('=');
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithCursor(GuidMother.Random(), VALID_LIMIT, cursor));
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 
     [TestCase(long.MaxValue)]
     [TestCase(-1)]
-    public async Task return_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date(long key)
+    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date(long key)
     {
         string cursor = PageCursorMother.Create(key, GuidMother.Random()).Encode();
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithCursor(GuidMother.Random(), VALID_LIMIT, cursor));
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 

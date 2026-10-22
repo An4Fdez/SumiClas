@@ -58,11 +58,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(announcement);
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        AnnouncementResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        AnnouncementResponse item = result.Items.Should().ContainSingle().Subject;
         item.Id.Should().Be(announcement.Id);
         item.Scope.Should().Be("Class");
         item.ClassId.Should().Be(classId);
@@ -75,7 +75,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         item.CreatedAt.Should().Be(announcement.CreatedAt);
         item.RelatedEvent.Should().Be(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
         item.Read.Should().BeFalse();
-        result.Value.NextCursor.Should().BeNull();
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -94,11 +94,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldSearchAnnouncements(
             AnnouncementMother.With(Now, schoolId: schoolId, relatedEventId: GuidMother.Random()));
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        AnnouncementResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        AnnouncementResponse item = result.Items.Should().ContainSingle().Subject;
         item.AuthorName.Should().BeEmpty();
         item.AuthorRole.Should().BeNull();
         item.RelatedEvent.Should().BeNull();
@@ -122,11 +122,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             AnnouncementMother.ReadBy(schoolId, GuidMother.Random(), Now.AddMinutes(2)),
             AnnouncementMother.With(Now.AddMinutes(1), schoolId: schoolId));
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        result.Value.Items.Select(item => item.Read).Should().Equal(true, false, false);
+        result.Items.Select(item => item.Read).Should().Equal(true, false, false);
     }
 
     [Test]
@@ -148,11 +148,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldSearchAnnouncements(school, mine, other, otherSchool);
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        result.Value.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
+        result.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
     }
 
     [Test]
@@ -226,14 +226,13 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             [SchoolNotice(schoolId, authorId, titlePrefix, 3), SchoolNotice(schoolId, authorId, titlePrefix, 1)],
             [ClassNotice(classId, authorId, titlePrefix, 4), ClassNotice(classId, authorId, titlePrefix, 2)]);
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithLimit(classId, 2),
             CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Items.Select(item => item.Title)
+        result.Items.Select(item => item.Title)
             .Should().Equal(TitleOf(titlePrefix, 4), TitleOf(titlePrefix, 3));
-        PageCursor.TryDecode(result.Value.NextCursor, out PageCursor cursor).Should().BeTrue();
+        PageCursor.TryDecode(result.NextCursor, out PageCursor cursor).Should().BeTrue();
         cursor.Key.Should().Be(Now.AddMinutes(3).UtcTicks);
     }
 
@@ -255,12 +254,12 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             [SchoolNotice(schoolId, authorId, titlePrefix, 1)],
             [ClassNotice(classId, authorId, titlePrefix, 2)]);
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithLimit(classId, 2),
             CancellationToken.None);
 
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().HaveCount(2);
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -282,19 +281,19 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             ClassNotice(classId, authorId, titlePrefix, 3),
             SchoolNotice(schoolId, authorId, titlePrefix, 2),
             ClassNotice(classId, authorId, titlePrefix, 4));
-        Result<PagedResponse<AnnouncementResponse>> firstPage = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> firstPage = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithLimit(classId, 2),
             CancellationToken.None);
 
-        Result<PagedResponse<AnnouncementResponse>> secondPage = await this._useCase.ExecuteAsync(
-            AnnouncementFinderByClassQueryMother.WithCursor(classId, 2, firstPage.Value.NextCursor!),
+        PagedResponse<AnnouncementResponse> secondPage = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithCursor(classId, 2, firstPage.NextCursor!),
             CancellationToken.None);
 
-        firstPage.Value.Items.Select(item => item.Title)
+        firstPage.Items.Select(item => item.Title)
             .Should().Equal(TitleOf(titlePrefix, 4), TitleOf(titlePrefix, 3));
-        secondPage.Value.Items.Select(item => item.Title)
+        secondPage.Items.Select(item => item.Title)
             .Should().Equal(TitleOf(titlePrefix, 2), TitleOf(titlePrefix, 1));
-        secondPage.Value.NextCursor.Should().BeNull();
+        secondPage.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -323,11 +322,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
 
         for (int requested = 0; requested <= tied.Length; requested++)
         {
-            Result<PagedResponse<AnnouncementResponse>> page = await this._useCase.ExecuteAsync(
+            PagedResponse<AnnouncementResponse> page = await this._useCase.ExecuteAsync(
                 AnnouncementFinderByClassQueryMother.With(classId, 1, cursor),
                 CancellationToken.None);
-            seen.AddRange(page.Value.Items.Select(item => item.Id));
-            cursor = page.Value.NextCursor;
+            seen.AddRange(page.Items.Select(item => item.Id));
+            cursor = page.NextCursor;
             if (cursor is null)
             {
                 break;
@@ -341,63 +340,63 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     [TestCase("garbage!")]
     [TestCase("")]
     [TestCase("bm9wZQ")]
-    public async Task return_invalid_cursor_without_reading_anything_when_the_cursor_is_invalid(string cursor)
+    public async Task throw_invalid_cursor_without_reading_anything_when_the_cursor_is_invalid(string cursor)
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor),
             CancellationToken.None);
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 
     [TestCase("abc|f0000000-0000-0000-0000-000000000001")]
     [TestCase("123|not-a-guid")]
-    public async Task return_invalid_cursor_when_the_cursor_key_or_id_cannot_be_parsed(string payload)
+    public async Task throw_invalid_cursor_when_the_cursor_key_or_id_cannot_be_parsed(string payload)
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         string cursor = Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)).TrimEnd('=');
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor),
             CancellationToken.None);
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date()
+    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date()
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
         string cursor = PageCursorMother.Create(long.MaxValue, GuidMother.Random()).Encode();
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor),
             CancellationToken.None);
 
-        result.Error!.Code.Should().Be("Pagination.InvalidCursor");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(51)]
-    public async Task return_invalid_limit_when_the_limit_is_out_of_range(int limit)
+    public async Task throw_invalid_limit_when_the_limit_is_out_of_range(int limit)
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithLimit(classId, limit),
             CancellationToken.None);
 
-        result.Error!.Code.Should().Be("Pagination.InvalidLimit");
+        await act.Should().ThrowAsync<PaginationExceptions.InvalidLimit>();
         this.ShouldNotHaveSearched();
     }
 
@@ -419,12 +418,12 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             .Select(minutes => SchoolNotice(schoolId, authorId, titlePrefix, minutes))
             .ToArray());
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        result.Value.Items.Should().HaveCount(Pagination.DefaultLimit);
-        result.Value.NextCursor.Should().NotBeNull();
+        result.Items.Should().HaveCount(Pagination.DefaultLimit);
+        result.NextCursor.Should().NotBeNull();
     }
 
     [Test]
@@ -450,11 +449,11 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
             createdAt: Now);
         this.ShouldSearchAnnouncements(low, high);
 
-        Result<PagedResponse<AnnouncementResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
+        result.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
     }
 
     [Test]

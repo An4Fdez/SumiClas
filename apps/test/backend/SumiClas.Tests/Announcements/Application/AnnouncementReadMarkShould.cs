@@ -36,10 +36,9 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(readerId);
         this.ShouldFindUser(readerId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.IsSuccess.Should().BeTrue();
         AnnouncementReadReceipt receipt = announcement.ReadReceipts.Should().ContainSingle().Subject;
         receipt.UserId.Should().Be(readerId);
         receipt.ReadAt.Should().Be(Now);
@@ -59,10 +58,9 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         await this._useCase.ExecuteAsync(AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
         this.AdvanceClock(TimeSpan.FromHours(2));
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.IsSuccess.Should().BeTrue();
         AnnouncementReadReceipt receipt = announcement.ReadReceipts.Should().ContainSingle().Subject;
         receipt.UserId.Should().Be(readerId);
         receipt.ReadAt.Should().Be(Now);
@@ -111,16 +109,16 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_for_the_reader_when_the_announcement_does_not_exist()
+    public async Task throw_not_found_without_asking_for_the_reader_when_the_announcement_does_not_exist()
     {
         Guid readerId = GuidMother.Random();
         this.ShouldFetchAnnouncements(AnnouncementMother.WithId(GuidMother.Random()));
         this.ShouldResolveCurrentUser(readerId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(GuidMother.Random()));
 
-        result.Error.Should().Be(AnnouncementErrors.NotFound);
+        await act.Should().ThrowAsync<AnnouncementExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
@@ -140,10 +138,9 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldFindUser(readerId);
         this.ShouldAllowClassAccess(readerId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.IsSuccess.Should().BeTrue();
         announcement.ReadReceipts.Should().ContainSingle().Which.UserId.Should().Be(readerId);
     }
 
@@ -180,10 +177,9 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(readerId);
         this.ShouldFindUser(readerId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.IsSuccess.Should().BeTrue();
         announcement.ReadReceipts.Should().ContainSingle();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserClassAccessEnsure.Query>(), It.IsAny<CancellationToken>()),
@@ -208,7 +204,7 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_receipt_user_required_without_adding_a_receipt_when_the_current_user_id_is_empty()
+    public async Task throw_receipt_user_required_without_adding_a_receipt_when_the_current_user_id_is_empty()
     {
         Guid announcementId = GuidMother.Random();
         Announcement announcement = AnnouncementMother.WithId(announcementId);
@@ -216,10 +212,10 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldFindUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.Error.Should().Be(AnnouncementErrors.ReadReceiptUserRequired);
+        await act.Should().ThrowAsync<AnnouncementExceptions.ReadReceiptUserRequired>();
         announcement.ReadReceipts.Should().BeEmpty();
     }
 }

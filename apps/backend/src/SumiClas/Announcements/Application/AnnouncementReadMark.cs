@@ -9,19 +9,16 @@ namespace SumiClas.Announcements.Application;
 public static class AnnouncementReadMark
 {
     /// <summary>The current user marks the announcement as read. Idempotent: marking it again does nothing.</summary>
-    public sealed record Command(Guid AnnouncementId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid AnnouncementId) : IRequest, ICommand;
 
     public sealed class Mark(IAnnouncementRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
-            var announcement = await repository.GetByIdAsync(command.AnnouncementId, ct);
-            if (announcement is null)
-            {
-                return Result.Failure(AnnouncementErrors.NotFound);
-            }
+            var announcement = await repository.GetByIdAsync(command.AnnouncementId, ct)
+                ?? throw new AnnouncementExceptions.NotFound();
 
             await queryBus.Send(new UserFinderById.Query(current), ct);
 
@@ -30,13 +27,13 @@ public static class AnnouncementReadMark
                 await queryBus.Send(new UserClassAccessEnsure.Query(current, classId), ct);
             }
 
-            return announcement.MarkAsReadBy(current, clock);
+            announcement.MarkAsReadBy(current, clock);
         }
     }
 
-    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => mark.ExecuteAsync(command, ct);
     }
 }

@@ -22,11 +22,11 @@ public static class AnnouncementCreate
         string Title,
         string Body,
         string Priority,
-        Guid? RelatedEventId) : IRequest<Result>, ICommand;
+        Guid? RelatedEventId) : IRequest, ICommand;
 
     public sealed class Create(IAnnouncementRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
@@ -34,17 +34,17 @@ public static class AnnouncementCreate
 
             if (!Enum.TryParse<AnnouncementScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {
-                return Result.Failure(AnnouncementErrors.InvalidScope);
+                throw new AnnouncementExceptions.InvalidScope();
             }
             if (!Enum.TryParse<Priority>(command.Priority, ignoreCase: true, out var priority) || !Enum.IsDefined(priority))
             {
-                return Result.Failure(AnnouncementErrors.InvalidPriority);
+                throw new AnnouncementExceptions.InvalidPriority();
             }
 
             // The school of a school-wide announcement is only known after looking up the class, so the aggregate is
             // built twice: once only to validate the input before any IO (the school is provisional and discarded),
             // and once with the real school.
-            var validation = Announcement.Create(
+            var announcement = Announcement.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -55,14 +55,10 @@ public static class AnnouncementCreate
                 authorId,
                 command.RelatedEventId,
                 clock);
-            if (validation.IsFailure)
-            {
-                return Result.Failure(validation.Error!);
-            }
 
             if (command.ClassId is not { } classId || classId == Guid.Empty)
             {
-                return Result.Failure(AnnouncementErrors.ClassRequiredForSchoolScope);
+                throw new AnnouncementExceptions.ClassRequiredForSchoolScope();
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
@@ -78,12 +74,11 @@ public static class AnnouncementCreate
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var announcement = validation.Value;
             if (scope == AnnouncementScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
-                var creation = Announcement.Create(
+                announcement = Announcement.Create(
                     command.Id,
                     scope,
                     command.ClassId,
@@ -94,23 +89,15 @@ public static class AnnouncementCreate
                     authorId,
                     command.RelatedEventId,
                     clock);
-                if (creation.IsFailure)
-                {
-                    return Result.Failure(creation.Error!);
-                }
-
-                announcement = creation.Value;
             }
 
             await repository.AddAsync(announcement, ct);
-
-            return Result.Success();
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

@@ -18,16 +18,8 @@ public static class LostItemFinderByClass
         public async Task<Result<PagedResponse<LostItemResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
-            if (pageRequest.IsFailure)
-            {
-                return Result<PagedResponse<LostItemResponse>>.Failure(pageRequest.Error!);
-            }
 
-            var page = Pagination.ByCreatedAt(pageRequest.Value);
-            if (page.IsFailure)
-            {
-                return Result<PagedResponse<LostItemResponse>>.Failure(page.Error!);
-            }
+            var page = Pagination.ByCreatedAt(pageRequest);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -38,12 +30,12 @@ public static class LostItemFinderByClass
             var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
             var candidates = (await repository.SearchAsync(
-                    new LostItemSpecification(scope: ItemScope.School, schoolId: school, page: page.Value), ct))
-                .Concat(await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page.Value), ct))
+                    new LostItemSpecification(scope: ItemScope.School, schoolId: school, page: page), ct))
+                .Concat(await repository.SearchAsync(new LostItemSpecification(scope: ItemScope.Class, classId: query.ClassId, page: page), ct))
                 .OrderByDescending(lostItem => lostItem.CreatedAt)
                 .ThenByDescending(lostItem => lostItem.Id, Pagination.IdComparer)
                 .ToList();
-            var (lostItems, nextCursor) = Pagination.Cut(candidates, pageRequest.Value.Limit, lostItem => Pagination.CursorOf(lostItem.CreatedAt, lostItem.Id));
+            var (lostItems, nextCursor) = Pagination.Cut(candidates, pageRequest.Limit, lostItem => Pagination.CursorOf(lostItem.CreatedAt, lostItem.Id));
 
             var authorIds = lostItems.Select(lostItem => lostItem.AuthorId).Distinct().ToList();
             var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
