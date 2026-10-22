@@ -45,10 +45,9 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
             EnrollmentMother.Confirmed(GuidMother.Random(), classId));
         this.ShouldCaptureAddedEnrollments();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(enrollmentId, studentId, classId));
 
-        result.IsSuccess.Should().BeTrue();
         Enrollment added = this.Added.Single();
         added.Id.Should().Be(enrollmentId);
         added.StudentId.Should().Be(studentId);
@@ -60,7 +59,7 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_already_exists_when_the_student_is_confirmed_in_another_class_of_the_school_year()
+    public async Task throw_already_exists_when_the_student_is_confirmed_in_another_class_of_the_school_year()
     {
         this.ShouldCaptureAddedEnrollments();
         Guid studentId = GuidMother.Random();
@@ -75,10 +74,11 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.ShouldFindClassesOfSchoolYear(schoolYearId, classId, otherClassId);
         this.ShouldSearchEnrollments(EnrollmentMother.Confirmed(studentId, otherClassId));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
 
-        result.Error.Should().Be(EnrollmentErrors.AlreadyExists);
+
+        await act.Should().ThrowAsync<EnrollmentExceptions.AlreadyExists>();
         this.Added.Should().BeEmpty();
     }
 
@@ -97,13 +97,13 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.ShouldSearchNoEnrollments();
         this.ShouldCaptureAddedEnrollments();
 
-        Result first = await this._useCase.ExecuteAsync(
-            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
-        Result second = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
 
-        first.IsSuccess.Should().BeTrue();
-        second.Error.Should().Be(EnrollmentErrors.AlreadyExists);
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            EnrollmentCreateCommandMother.With(GuidMother.Random(), studentId, classId));
+
+        await act.Should().ThrowAsync<EnrollmentExceptions.AlreadyExists>();
         this.Added.Should().ContainSingle();
     }
 
@@ -187,57 +187,57 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_enrollment_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_enrollment_id_is_empty()
     {
         this.ShouldCaptureAddedEnrollments();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(Guid.Empty, GuidMother.Random(), GuidMother.Random()));
 
-        result.Error.Should().Be(EnrollmentErrors.IdRequired);
+        await act.Should().ThrowAsync<EnrollmentExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_student_required_without_asking_or_adding_when_the_student_id_is_empty()
+    public async Task throw_student_required_without_asking_or_adding_when_the_student_id_is_empty()
     {
         this.ShouldCaptureAddedEnrollments();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), Guid.Empty, GuidMother.Random()));
 
-        result.Error.Should().Be(EnrollmentErrors.StudentRequired);
+        await act.Should().ThrowAsync<EnrollmentExceptions.StudentRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_id_is_empty()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_id_is_empty()
     {
         this.ShouldCaptureAddedEnrollments();
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), GuidMother.Random(), Guid.Empty));
 
-        result.Error.Should().Be(EnrollmentErrors.ClassRequired);
+        await act.Should().ThrowAsync<EnrollmentExceptions.ClassRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_when_every_id_is_empty()
+    public async Task throw_id_required_when_every_id_is_empty()
     {
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(Guid.Empty, Guid.Empty, Guid.Empty));
 
-        result.Error.Should().Be(EnrollmentErrors.IdRequired);
+        await act.Should().ThrowAsync<EnrollmentExceptions.IdRequired>();
     }
 
     [Test]
-    public async Task return_student_required_when_the_student_and_the_class_ids_are_empty()
+    public async Task throw_student_required_when_the_student_and_the_class_ids_are_empty()
     {
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentCreateCommandMother.With(GuidMother.Random(), Guid.Empty, Guid.Empty));
 
-        result.Error.Should().Be(EnrollmentErrors.StudentRequired);
+        await act.Should().ThrowAsync<EnrollmentExceptions.StudentRequired>();
     }
 
     [Test]

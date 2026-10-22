@@ -31,58 +31,46 @@ public sealed class Enrollment : AggregateRoot
     }
 
     /// <summary>Direct enrollment: a guardian enrolls their child in a class, already confirmed.</summary>
-    public static Result<Enrollment> Create(Guid id, Guid studentId, Guid classId, IClock clock)
+    public static Enrollment Create(Guid id, Guid studentId, Guid classId, IClock clock)
     {
-        var validation = Validate(id, studentId, classId);
-        if (validation.IsFailure)
-        {
-            return Result<Enrollment>.Failure(validation.Error!);
-        }
+        Validate(id, studentId, classId);
 
         var now = clock.UtcNow;
-        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, now, now);
-        return Result<Enrollment>.Success(enrollment);
+        return new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, now, now);
     }
 
     /// <summary>Suggested continuity when a new SchoolYear opens: pending guardian confirmation.</summary>
-    public static Result<Enrollment> CreateSuggested(Guid id, Guid studentId, Guid classId, IClock clock)
+    public static Enrollment CreateSuggested(Guid id, Guid studentId, Guid classId, IClock clock)
     {
-        var validation = Validate(id, studentId, classId);
-        if (validation.IsFailure)
-        {
-            return Result<Enrollment>.Failure(validation.Error!);
-        }
+        Validate(id, studentId, classId);
 
-        var enrollment = new Enrollment(id, studentId, classId, EnrollmentStatus.Suggested, clock.UtcNow, null);
-        return Result<Enrollment>.Success(enrollment);
+        return new Enrollment(id, studentId, classId, EnrollmentStatus.Suggested, clock.UtcNow, null);
     }
 
-    public Result Confirm(IClock clock)
+    public void Confirm(IClock clock)
     {
         if (Status == EnrollmentStatus.Confirmed)
         {
-            return Result.Failure(EnrollmentErrors.AlreadyConfirmed);
+            throw new EnrollmentExceptions.AlreadyConfirmed();
         }
 
         Status = EnrollmentStatus.Confirmed;
         ConfirmedAt = clock.UtcNow;
-        return Result.Success();
     }
 
-    private static Result Validate(Guid id, Guid studentId, Guid classId)
+    private static void Validate(Guid id, Guid studentId, Guid classId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(EnrollmentErrors.IdRequired);
+            throw new EnrollmentExceptions.IdRequired();
         }
         if (studentId == Guid.Empty)
         {
-            return Result.Failure(EnrollmentErrors.StudentRequired);
+            throw new EnrollmentExceptions.StudentRequired();
         }
         if (classId == Guid.Empty)
         {
-            return Result.Failure(EnrollmentErrors.ClassRequired);
+            throw new EnrollmentExceptions.ClassRequired();
         }
-        return Result.Success();
     }
 }

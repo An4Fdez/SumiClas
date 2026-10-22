@@ -44,10 +44,9 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, otherSuggested.ClassId);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.IsSuccess.Should().BeTrue();
         enrollment.Status.Should().Be(EnrollmentStatus.Confirmed);
         otherSuggested.Status.Should().Be(EnrollmentStatus.Suggested);
         enrollment.ConfirmedAt.Should().Be(Now + TimeSpan.FromDays(1));
@@ -56,7 +55,7 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_already_exists_when_the_student_is_confirmed_in_another_class_of_the_school_year()
+    public async Task throw_already_exists_when_the_student_is_confirmed_in_another_class_of_the_school_year()
     {
         Guid schoolYearId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
@@ -71,16 +70,17 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId, confirmedElsewhere.ClassId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.Error.Should().Be(EnrollmentErrors.AlreadyExists);
+
+        await act.Should().ThrowAsync<EnrollmentExceptions.AlreadyExists>();
         enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
         enrollment.ConfirmedAt.Should().BeNull();
     }
 
     [Test]
-    public async Task return_already_confirmed_and_keep_the_confirmation_time_when_the_enrollment_is_already_confirmed()
+    public async Task throw_already_confirmed_and_keep_the_confirmation_time_when_the_enrollment_is_already_confirmed()
     {
         Guid schoolYearId = GuidMother.Random();
         Enrollment enrollment = EnrollmentMother.Confirmed(GuidMother.Random(), GuidMother.Random());
@@ -94,10 +94,11 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         this.ShouldFindClassesOfSchoolYear(schoolYearId, enrollment.ClassId);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(enrollment.Id));
 
-        result.Error.Should().Be(EnrollmentErrors.AlreadyConfirmed);
+
+        await act.Should().ThrowAsync<EnrollmentExceptions.AlreadyConfirmed>();
         enrollment.ConfirmedAt.Should().Be(Now);
     }
 
@@ -161,14 +162,15 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_other_modules_when_the_enrollment_does_not_exist()
+    public async Task throw_not_found_without_asking_other_modules_when_the_enrollment_does_not_exist()
     {
         this.ShouldFetchEnrollments(EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random()));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             EnrollmentConfirmCommandMother.WithEnrollmentId(GuidMother.Random()));
 
-        result.Error.Should().Be(EnrollmentErrors.NotFound);
+
+        await act.Should().ThrowAsync<EnrollmentExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 

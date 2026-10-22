@@ -12,7 +12,7 @@ public static class EnrollmentSuggestedCreate
 {
     /// <summary>Suggests, in <paramref name="ClassId"/> (the new class), every student with a confirmed enrollment in <paramref name="PreviousClassId"/>.</summary>
     public sealed record Command(Guid ClassId, Guid PreviousClassId)
-        : IRequest<Result<EnrollmentSuggestedCreateResponse>>, ICommand;
+        : IRequest<EnrollmentSuggestedCreateResponse>, ICommand;
 
     public sealed class Create(
         IEnrollmentRepository repository,
@@ -20,18 +20,18 @@ public static class EnrollmentSuggestedCreate
         IUserProvider userProvider,
         IClock clock) : IUseCase
     {
-        public async Task<Result<EnrollmentSuggestedCreateResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task<EnrollmentSuggestedCreateResponse> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
             if (command.ClassId == Guid.Empty || command.PreviousClassId == Guid.Empty)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.ClassRequired);
+                throw new EnrollmentExceptions.ClassRequired();
             }
 
             if (command.ClassId == command.PreviousClassId)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.SameClass);
+                throw new EnrollmentExceptions.SameClass();
             }
 
             var newClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
@@ -46,12 +46,12 @@ public static class EnrollmentSuggestedCreate
             var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, command.ClassId), ct);
             if (!isRepresentative)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.SuggestForbidden);
+                throw new EnrollmentExceptions.SuggestForbidden();
             }
 
             if (newSchoolYearId == previousSchoolYearId)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.SameSchoolYear);
+                throw new EnrollmentExceptions.SameSchoolYear();
             }
 
             var schoolYears = await queryBus.Send(new SchoolYearFinderByIds.Query([newSchoolYearId, previousSchoolYearId]), ct);
@@ -59,7 +59,7 @@ public static class EnrollmentSuggestedCreate
             var previousSchoolYear = schoolYears.FirstOrDefault(schoolYear => schoolYear.Id == previousSchoolYearId);
             if (newSchoolYear is null || previousSchoolYear is null || newSchoolYear.SchoolId != previousSchoolYear.SchoolId)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Failure(EnrollmentErrors.DifferentSchool);
+                throw new EnrollmentExceptions.DifferentSchool();
             }
 
             var candidates = (await repository.SearchAsync(
@@ -69,7 +69,7 @@ public static class EnrollmentSuggestedCreate
                 .ToList();
             if (candidates.Count == 0)
             {
-                return Result<EnrollmentSuggestedCreateResponse>.Success(new EnrollmentSuggestedCreateResponse(0, 0));
+                return new EnrollmentSuggestedCreateResponse(0, 0);
             }
 
             var inNewClass = await repository.SearchAsync(
@@ -91,23 +91,18 @@ public static class EnrollmentSuggestedCreate
             foreach (var studentId in candidates.Where(studentId => !alreadyEnrolled.Contains(studentId)))
             {
                 var suggestion = Enrollment.CreateSuggested(Guid.NewGuid(), studentId, command.ClassId, clock);
-                if (suggestion.IsFailure)
-                {
-                    return Result<EnrollmentSuggestedCreateResponse>.Failure(suggestion.Error!);
-                }
 
-                await repository.AddAsync(suggestion.Value, ct);
+                await repository.AddAsync(suggestion, ct);
                 created++;
             }
 
-            return Result<EnrollmentSuggestedCreateResponse>.Success(
-                new EnrollmentSuggestedCreateResponse(created, candidates.Count - created));
+            return new EnrollmentSuggestedCreateResponse(created, candidates.Count - created);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result<EnrollmentSuggestedCreateResponse>>
+    public sealed class Handler(Create create) : IRequestHandler<Command, EnrollmentSuggestedCreateResponse>
     {
-        public Task<Result<EnrollmentSuggestedCreateResponse>> Handle(Command command, CancellationToken ct)
+        public Task<EnrollmentSuggestedCreateResponse> Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

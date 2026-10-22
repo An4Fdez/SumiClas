@@ -11,17 +11,13 @@ namespace SumiClas.Enrollments.Application;
 
 public static class EnrollmentCreate
 {
-    public sealed record Command(Guid Id, Guid StudentId, Guid ClassId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid Id, Guid StudentId, Guid ClassId) : IRequest, ICommand;
 
     public sealed class Create(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var creation = Enrollment.Create(command.Id, command.StudentId, command.ClassId, clock);
-            if (creation.IsFailure)
-            {
-                return Result.Failure(creation.Error!);
-            }
+            var enrollment = Enrollment.Create(command.Id, command.StudentId, command.ClassId, clock);
 
             var current = userProvider.GetCurrentUserId();
 
@@ -39,18 +35,16 @@ public static class EnrollmentCreate
                 new EnrollmentSpecification(studentId: command.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Count > 0)
             {
-                return Result.Failure(EnrollmentErrors.AlreadyExists);
+                throw new EnrollmentExceptions.AlreadyExists();
             }
 
-            await repository.AddAsync(creation.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(enrollment, ct);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

@@ -9,6 +9,7 @@ using SumiClas.Classes.Domain;
 using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Domain;
 using SumiClas.Users.Domain;
 
 [TestFixture]
@@ -112,6 +113,21 @@ public class DomainExceptionProfilesShould
         [
             new DomainExceptionStatus(
                 typeof(UserExceptions.ClassRepresentativeForbidden),
+                StatusCodes.Status403Forbidden),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_missing_student_as_404_and_a_user_who_is_not_their_guardian_as_403()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresStudentGuardian();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(StudentExceptions.NotFound), StatusCodes.Status404NotFound),
+            new DomainExceptionStatus(
+                typeof(StudentExceptions.GuardianAccessForbidden),
                 StatusCodes.Status403Forbidden),
         ]);
     }

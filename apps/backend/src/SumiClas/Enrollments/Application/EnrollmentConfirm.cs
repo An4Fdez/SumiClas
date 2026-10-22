@@ -11,16 +11,16 @@ namespace SumiClas.Enrollments.Application;
 
 public static class EnrollmentConfirm
 {
-    public sealed record Command(Guid EnrollmentId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid EnrollmentId) : IRequest, ICommand;
 
     public sealed class Confirm(IEnrollmentRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var enrollment = await repository.GetByIdAsync(command.EnrollmentId, ct);
             if (enrollment is null)
             {
-                return Result.Failure(EnrollmentErrors.NotFound);
+                throw new EnrollmentExceptions.NotFound();
             }
 
             var current = userProvider.GetCurrentUserId();
@@ -39,16 +39,16 @@ public static class EnrollmentConfirm
                 new EnrollmentSpecification(studentId: enrollment.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Any(other => other.Id != enrollment.Id))
             {
-                return Result.Failure(EnrollmentErrors.AlreadyExists);
+                throw new EnrollmentExceptions.AlreadyExists();
             }
 
-            return enrollment.Confirm(clock);
+            enrollment.Confirm(clock);
         }
     }
 
-    public sealed class Handler(Confirm confirm) : IRequestHandler<Command, Result>
+    public sealed class Handler(Confirm confirm) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => confirm.ExecuteAsync(command, ct);
     }
 }

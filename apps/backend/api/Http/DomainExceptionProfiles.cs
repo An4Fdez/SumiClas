@@ -2,6 +2,7 @@ using SumiClas.Classes.Domain;
 using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Students.Domain;
 using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Http;
@@ -47,4 +48,10 @@ public static class DomainExceptionProfiles
     /// <summary>The endpoint reads or changes a class, so the class may not exist.</summary>
     public static RouteHandlerBuilder RequiresClass(this RouteHandlerBuilder builder)
         => builder.Maps<ClassExceptions.NotFound>(StatusCodes.Status404NotFound);
+
+    /// <summary>The endpoint acts on a student, so the student must exist and the user must be one of their guardians.</summary>
+    public static RouteHandlerBuilder RequiresStudentGuardian(this RouteHandlerBuilder builder)
+        => builder
+            .Maps<StudentExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<StudentExceptions.GuardianAccessForbidden>(StatusCodes.Status403Forbidden);
 }
