@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
+using SumiClas.Api.Http;
 
 namespace SumiClas.Api.Configuration;
 
@@ -18,6 +19,7 @@ public static class OpenApiSecurityServiceCollectionExtensions
         {
             options.AddDocumentTransformer<BearerSecurityTransformer>();
             options.AddOperationTransformer<BearerSecurityTransformer>();
+            options.AddOperationTransformer<ProblemResponsesTransformer>();
         });
 
         return services;

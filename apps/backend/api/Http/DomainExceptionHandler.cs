@@ -4,10 +4,10 @@ using SumiClas.Shared.Domain;
 namespace SumiClas.Api.Http;
 
 /// <summary>
-/// Turns a <see cref="DomainException"/> into the standard ProblemDetails response, with the status the endpoint
-/// declared for it (see <see cref="DomainExceptionEndpointExtensions.Maps{TException}"/>) and its code in the
-/// <c>code</c> extension. A domain exception the endpoint did not declare is a programming mistake: it is logged as an
-/// error and answered as a plain 500.
+/// Turns a <see cref="DomainException"/> into the standard ProblemDetails response, with its code in the
+/// <c>code</c> extension. The status is the one the endpoint declared for that exception (see
+/// <see cref="DomainExceptionEndpointExtensions.Maps{TException}"/>, an override for the rare exception that deviates)
+/// or, when it declared none, the one <see cref="DomainExceptionConvention"/> gives.
 /// </summary>
 public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IExceptionHandler
 {
@@ -23,23 +23,11 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         Endpoint? endpoint = http.Features.Get<IExceptionHandlerFeature>()?.Endpoint ?? http.GetEndpoint();
         DomainExceptionStatus? declared = endpoint?.Metadata.GetOrderedMetadata<DomainExceptionStatus>()
             .FirstOrDefault(status => status.ExceptionType == domain.GetType());
+        int statusCode = declared?.StatusCode ?? DomainExceptionConvention.StatusOf(domain);
 
-        if (declared is null)
-        {
-            logger.LogError(
-                domain,
-                "The domain exception {Code} ({Type}) is not declared by the endpoint {Endpoint}.",
-                domain.Code,
-                domain.GetType().FullName,
-                endpoint?.DisplayName);
+        logger.LogInformation("Domain exception {Code} answered with {Status}.", domain.Code, statusCode);
 
-            await Results.Problem(statusCode: StatusCodes.Status500InternalServerError).ExecuteAsync(http);
-            return true;
-        }
-
-        logger.LogInformation("Domain exception {Code} answered with {Status}.", domain.Code, declared.StatusCode);
-
-        await DomainProblem.Create(domain, declared.StatusCode).ExecuteAsync(http);
+        await DomainProblem.Create(domain, statusCode).ExecuteAsync(http);
         return true;
     }
 }

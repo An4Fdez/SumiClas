@@ -19,41 +19,41 @@ using System.Text.Json;
 public class DomainExceptionPipelineShould
 {
     [Test]
-    public async Task answer_a_declared_domain_exception_with_its_status_code_and_message()
+    public async Task answer_a_declared_domain_exception_with_the_declared_status_code_and_message()
     {
         await using WebApplication app = await StartAsync();
         using HttpClient client = ClientOf(app);
 
         HttpResponseMessage response = await client.GetAsync("/declared");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         JsonElement body = await BodyOf(response);
         body.GetProperty("code").GetString().Should().Be(SampleExceptions.NOT_FOUND_CODE);
         body.GetProperty("detail").GetString().Should().Be(SampleExceptions.NOT_FOUND_MESSAGE);
     }
 
     [Test]
-    public async Task answer_a_500_without_code_when_the_endpoint_did_not_declare_the_domain_exception()
+    public async Task answer_the_status_of_the_convention_when_the_endpoint_declared_another_domain_exception()
     {
         await using WebApplication app = await StartAsync();
         using HttpClient client = ClientOf(app);
 
         HttpResponseMessage response = await client.GetAsync("/undeclared");
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-        (await BodyOf(response)).TryGetProperty("code", out _).Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(SampleExceptions.FORBIDDEN_CODE);
     }
 
     [Test]
-    public async Task answer_a_500_without_code_when_the_endpoint_declares_no_domain_exceptions()
+    public async Task answer_the_status_of_the_convention_when_the_endpoint_declares_no_domain_exceptions()
     {
         await using WebApplication app = await StartAsync();
         using HttpClient client = ClientOf(app);
 
         HttpResponseMessage response = await client.GetAsync("/none");
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-        (await BodyOf(response)).TryGetProperty("code", out _).Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(SampleExceptions.NOT_FOUND_CODE);
     }
 
     [Test]
@@ -94,7 +94,7 @@ public class DomainExceptionPipelineShould
         WebApplication app = builder.Build();
         app.UseExceptionHandler();
         app.MapGet("/declared", IResult () => throw new SampleExceptions.NotFound())
-            .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
+            .Maps<SampleExceptions.NotFound>(StatusCodes.Status409Conflict);
         app.MapGet("/undeclared", IResult () => throw new SampleExceptions.Forbidden())
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
         app.MapGet("/none", IResult () => throw new SampleExceptions.NotFound());
