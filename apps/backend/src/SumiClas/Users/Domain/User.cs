@@ -84,7 +84,7 @@ public sealed class User : AggregateRoot
     /// </summary>
     public void AssignAsClassRepresentative(Guid classId, int currentClassRepresentativeCount)
     {
-        var alreadyRepresentative = _classRoles
+        bool alreadyRepresentative = _classRoles
             .Any(r => r.ClassId == classId && r.Role == ClassRoleType.ClassRepresentative);
 
         if (!alreadyRepresentative && currentClassRepresentativeCount >= MaxClassRepresentativesPerClass)
@@ -97,7 +97,7 @@ public sealed class User : AggregateRoot
 
     public void ResignAsClassRepresentative(Guid classId)
     {
-        var current = _classRoles.FirstOrDefault(r => r.ClassId == classId)
+        ClassRoleAssignment current = _classRoles.FirstOrDefault(r => r.ClassId == classId)
             ?? throw new UserExceptions.NoRoleAssignedInClass();
         if (current.Role != ClassRoleType.ClassRepresentative)
         {

@@ -14,16 +14,16 @@ public static class UserClassRepresentativeResign
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var userId = userProvider.GetCurrentUserId();
+            Guid userId = userProvider.GetCurrentUserId();
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var user = await repository.GetByIdAsync(userId, ct)
+            User user = await repository.GetByIdAsync(userId, ct)
                 ?? throw new UserExceptions.NotFound();
 
-            var representatives = await repository.SearchAsync(
+            IReadOnlyCollection<User> representatives = await repository.SearchAsync(
                 new UserSpecification(classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
             if (representatives.Count == 1 && representatives.Single().Id == user.Id)
             {

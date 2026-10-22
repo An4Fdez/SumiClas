@@ -19,20 +19,20 @@ public static class UserPasswordVerify
     {
         public async Task<UserResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var password = query.Password ?? string.Empty;
+            string password = query.Password ?? string.Empty;
 
-            var user = Email.TryCreate(query.Email, out var email)
+            User? user = Email.TryCreate(query.Email, out Email? email)
                 ? (await repository.SearchAsync(new UserSpecification(email: email), ct)).FirstOrDefault()
                 : null;
 
-            var verification = hasher.Verify(user?.PasswordHash, password);
+            PasswordVerification verification = hasher.Verify(user?.PasswordHash, password);
             if (user is null || verification == PasswordVerification.Failed)
             {
                 throw new AuthenticationExceptions.InvalidCredentials();
             }
 
             // A legacy password outside the current rules keeps its old hash: login must still succeed.
-            if (verification == PasswordVerification.SuccessRehashNeeded && Password.TryCreate(password, out var rehashable))
+            if (verification == PasswordVerification.SuccessRehashNeeded && Password.TryCreate(password, out Password? rehashable))
             {
                 user.ReplacePasswordHash(hasher.Generate(rehashable), clock);
             }

@@ -14,7 +14,7 @@ public static class UserClassMemberFinderByIds
     {
         public async Task<IReadOnlyCollection<UserClassMemberResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
+            IReadOnlyCollection<User> users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
             return users
                 .Select(user => new UserClassMemberResponse(
                     user.Id,

@@ -20,7 +20,7 @@ public static class UserClassAccessEnsure
     {
         public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var representatives = await repository.SearchAsync(
+            IReadOnlyCollection<User> representatives = await repository.SearchAsync(
                 new UserSpecification(id: query.UserId, classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative),
                 ct);
             if (representatives.Count > 0)
@@ -28,13 +28,13 @@ public static class UserClassAccessEnsure
                 return Unit.Value;
             }
 
-            var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
-            var studentIds = enrollments
+            IReadOnlyCollection<EnrollmentResponse> enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
+            List<Guid> studentIds = enrollments
                 .Where(enrollment => enrollment.Status == ConfirmedStatus)
                 .Select(enrollment => enrollment.StudentId)
                 .Distinct()
                 .ToList();
-            var guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
+            IReadOnlyCollection<Guid> guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
 
             return guardianIds.Contains(query.UserId)
                 ? Unit.Value

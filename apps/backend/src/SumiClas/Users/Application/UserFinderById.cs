@@ -1,5 +1,6 @@
 using MediatR;
 using SumiClas.Shared.Application;
+using SumiClas.Users.Domain;
 using SumiClas.Users.Domain.Services;
 
 namespace SumiClas.Users.Application;
@@ -12,7 +13,7 @@ public static class UserFinderById
     {
         public async Task<UserResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var user = await finder.FindByIdAsync(query.UserId, ct);
+            User user = await finder.FindByIdAsync(query.UserId, ct);
             return new UserResponse(user.Id, user.FullName);
         }
     }

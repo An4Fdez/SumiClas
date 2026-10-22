@@ -19,7 +19,7 @@ public sealed class UserSpecification : Specification<User>
         if (email is not null) AddCriteria(user => user.Email.Value == email.Value);
         if (ids is not null)
         {
-            var userIds = ids.ToArray();
+            Guid[] userIds = ids.ToArray();
             AddCriteria(user => userIds.Contains(user.Id));
         }
 

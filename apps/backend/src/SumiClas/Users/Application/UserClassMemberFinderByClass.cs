@@ -21,29 +21,29 @@ public static class UserClassMemberFinderByClass
     {
         public async Task<IReadOnlyCollection<UserClassMemberResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
-            var studentIds = enrollments
+            IReadOnlyCollection<EnrollmentResponse> enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
+            List<Guid> studentIds = enrollments
                 .Where(enrollment => enrollment.Status == ConfirmedStatus)
                 .Select(enrollment => enrollment.StudentId)
                 .Distinct()
                 .ToList();
-            var guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
+            IReadOnlyCollection<Guid> guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
 
-            var delegates = await repository.SearchAsync(
+            IReadOnlyCollection<User> delegates = await repository.SearchAsync(
                 new UserSpecification(classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
-            var memberIds = guardianIds.Concat(delegates.Select(user => user.Id)).Distinct().ToList();
+            List<Guid> memberIds = guardianIds.Concat(delegates.Select(user => user.Id)).Distinct().ToList();
 
-            var users = await repository.SearchAsync(new UserSpecification(ids: memberIds), ct);
+            IReadOnlyCollection<User> users = await repository.SearchAsync(new UserSpecification(ids: memberIds), ct);
             if (users.All(user => user.Id != current))
             {
                 throw new UserExceptions.ClassMembersForbidden();
             }
 
-            var representativeRole = ClassRoleType.ClassRepresentative.ToString();
+            string representativeRole = ClassRoleType.ClassRepresentative.ToString();
             return users
                 .Select(user => new UserClassMemberResponse(
                     user.Id,

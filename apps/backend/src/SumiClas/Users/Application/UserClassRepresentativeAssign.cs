@@ -18,23 +18,23 @@ public static class UserClassRepresentativeAssign
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var actingUserId = userProvider.GetCurrentUserId();
+            Guid actingUserId = userProvider.GetCurrentUserId();
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var actingRepresentative = await repository.SearchAsync(
+            IReadOnlyCollection<User> actingRepresentative = await repository.SearchAsync(
                 new UserSpecification(id: actingUserId, classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
             if (actingRepresentative.Count == 0)
             {
                 throw new UserExceptions.AssignForbidden();
             }
 
-            var user = await repository.GetByIdAsync(command.UserId, ct)
+            User user = await repository.GetByIdAsync(command.UserId, ct)
                 ?? throw new UserExceptions.NotFound();
 
-            var representatives = await repository.SearchAsync(
+            IReadOnlyCollection<User> representatives = await repository.SearchAsync(
                 new UserSpecification(classId: command.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
 
             user.AssignAsClassRepresentative(command.ClassId, representatives.Count);

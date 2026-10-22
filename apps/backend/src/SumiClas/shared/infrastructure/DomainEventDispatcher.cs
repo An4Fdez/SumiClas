@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
@@ -11,7 +12,7 @@ public sealed class DomainEventDispatcher(SumiClasDbContext dbContext, IServiceP
     {
         while (true)
         {
-            var aggregates = dbContext.ChangeTracker.Entries<AggregateRoot>()
+            List<AggregateRoot> aggregates = dbContext.ChangeTracker.Entries<AggregateRoot>()
                 .Select(entry => entry.Entity)
                 .Where(aggregate => aggregate.DomainEvents.Count > 0)
                 .ToList();
@@ -20,18 +21,18 @@ public sealed class DomainEventDispatcher(SumiClasDbContext dbContext, IServiceP
                 return;
             }
 
-            var domainEvents = aggregates.SelectMany(aggregate => aggregate.DomainEvents).ToList();
-            foreach (var aggregate in aggregates)
+            List<DomainEventBase> domainEvents = aggregates.SelectMany(aggregate => aggregate.DomainEvents).ToList();
+            foreach (AggregateRoot aggregate in aggregates)
             {
                 aggregate.ClearDomainEvents();
             }
 
-            foreach (var domainEvent in domainEvents)
+            foreach (DomainEventBase domainEvent in domainEvents)
             {
-                var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEvent.GetType());
-                var handle = handlerType.GetMethod(nameof(IDomainEventHandler<DomainEventBase>.Handle))!;
+                Type handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEvent.GetType());
+                MethodInfo handle = handlerType.GetMethod(nameof(IDomainEventHandler<DomainEventBase>.Handle))!;
 
-                foreach (var handler in serviceProvider.GetServices(handlerType))
+                foreach (object? handler in serviceProvider.GetServices(handlerType))
                 {
                     await (Task)handle.Invoke(handler, [domainEvent, ct])!;
                 }

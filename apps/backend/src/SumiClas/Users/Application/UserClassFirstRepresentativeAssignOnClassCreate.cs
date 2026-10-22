@@ -12,10 +12,10 @@ public sealed class UserClassFirstRepresentativeAssignOnClassCreate(IUserReposit
 {
     public async Task Handle(ClassCreatedDomainEvent domainEvent, CancellationToken ct = default)
     {
-        var creator = await repository.GetByIdAsync(domainEvent.CreatorId, ct)
+        User creator = await repository.GetByIdAsync(domainEvent.CreatorId, ct)
             ?? throw new UserExceptions.NotFound();
 
-        var representatives = await repository.SearchAsync(
+        IReadOnlyCollection<User> representatives = await repository.SearchAsync(
             new UserSpecification(classId: domainEvent.ClassId, classRole: ClassRoleType.ClassRepresentative), ct);
         if (representatives.Count > 0)
         {

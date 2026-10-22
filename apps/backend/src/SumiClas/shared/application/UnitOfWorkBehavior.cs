@@ -21,7 +21,7 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
     {
         if (unitOfWork.HasActiveTransaction)
         {
-            var nestedResponse = await next();
+            TResponse nestedResponse = await next();
             await unitOfWork.SaveChangesAsync(ct);
 
             return nestedResponse;
@@ -30,7 +30,7 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
         await unitOfWork.BeginTransactionAsync(ct);
         try
         {
-            var response = await next();
+            TResponse response = await next();
 
             await dispatcher.DispatchAsync(ct);
 

@@ -14,12 +14,12 @@ public sealed partial class Email : ValueObject
     }
 
     public static Email Create(string value)
-        => TryCreate(value, out var email) ? email : throw new UserExceptions.InvalidEmailFormat();
+        => TryCreate(value, out Email? email) ? email : throw new UserExceptions.InvalidEmailFormat();
 
     /// <summary>For the callers that must treat a malformed email as "no such account" instead of failing.</summary>
     public static bool TryCreate(string? value, [NotNullWhen(true)] out Email? email)
     {
-        var trimmed = value?.Trim();
+        string? trimmed = value?.Trim();
         if (string.IsNullOrEmpty(trimmed) || !EmailFormat().IsMatch(trimmed))
         {
             email = null;

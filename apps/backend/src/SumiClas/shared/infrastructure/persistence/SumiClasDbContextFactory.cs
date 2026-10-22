@@ -13,7 +13,7 @@ public sealed class SumiClasDbContextFactory : IDesignTimeDbContextFactory<SumiC
 {
     public SumiClasDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<SumiClasDbContext>();
+        DbContextOptionsBuilder<SumiClasDbContext> optionsBuilder = new DbContextOptionsBuilder<SumiClasDbContext>();
         optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=sumiclas;Username=sumiclas;Password=sumiclas_dev");
 
         return new SumiClasDbContext(optionsBuilder.Options);

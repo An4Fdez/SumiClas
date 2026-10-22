@@ -13,7 +13,7 @@ public static class UserFinderByIds
     {
         public async Task<IReadOnlyCollection<UserResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
+            IReadOnlyCollection<User> users = await repository.SearchAsync(new UserSpecification(ids: query.UserIds), ct);
             return users.Select(user => new UserResponse(user.Id, user.FullName)).ToList();
         }
     }

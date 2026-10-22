@@ -20,10 +20,10 @@ public sealed record PageCursor(long Key, Guid Id)
 
         try
         {
-            var parts = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(value)).Split('|');
+            string[] parts = Encoding.UTF8.GetString(Base64Url.DecodeFromChars(value)).Split('|');
             if (parts.Length != 2
-                || !long.TryParse(parts[0], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var key)
-                || !Guid.TryParseExact(parts[1], "D", out var id))
+                || !long.TryParse(parts[0], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long key)
+                || !Guid.TryParseExact(parts[1], "D", out Guid id))
             {
                 return false;
             }

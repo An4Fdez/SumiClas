@@ -13,7 +13,7 @@ public static class UserFinderByIdOrNull
     {
         public async Task<UserResponse?> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var user = await repository.GetByIdAsync(query.UserId, ct);
+            User? user = await repository.GetByIdAsync(query.UserId, ct);
             return user is null ? null : new UserResponse(user.Id, user.FullName);
         }
     }

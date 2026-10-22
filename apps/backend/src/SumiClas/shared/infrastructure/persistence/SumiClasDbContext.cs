@@ -16,6 +16,7 @@ using SumiClas.SchoolYears.Domain;
 using SumiClas.Students.Domain;
 using SumiClas.Subjects.Domain;
 using SumiClas.Users.Domain;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SumiClas.Shared.Infrastructure.Persistence;
 
@@ -50,7 +51,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
         {
             return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
-        catch (DbUpdateException exception) when (UniqueViolationDetector.TryGetConstraintName(exception, out var constraintName))
+        catch (DbUpdateException exception) when (UniqueViolationDetector.TryGetConstraintName(exception, out string? constraintName))
         {
             throw new DuplicateKeyException(constraintName, exception);
         }
@@ -65,7 +66,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
 
     public async Task CommitTransactionAsync(CancellationToken ct = default)
     {
-        var transaction = Database.CurrentTransaction;
+        IDbContextTransaction? transaction = Database.CurrentTransaction;
         if (transaction is null)
         {
             return;
@@ -79,7 +80,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
 
     public async Task RollbackTransactionAsync(CancellationToken ct = default)
     {
-        var transaction = Database.CurrentTransaction;
+        IDbContextTransaction? transaction = Database.CurrentTransaction;
         if (transaction is null)
         {
             return;

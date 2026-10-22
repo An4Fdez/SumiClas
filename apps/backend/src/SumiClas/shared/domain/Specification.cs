@@ -18,8 +18,8 @@ public abstract class Specification<TEntity> : ISpecification<TEntity>
 
     protected void AddCriteria(Expression<Func<TEntity, bool>> criteria)
     {
-        var parameter = Criteria.Parameters[0];
-        var right = new ParameterReplacer(criteria.Parameters[0], parameter).Visit(criteria.Body);
+        ParameterExpression parameter = Criteria.Parameters[0];
+        Expression right = new ParameterReplacer(criteria.Parameters[0], parameter).Visit(criteria.Body);
         Criteria = Expression.Lambda<Func<TEntity, bool>>(Expression.AndAlso(Criteria.Body, right), parameter);
     }
 
@@ -47,21 +47,21 @@ public abstract class Specification<TEntity> : ISpecification<TEntity>
             return;
         }
 
-        var parameter = Criteria.Parameters[0];
-        var keyBody = new ParameterReplacer(key.Parameters[0], parameter).Visit(key.Body);
-        var idBody = new ParameterReplacer(id.Parameters[0], parameter).Visit(id.Body);
+        ParameterExpression parameter = Criteria.Parameters[0];
+        Expression keyBody = new ParameterReplacer(key.Parameters[0], parameter).Visit(key.Body);
+        Expression idBody = new ParameterReplacer(id.Parameters[0], parameter).Visit(id.Body);
 
-        var afterKey = Expression.Property(Expression.Constant(new Box<TKey>(page.After.Key)), nameof(Box<TKey>.Value));
-        var afterId = Expression.Property(Expression.Constant(new Box<Guid>(page.After.Id)), nameof(Box<Guid>.Value));
+        MemberExpression afterKey = Expression.Property(Expression.Constant(new Box<TKey>(page.After.Key)), nameof(Box<TKey>.Value));
+        MemberExpression afterId = Expression.Property(Expression.Constant(new Box<Guid>(page.After.Id)), nameof(Box<Guid>.Value));
 
-        var keyBeyond = descending ? Expression.LessThan(keyBody, afterKey) : Expression.GreaterThan(keyBody, afterKey);
-        var keyTied = Expression.Equal(keyBody, afterKey);
-        var idComparison = Expression.Call(idBody, typeof(Guid).GetMethod(nameof(Guid.CompareTo), [typeof(Guid)])!, afterId);
-        var idBeyond = descending
+        BinaryExpression keyBeyond = descending ? Expression.LessThan(keyBody, afterKey) : Expression.GreaterThan(keyBody, afterKey);
+        BinaryExpression keyTied = Expression.Equal(keyBody, afterKey);
+        MethodCallExpression idComparison = Expression.Call(idBody, typeof(Guid).GetMethod(nameof(Guid.CompareTo), [typeof(Guid)])!, afterId);
+        BinaryExpression idBeyond = descending
             ? Expression.LessThan(idComparison, Expression.Constant(0))
             : Expression.GreaterThan(idComparison, Expression.Constant(0));
 
-        var after = Expression.OrElse(keyBeyond, Expression.AndAlso(keyTied, idBeyond));
+        BinaryExpression after = Expression.OrElse(keyBeyond, Expression.AndAlso(keyTied, idBeyond));
         AddCriteria(Expression.Lambda<Func<TEntity, bool>>(after, parameter));
     }
 

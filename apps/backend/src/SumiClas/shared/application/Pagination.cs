@@ -12,7 +12,7 @@ public static class Pagination
     /// <summary>Validates the page parameters of a request; a null cursor means the first page.</summary>
     public static PageRequest Resolve(int? limit, string? cursor)
     {
-        var resolvedLimit = limit ?? DefaultLimit;
+        int resolvedLimit = limit ?? DefaultLimit;
         if (resolvedLimit is < 1 or > MaxLimit)
         {
             throw new PaginationExceptions.InvalidLimit();
@@ -23,7 +23,7 @@ public static class Pagination
             return new PageRequest(resolvedLimit, null);
         }
 
-        return PageCursor.TryDecode(cursor, out var decoded)
+        return PageCursor.TryDecode(cursor, out PageCursor? decoded)
             ? new PageRequest(resolvedLimit, decoded)
             : throw new PaginationExceptions.InvalidCursor();
     }
@@ -43,7 +43,7 @@ public static class Pagination
             throw new PaginationExceptions.InvalidCursor();
         }
 
-        var boundary = new KeysetBoundary<DateTimeOffset>(new DateTimeOffset(request.After.Key, TimeSpan.Zero), request.After.Id);
+        KeysetBoundary<DateTimeOffset> boundary = new KeysetBoundary<DateTimeOffset>(new DateTimeOffset(request.After.Key, TimeSpan.Zero), request.After.Id);
         return new KeysetPage<DateTimeOffset>(request.Limit + 1, boundary);
     }
 
@@ -59,7 +59,7 @@ public static class Pagination
             throw new PaginationExceptions.InvalidCursor();
         }
 
-        var boundary = new KeysetBoundary<DateOnly>(DateOnly.FromDayNumber((int)request.After.Key), request.After.Id);
+        KeysetBoundary<DateOnly> boundary = new KeysetBoundary<DateOnly>(DateOnly.FromDayNumber((int)request.After.Key), request.After.Id);
         return new KeysetPage<DateOnly>(request.Limit + 1, boundary);
     }
 
@@ -80,8 +80,8 @@ public static class Pagination
     /// </summary>
     public static (IReadOnlyList<T> Items, string? NextCursor) Cut<T>(IReadOnlyList<T> ordered, int limit, Func<T, PageCursor> cursorOf)
     {
-        var items = ordered.Take(limit).ToList();
-        var next = ordered.Count > limit ? cursorOf(items[^1]).Encode() : null;
+        List<T> items = ordered.Take(limit).ToList();
+        string? next = ordered.Count > limit ? cursorOf(items[^1]).Encode() : null;
         return (items, next);
     }
 }

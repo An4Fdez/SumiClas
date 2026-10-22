@@ -17,13 +17,13 @@ public static class UserRegister
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var password = Password.Create(command.Password);
+            Password password = Password.Create(command.Password);
 
-            var email = Email.Create(command.Email);
+            Email email = Email.Create(command.Email);
 
-            var user = User.Register(command.Id, command.FullName, email, hasher.Generate(password), clock);
+            User user = User.Register(command.Id, command.FullName, email, hasher.Generate(password), clock);
 
-            var existing = await repository.SearchAsync(new UserSpecification(email: email), ct);
+            IReadOnlyCollection<User> existing = await repository.SearchAsync(new UserSpecification(email: email), ct);
             if (existing.Count > 0)
             {
                 throw new UserExceptions.EmailAlreadyRegistered();

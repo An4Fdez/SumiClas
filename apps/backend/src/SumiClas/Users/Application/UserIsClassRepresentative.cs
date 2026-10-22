@@ -12,7 +12,7 @@ public static class UserIsClassRepresentative
     {
         public async Task<bool> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var matches = await repository.SearchAsync(
+            IReadOnlyCollection<User> matches = await repository.SearchAsync(
                 new UserSpecification(id: query.UserId, classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative),
                 ct);
             return matches.Count > 0;

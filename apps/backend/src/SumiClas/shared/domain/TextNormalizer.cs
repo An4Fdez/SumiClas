@@ -18,10 +18,10 @@ public static class TextNormalizer
             return string.Empty;
         }
 
-        var decomposed = text.Normalize(NormalizationForm.FormD);
-        var builder = new StringBuilder(decomposed.Length);
-        var previousWasSpace = false;
-        foreach (var character in decomposed)
+        string decomposed = text.Normalize(NormalizationForm.FormD);
+        StringBuilder builder = new StringBuilder(decomposed.Length);
+        bool previousWasSpace = false;
+        foreach (char character in decomposed)
         {
             if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
             {

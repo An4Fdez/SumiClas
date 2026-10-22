@@ -21,7 +21,7 @@ public sealed class Password : ValueObject
     }
 
     public static Password Create(string? value)
-        => TryCreate(value, out var password) ? password : throw new AuthenticationExceptions.PasswordTooWeak();
+        => TryCreate(value, out Password? password) ? password : throw new AuthenticationExceptions.PasswordTooWeak();
 
     /// <summary>For the callers that must keep going with a password outside the current rules.</summary>
     public static bool TryCreate(string? value, [NotNullWhen(true)] out Password? password)

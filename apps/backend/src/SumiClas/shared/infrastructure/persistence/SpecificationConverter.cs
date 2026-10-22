@@ -10,9 +10,9 @@ public static class SpecificationConverter<TEntity>
         query = query.Where(specification.Criteria);
 
         IOrderedQueryable<TEntity>? ordered = null;
-        foreach (var order in specification.Orders)
+        foreach (SpecificationOrder order in specification.Orders)
         {
-            var method = (ordered is null, order.Descending) switch
+            string method = (ordered is null, order.Descending) switch
             {
                 (true, false) => nameof(Queryable.OrderBy),
                 (true, true) => nameof(Queryable.OrderByDescending),

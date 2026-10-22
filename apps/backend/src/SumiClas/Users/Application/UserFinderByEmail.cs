@@ -13,10 +13,10 @@ public static class UserFinderByEmail
     {
         public async Task<UserResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var email = Email.Create(query.Email);
+            Email email = Email.Create(query.Email);
 
-            var found = await repository.SearchAsync(new UserSpecification(email: email), ct);
-            var user = found.FirstOrDefault() ?? throw new UserExceptions.NotFound();
+            IReadOnlyCollection<User> found = await repository.SearchAsync(new UserSpecification(email: email), ct);
+            User user = found.FirstOrDefault() ?? throw new UserExceptions.NotFound();
             return new UserResponse(user.Id, user.FullName);
         }
     }
