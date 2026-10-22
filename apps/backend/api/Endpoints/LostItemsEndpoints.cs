@@ -2,10 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.LostItems.Application;
-using SumiClas.LostItems.Domain;
-using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -41,21 +38,7 @@ public sealed class LostItemsEndpoints : IEndpoints
         })
             .WithName("LostItemCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<LostItemExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.InvalidScope>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.InvalidStatus>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.ClassRequiredForClassScope>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.ClassRequiredForSchoolScope>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.DescriptionRequired>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.PhotoPrivacyConfirmationRequired>(StatusCodes.Status400BadRequest)
-            .Maps<LostItemExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresUser()
-            .RequiresClass()
-            .RequiresClassMembership()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         lostItems.MapPut("/{lostItemId:guid}/recovered", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
         {
@@ -64,13 +47,7 @@ public sealed class LostItemsEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("LostItemRecoveredMark")
-            .Produces(StatusCodes.Status204NoContent)
-            .Maps<LostItemExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .Maps<LostItemExceptions.MarkForbidden>(StatusCodes.Status403Forbidden)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .Produces(StatusCodes.Status204NoContent);
 
         lostItems.MapDelete("/{lostItemId:guid}/recovered", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
         {
@@ -79,23 +56,11 @@ public sealed class LostItemsEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("LostItemNotRecoveredMark")
-            .Produces(StatusCodes.Status204NoContent)
-            .Maps<LostItemExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .Maps<LostItemExceptions.MarkForbidden>(StatusCodes.Status403Forbidden)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .Produces(StatusCodes.Status204NoContent);
 
         lostItems.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new LostItemFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("LostItemFinderByClass")
-            .Produces<PagedResponse<LostItemResponse>>(StatusCodes.Status200OK)
-            .Maps<PaginationExceptions.InvalidLimit>(StatusCodes.Status400BadRequest)
-            .Maps<PaginationExceptions.InvalidCursor>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership()
-            .Maps<SchoolYearExceptions.NotFound>(StatusCodes.Status404NotFound);
+            .Produces<PagedResponse<LostItemResponse>>(StatusCodes.Status200OK);
     }
 }

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Subjects.Application;
-using SumiClas.Subjects.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -22,22 +21,11 @@ public sealed class SubjectsEndpoints : IEndpoints
         })
             .WithName("SubjectCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<SubjectExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<SubjectExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
-            .Maps<SubjectExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassRepresentative()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         subjects.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new SubjectFinderByClass.Query(classId), ct)))
             .WithName("SubjectFinderByClass")
-            .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership();
+            .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK);
     }
 }

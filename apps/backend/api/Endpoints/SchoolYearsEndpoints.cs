@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.SchoolYears.Application;
-using SumiClas.SchoolYears.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -28,13 +27,7 @@ public sealed class SchoolYearsEndpoints : IEndpoints
         })
             .WithName("SchoolYearCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<SchoolYearExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<SchoolYearExceptions.SchoolRequired>(StatusCodes.Status400BadRequest)
-            .Maps<SchoolYearExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
-            .Maps<SchoolYearExceptions.InvalidDateRange>(StatusCodes.Status400BadRequest)
-            .RequiresSchool()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         schoolYears.MapPost("/{schoolYearId:guid}/archive", async (Guid schoolYearId, ISender sender, CancellationToken ct) =>
         {
@@ -43,20 +36,11 @@ public sealed class SchoolYearsEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("SchoolYearArchive")
-            .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClassRepresentative()
-            .Maps<SchoolYearExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .Maps<SchoolYearExceptions.Archived>(StatusCodes.Status400BadRequest)
-            .ConflictsOnSave();
+            .Produces(StatusCodes.Status204NoContent);
 
         schoolYears.MapGet("/", async (Guid schoolId, string? status, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new SchoolYearFinderBySchool.Query(schoolId, status), ct)))
             .WithName("SchoolYearFinderBySchool")
-            .Produces<IReadOnlyCollection<SchoolYearResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .Maps<SchoolYearExceptions.InvalidStatus>(StatusCodes.Status400BadRequest)
-            .RequiresSchool();
+            .Produces<IReadOnlyCollection<SchoolYearResponse>>(StatusCodes.Status200OK);
     }
 }

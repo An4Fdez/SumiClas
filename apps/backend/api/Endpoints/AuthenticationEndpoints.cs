@@ -7,7 +7,6 @@ using SumiClas.Sessions.Application;
 using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
-using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -41,15 +40,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .WithName("UserRegister")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests)
-            .Maps<AuthenticationExceptions.PasswordTooWeak>(StatusCodes.Status400BadRequest)
-            .Maps<UserExceptions.InvalidEmailFormat>(StatusCodes.Status400BadRequest)
-            .Maps<UserExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<UserExceptions.FullNameRequired>(StatusCodes.Status400BadRequest)
-            .Maps<UserExceptions.EmailAlreadyRegistered>(StatusCodes.Status409Conflict)
-            .ConflictsOnSave();
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         credentials.MapPost("/login", async (
                 AccountLoginRequest request,
@@ -66,10 +57,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .WithName("SessionCreate")
             .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests)
-            .Maps<AuthenticationExceptions.InvalidCredentials>(StatusCodes.Status401Unauthorized)
-            .ConflictsOnSave();
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         var session = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthRefreshPolicy);
@@ -108,11 +96,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
         })
             .WithName("SessionRotate")
             .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests)
-            .Maps<AuthenticationExceptions.RefreshTokenInvalid>(StatusCodes.Status401Unauthorized)
-            .ConflictsOnSave();
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         session.MapPost("/logout", async (
                 HttpRequest request,
@@ -129,9 +113,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
         })
             .WithName("SessionRevoke")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests)
-            .ConflictsOnSave();
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
     }
 
     private static IResult Respond(SessionResponse session, HttpResponse response, RefreshCookieOptions options, TimeProvider time)

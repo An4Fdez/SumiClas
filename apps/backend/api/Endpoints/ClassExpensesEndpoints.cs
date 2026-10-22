@@ -1,11 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
-using SumiClas.CalendarEvents.Domain;
 using SumiClas.ClassExpenses.Application;
-using SumiClas.ClassExpenses.Domain;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -39,22 +36,7 @@ public sealed class ClassExpensesEndpoints : IEndpoints
         })
             .WithName("ClassExpenseCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<ClassExpenseExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.ItemRequired>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.TotalAmountMustBePositive>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.AtLeastOneParticipantRequired>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.ParticipantNotInClass>(StatusCodes.Status400BadRequest)
-            .Maps<ClassExpenseExceptions.ParticipantNotFound>(StatusCodes.Status404NotFound)
-            .Maps<CalendarEventExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .RequiresSession()
-            .RequiresUser()
-            .RequiresClass()
-            .RequiresClassRepresentative()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         classExpenses.MapPut("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
@@ -63,15 +45,7 @@ public sealed class ClassExpensesEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("ClassExpensePaidMark")
-            .Produces(StatusCodes.Status204NoContent)
-            .Maps<ClassExpenseExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .Maps<ClassExpenseExceptions.NotAParticipant>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership()
-            .RequiresClassRepresentative()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .Produces(StatusCodes.Status204NoContent);
 
         classExpenses.MapDelete("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
@@ -80,24 +54,11 @@ public sealed class ClassExpensesEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("ClassExpenseUnpaidMark")
-            .Produces(StatusCodes.Status204NoContent)
-            .Maps<ClassExpenseExceptions.NotFound>(StatusCodes.Status404NotFound)
-            .Maps<ClassExpenseExceptions.NotAParticipant>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership()
-            .RequiresClassRepresentative()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .Produces(StatusCodes.Status204NoContent);
 
         classExpenses.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new ClassExpenseFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("ClassExpenseFinderByClass")
-            .Produces<PagedResponse<ClassExpenseResponse>>(StatusCodes.Status200OK)
-            .Maps<PaginationExceptions.InvalidLimit>(StatusCodes.Status400BadRequest)
-            .Maps<PaginationExceptions.InvalidCursor>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership();
+            .Produces<PagedResponse<ClassExpenseResponse>>(StatusCodes.Status200OK);
     }
 }

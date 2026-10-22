@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.CalendarEvents.Application;
-using SumiClas.CalendarEvents.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -49,21 +48,7 @@ public sealed class CalendarEventsEndpoints : IEndpoints
         })
             .WithName("CalendarEventCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<CalendarEventExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.InvalidScope>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.InvalidType>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.UseCreateBirthdayForBirthdays>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.ClassRequiredForClassScope>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.ClassRequiredForSchoolScope>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.TitleRequired>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresUser()
-            .RequiresClass()
-            .RequiresClassRepresentative()
-            .RequiresActiveSchoolYear()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         calendarEvents.MapPost("/birthdays", async (CalendarEventBirthdayCreateRequest request, ISender sender, CancellationToken ct) =>
         {
@@ -80,24 +65,11 @@ public sealed class CalendarEventsEndpoints : IEndpoints
         })
             .WithName("CalendarEventBirthdayCreate")
             .Produces(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .Maps<CalendarEventExceptions.IdRequired>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.StudentRequiredForBirthday>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.TitleRequired>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.InvalidMonth>(StatusCodes.Status400BadRequest)
-            .Maps<CalendarEventExceptions.InvalidDay>(StatusCodes.Status400BadRequest)
-            .RequiresSession()
-            .RequiresUser()
-            .RequiresStudentGuardian()
-            .ConflictsOnSave();
+            .ProducesValidationProblem();
 
         calendarEvents.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)))
             .WithName("CalendarEventFinderByClass")
-            .Produces<IReadOnlyCollection<CalendarEventResponse>>(StatusCodes.Status200OK)
-            .RequiresSession()
-            .RequiresClass()
-            .RequiresClassMembership();
+            .Produces<IReadOnlyCollection<CalendarEventResponse>>(StatusCodes.Status200OK);
     }
 }
