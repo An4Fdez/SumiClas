@@ -140,15 +140,22 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<CalendarEventSummaryResponse>.Success(
-                CalendarEventSummaryResponseMother.With(calendarEventId, StringMother.Random("Event"))));
+            .ReturnsAsync(
+                CalendarEventSummaryResponseMother.With(calendarEventId, StringMother.Random("Event")));
+
+    protected void ShouldHaveAskedForCalendarEvent(Guid calendarEventId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
     protected void ShouldNotFindCalendarEvent(Guid calendarEventId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<CalendarEventSummaryResponse>.Failure(CalendarEventErrors.NotFound));
+            .ThrowsAsync(new CalendarEventExceptions.NotFound());
 
     protected void ShouldAllowClassAccess(Guid userId, Guid classId)
         => this.QueryBus

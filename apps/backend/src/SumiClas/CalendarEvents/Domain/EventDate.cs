@@ -23,35 +23,30 @@ public sealed class EventDate : ValueObject
         Year = year;
     }
 
-    public static Result<EventDate> OnDate(DateOnly date)
+    public static EventDate OnDate(DateOnly date)
     {
-        return Result<EventDate>.Success(new EventDate(date.Month, date.Day, date.Year));
+        return new EventDate(date.Month, date.Day, date.Year);
     }
 
-    public static Result<EventDate> RecurringAnnual(int month, int day)
+    public static EventDate RecurringAnnual(int month, int day)
     {
-        var validation = Validate(month, day);
-        if (validation.IsFailure)
-        {
-            return Result<EventDate>.Failure(validation.Error!);
-        }
+        Validate(month, day);
 
-        return Result<EventDate>.Success(new EventDate(month, day, null));
+        return new EventDate(month, day, null);
     }
 
-    private static Result Validate(int month, int day)
+    private static void Validate(int month, int day)
     {
         if (month < 1 || month > 12)
         {
-            return Result.Failure(CalendarEventErrors.InvalidMonth);
+            throw new CalendarEventExceptions.InvalidMonth();
         }
 
         // 2000 is a leap year, so Feb 29 is always accepted as a valid recurring day.
         if (day < 1 || day > DateTime.DaysInMonth(2000, month))
         {
-            return Result.Failure(CalendarEventErrors.InvalidDay);
+            throw new CalendarEventExceptions.InvalidDay();
         }
-        return Result.Success();
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

@@ -15,14 +15,14 @@ public static class CalendarEventFinderByClass
     /// School-wide events, the events of the class, and the birthdays of the students currently enrolled in it
     /// (resolved through their confirmed enrollments, because a birthday follows the student and not the class).
     /// </summary>
-    public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<CalendarEventResponse>>>;
+    public sealed record Query(Guid ClassId) : IQuery<IReadOnlyCollection<CalendarEventResponse>>;
 
     public sealed class Finder(
         ICalendarEventRepository repository,
         IQueryBus queryBus,
         IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<CalendarEventResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<IReadOnlyCollection<CalendarEventResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
@@ -73,13 +73,13 @@ public static class CalendarEventFinderByClass
                     calendarEvent.CreatedAt))
                 .ToList();
 
-            return Result<IReadOnlyCollection<CalendarEventResponse>>.Success(response);
+            return response;
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<CalendarEventResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<CalendarEventResponse>>
     {
-        public Task<Result<IReadOnlyCollection<CalendarEventResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<IReadOnlyCollection<CalendarEventResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

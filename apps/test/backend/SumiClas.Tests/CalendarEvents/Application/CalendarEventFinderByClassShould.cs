@@ -64,11 +64,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
                 17,
                 GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Select(item => item.Title).Should().BeEquivalentTo(schoolTitle, classTitle, birthdayTitle);
+        result.Select(item => item.Title).Should().BeEquivalentTo(schoolTitle, classTitle, birthdayTitle);
         this.ShouldHaveSearched(3);
     }
 
@@ -93,10 +92,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
             17,
             GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Should().BeEmpty();
+        result.Should().BeEmpty();
     }
 
     [Test]
@@ -124,10 +123,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(mine, otherSchool);
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Select(item => item.Id).Should().Equal(mine.Id);
+        result.Select(item => item.Id).Should().Equal(mine.Id);
     }
 
     [Test]
@@ -173,10 +172,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
                 17,
                 GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Select(item => item.Title).Should().BeEquivalentTo(schoolTitle, classTitle);
+        result.Select(item => item.Title).Should().BeEquivalentTo(schoolTitle, classTitle);
         this.ShouldHaveSearched(2);
     }
 
@@ -249,10 +248,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
             CalendarEventMother.SchoolWide(schoolId, "march-2-2027", new DateOnly(2027, 3, 2), GuidMother.Random()),
             CalendarEventMother.Birthday(studentId, "birthday-march-1", 3, 1, GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Select(item => item.Title).Should().Equal(
+        result.Select(item => item.Title).Should().Equal(
             "birthday-march-1",
             "birthday-march-20",
             "birthday-december",
@@ -291,10 +290,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
             authorId,
             createdAt));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        CalendarEventResponse item = result.Value.Should().ContainSingle().Subject;
+        CalendarEventResponse item = result.Should().ContainSingle().Subject;
         item.Scope.Should().Be("Class");
         item.ClassId.Should().Be(classId);
         item.StudentId.Should().BeNull();
@@ -329,10 +328,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         this.ShouldFindMembers();
         this.ShouldSearchCalendarEvents(CalendarEventMother.Birthday(studentId, title, 2, 29, GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        CalendarEventResponse item = result.Value.Should().ContainSingle().Subject;
+        CalendarEventResponse item = result.Should().ContainSingle().Subject;
         item.Scope.Should().Be("Class");
         item.ClassId.Should().BeNull();
         item.StudentId.Should().Be(studentId);
@@ -363,10 +362,10 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
         this.ShouldSearchCalendarEvents(
             CalendarEventMother.SchoolWide(schoolId, StringMother.Random("school"), TODAY, GuidMother.Random()));
 
-        Result<IReadOnlyCollection<CalendarEventResponse>> result = await this._useCase.ExecuteAsync(
+        IReadOnlyCollection<CalendarEventResponse> result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByClassQueryMother.WithClassId(classId));
 
-        CalendarEventResponse item = result.Value.Should().ContainSingle().Subject;
+        CalendarEventResponse item = result.Should().ContainSingle().Subject;
         item.AuthorName.Should().BeEmpty();
         item.AuthorRole.Should().BeNull();
     }

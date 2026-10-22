@@ -69,11 +69,7 @@ public static class AnnouncementCreate
 
             if (command.RelatedEventId is { } relatedEventId)
             {
-                var relatedEvent = await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
-                if (relatedEvent.IsFailure)
-                {
-                    return Result.Failure(relatedEvent.Error!);
-                }
+                await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
             }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);

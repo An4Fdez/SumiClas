@@ -11,17 +11,17 @@ public static class CalendarEventBirthdayCreate
 {
     /// <summary>Month and day only: a birth year is never stored (privacy rule for minors).</summary>
     public sealed record Command(Guid Id, Guid StudentId, string Title, int Month, int Day)
-        : IRequest<Result>, ICommand;
+        : IRequest, ICommand;
 
     public sealed class Create(ICalendarEventRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
             var authorId = current;
 
-            var creation = CalendarEvent.CreateBirthday(
+            var birthday = CalendarEvent.CreateBirthday(
                 command.Id,
                 command.StudentId,
                 command.Title,
@@ -29,24 +29,18 @@ public static class CalendarEventBirthdayCreate
                 command.Day,
                 authorId,
                 clock);
-            if (creation.IsFailure)
-            {
-                return Result.Failure(creation.Error!);
-            }
 
             await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
             await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, authorId), ct);
 
-            await repository.AddAsync(creation.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(birthday, ct);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

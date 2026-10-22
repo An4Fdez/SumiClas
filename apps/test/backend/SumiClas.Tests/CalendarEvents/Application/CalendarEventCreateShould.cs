@@ -45,7 +45,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.With(
             eventId,
             "School",
             classId,
@@ -56,7 +56,6 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
             "  " + location + " ",
             " " + cost + "  "));
 
-        result.IsSuccess.Should().BeTrue();
         CalendarEvent added = this.Added.Single();
         added.Id.Should().Be(eventId);
         added.Scope.Should().Be(EventScope.School);
@@ -88,10 +87,9 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.IsSuccess.Should().BeTrue();
         CalendarEvent added = this.Added.Single();
         added.Scope.Should().Be(EventScope.Class);
         added.ClassId.Should().Be(classId);
@@ -200,187 +198,187 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
 
     [TestCase("")]
     [TestCase("7")]
-    public async Task return_invalid_scope_without_asking_or_adding_when_the_scope_is_not_a_known_one(string scope)
+    public async Task throw_invalid_scope_without_asking_or_adding_when_the_scope_is_not_a_known_one(string scope)
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(scope: scope));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(scope: scope));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [TestCase("")]
     [TestCase("9")]
-    public async Task return_invalid_type_without_asking_or_adding_when_the_type_is_not_a_known_one(string type)
+    public async Task throw_invalid_type_without_asking_or_adding_when_the_type_is_not_a_known_one(string type)
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(type: type));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(type: type));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidType);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidType>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_invalid_scope_when_both_the_scope_and_the_type_are_invalid()
+    public async Task throw_invalid_scope_when_both_the_scope_and_the_type_are_invalid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(
             scope: StringMother.Random("scope"),
             type: StringMother.Random("type")));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidScope>();
     }
 
     [Test]
-    public async Task return_invalid_scope_when_the_scope_is_invalid_and_the_id_is_empty()
+    public async Task throw_invalid_scope_when_the_scope_is_invalid_and_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(id: Guid.Empty, scope: StringMother.Random("scope")));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidScope>();
     }
 
     [Test]
-    public async Task return_invalid_type_when_the_type_is_invalid_and_the_id_is_empty()
+    public async Task throw_invalid_type_when_the_type_is_invalid_and_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(id: Guid.Empty, type: StringMother.Random("type")));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidType);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidType>();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_is_empty()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(id: Guid.Empty));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(id: Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.IdRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_use_create_birthday_without_asking_or_adding_when_the_type_is_birthday()
+    public async Task throw_use_create_birthday_without_asking_or_adding_when_the_type_is_birthday()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(type: "Birthday"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(type: "Birthday"));
 
-        result.Error.Should().Be(CalendarEventErrors.UseCreateBirthdayForBirthdays);
+        await act.Should().ThrowAsync<CalendarEventExceptions.UseCreateBirthdayForBirthdays>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.ClassScopeWithClassId(null));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.ClassScopeWithClassId(null));
 
-        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.ClassRequiredForClassScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_scope_has_an_empty_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_scope_has_an_empty_class()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.ClassScopeWithClassId(Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.ClassRequiredForClassScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank()
+    public async Task throw_title_required_without_asking_or_adding_when_the_title_is_blank()
     {
         string title = "   ";
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(title: title));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(title: title));
 
-        result.Error.Should().Be(CalendarEventErrors.TitleRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.TitleRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid());
 
-        result.Error.Should().Be(CalendarEventErrors.AuthorRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_is_empty_and_the_type_is_birthday()
+    public async Task throw_id_required_when_the_id_is_empty_and_the_type_is_birthday()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(id: Guid.Empty, type: "Birthday"));
 
-        result.Error.Should().Be(CalendarEventErrors.IdRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.IdRequired>();
     }
 
     [Test]
-    public async Task return_use_create_birthday_when_the_type_is_birthday_and_the_class_is_missing()
+    public async Task throw_use_create_birthday_when_the_type_is_birthday_and_the_class_is_missing()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.ClassScopeWithClassId(null, type: "Birthday"));
 
-        result.Error.Should().Be(CalendarEventErrors.UseCreateBirthdayForBirthdays);
+        await act.Should().ThrowAsync<CalendarEventExceptions.UseCreateBirthdayForBirthdays>();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_is_missing_and_the_title_is_blank()
+    public async Task throw_class_required_when_the_class_is_missing_and_the_title_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.ClassScopeWithClassId(null, title: "  "));
 
-        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.ClassRequiredForClassScope>();
     }
 
     [Test]
-    public async Task return_title_required_when_the_title_is_blank_and_the_current_user_id_is_empty()
+    public async Task throw_title_required_when_the_title_is_blank_and_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(title: "  "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventCreateCommandMother.Valid(title: "  "));
 
-        result.Error.Should().Be(CalendarEventErrors.TitleRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.TitleRequired>();
     }
 
     [Test]
@@ -486,12 +484,12 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.With(
                 GuidMother.Random(),
                 "School",
@@ -503,21 +501,21 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
                 null,
                 null));
 
-        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "School", classId: Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<CalendarEventExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

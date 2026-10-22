@@ -23,11 +23,11 @@ public static class CalendarEventCreate
         DateOnly Date,
         TimeOnly? Time,
         string? Location,
-        string? Cost) : IRequest<Result>, ICommand;
+        string? Cost) : IRequest, ICommand;
 
     public sealed class Create(ICalendarEventRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
@@ -35,17 +35,17 @@ public static class CalendarEventCreate
 
             if (!Enum.TryParse<EventScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {
-                return Result.Failure(CalendarEventErrors.InvalidScope);
+                throw new CalendarEventExceptions.InvalidScope();
             }
             if (!Enum.TryParse<EventType>(command.Type, ignoreCase: true, out var type) || !Enum.IsDefined(type))
             {
-                return Result.Failure(CalendarEventErrors.InvalidType);
+                throw new CalendarEventExceptions.InvalidType();
             }
 
             // The school of a school-wide event is only known after looking up the class, so the aggregate is built
             // twice: once only to validate the input before any IO (the school is provisional and discarded), and
             // once with the real school.
-            var validation = CalendarEvent.Create(
+            var calendarEvent = CalendarEvent.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -58,14 +58,10 @@ public static class CalendarEventCreate
                 command.Cost,
                 authorId,
                 clock);
-            if (validation.IsFailure)
-            {
-                return Result.Failure(validation.Error!);
-            }
 
             if (command.ClassId is not { } classId || classId == Guid.Empty)
             {
-                return Result.Failure(CalendarEventErrors.ClassRequiredForSchoolScope);
+                throw new CalendarEventExceptions.ClassRequiredForSchoolScope();
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
@@ -76,12 +72,11 @@ public static class CalendarEventCreate
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var calendarEvent = validation.Value;
             if (scope == EventScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
-                var creation = CalendarEvent.Create(
+                calendarEvent = CalendarEvent.Create(
                     command.Id,
                     scope,
                     command.ClassId,
@@ -94,23 +89,15 @@ public static class CalendarEventCreate
                     command.Cost,
                     authorId,
                     clock);
-                if (creation.IsFailure)
-                {
-                    return Result.Failure(creation.Error!);
-                }
-
-                calendarEvent = creation.Value;
             }
 
             await repository.AddAsync(calendarEvent, ct);
-
-            return Result.Success();
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

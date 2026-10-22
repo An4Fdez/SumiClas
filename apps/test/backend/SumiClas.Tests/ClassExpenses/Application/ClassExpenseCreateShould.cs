@@ -102,6 +102,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
+        this.ShouldHaveAskedForCalendarEvent(eventId);
     }
 
     [Test]
@@ -431,7 +432,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_calendar_event_not_found_without_adding_when_the_related_event_does_not_exist()
+    public async Task throw_calendar_event_not_found_without_adding_when_the_related_event_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         Guid eventId = GuidMother.Random();
@@ -448,13 +449,13 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldNotFindCalendarEvent(eventId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(
                 classId: classId,
                 participantIds: [guardianId],
                 relatedEventId: eventId));
 
-        result.Error.Should().Be(CalendarEventErrors.NotFound);
+        await act.Should().ThrowAsync<CalendarEventExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 
@@ -494,13 +495,20 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<CalendarEventSummaryResponse>.Success(
-                CalendarEventSummaryResponseMother.With(calendarEventId, StringMother.Random("Event"))));
+            .ReturnsAsync(
+                CalendarEventSummaryResponseMother.With(calendarEventId, StringMother.Random("Event")));
+
+    private void ShouldHaveAskedForCalendarEvent(Guid calendarEventId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
     private void ShouldNotFindCalendarEvent(Guid calendarEventId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<CalendarEventFinderById.Query>(query => query.CalendarEventId == calendarEventId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<CalendarEventSummaryResponse>.Failure(CalendarEventErrors.NotFound));
+            .ThrowsAsync(new CalendarEventExceptions.NotFound());
 }

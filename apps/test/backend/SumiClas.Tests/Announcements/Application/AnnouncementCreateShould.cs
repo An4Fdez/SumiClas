@@ -112,6 +112,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
 
         result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
+        this.ShouldHaveAskedForCalendarEvent(eventId);
     }
 
     [TestCase("school", AnnouncementScope.School)]
@@ -372,7 +373,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_calendar_event_not_found_without_asking_for_the_class_when_the_event_does_not_exist()
+    public async Task throw_calendar_event_not_found_without_asking_for_the_class_when_the_event_does_not_exist()
     {
         this.ShouldCaptureAddedAnnouncements();
         Guid eventId = GuidMother.Random();
@@ -381,12 +382,12 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldFindUser(authorId);
         this.ShouldNotFindCalendarEvent(eventId);
 
-        Result result = await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(
+        Func<Task> act = () => this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(
             scope: "Class",
             classId: GuidMother.Random(),
             relatedEventId: eventId));
 
-        result.Error.Should().Be(CalendarEventErrors.NotFound);
+        await act.Should().ThrowAsync<CalendarEventExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),

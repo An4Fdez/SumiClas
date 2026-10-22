@@ -68,7 +68,7 @@ public sealed class CalendarEvent : AggregateRoot
     }
 
     /// <summary>For Trip, Meeting, Activity and Other — one-time events on a real date. Use CreateBirthday for birthdays.</summary>
-    public static Result<CalendarEvent> Create(
+    public static CalendarEvent Create(
         Guid id,
         EventScope scope,
         Guid? classId,
@@ -82,15 +82,9 @@ public sealed class CalendarEvent : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, schoolId, type, title, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<CalendarEvent>.Failure(validation.Error!);
-        }
+        Validate(id, scope, classId, schoolId, type, title, authorId);
 
-        var eventDate = EventDate.OnDate(date);
-
-        var calendarEvent = new CalendarEvent(
+        return new CalendarEvent(
             id,
             scope,
             scope == EventScope.Class ? classId : null,
@@ -98,50 +92,47 @@ public sealed class CalendarEvent : AggregateRoot
             null,
             type,
             title.Trim(),
-            eventDate.Value,
+            EventDate.OnDate(date),
             time,
             NormalizeOptional(location),
             NormalizeOptional(cost),
             authorId,
             clock.UtcNow);
-
-        return Result<CalendarEvent>.Success(calendarEvent);
     }
 
-    private static Result Validate(Guid id, EventScope scope, Guid? classId, Guid? schoolId, EventType type, string title, Guid authorId)
+    private static void Validate(Guid id, EventScope scope, Guid? classId, Guid? schoolId, EventType type, string title, Guid authorId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(CalendarEventErrors.IdRequired);
+            throw new CalendarEventExceptions.IdRequired();
         }
         if (type == EventType.Birthday)
         {
-            return Result.Failure(CalendarEventErrors.UseCreateBirthdayForBirthdays);
+            throw new CalendarEventExceptions.UseCreateBirthdayForBirthdays();
         }
         if (scope == EventScope.Class && (classId is null || classId == Guid.Empty))
         {
-            return Result.Failure(CalendarEventErrors.ClassRequiredForClassScope);
+            throw new CalendarEventExceptions.ClassRequiredForClassScope();
         }
         if (scope == EventScope.School && (schoolId is null || schoolId == Guid.Empty))
         {
-            return Result.Failure(CalendarEventErrors.SchoolRequiredForSchoolScope);
+            throw new CalendarEventExceptions.SchoolRequiredForSchoolScope();
         }
         if (string.IsNullOrWhiteSpace(title))
         {
-            return Result.Failure(CalendarEventErrors.TitleRequired);
+            throw new CalendarEventExceptions.TitleRequired();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(CalendarEventErrors.AuthorRequired);
+            throw new CalendarEventExceptions.AuthorRequired();
         }
-        return Result.Success();
     }
 
     /// <summary>
     /// Birthdays are always Class-scoped (via the student's current class, resolved
     /// dynamically) and always recurring (month+day, never a year — see EventDate/StudentId).
     /// </summary>
-    public static Result<CalendarEvent> CreateBirthday(
+    public static CalendarEvent CreateBirthday(
         Guid id,
         Guid studentId,
         string title,
@@ -150,19 +141,11 @@ public sealed class CalendarEvent : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = ValidateBirthday(id, studentId, title, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<CalendarEvent>.Failure(validation.Error!);
-        }
+        ValidateBirthday(id, studentId, title, authorId);
 
         var eventDate = EventDate.RecurringAnnual(month, day);
-        if (eventDate.IsFailure)
-        {
-            return Result<CalendarEvent>.Failure(eventDate.Error!);
-        }
 
-        var birthday = new CalendarEvent(
+        return new CalendarEvent(
             id,
             EventScope.Class,
             null,
@@ -170,35 +153,32 @@ public sealed class CalendarEvent : AggregateRoot
             studentId,
             EventType.Birthday,
             title.Trim(),
-            eventDate.Value,
+            eventDate,
             null,
             null,
             null,
             authorId,
             clock.UtcNow);
-
-        return Result<CalendarEvent>.Success(birthday);
     }
 
-    private static Result ValidateBirthday(Guid id, Guid studentId, string title, Guid authorId)
+    private static void ValidateBirthday(Guid id, Guid studentId, string title, Guid authorId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(CalendarEventErrors.IdRequired);
+            throw new CalendarEventExceptions.IdRequired();
         }
         if (studentId == Guid.Empty)
         {
-            return Result.Failure(CalendarEventErrors.StudentRequiredForBirthday);
+            throw new CalendarEventExceptions.StudentRequiredForBirthday();
         }
         if (string.IsNullOrWhiteSpace(title))
         {
-            return Result.Failure(CalendarEventErrors.TitleRequired);
+            throw new CalendarEventExceptions.TitleRequired();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(CalendarEventErrors.AuthorRequired);
+            throw new CalendarEventExceptions.AuthorRequired();
         }
-        return Result.Success();
     }
 
     private static string? NormalizeOptional(string? value) =>

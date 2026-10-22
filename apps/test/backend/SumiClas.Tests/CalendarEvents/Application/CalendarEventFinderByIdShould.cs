@@ -28,22 +28,20 @@ public class CalendarEventFinderByIdShould : CalendarEventsUnitTestCase
             CalendarEventMother.With(calendarEventId, title),
             CalendarEventMother.WithId(GuidMother.Random()));
 
-        Result<CalendarEventSummaryResponse> result = await this._useCase.ExecuteAsync(
+        CalendarEventSummaryResponse result = await this._useCase.ExecuteAsync(
             CalendarEventFinderByIdQueryMother.WithId(calendarEventId));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(CalendarEventSummaryResponseMother.With(calendarEventId, title));
+        result.Should().Be(CalendarEventSummaryResponseMother.With(calendarEventId, title));
     }
 
     [Test]
-    public async Task return_not_found_when_the_event_does_not_exist()
+    public async Task throw_not_found_when_the_event_does_not_exist()
     {
         this.ShouldFetchCalendarEvents(CalendarEventMother.WithId(GuidMother.Random()));
 
-        Result<CalendarEventSummaryResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventFinderByIdQueryMother.WithId(GuidMother.Random()));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(CalendarEventErrors.NotFound);
+        await act.Should().ThrowAsync<CalendarEventExceptions.NotFound>();
     }
 }

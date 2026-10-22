@@ -37,10 +37,9 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         this.ShouldEnsureStudentGuardian(studentId, authorId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.With(eventId, studentId, "  " + title + " ", 3, 21));
 
-        result.IsSuccess.Should().BeTrue();
         CalendarEvent added = this.Added.Single();
         added.Id.Should().Be(eventId);
         added.Scope.Should().Be(EventScope.Class);
@@ -78,12 +77,11 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         this.ShouldEnsureStudentGuardian(studentId, authorId);
         this.ShouldCaptureAddedCalendarEvents();
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(
+        await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(
             studentId: studentId,
             month: month,
             day: day));
 
-        result.IsSuccess.Should().BeTrue();
         CalendarEvent added = this.Added.Single();
         added.EventDate.Month.Should().Be(month);
         added.EventDate.Day.Should().Be(day);
@@ -103,56 +101,56 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_is_empty()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(id: Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.IdRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_student_required_without_asking_or_adding_when_the_student_id_is_empty()
+    public async Task throw_student_required_without_asking_or_adding_when_the_student_id_is_empty()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.StudentRequiredForBirthday);
+        await act.Should().ThrowAsync<CalendarEventExceptions.StudentRequiredForBirthday>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_title_required_without_asking_or_adding_when_the_title_is_blank()
+    public async Task throw_title_required_without_asking_or_adding_when_the_title_is_blank()
     {
         string title = "   ";
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(title: title));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(title: title));
 
-        result.Error.Should().Be(CalendarEventErrors.TitleRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.TitleRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid());
 
-        result.Error.Should().Be(CalendarEventErrors.AuthorRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -160,14 +158,14 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [TestCase(0)]
     [TestCase(13)]
     [TestCase(-1)]
-    public async Task return_invalid_month_without_asking_or_adding_when_the_month_is_out_of_range(int month)
+    public async Task throw_invalid_month_without_asking_or_adding_when_the_month_is_out_of_range(int month)
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: month));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: month));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidMonth);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidMonth>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -176,83 +174,83 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     [TestCase(1, 32)]
     [TestCase(4, 31)]
     [TestCase(2, 30)]
-    public async Task return_invalid_day_without_asking_or_adding_when_the_day_does_not_exist_in_the_month(
+    public async Task throw_invalid_day_without_asking_or_adding_when_the_day_does_not_exist_in_the_month(
         int month,
         int day)
     {
         this.ShouldCaptureAddedCalendarEvents();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(month: month, day: day));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidDay);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidDay>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_invalid_month_when_both_the_month_and_the_day_are_invalid()
+    public async Task throw_invalid_month_when_both_the_month_and_the_day_are_invalid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(month: 13, day: 40));
 
-        result.Error.Should().Be(CalendarEventErrors.InvalidMonth);
+        await act.Should().ThrowAsync<CalendarEventExceptions.InvalidMonth>();
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_and_the_student_are_empty()
+    public async Task throw_id_required_when_the_id_and_the_student_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(id: Guid.Empty, studentId: Guid.Empty));
 
-        result.Error.Should().Be(CalendarEventErrors.IdRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.IdRequired>();
     }
 
     [Test]
-    public async Task return_student_required_when_the_student_is_empty_and_the_title_is_blank()
+    public async Task throw_student_required_when_the_student_is_empty_and_the_title_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: Guid.Empty, title: "  "));
 
-        result.Error.Should().Be(CalendarEventErrors.StudentRequiredForBirthday);
+        await act.Should().ThrowAsync<CalendarEventExceptions.StudentRequiredForBirthday>();
     }
 
     [Test]
-    public async Task return_title_required_when_the_title_is_blank_and_the_current_user_id_is_empty()
+    public async Task throw_title_required_when_the_title_is_blank_and_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(title: "  "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(title: "  "));
 
-        result.Error.Should().Be(CalendarEventErrors.TitleRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.TitleRequired>();
     }
 
     [Test]
-    public async Task return_author_required_when_the_current_user_id_is_empty_and_the_month_is_invalid()
+    public async Task throw_author_required_when_the_current_user_id_is_empty_and_the_month_is_invalid()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: 13));
+        Func<Task> act = () => this._useCase.ExecuteAsync(CalendarEventBirthdayCreateCommandMother.Valid(month: 13));
 
-        result.Error.Should().Be(CalendarEventErrors.AuthorRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.AuthorRequired>();
     }
 
     [Test]
-    public async Task return_title_required_when_the_title_is_blank_and_the_month_is_invalid()
+    public async Task throw_title_required_when_the_title_is_blank_and_the_month_is_invalid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(title: "  ", month: 13));
 
-        result.Error.Should().Be(CalendarEventErrors.TitleRequired);
+        await act.Should().ThrowAsync<CalendarEventExceptions.TitleRequired>();
     }
 
     [Test]

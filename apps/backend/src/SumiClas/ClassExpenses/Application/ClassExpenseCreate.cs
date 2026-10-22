@@ -67,11 +67,7 @@ public static class ClassExpenseCreate
 
             if (command.RelatedEventId is { } relatedEventId)
             {
-                var relatedEvent = await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
-                if (relatedEvent.IsFailure)
-                {
-                    return Result.Failure(relatedEvent.Error!);
-                }
+                await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
             }
 
             await repository.AddAsync(creation.Value, ct);
