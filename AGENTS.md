@@ -69,7 +69,7 @@ pnpm dev
 - **Ramas**: se trabaja commiteando directo a `main` (no hay ramas de feature ni PRs en este proyecto). No crees ramas por tu cuenta salvo que el usuario lo pida explícitamente para una tarea concreta.
 - **Estilo/formato**:
   - Frontend: ESLint + `typescript-eslint` (`apps/frontend/sumiclas-web/eslint.config.js`) es la única verificación de estilo configurada. No hay Prettier.
-  - Backend: no hay `dotnet format` ni analizadores de estilo configurados todavía. Carpetas de capa en inglés (`shared/application`, `shared/domain`, `shared/infrastructure`).
+  - Backend: no hay `dotnet format` ni analizadores de estilo configurados todavía. Carpetas de capa en inglés (`shared/application`, `shared/domain`, `shared/infrastructure`). **Regla obligatoria: tipos explícitos, nunca `var`**, en `src`, `api` y los tests (detalle y cómo cumplirla en `apps/backend/AGENTS.md`).
   - No hay hooks de pre-commit (ni Husky ni equivalente) en este repo.
 
 ## Reglas generales
