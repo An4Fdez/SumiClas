@@ -8,14 +8,28 @@ namespace SumiClas.Api.Http;
 /// <summary>
 /// Documents in every operation the error responses a domain exception can produce, since the status of each one is
 /// decided by <see cref="DomainExceptionConvention"/> and not declared by the endpoint: 400 and 401 always, 403 and 404
-/// when the operation is not anonymous and 409 when it writes. They carry <see cref="ProblemDetails"/>, so the
-/// generated client types the error with its <c>code</c>. A response the endpoint already declares is left alone.
+/// when the operation is not anonymous and 409 when it writes. They all point to one shared
+/// <see cref="ProblemDetails"/> schema (an inline copy per response makes the generated client invent one anonymous
+/// type per response), so the client types the error with its <c>code</c>. A response the endpoint already declares
+/// is left alone.
 /// </summary>
-public sealed class ProblemResponsesTransformer : IOpenApiOperationTransformer
+public sealed class ProblemResponsesTransformer : IOpenApiOperationTransformer, IOpenApiDocumentTransformer
 {
     private const string ProblemContentType = "application/problem+json";
+    private const string ProblemSchemaName = nameof(ProblemDetails);
 
-    public async Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    public async Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.Schemas ??= new Dictionary<string, IOpenApiSchema>();
+        if (!document.Components.Schemas.ContainsKey(ProblemSchemaName))
+        {
+            document.Components.Schemas[ProblemSchemaName] =
+                await context.GetOrCreateSchemaAsync(typeof(ProblemDetails), null, cancellationToken);
+        }
+    }
+
+    public Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
         bool anonymous = context.Description.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any();
         bool reads = string.Equals(context.Description.HttpMethod, HttpMethods.Get, StringComparison.OrdinalIgnoreCase);
@@ -32,7 +46,6 @@ public sealed class ProblemResponsesTransformer : IOpenApiOperationTransformer
             statuses.Add(StatusCodes.Status409Conflict);
         }
 
-        IOpenApiSchema problem = await context.GetOrCreateSchemaAsync(typeof(ProblemDetails), null, cancellationToken);
         operation.Responses ??= [];
         foreach (int status in statuses)
         {
@@ -45,9 +58,14 @@ public sealed class ProblemResponsesTransformer : IOpenApiOperationTransformer
             operation.Responses[key] = new OpenApiResponse
             {
                 Description = existing?.Description ?? Describe(status),
-                Content = new Dictionary<string, OpenApiMediaType> { [ProblemContentType] = new() { Schema = problem } },
+                Content = new Dictionary<string, OpenApiMediaType>
+                {
+                    [ProblemContentType] = new() { Schema = new OpenApiSchemaReference(ProblemSchemaName, context.Document) },
+                },
             };
         }
+
+        return Task.CompletedTask;
     }
 
     private static string Describe(int status) => status switch

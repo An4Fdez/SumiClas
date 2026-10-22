@@ -19,6 +19,7 @@ public static class OpenApiSecurityServiceCollectionExtensions
         {
             options.AddDocumentTransformer<BearerSecurityTransformer>();
             options.AddOperationTransformer<BearerSecurityTransformer>();
+            options.AddDocumentTransformer<ProblemResponsesTransformer>();
             options.AddOperationTransformer<ProblemResponsesTransformer>();
         });
 

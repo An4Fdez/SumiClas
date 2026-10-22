@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SumiClas.Api.Http;
-using System.Reflection;
 using System.Text.Json;
 
 /// <summary>The real OpenAPI generator with the transformer, over a loopback socket, reading the document it serves.</summary>
@@ -17,6 +16,7 @@ using System.Text.Json;
 public class ProblemResponsesTransformerShould
 {
     private const string PROBLEM_CONTENT_TYPE = "application/problem+json";
+    private const string PROBLEM_SCHEMA_REFERENCE = "#/components/schemas/ProblemDetails";
 
     [Test]
     public async Task document_the_read_errors_of_a_protected_operation_as_problem_details()
@@ -26,7 +26,7 @@ public class ProblemResponsesTransformerShould
         StatusesOf(responses).Should().BeEquivalentTo(["400", "401", "403", "404"]);
         foreach (JsonProperty response in responses.EnumerateObject().Where(response => response.Name != "200"))
         {
-            SchemaOf(response.Value).Should().Contain("\"detail\"");
+            SchemaOf(response.Value).Should().Contain(PROBLEM_SCHEMA_REFERENCE);
         }
     }
 
@@ -70,7 +70,17 @@ public class ProblemResponsesTransformerShould
 
         JsonElement unauthorized = responses.GetProperty("401");
         unauthorized.GetProperty("description").GetString().Should().Be("Unauthorized");
-        SchemaOf(unauthorized).Should().Contain("\"detail\"");
+        SchemaOf(unauthorized).Should().Contain(PROBLEM_SCHEMA_REFERENCE);
+    }
+
+    [Test]
+    public async Task point_every_error_to_one_shared_problem_details_schema_that_the_document_defines()
+    {
+        JsonElement document = await DocumentOf();
+
+        JsonElement problem = document.GetProperty("components").GetProperty("schemas").GetProperty("ProblemDetails");
+        problem.GetProperty("properties").TryGetProperty("detail", out _).Should().BeTrue();
+        problem.GetProperty("properties").TryGetProperty("title", out _).Should().BeTrue();
     }
 
     private static IEnumerable<string> StatusesOf(JsonElement responses)
@@ -79,24 +89,22 @@ public class ProblemResponsesTransformerShould
     private static string SchemaOf(JsonElement response)
         => response.GetProperty("content").GetProperty(PROBLEM_CONTENT_TYPE).GetProperty("schema").ToString();
 
-    /// <summary>
-    /// Registers the OpenAPI services by reflection: a direct call makes the OpenAPI source generator emit interceptors,
-    /// which only the Web SDK enables, and this test project is not a web project.
-    /// </summary>
-    private static void AddOpenApi(IServiceCollection services, Action<OpenApiOptions> configure)
+    private static async Task<JsonElement> ResponsesOf(string method, string path)
     {
-        MethodInfo addOpenApi = typeof(OpenApiServiceCollectionExtensions).GetMethod(
-            nameof(OpenApiServiceCollectionExtensions.AddOpenApi),
-            [typeof(IServiceCollection), typeof(Action<OpenApiOptions>)])!;
-        addOpenApi.Invoke(null, [services, configure]);
+        JsonElement document = await DocumentOf();
+        return document.GetProperty("paths").GetProperty(path).GetProperty(method).GetProperty("responses");
     }
 
-    private static async Task<JsonElement> ResponsesOf(string method, string path)
+    private static async Task<JsonElement> DocumentOf()
     {
         WebApplicationBuilder builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Logging.ClearProviders();
-        AddOpenApi(builder.Services, options => options.AddOperationTransformer<ProblemResponsesTransformer>());
+        OpenApiRegistration.AddOpenApi(builder.Services, options =>
+        {
+            options.AddDocumentTransformer<ProblemResponsesTransformer>();
+            options.AddOperationTransformer<ProblemResponsesTransformer>();
+        });
         await using WebApplication app = builder.Build();
         app.MapOpenApi();
         app.MapGet("/protected", () => "ok");
@@ -109,6 +117,6 @@ public class ProblemResponsesTransformerShould
 
         using HttpClient client = new() { BaseAddress = new Uri(app.Urls.First()) };
         using JsonDocument document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
-        return document.RootElement.GetProperty("paths").GetProperty(path).GetProperty(method).GetProperty("responses").Clone();
+        return document.RootElement.Clone();
     }
 }
