@@ -2,11 +2,6 @@
   <Folder Name="/apps/" />
   <Folder Name="/apps/backend/">
     <File Path="apps/backend/AGENTS.md" />
-    <File Path="apps/backend/api/Bootstrap/ApplicationServiceCollectionExtensions.cs" />
-    <File Path="apps/backend/api/Bootstrap/ConventionServiceCollectionExtensions.cs" />
-    <File Path="apps/backend/api/Bootstrap/InfrastructureServiceCollectionExtensions.cs" />
-    <File Path="apps/backend/api/Bootstrap/WebApplicationMigrationExtensions.cs" />
-    <File Path="apps/backend/api/Endpoints/SchoolsEndpoints.cs" />
   </Folder>
   <Folder Name="/apps/backend/api/">
     <Project Path="apps/backend/api/SumiClas.Api.csproj" />
