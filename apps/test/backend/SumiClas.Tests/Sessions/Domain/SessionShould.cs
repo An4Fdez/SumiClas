@@ -26,10 +26,8 @@ public class SessionShould : UnitTestCase
         Guid userId = GuidMother.Random();
         string firstHash = StringMother.Random("hash");
 
-        Result<Session> result = Session.Create(userId, firstHash, this.Clock.Object);
+        Session session = Session.Create(userId, firstHash, this.Clock.Object);
 
-        result.IsSuccess.Should().BeTrue();
-        Session session = result.Value;
         session.Id.Should().NotBe(Guid.Empty);
         session.UserId.Should().Be(userId);
         session.CreatedAt.Should().Be(Now);
@@ -50,32 +48,32 @@ public class SessionShould : UnitTestCase
         Guid userId = GuidMother.Random();
         string firstHash = StringMother.Random("hash");
 
-        Session first = Session.Create(userId, firstHash, this.Clock.Object).Value;
-        Session second = Session.Create(userId, firstHash, this.Clock.Object).Value;
+        Session first = Session.Create(userId, firstHash, this.Clock.Object);
+        Session second = Session.Create(userId, firstHash, this.Clock.Object);
 
         first.Id.Should().NotBe(Guid.Empty);
         second.Id.Should().NotBe(first.Id);
     }
 
     [Test]
-    public void return_user_required_when_started_with_an_empty_user()
+    public void throw_user_required_when_started_with_an_empty_user()
     {
         string firstHash = StringMother.Random("hash");
 
-        Result<Session> result = Session.Create(Guid.Empty, firstHash, this.Clock.Object);
+        Func<Session> act = () => Session.Create(Guid.Empty, firstHash, this.Clock.Object);
 
-        result.Error.Should().Be(SessionErrors.UserRequired);
+        act.Should().Throw<SessionExceptions.UserRequired>();
     }
 
     [TestCase("")]
     [TestCase("   ")]
-    public void return_token_hash_required_when_started_with_a_blank_hash(string hash)
+    public void throw_token_hash_required_when_started_with_a_blank_hash(string hash)
     {
         Guid userId = GuidMother.Random();
 
-        Result<Session> result = Session.Create(userId, hash, this.Clock.Object);
+        Func<Session> act = () => Session.Create(userId, hash, this.Clock.Object);
 
-        result.Error.Should().Be(SessionErrors.TokenHashRequired);
+        act.Should().Throw<SessionExceptions.TokenHashRequired>();
     }
 
     [Test]
@@ -87,10 +85,8 @@ public class SessionShould : UnitTestCase
         Guid firstId = session.RefreshTokens.Single().Id;
         this.AdvanceClock(TimeSpan.FromMinutes(5));
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, secondHash);
-
-        result.IsSuccess.Should().BeTrue();
-        SessionRotation.Rotated? rotated = result.Value as SessionRotation.Rotated;
+        SessionRotation result = this.Rotate(session, firstHash, secondHash);
+        SessionRotation.Rotated? rotated = result as SessionRotation.Rotated;
         rotated.Should().NotBeNull();
         rotated!.NewToken.Id.Should().NotBe(Guid.Empty);
         rotated.NewToken.Id.Should().NotBe(firstId);
@@ -105,25 +101,25 @@ public class SessionShould : UnitTestCase
     }
 
     [Test]
-    public void return_token_hash_required_when_rotating_with_a_blank_old_hash()
+    public void throw_token_hash_required_when_rotating_with_a_blank_old_hash()
     {
         Session session = this.NewSession(GuidMother.Random(), StringMother.Random("hash"));
 
-        Result<SessionRotation> result = this.Rotate(session, "", StringMother.Random("hash"));
+        Func<SessionRotation> act = () => this.Rotate(session, "", StringMother.Random("hash"));
 
-        result.Error.Should().Be(SessionErrors.TokenHashRequired);
+        act.Should().Throw<SessionExceptions.TokenHashRequired>();
         session.RefreshTokens.Should().HaveCount(1);
     }
 
     [Test]
-    public void return_token_hash_required_when_rotating_with_a_blank_new_hash_even_if_the_old_one_is_known()
+    public void throw_token_hash_required_when_rotating_with_a_blank_new_hash_even_if_the_old_one_is_known()
     {
         string firstHash = StringMother.Random("hash");
         Session session = this.NewSession(GuidMother.Random(), firstHash);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, " ");
+        Func<SessionRotation> act = () => this.Rotate(session, firstHash, " ");
 
-        result.Error.Should().Be(SessionErrors.TokenHashRequired);
+        act.Should().Throw<SessionExceptions.TokenHashRequired>();
         session.RefreshTokens.Should().HaveCount(1);
     }
 
@@ -134,9 +130,9 @@ public class SessionShould : UnitTestCase
         string unknownHash = StringMother.Random("hash");
         string secondHash = StringMother.Random("hash");
 
-        Result<SessionRotation> result = this.Rotate(session, unknownHash, secondHash);
+        SessionRotation result = this.Rotate(session, unknownHash, secondHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RefreshTokens.Should().HaveCount(1);
         session.RefreshTokens.Single().ReplacedAt.Should().BeNull();
         session.RevokedAt.Should().BeNull();
@@ -150,9 +146,9 @@ public class SessionShould : UnitTestCase
         Session session = this.NewSession(GuidMother.Random(), firstHash);
         this.AdvanceClock(RefreshToken.Lifetime + TimeSpan.FromSeconds(1));
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, secondHash);
+        SessionRotation result = this.Rotate(session, firstHash, secondHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RefreshTokens.Should().HaveCount(1);
         session.RefreshTokens.Single().ReplacedAt.Should().BeNull();
         session.RevokedAt.Should().BeNull();
@@ -168,9 +164,9 @@ public class SessionShould : UnitTestCase
         this.Rotate(session, firstHash, secondHash);
         this.AdvanceClock(Session.RefreshGrace / 2);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, thirdHash);
+        SessionRotation result = this.Rotate(session, firstHash, thirdHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RevokedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(2);
         session.RefreshTokens.Single(token => token.TokenHash == secondHash).IsActive(this.Clock.Object)
@@ -187,9 +183,9 @@ public class SessionShould : UnitTestCase
         this.Rotate(session, firstHash, secondHash);
         this.AdvanceClock(Session.RefreshGrace);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, thirdHash);
+        SessionRotation result = this.Rotate(session, firstHash, thirdHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RevokedAt.Should().BeNull();
     }
 
@@ -204,10 +200,8 @@ public class SessionShould : UnitTestCase
         this.Rotate(session, firstHash, secondHash);
         this.AdvanceClock(pastGrace);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, thirdHash);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotation.Reused>();
+        SessionRotation result = this.Rotate(session, firstHash, thirdHash);
+        result.Should().BeOfType<SessionRotation.Reused>();
         session.RevokedAt.Should().Be(Now + pastGrace);
         session.IsActive(this.Clock.Object).Should().BeFalse();
         session.RefreshTokens.Should().HaveCount(2);
@@ -225,9 +219,9 @@ public class SessionShould : UnitTestCase
         this.AdvanceClock(Session.RefreshGrace + TimeSpan.FromSeconds(50));
         this.Rotate(session, firstHash, thirdHash);
 
-        Result<SessionRotation> result = this.Rotate(session, secondHash, fourthHash);
+        SessionRotation result = this.Rotate(session, secondHash, fourthHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RefreshTokens.Should().HaveCount(2);
     }
 
@@ -239,9 +233,9 @@ public class SessionShould : UnitTestCase
         Session session = this.NewSession(GuidMother.Random(), firstHash);
         session.Revoke(this.Clock.Object);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, secondHash);
+        SessionRotation result = this.Rotate(session, firstHash, secondHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RefreshTokens.Should().HaveCount(1);
         session.RefreshTokens.Single().ReplacedAt.Should().BeNull();
     }
@@ -308,9 +302,9 @@ public class SessionShould : UnitTestCase
         DateTimeOffset? rotatedAt = session.LastRotatedAt;
         this.AdvanceClock(Session.RefreshGrace + TimeSpan.FromSeconds(50));
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, thirdHash);
+        SessionRotation result = this.Rotate(session, firstHash, thirdHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Reused>();
+        result.Should().BeOfType<SessionRotation.Reused>();
         session.LastRotatedAt.Should().Be(rotatedAt);
     }
 
@@ -325,9 +319,9 @@ public class SessionShould : UnitTestCase
         this.Rotate(session, firstHash, secondHash);
         this.AdvanceClock(TimeSpan.FromHours(26));
 
-        Result<SessionRotation> result = this.Rotate(session, secondHash, thirdHash);
+        SessionRotation result = this.Rotate(session, secondHash, thirdHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Rotated>();
+        result.Should().BeOfType<SessionRotation.Rotated>();
         session.RefreshTokens.Select(token => token.Id).Should().BeEquivalentTo(
             new[] { TokenOf(session, secondHash).Id, TokenOf(session, thirdHash).Id });
     }
@@ -359,9 +353,9 @@ public class SessionShould : UnitTestCase
         this.Rotate(session, firstHash, secondHash);
         this.AdvanceClock(RefreshToken.Lifetime + TimeSpan.FromHours(1));
 
-        Result<SessionRotation> result = this.Rotate(session, secondHash, thirdHash);
+        SessionRotation result = this.Rotate(session, secondHash, thirdHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Rotated>();
+        result.Should().BeOfType<SessionRotation.Rotated>();
         session.RefreshTokens.Select(token => token.Id).Should().BeEquivalentTo(
             new[] { TokenOf(session, secondHash).Id, TokenOf(session, thirdHash).Id });
     }
@@ -379,9 +373,9 @@ public class SessionShould : UnitTestCase
         this.AdvanceClock(TimeSpan.FromHours(26));
         this.Rotate(session, secondHash, thirdHash);
 
-        Result<SessionRotation> result = this.Rotate(session, firstHash, fourthHash);
+        SessionRotation result = this.Rotate(session, firstHash, fourthHash);
 
-        result.Value.Should().BeOfType<SessionRotation.Invalid>();
+        result.Should().BeOfType<SessionRotation.Invalid>();
         session.RevokedAt.Should().BeNull();
     }
 
@@ -500,8 +494,8 @@ public class SessionShould : UnitTestCase
         => specification.Criteria.Compile()(candidate);
 
     private Session NewSession(Guid userId, string firstHash)
-        => Session.Create(userId, firstHash, this.Clock.Object).Value;
+        => Session.Create(userId, firstHash, this.Clock.Object);
 
-    private Result<SessionRotation> Rotate(Session session, string hash, string newHash)
+    private SessionRotation Rotate(Session session, string hash, string newHash)
         => session.Rotate(hash, newHash, this.Clock.Object);
 }

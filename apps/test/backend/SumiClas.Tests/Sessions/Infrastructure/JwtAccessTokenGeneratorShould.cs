@@ -34,14 +34,13 @@ public class JwtAccessTokenGeneratorShould : UnitTestCase
     }
 
     [Test]
-    public void return_a_successful_result_with_an_access_token_value_object()
+    public void return_an_access_token_value_object()
     {
         JwtAccessTokenGenerator generator = this.NewGenerator(JwtOptionsMother.Random());
 
-        Result<AccessToken> result = generator.Generate(GuidMother.Random());
+        AccessToken result = generator.Generate(GuidMother.Random());
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(AccessTokenMother.Create(result.Value.Value, Now + AccessToken.Lifetime));
+        result.Should().Be(AccessTokenMother.Create(result.Value, Now + AccessToken.Lifetime));
     }
 
     [Test]
@@ -74,7 +73,7 @@ public class JwtAccessTokenGeneratorShould : UnitTestCase
     public async Task produce_a_signature_that_validates_with_the_key_and_fails_with_another_one()
     {
         JwtOptions options = JwtOptionsMother.Random();
-        string value = this.NewGenerator(options).Generate(GuidMother.Random()).Value.Value;
+        string value = this.NewGenerator(options).Generate(GuidMother.Random()).Value;
         JsonWebTokenHandler handler = new();
 
         TokenValidationResult withKey = await handler.ValidateTokenAsync(
@@ -89,7 +88,7 @@ public class JwtAccessTokenGeneratorShould : UnitTestCase
     }
 
     private static JsonWebToken GenerateToken(JwtAccessTokenGenerator generator, Guid userId)
-        => new(generator.Generate(userId).Value.Value);
+        => new(generator.Generate(userId).Value);
 
     private static TokenValidationParameters Parameters(JwtOptions options, string key)
         => new()

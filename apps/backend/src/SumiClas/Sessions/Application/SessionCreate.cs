@@ -13,7 +13,7 @@ namespace SumiClas.Sessions.Application;
 /// </summary>
 public static class SessionCreate
 {
-    public sealed record Command(string Email, string Password) : IRequest<Result<SessionResponse>>, ICommand;
+    public sealed record Command(string Email, string Password) : IRequest<SessionResponse>, ICommand;
 
     public sealed class Create(
         IQueryBus queryBus,
@@ -22,35 +22,25 @@ public static class SessionCreate
         IAccessTokenGenerator accessTokenGenerator,
         IClock clock) : IUseCase
     {
-        public async Task<Result<SessionResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task<SessionResponse> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var user = await queryBus.Send(new UserPasswordVerify.Query(command.Email, command.Password), ct);
 
             var refreshToken = refreshTokenGenerator.Generate();
             var session = Session.Create(user.Id, refreshTokenGenerator.Hash(refreshToken), clock);
 
-            if (session.IsFailure)
-            {
-                return Result<SessionResponse>.Failure(session.Error!);
-            }
-
-            await repository.AddAsync(session.Value, ct);
+            await repository.AddAsync(session, ct);
 
             var accessToken = accessTokenGenerator.Generate(user.Id);
-            if (accessToken.IsFailure)
-            {
-                return Result<SessionResponse>.Failure(accessToken.Error!);
-            }
 
-            return Result<SessionResponse>.Success(
-                new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Id,
-                    user.FullName, refreshToken, session.Value.RefreshTokens.Single().ExpiresAt));
+            return new SessionResponse(accessToken.Value, accessToken.ExpiresAt, user.Id,
+                user.FullName, refreshToken, session.RefreshTokens.Single().ExpiresAt);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result<SessionResponse>>
+    public sealed class Handler(Create create) : IRequestHandler<Command, SessionResponse>
     {
-        public Task<Result<SessionResponse>> Handle(Command command, CancellationToken ct)
+        public Task<SessionResponse> Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

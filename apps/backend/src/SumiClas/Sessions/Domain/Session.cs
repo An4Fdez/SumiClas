@@ -45,36 +45,30 @@ public sealed class Session : AggregateRoot
         _refreshTokens.AddRange(refreshTokens);
     }
 
-    public static Result<Session> Create(Guid userId, string tokenHash, IClock clock)
+    public static Session Create(Guid userId, string tokenHash, IClock clock)
     {
         if (userId == Guid.Empty)
         {
-            return Result<Session>.Failure(SessionErrors.UserRequired);
+            throw new SessionExceptions.UserRequired();
         }
 
-        var validation = Validate(tokenHash);
-        if (validation.IsFailure)
-        {
-            return Result<Session>.Failure(validation.Error!);
-        }
+        Validate(tokenHash);
 
-        var session = new Session(
+        return new Session(
             Guid.NewGuid(),
             userId,
             clock.UtcNow,
             null,
             null,
             [RefreshToken.Create(tokenHash, clock)]);
-        return Result<Session>.Success(session);
     }
 
-    private static Result Validate(string tokenHash)
+    private static void Validate(string tokenHash)
     {
         if (string.IsNullOrWhiteSpace(tokenHash))
         {
-            return Result.Failure(SessionErrors.TokenHashRequired);
+            throw new SessionExceptions.TokenHashRequired();
         }
-        return Result.Success();
     }
 
     public bool IsActive(IClock clock) => RevokedAt is null;
@@ -87,43 +81,36 @@ public sealed class Session : AggregateRoot
         RevokedAt ??= clock.UtcNow;
     }
 
-    public Result<SessionRotation> Rotate(string tokenHash, string newTokenHash, IClock clock)
+    public SessionRotation Rotate(string tokenHash, string newTokenHash, IClock clock)
     {
-        var validation = Validate(newTokenHash);
-        if (validation.IsFailure)
-        {
-            return Result<SessionRotation>.Failure(validation.Error!);
-        }
-        if (string.IsNullOrWhiteSpace(tokenHash))
-        {
-            return Result<SessionRotation>.Failure(SessionErrors.TokenHashRequired);
-        }
+        Validate(newTokenHash);
+        Validate(tokenHash);
 
         if (RevokedAt is not null)
         {
-            return Done(new SessionRotation.Invalid());
+            return new SessionRotation.Invalid();
         }
 
         var current = _refreshTokens.FirstOrDefault(token => token.TokenHash == tokenHash);
         if (current is null)
         {
-            return Done(new SessionRotation.Invalid());
+            return new SessionRotation.Invalid();
         }
 
         if (current.ReplacedAt is not null)
         {
             if (current.WasReplacedWithin(clock, RefreshGrace))
             {
-                return Done(new SessionRotation.Invalid());
+                return new SessionRotation.Invalid();
             }
 
             Revoke(clock);
-            return Done(new SessionRotation.Reused());
+            return new SessionRotation.Reused();
         }
 
         if (!current.IsActive(clock))
         {
-            return Done(new SessionRotation.Invalid());
+            return new SessionRotation.Invalid();
         }
 
         var successor = RefreshToken.Create(newTokenHash, clock);
@@ -131,7 +118,7 @@ public sealed class Session : AggregateRoot
         _refreshTokens.Add(successor);
         LastRotatedAt = clock.UtcNow;
         Prune(clock, current.Id, successor.Id);
-        return Done(new SessionRotation.Rotated(successor));
+        return new SessionRotation.Rotated(successor);
     }
 
     private void Prune(IClock clock, Guid keepPrevious, Guid keepCurrent)
@@ -143,5 +130,4 @@ public sealed class Session : AggregateRoot
             && (token.ExpiresAt <= now || (token.ReplacedAt is { } replacedAt && now - replacedAt > ReplacedTokenRetention)));
     }
 
-    private static Result<SessionRotation> Done(SessionRotation rotation) => Result<SessionRotation>.Success(rotation);
 }

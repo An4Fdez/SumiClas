@@ -301,7 +301,6 @@ public class JwtBearerValidationShould : ApiUnitTestCase
 
         return new JwtAccessTokenGenerator(Options.Create(issuing), this.Clock.Object)
             .Generate(userId)
-            .Value
             .Value;
     }
 }

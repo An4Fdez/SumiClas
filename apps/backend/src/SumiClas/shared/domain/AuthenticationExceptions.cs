@@ -11,4 +11,8 @@ public static class AuthenticationExceptions
 
     public sealed class PasswordTooWeak()
         : DomainException(AuthenticationErrors.PasswordTooWeak.Code, AuthenticationErrors.PasswordTooWeak.Message);
+
+    /// <summary>The refresh token is missing, unknown, expired, revoked or already replaced.</summary>
+    public sealed class RefreshTokenInvalid()
+        : DomainException(AuthenticationErrors.RefreshTokenInvalid.Code, AuthenticationErrors.RefreshTokenInvalid.Message);
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Sessions.Application;
+using SumiClas.Sessions.Domain;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
 using SumiClas.Users.Domain;
@@ -58,20 +59,17 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 TimeProvider time,
                 CancellationToken ct) =>
         {
-            var result = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
-            if (result.IsFailure)
-            {
-                return result.ToProblem();
-            }
+            var session = await sender.Send(new SessionCreate.Command(request.Email, request.Password), ct);
 
-            return Respond(result.Value, response, cookieOptions.Value, time);
+            return Respond(session, response, cookieOptions.Value, time);
         })
             .WithName("SessionCreate")
             .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status429TooManyRequests)
-            .Maps<AuthenticationExceptions.InvalidCredentials>(StatusCodes.Status401Unauthorized);
+            .Maps<AuthenticationExceptions.InvalidCredentials>(StatusCodes.Status401Unauthorized)
+            .ConflictsOnSave();
 
         var session = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthRefreshPolicy);
@@ -85,25 +83,36 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 CancellationToken ct) =>
         {
             var options = cookieOptions.Value;
-            var result = await sender.Send(new SessionRotate.Command(RefreshCookie.Read(request, options)), ct);
-            if (result.IsFailure)
+            var refreshToken = RefreshCookie.Read(request, options);
+            try
             {
-                return result.ToProblem();
-            }
+                var rotated = await sender.Send(new SessionRotate.Command(refreshToken), ct);
 
-            if (result.Value is SessionRotateOutcome.Rotated rotated)
+                return Respond(rotated, response, options, time);
+            }
+            catch (SessionExceptions.RefreshTokenReused)
             {
-                return Respond(rotated.Session, response, options, time);
-            }
+                // The failed rotation rolled back, so the revocation of the stolen session is its own command and
+                // its own transaction; it is not atomic with the detection. It must survive the client hanging up:
+                // whoever replays a token could otherwise cancel the revocation by aborting the request.
+                await sender.Send(new SessionRevoke.Command(refreshToken), CancellationToken.None);
 
-            RefreshCookie.Clear(response, options);
-            return ResultExtensions.RefreshTokenInvalidProblem();
+                RefreshCookie.Clear(response, options);
+                return ResultExtensions.RefreshTokenInvalidProblem();
+            }
+            catch (AuthenticationExceptions.RefreshTokenInvalid)
+            {
+                RefreshCookie.Clear(response, options);
+                return ResultExtensions.RefreshTokenInvalidProblem();
+            }
         })
             .WithName("SessionRotate")
             .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .Maps<AuthenticationExceptions.RefreshTokenInvalid>(StatusCodes.Status401Unauthorized)
+            .ConflictsOnSave();
 
         session.MapPost("/logout", async (
                 HttpRequest request,
@@ -113,11 +122,7 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 CancellationToken ct) =>
         {
             var options = cookieOptions.Value;
-            var result = await sender.Send(new SessionRevoke.Command(RefreshCookie.Read(request, options)), ct);
-            if (result.IsFailure)
-            {
-                return result.ToProblem();
-            }
+            await sender.Send(new SessionRevoke.Command(RefreshCookie.Read(request, options)), ct);
 
             RefreshCookie.Clear(response, options);
             return Results.NoContent();
@@ -125,7 +130,8 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .WithName("SessionRevoke")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .ConflictsOnSave();
     }
 
     private static IResult Respond(SessionResponse session, HttpResponse response, RefreshCookieOptions options, TimeProvider time)

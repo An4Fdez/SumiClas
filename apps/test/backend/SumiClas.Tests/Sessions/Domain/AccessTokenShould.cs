@@ -15,39 +15,38 @@ public class AccessTokenShould
     }
 
     [Test]
-    public void succeed_when_created_with_a_value_and_an_expiry()
+    public void create_the_token_with_a_value_and_an_expiry()
     {
         string value = StringMother.Random("jwt");
         DateTimeOffset expiresAt = UnitTestCase.Now + AccessToken.Lifetime;
 
-        Result<AccessToken> result = AccessToken.Create(value, expiresAt);
+        AccessToken result = AccessToken.Create(value, expiresAt);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().Be(value);
-        result.Value.ExpiresAt.Should().Be(expiresAt);
+        result.Value.Should().Be(value);
+        result.ExpiresAt.Should().Be(expiresAt);
     }
 
     [TestCase(null)]
     [TestCase("   ")]
-    public void fail_with_value_required_when_created_with_an_empty_value(string? value)
+    public void throw_value_required_when_created_with_an_empty_value(string? value)
     {
         DateTimeOffset expiresAt = UnitTestCase.Now + AccessToken.Lifetime;
 
-        Result<AccessToken> result = AccessToken.Create(value!, expiresAt);
+        Action act = () => AccessToken.Create(value!, expiresAt);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AccessTokenErrors.ValueRequired);
+
+        act.Should().Throw<AccessTokenExceptions.ValueRequired>();
     }
 
     [Test]
-    public void fail_with_expiry_required_when_created_with_a_default_expiry()
+    public void throw_expiry_required_when_created_with_a_default_expiry()
     {
         string value = StringMother.Random("jwt");
 
-        Result<AccessToken> result = AccessToken.Create(value, default);
+        Action act = () => AccessToken.Create(value, default);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AccessTokenErrors.ExpiryRequired);
+
+        act.Should().Throw<AccessTokenExceptions.ExpiryRequired>();
     }
 
     [Test]

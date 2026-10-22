@@ -33,9 +33,8 @@ public class SessionRevokeShould : SessionsUnitTestCase
         Session other = SessionMother.With(userId, HashOf(otherRaw));
         this.ShouldSearchSessions(session, other);
 
-        Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(activeRaw));
+        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(activeRaw));
 
-        result.IsSuccess.Should().BeTrue();
         session.RevokedAt.Should().Be(Now);
         other.RevokedAt.Should().BeNull();
     }
@@ -50,14 +49,13 @@ public class SessionRevokeShould : SessionsUnitTestCase
         session.Rotate(HashOf(oldRaw), HashOf(newRaw), this.Clock.Object);
         this.ShouldSearchSessions(session);
 
-        Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(oldRaw));
+        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
         session.RevokedAt.Should().NotBeNull();
     }
 
     [Test]
-    public async Task keep_the_first_revocation_and_succeed_when_called_twice()
+    public async Task keep_the_first_revocation_when_called_twice()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         string raw = StringMother.Random("raw");
@@ -67,24 +65,22 @@ public class SessionRevokeShould : SessionsUnitTestCase
         DateTimeOffset? firstRevocation = session.RevokedAt;
         this.AdvanceClock(TimeSpan.FromHours(1));
 
-        Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(raw));
+        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(raw));
 
-        result.IsSuccess.Should().BeTrue();
         session.RevokedAt.Should().Be(firstRevocation);
     }
 
     [TestCase(null)]
     [TestCase("  ")]
     [TestCase("unknown")]
-    public async Task succeed_and_touch_nothing_when_the_token_is_blank_or_unknown(string? token)
+    public async Task touch_nothing_when_the_token_is_blank_or_unknown(string? token)
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Session session = SessionMother.With(GuidMother.Random(), HashOf(StringMother.Random("raw")));
         this.ShouldSearchSessions(session);
 
-        Result result = await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(token));
+        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(token));
 
-        result.IsSuccess.Should().BeTrue();
         session.RevokedAt.Should().BeNull();
     }
 }

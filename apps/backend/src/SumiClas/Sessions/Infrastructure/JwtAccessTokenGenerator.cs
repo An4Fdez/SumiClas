@@ -23,7 +23,7 @@ public sealed class JwtAccessTokenGenerator : IAccessTokenGenerator
             SecurityAlgorithms.HmacSha256);
     }
 
-    public Result<AccessToken> Generate(Guid userId)
+    public AccessToken Generate(Guid userId)
     {
         var now = _clock.UtcNow;
         var expiresAt = now.Add(AccessToken.Lifetime);

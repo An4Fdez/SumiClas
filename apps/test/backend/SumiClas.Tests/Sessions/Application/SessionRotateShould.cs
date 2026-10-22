@@ -28,7 +28,7 @@ public class SessionRotateShould : SessionsUnitTestCase
     }
 
     [Test]
-    public async Task propagate_the_failure_when_the_access_token_issuer_fails()
+    public async Task throw_the_access_token_failure_when_the_access_token_issuer_fails()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -38,11 +38,10 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldSearchSessions(SessionMother.With(userId, HashOf(oldRaw)));
         this.ShouldFailGeneratingAccessToken(userId);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AccessTokenErrors.ValueRequired);
+        await act.Should().ThrowAsync<AccessTokenExceptions.ValueRequired>();
     }
 
     [Test]
@@ -60,17 +59,16 @@ public class SessionRotateShould : SessionsUnitTestCase
         Session session = SessionMother.With(userId, HashOf(oldRaw));
         this.ShouldSearchSessions(session);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        SessionResponse result = await this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(SessionRotateOutcomeMother.Rotated(SessionResponseMother.Create(
+        result.Should().Be(SessionResponseMother.Create(
             jwt,
             Now + AccessToken.Lifetime,
             userId,
             fullName,
             newRaw,
-            Now + RefreshToken.Lifetime)));
+            Now + RefreshToken.Lifetime));
         RefreshToken old = TokenOf(session, oldRaw);
         RefreshToken successor = TokenOf(session, newRaw);
         session.RefreshTokens.Should().HaveCount(2);
@@ -85,18 +83,17 @@ public class SessionRotateShould : SessionsUnitTestCase
 
     [TestCase(null)]
     [TestCase("   ")]
-    public async Task return_invalid_and_search_nothing_when_the_token_is_blank(string? raw)
+    public async Task throw_invalid_and_search_nothing_when_the_token_is_blank(string? raw)
     {
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(raw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_invalid_and_change_nothing_when_the_token_is_unknown()
+    public async Task throw_invalid_and_change_nothing_when_the_token_is_unknown()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         string otherRaw = StringMother.Random("other");
@@ -104,16 +101,16 @@ public class SessionRotateShould : SessionsUnitTestCase
         Session session = SessionMother.With(GuidMother.Random(), HashOf(otherRaw));
         this.ShouldSearchSessions(session);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(unknownRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         session.RefreshTokens.Should().HaveCount(1);
     }
 
     [Test]
-    public async Task return_invalid_and_change_nothing_when_the_token_is_expired()
+    public async Task throw_invalid_and_change_nothing_when_the_token_is_expired()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -124,17 +121,17 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldSearchSessions(session);
         this.AdvanceClock(RefreshToken.Lifetime + TimeSpan.FromSeconds(1));
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         TokenOf(session, oldRaw).ReplacedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(1);
     }
 
     [Test]
-    public async Task return_invalid_and_change_nothing_when_the_session_is_revoked()
+    public async Task throw_invalid_and_change_nothing_when_the_session_is_revoked()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -145,17 +142,17 @@ public class SessionRotateShould : SessionsUnitTestCase
         session.Revoke(this.Clock.Object);
         this.ShouldSearchSessions(session);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         TokenOf(session, oldRaw).ReplacedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(1);
     }
 
     [Test]
-    public async Task revoke_the_session_and_report_reuse_as_a_success_when_a_replaced_token_comes_after_the_grace()
+    public async Task revoke_the_session_and_throw_reuse_when_a_replaced_token_comes_after_the_grace()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -170,18 +167,18 @@ public class SessionRotateShould : SessionsUnitTestCase
         await this._useCase.ExecuteAsync(SessionRotateCommandMother.WithToken(oldRaw));
         this.AdvanceClock(Session.RefreshGrace + TimeSpan.FromSeconds(1));
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Reused>();
+
+        await act.Should().ThrowAsync<SessionExceptions.RefreshTokenReused>();
         session.RevokedAt.Should().NotBeNull();
         unrelated.RevokedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(2);
     }
 
     [Test]
-    public async Task return_invalid_and_not_revoke_the_session_when_a_replaced_token_comes_within_the_grace()
+    public async Task throw_invalid_and_not_revoke_the_session_when_a_replaced_token_comes_within_the_grace()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -194,17 +191,17 @@ public class SessionRotateShould : SessionsUnitTestCase
         await this._useCase.ExecuteAsync(SessionRotateCommandMother.WithToken(oldRaw));
         this.AdvanceClock(Session.RefreshGrace / 2);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         session.RevokedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(2);
     }
 
     [Test]
-    public async Task return_invalid_and_leave_the_session_untouched_when_the_user_no_longer_exists()
+    public async Task throw_invalid_and_leave_the_session_untouched_when_the_user_no_longer_exists()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -213,11 +210,11 @@ public class SessionRotateShould : SessionsUnitTestCase
         this.ShouldSearchSessions(session);
         this.ShouldNotFindUser(userId);
 
-        Result<SessionRotateOutcome> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             SessionRotateCommandMother.WithToken(oldRaw));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<SessionRotateOutcome.Invalid>();
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
         TokenOf(session, oldRaw).ReplacedAt.Should().BeNull();
         session.RefreshTokens.Should().HaveCount(1);
     }
@@ -227,7 +224,9 @@ public class SessionRotateShould : SessionsUnitTestCase
 
     private void ShouldFindUser(Guid userId, string fullName)
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<UserFinderByIdOrNull.Query>(), It.IsAny<CancellationToken>()))
+            .Setup(bus => bus.Send(
+                It.Is<UserFinderByIdOrNull.Query>(query => query.UserId == userId),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserResponseMother.With(userId, fullName));
 
     private void ShouldGenerateRefreshToken(string raw)
@@ -236,10 +235,10 @@ public class SessionRotateShould : SessionsUnitTestCase
     private void ShouldGenerateAccessToken(Guid userId, string jwt)
         => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Success(AccessTokenMother.With(jwt)));
+            .Returns(AccessTokenMother.With(jwt));
 
     private void ShouldFailGeneratingAccessToken(Guid userId)
         => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
+            .Throws(new AccessTokenExceptions.ValueRequired());
 }

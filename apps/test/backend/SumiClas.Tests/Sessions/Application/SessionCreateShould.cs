@@ -49,10 +49,9 @@ public class SessionCreateShould : SessionsUnitTestCase
         this.ShouldGenerateAccessToken(userId, jwt);
         SessionCreate.Command command = SessionCreateCommandMother.WithCredentials(email, password);
 
-        Result<SessionResponse> result = await this._useCase.ExecuteAsync(command);
+        SessionResponse result = await this._useCase.ExecuteAsync(command);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(SessionResponseMother.Create(
+        result.Should().Be(SessionResponseMother.Create(
             jwt,
             Now + AccessToken.Lifetime,
             userId,
@@ -85,7 +84,7 @@ public class SessionCreateShould : SessionsUnitTestCase
     }
 
     [Test]
-    public async Task propagate_the_failure_when_the_access_token_issuer_fails()
+    public async Task throw_the_access_token_failure_when_the_access_token_issuer_fails()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);
         Guid userId = GuidMother.Random();
@@ -96,10 +95,9 @@ public class SessionCreateShould : SessionsUnitTestCase
         this.ShouldFailGeneratingAccessToken(userId);
         SessionCreate.Command command = SessionCreateCommandMother.WithCredentials(email, password);
 
-        Result<SessionResponse> result = await this._useCase.ExecuteAsync(command);
+        Func<Task> act = () => this._useCase.ExecuteAsync(command);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AccessTokenErrors.ValueRequired);
+        await act.Should().ThrowAsync<AccessTokenExceptions.ValueRequired>();
     }
 
     private void ShouldRejectCredentials()
@@ -118,10 +116,10 @@ public class SessionCreateShould : SessionsUnitTestCase
     private void ShouldGenerateAccessToken(Guid userId, string jwt)
         => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Success(AccessTokenMother.With(jwt)));
+            .Returns(AccessTokenMother.With(jwt));
 
     private void ShouldFailGeneratingAccessToken(Guid userId)
         => this._accessTokenGenerator
             .Setup(generator => generator.Generate(userId))
-            .Returns(Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired));
+            .Throws(new AccessTokenExceptions.ValueRequired());
 }

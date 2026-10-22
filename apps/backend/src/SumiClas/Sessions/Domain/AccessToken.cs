@@ -15,19 +15,19 @@ public sealed class AccessToken : ValueObject
         ExpiresAt = expiresAt;
     }
 
-    public static Result<AccessToken> Create(string value, DateTimeOffset expiresAt)
+    public static AccessToken Create(string value, DateTimeOffset expiresAt)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Result<AccessToken>.Failure(AccessTokenErrors.ValueRequired);
+            throw new AccessTokenExceptions.ValueRequired();
         }
 
         if (expiresAt == default)
         {
-            return Result<AccessToken>.Failure(AccessTokenErrors.ExpiryRequired);
+            throw new AccessTokenExceptions.ExpiryRequired();
         }
 
-        return Result<AccessToken>.Success(new AccessToken(value, expiresAt));
+        return new AccessToken(value, expiresAt);
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()
