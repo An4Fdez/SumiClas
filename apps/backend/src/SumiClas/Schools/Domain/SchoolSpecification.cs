@@ -21,7 +21,7 @@ public sealed class SchoolSpecification : Specification<School>
         if (address is not null) AddCriteria(school => school.Address == address);
         if (ids is not null)
         {
-            var schoolIds = ids.ToArray();
+            Guid[] schoolIds = ids.ToArray();
             AddCriteria(school => schoolIds.Contains(school.Id));
         }
     }

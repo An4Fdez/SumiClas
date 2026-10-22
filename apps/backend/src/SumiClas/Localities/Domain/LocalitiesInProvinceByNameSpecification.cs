@@ -12,7 +12,7 @@ public sealed class LocalitiesInProvinceByNameSpecification : Specification<Loca
     {
         AddCriteria(locality => locality.ProvinceId == provinceId);
 
-        var normalizedTerm = TextNormalizer.Normalize(term);
+        string normalizedTerm = TextNormalizer.Normalize(term);
         if (normalizedTerm.Length > 0)
         {
             AddCriteria(locality => locality.NormalizedName.Contains(normalizedTerm));

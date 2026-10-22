@@ -17,7 +17,7 @@ public static class SchoolYearFinderBySchool
             SchoolYearStatus? status = null;
             if (!string.IsNullOrWhiteSpace(query.Status))
             {
-                if (!Enum.TryParse<SchoolYearStatus>(query.Status, ignoreCase: true, out var parsed) || !Enum.IsDefined(parsed))
+                if (!Enum.TryParse<SchoolYearStatus>(query.Status, ignoreCase: true, out SchoolYearStatus parsed) || !Enum.IsDefined(parsed))
                 {
                     throw new SchoolYearExceptions.InvalidStatus();
                 }
@@ -27,7 +27,7 @@ public static class SchoolYearFinderBySchool
 
             await queryBus.Send(new SchoolEnsure.Query(query.SchoolId), ct);
 
-            var schoolYears = await repository.SearchAsync(new SchoolYearSpecification(schoolId: query.SchoolId, status: status), ct);
+            IReadOnlyCollection<SchoolYear> schoolYears = await repository.SearchAsync(new SchoolYearSpecification(schoolId: query.SchoolId, status: status), ct);
             return schoolYears
                 .OrderByDescending(schoolYear => schoolYear.StartDate)
                 .Select(schoolYear => new SchoolYearResponse(

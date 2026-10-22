@@ -22,33 +22,33 @@ internal static class SchoolResponseFactory
             return [];
         }
 
-        var localities = (await queryBus.Send(
+        Dictionary<Guid, LocalityResponse> localities = (await queryBus.Send(
             new LocalityFinderByIds.Query(schools.Select(school => school.LocalityId).Distinct().ToList()), ct))
             .ToDictionary(locality => locality.Id);
 
-        var provinces = (await queryBus.Send(
+        Dictionary<Guid, ProvinceResponse> provinces = (await queryBus.Send(
             new ProvinceFinderByIds.Query(localities.Values.Select(locality => locality.ProvinceId).Distinct().ToList()), ct))
             .ToDictionary(province => province.Id);
 
-        var postalCodeIds = schools
+        List<Guid> postalCodeIds = schools
             .Where(school => school.PostalCodeId is not null)
             .Select(school => school.PostalCodeId!.Value)
             .Distinct()
             .ToList();
-        var postalCodes = postalCodeIds.Count == 0
+        Dictionary<Guid, PostalCodeResponse> postalCodes = postalCodeIds.Count == 0
             ? new Dictionary<Guid, PostalCodeResponse>()
             : (await queryBus.Send(new PostalCodeFinderByIds.Query(postalCodeIds), ct))
                 .ToDictionary(postalCode => postalCode.Id);
 
         return schools.Select(school =>
         {
-            if (!localities.TryGetValue(school.LocalityId, out var locality)
-                || !provinces.TryGetValue(locality.ProvinceId, out var province))
+            if (!localities.TryGetValue(school.LocalityId, out LocalityResponse? locality)
+                || !provinces.TryGetValue(locality.ProvinceId, out ProvinceResponse? province))
             {
                 throw new InvalidOperationException($"School {school.Id} points to a locality or province that does not exist.");
             }
 
-            var postalCode = school.PostalCodeId is { } postalCodeId ? postalCodes.GetValueOrDefault(postalCodeId) : null;
+            PostalCodeResponse? postalCode = school.PostalCodeId is { } postalCodeId ? postalCodes.GetValueOrDefault(postalCodeId) : null;
 
             return new SchoolResponse(
                 school.Id,

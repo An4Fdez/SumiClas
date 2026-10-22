@@ -16,11 +16,11 @@ public static class SubjectCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var subject = Subject.Create(command.Id, command.ClassId, command.Label);
+            Subject subject = Subject.Create(command.Id, command.ClassId, command.Label);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct);
 

@@ -13,7 +13,7 @@ public static class ProvinceFinderAll
     {
         public async Task<IReadOnlyCollection<ProvinceResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var provinces = await repository.SearchAsync(new ProvinceSpecification(), ct);
+            IReadOnlyCollection<Province> provinces = await repository.SearchAsync(new ProvinceSpecification(), ct);
             return provinces
                 .OrderBy(province => province.NormalizedName, StringComparer.Ordinal)
                 .Select(province => new ProvinceResponse(province.Id, province.Name))

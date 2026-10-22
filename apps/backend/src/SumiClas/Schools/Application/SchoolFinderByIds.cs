@@ -13,7 +13,7 @@ public static class SchoolFinderByIds
     {
         public async Task<IReadOnlyCollection<SchoolResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schools = await repository.SearchAsync(new SchoolSpecification(ids: query.SchoolIds), ct);
+            IReadOnlyCollection<School> schools = await repository.SearchAsync(new SchoolSpecification(ids: query.SchoolIds), ct);
             return await SchoolResponseFactory.CreateAsync(queryBus, schools, ct);
         }
     }

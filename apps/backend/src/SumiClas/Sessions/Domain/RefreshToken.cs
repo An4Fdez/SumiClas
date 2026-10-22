@@ -32,7 +32,7 @@ public sealed class RefreshToken : Entity
 
     internal static RefreshToken Create(string tokenHash, IClock clock)
     {
-        var now = clock.UtcNow;
+        DateTimeOffset now = clock.UtcNow;
         return new RefreshToken(Guid.NewGuid(), tokenHash, now, now + Lifetime, null, null);
     }
 

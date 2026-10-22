@@ -18,29 +18,29 @@ public static class StudentFinderByCurrentGuardian
     {
         public async Task<IReadOnlyCollection<ChildResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var students = await repository.SearchAsync(new StudentSpecification(guardianId: current), ct);
-            var studentIds = students.Select(student => student.Id).ToList();
+            IReadOnlyCollection<Student> students = await repository.SearchAsync(new StudentSpecification(guardianId: current), ct);
+            List<Guid> studentIds = students.Select(student => student.Id).ToList();
             if (studentIds.Count == 0)
             {
                 return new List<ChildResponse>();
             }
 
-            var enrollments = (await queryBus.Send(new EnrollmentFinderByStudents.Query(studentIds), ct))
+            List<EnrollmentResponse> enrollments = (await queryBus.Send(new EnrollmentFinderByStudents.Query(studentIds), ct))
                 .Where(enrollment => enrollment.Status == "Confirmed")
                 .ToList();
 
-            var classes = (await queryBus.Send(
+            Dictionary<Guid, ClassResponse> classes = (await queryBus.Send(
                 new ClassFinderByIds.Query(enrollments.Select(enrollment => enrollment.ClassId).Distinct().ToList()), ct))
                 .ToDictionary(schoolClass => schoolClass.Id);
 
-            var activeYears = (await queryBus.Send(
+            Dictionary<Guid, SchoolYearResponse> activeYears = (await queryBus.Send(
                 new SchoolYearFinderByIds.Query(classes.Values.Select(schoolClass => schoolClass.SchoolYearId).Distinct().ToList()), ct))
                 .Where(schoolYear => schoolYear.Status == "Active")
                 .ToDictionary(schoolYear => schoolYear.Id);
 
-            var schools = (await queryBus.Send(
+            Dictionary<Guid, SchoolResponse> schools = (await queryBus.Send(
                 new SchoolFinderByIds.Query(activeYears.Values.Select(schoolYear => schoolYear.SchoolId).Distinct().ToList()), ct))
                 .ToDictionary(school => school.Id);
 
@@ -48,12 +48,12 @@ public static class StudentFinderByCurrentGuardian
                 .OrderBy(student => student.Name.FirstName)
                 .Select(student =>
                 {
-                    var schoolClass = enrollments
+                    ClassResponse? schoolClass = enrollments
                         .Where(enrollment => enrollment.StudentId == student.Id)
                         .Select(enrollment => classes.GetValueOrDefault(enrollment.ClassId))
                         .FirstOrDefault(candidate => candidate is not null && activeYears.ContainsKey(candidate.SchoolYearId));
-                    var schoolYear = schoolClass is null ? null : activeYears[schoolClass.SchoolYearId];
-                    var school = schoolYear is null ? null : schools.GetValueOrDefault(schoolYear.SchoolId);
+                    SchoolYearResponse? schoolYear = schoolClass is null ? null : activeYears[schoolClass.SchoolYearId];
+                    SchoolResponse? school = schoolYear is null ? null : schools.GetValueOrDefault(schoolYear.SchoolId);
 
                     return new ChildResponse(
                         student.Id,

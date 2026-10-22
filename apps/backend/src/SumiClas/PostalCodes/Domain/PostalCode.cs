@@ -26,7 +26,7 @@ public sealed class PostalCode : AggregateRoot
             throw new PostalCodeExceptions.LocalityRequired();
         }
 
-        var trimmed = code?.Trim() ?? string.Empty;
+        string trimmed = code?.Trim() ?? string.Empty;
         if (trimmed.Length != Length || !trimmed.All(char.IsAsciiDigit))
         {
             throw new PostalCodeExceptions.CodeInvalid();

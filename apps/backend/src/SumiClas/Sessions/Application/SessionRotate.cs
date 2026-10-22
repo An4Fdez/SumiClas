@@ -29,20 +29,20 @@ public static class SessionRotate
                 throw new AuthenticationExceptions.RefreshTokenInvalid();
             }
 
-            var hash = refreshTokenGenerator.Hash(command.RefreshToken);
-            var found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
-            var session = found.FirstOrDefault() ?? throw new AuthenticationExceptions.RefreshTokenInvalid();
+            string hash = refreshTokenGenerator.Hash(command.RefreshToken);
+            IReadOnlyCollection<Session> found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
+            Session session = found.FirstOrDefault() ?? throw new AuthenticationExceptions.RefreshTokenInvalid();
 
-            var user = await queryBus.Send(new UserFinderByIdOrNull.Query(session.UserId), ct)
+            UserResponse user = await queryBus.Send(new UserFinderByIdOrNull.Query(session.UserId), ct)
                 ?? throw new AuthenticationExceptions.RefreshTokenInvalid();
 
-            var refreshToken = refreshTokenGenerator.Generate();
-            var rotation = session.Rotate(hash, refreshTokenGenerator.Hash(refreshToken), clock);
+            string refreshToken = refreshTokenGenerator.Generate();
+            SessionRotation rotation = session.Rotate(hash, refreshTokenGenerator.Hash(refreshToken), clock);
 
             switch (rotation)
             {
                 case SessionRotation.Rotated rotated:
-                    var accessToken = accessTokenGenerator.Generate(session.UserId);
+                    AccessToken accessToken = accessTokenGenerator.Generate(session.UserId);
 
                     return new SessionResponse(accessToken.Value, accessToken.ExpiresAt, session.UserId,
                         user.FullName, refreshToken, rotated.NewToken.ExpiresAt);

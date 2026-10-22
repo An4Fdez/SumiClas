@@ -17,11 +17,11 @@ public static class SubjectFinderByClass
         {
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var subjects = await repository.SearchAsync(new SubjectSpecification(classId: query.ClassId), ct);
+            IReadOnlyCollection<Subject> subjects = await repository.SearchAsync(new SubjectSpecification(classId: query.ClassId), ct);
             return subjects
                 .OrderBy(subject => subject.Label)
                 .Select(subject => new SubjectResponse(subject.Id, subject.ClassId, subject.Label))

@@ -16,7 +16,7 @@ public static class SchoolYearCreate
         {
             await queryBus.Send(new SchoolEnsure.Query(command.SchoolId), ct);
 
-            var schoolYear = SchoolYear.Create(command.Id, command.SchoolId, command.Label, command.StartDate, command.EndDate);
+            SchoolYear schoolYear = SchoolYear.Create(command.Id, command.SchoolId, command.Label, command.StartDate, command.EndDate);
 
             await repository.AddAsync(schoolYear, ct);
         }

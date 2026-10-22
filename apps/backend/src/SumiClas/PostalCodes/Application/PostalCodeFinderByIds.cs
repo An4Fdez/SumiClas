@@ -13,7 +13,7 @@ public static class PostalCodeFinderByIds
     {
         public async Task<IReadOnlyCollection<PostalCodeResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var postalCodes = await repository.SearchAsync(new PostalCodeSpecification(ids: query.PostalCodeIds), ct);
+            IReadOnlyCollection<PostalCode> postalCodes = await repository.SearchAsync(new PostalCodeSpecification(ids: query.PostalCodeIds), ct);
             return postalCodes
                 .Select(postalCode => new PostalCodeResponse(postalCode.Id, postalCode.LocalityId, postalCode.Code))
                 .ToList();

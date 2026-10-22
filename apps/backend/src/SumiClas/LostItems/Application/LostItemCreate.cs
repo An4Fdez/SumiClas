@@ -27,15 +27,15 @@ public static class LostItemCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
-            if (!Enum.TryParse<ItemScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
+            if (!Enum.TryParse<ItemScope>(command.Scope, ignoreCase: true, out ItemScope scope) || !Enum.IsDefined(scope))
             {
                 throw new LostItemExceptions.InvalidScope();
             }
-            if (!Enum.TryParse<ItemStatus>(command.Status, ignoreCase: true, out var status) || !Enum.IsDefined(status))
+            if (!Enum.TryParse<ItemStatus>(command.Status, ignoreCase: true, out ItemStatus status) || !Enum.IsDefined(status))
             {
                 throw new LostItemExceptions.InvalidStatus();
             }
@@ -43,7 +43,7 @@ public static class LostItemCreate
             // The school of a school-wide lost item is only known after looking up the class, so the aggregate is
             // built twice: once only to validate the input before any IO (the school is provisional and discarded),
             // and once with the real school.
-            var lostItem = LostItem.Create(
+            LostItem lostItem = LostItem.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -60,9 +60,9 @@ public static class LostItemCreate
                 throw new LostItemExceptions.ClassRequiredForSchoolScope();
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
+            UserResponse author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(authorId, classId), ct);
 
@@ -70,7 +70,7 @@ public static class LostItemCreate
 
             if (scope == ItemScope.School)
             {
-                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
+                Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
                 lostItem = LostItem.Create(
                     command.Id,

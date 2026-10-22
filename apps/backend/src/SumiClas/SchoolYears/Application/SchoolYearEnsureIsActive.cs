@@ -1,4 +1,5 @@
 using MediatR;
+using SumiClas.SchoolYears.Domain;
 using SumiClas.SchoolYears.Domain.Services;
 using SumiClas.Shared.Application;
 
@@ -12,7 +13,7 @@ public static class SchoolYearEnsureIsActive
     {
         public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schoolYear = await finder.FindByIdAsync(query.SchoolYearId, ct);
+            SchoolYear schoolYear = await finder.FindByIdAsync(query.SchoolYearId, ct);
             schoolYear.EnsureIsActive();
             return Unit.Value;
         }

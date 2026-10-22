@@ -1,5 +1,6 @@
 using MediatR;
 using SumiClas.Shared.Application;
+using SumiClas.Subjects.Domain;
 using SumiClas.Subjects.Domain.Services;
 
 namespace SumiClas.Subjects.Application;
@@ -12,7 +13,7 @@ public static class SubjectFinderById
     {
         public async Task<SubjectResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var subject = await finder.FindAsync(query.SubjectId, ct);
+            Subject subject = await finder.FindAsync(query.SubjectId, ct);
             return new SubjectResponse(subject.Id, subject.ClassId, subject.Label);
         }
     }

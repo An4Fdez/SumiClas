@@ -91,7 +91,7 @@ public sealed class Session : AggregateRoot
             return new SessionRotation.Invalid();
         }
 
-        var current = _refreshTokens.FirstOrDefault(token => token.TokenHash == tokenHash);
+        RefreshToken? current = _refreshTokens.FirstOrDefault(token => token.TokenHash == tokenHash);
         if (current is null)
         {
             return new SessionRotation.Invalid();
@@ -113,7 +113,7 @@ public sealed class Session : AggregateRoot
             return new SessionRotation.Invalid();
         }
 
-        var successor = RefreshToken.Create(newTokenHash, clock);
+        RefreshToken successor = RefreshToken.Create(newTokenHash, clock);
         current.ReplaceWith(successor.Id, clock);
         _refreshTokens.Add(successor);
         LastRotatedAt = clock.UtcNow;
@@ -123,7 +123,7 @@ public sealed class Session : AggregateRoot
 
     private void Prune(IClock clock, Guid keepPrevious, Guid keepCurrent)
     {
-        var now = clock.UtcNow;
+        DateTimeOffset now = clock.UtcNow;
         _refreshTokens.RemoveAll(token =>
             token.Id != keepPrevious
             && token.Id != keepCurrent

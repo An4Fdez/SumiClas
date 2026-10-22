@@ -15,7 +15,7 @@ public sealed class PostalCodeSpecification : Specification<PostalCode>
         if (code is not null) AddCriteria(postalCode => postalCode.Code == code);
         if (ids is not null)
         {
-            var postalCodeIds = ids.ToArray();
+            Guid[] postalCodeIds = ids.ToArray();
             AddCriteria(postalCode => postalCodeIds.Contains(postalCode.Id));
         }
     }

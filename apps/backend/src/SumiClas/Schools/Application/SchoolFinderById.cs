@@ -1,4 +1,5 @@
 using MediatR;
+using SumiClas.Schools.Domain;
 using SumiClas.Schools.Domain.Services;
 using SumiClas.Shared.Application;
 
@@ -12,9 +13,9 @@ public static class SchoolFinderById
     {
         public async Task<SchoolResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var school = await finder.FindByIdAsync(query.SchoolId, ct);
+            School school = await finder.FindByIdAsync(query.SchoolId, ct);
 
-            var responses = await SchoolResponseFactory.CreateAsync(queryBus, [school], ct);
+            IReadOnlyCollection<SchoolResponse> responses = await SchoolResponseFactory.CreateAsync(queryBus, [school], ct);
             return responses.Single();
         }
     }

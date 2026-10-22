@@ -13,7 +13,7 @@ public static class SchoolYearFinderByIds
     {
         public async Task<IReadOnlyCollection<SchoolYearResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schoolYears = await repository.SearchAsync(new SchoolYearSpecification(ids: query.SchoolYearIds), ct);
+            IReadOnlyCollection<SchoolYear> schoolYears = await repository.SearchAsync(new SchoolYearSpecification(ids: query.SchoolYearIds), ct);
             return schoolYears
                 .Select(schoolYear => new SchoolYearResponse(
                     schoolYear.Id,

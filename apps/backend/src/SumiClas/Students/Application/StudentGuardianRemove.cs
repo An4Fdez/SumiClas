@@ -13,9 +13,9 @@ public static class StudentGuardianRemove
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var student = await repository.GetByIdAsync(command.StudentId, ct)
+            Student student = await repository.GetByIdAsync(command.StudentId, ct)
                 ?? throw new StudentExceptions.NotFound();
 
             if (student.Guardians.All(guardian => guardian.GuardianId != current))

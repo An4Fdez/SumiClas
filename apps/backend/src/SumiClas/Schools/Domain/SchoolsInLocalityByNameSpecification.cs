@@ -12,7 +12,7 @@ public sealed class SchoolsInLocalityByNameSpecification : Specification<School>
     {
         AddCriteria(school => school.LocalityId == localityId);
 
-        var normalizedTerm = TextNormalizer.Normalize(term);
+        string normalizedTerm = TextNormalizer.Normalize(term);
         if (normalizedTerm.Length > 0)
         {
             AddCriteria(school => school.NormalizedName.Contains(normalizedTerm));

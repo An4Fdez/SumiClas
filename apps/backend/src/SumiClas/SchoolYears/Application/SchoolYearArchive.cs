@@ -17,15 +17,15 @@ public static class SchoolYearArchive
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var schoolYear = await repository.GetByIdAsync(command.SchoolYearId, ct)
+            SchoolYear schoolYear = await repository.GetByIdAsync(command.SchoolYearId, ct)
                 ?? throw new SchoolYearExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var classes = await queryBus.Send(new ClassFinderBySchoolYear.Query(command.SchoolYearId), ct);
-            foreach (var schoolClass in classes)
+            IReadOnlyCollection<ClassResponse> classes = await queryBus.Send(new ClassFinderBySchoolYear.Query(command.SchoolYearId), ct);
+            foreach (ClassResponse schoolClass in classes)
             {
-                var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, schoolClass.Id), ct);
+                bool isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, schoolClass.Id), ct);
                 if (isRepresentative)
                 {
                     schoolYear.Archive(clock);

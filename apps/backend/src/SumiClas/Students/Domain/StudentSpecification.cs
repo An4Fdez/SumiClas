@@ -19,7 +19,7 @@ public sealed class StudentSpecification : Specification<Student>
         if (guardianId is { } guardian) AddCriteria(student => student.Guardians.Any(link => link.GuardianId == guardian));
         if (ids is not null)
         {
-            var studentIds = ids.ToArray();
+            Guid[] studentIds = ids.ToArray();
             AddCriteria(student => studentIds.Contains(student.Id));
         }
     }

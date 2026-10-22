@@ -24,14 +24,14 @@ public static class SessionCreate
     {
         public async Task<SessionResponse> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var user = await queryBus.Send(new UserPasswordVerify.Query(command.Email, command.Password), ct);
+            UserResponse user = await queryBus.Send(new UserPasswordVerify.Query(command.Email, command.Password), ct);
 
-            var refreshToken = refreshTokenGenerator.Generate();
-            var session = Session.Create(user.Id, refreshTokenGenerator.Hash(refreshToken), clock);
+            string refreshToken = refreshTokenGenerator.Generate();
+            Session session = Session.Create(user.Id, refreshTokenGenerator.Hash(refreshToken), clock);
 
             await repository.AddAsync(session, ct);
 
-            var accessToken = accessTokenGenerator.Generate(user.Id);
+            AccessToken accessToken = accessTokenGenerator.Generate(user.Id);
 
             return new SessionResponse(accessToken.Value, accessToken.ExpiresAt, user.Id,
                 user.FullName, refreshToken, session.RefreshTokens.Single().ExpiresAt);

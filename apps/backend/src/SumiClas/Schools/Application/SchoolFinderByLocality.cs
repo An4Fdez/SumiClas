@@ -20,7 +20,7 @@ public static class SchoolFinderByLocality
                 throw new SchoolExceptions.LocalityFilterRequired();
             }
 
-            var schools = await repository.SearchAsync(
+            IReadOnlyCollection<School> schools = await repository.SearchAsync(
                 new SchoolsInLocalityByNameSpecification(query.LocalityId.Value, query.Name, MaxResults), ct);
             return await SchoolResponseFactory.CreateAsync(queryBus, schools, ct);
         }

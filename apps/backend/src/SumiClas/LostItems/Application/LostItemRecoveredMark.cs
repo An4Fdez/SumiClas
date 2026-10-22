@@ -16,10 +16,10 @@ public static class LostItemRecoveredMark
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var lostItem = await repository.GetByIdAsync(command.LostItemId, ct)
+            LostItem lostItem = await repository.GetByIdAsync(command.LostItemId, ct)
                 ?? throw new LostItemExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             if (lostItem.AuthorId != current)
             {
@@ -28,7 +28,7 @@ public static class LostItemRecoveredMark
 
             if (lostItem.ClassId is { } classId)
             {
-                var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
+                ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
                 await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
             }

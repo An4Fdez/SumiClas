@@ -18,7 +18,7 @@ public static class StudentGuardianFinderByStudents
                 return [];
             }
 
-            var students = await repository.SearchAsync(new StudentSpecification(ids: query.StudentIds), ct);
+            IReadOnlyCollection<Student> students = await repository.SearchAsync(new StudentSpecification(ids: query.StudentIds), ct);
             return students
                 .SelectMany(student => student.Guardians.Select(link => link.GuardianId))
                 .Distinct()

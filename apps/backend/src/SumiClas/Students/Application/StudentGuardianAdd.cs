@@ -14,14 +14,14 @@ public static class StudentGuardianAdd
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            if (!Enum.TryParse<GuardianRole>(command.Role, ignoreCase: true, out var role) || !Enum.IsDefined(role))
+            if (!Enum.TryParse<GuardianRole>(command.Role, ignoreCase: true, out GuardianRole role) || !Enum.IsDefined(role))
             {
                 throw new StudentExceptions.InvalidGuardianRole();
             }
 
-            var student = await repository.GetByIdAsync(command.StudentId, ct)
+            Student student = await repository.GetByIdAsync(command.StudentId, ct)
                 ?? throw new StudentExceptions.NotFound();
 
             if (student.Guardians.All(guardian => guardian.GuardianId != current))

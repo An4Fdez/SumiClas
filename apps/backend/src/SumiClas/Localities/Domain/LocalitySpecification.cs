@@ -15,7 +15,7 @@ public sealed class LocalitySpecification : Specification<Locality>
         if (normalizedName is not null) AddCriteria(locality => locality.NormalizedName == normalizedName);
         if (ids is not null)
         {
-            var localityIds = ids.ToArray();
+            Guid[] localityIds = ids.ToArray();
             AddCriteria(locality => localityIds.Contains(locality.Id));
         }
     }

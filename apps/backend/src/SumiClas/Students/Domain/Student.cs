@@ -28,7 +28,7 @@ public sealed class Student : AggregateRoot
     {
         Validate(id, firstGuardianId);
 
-        var guardianLink = GuardianLink.Create(firstGuardianId, firstGuardianRole);
+        GuardianLink guardianLink = GuardianLink.Create(firstGuardianId, firstGuardianRole);
 
         return new Student(id, name, [guardianLink]);
     }
@@ -57,7 +57,7 @@ public sealed class Student : AggregateRoot
 
     public void RemoveGuardian(Guid guardianId)
     {
-        var link = _guardians.FirstOrDefault(g => g.GuardianId == guardianId)
+        GuardianLink link = _guardians.FirstOrDefault(g => g.GuardianId == guardianId)
             ?? throw new StudentExceptions.GuardianNotLinked();
 
         if (_guardians.Count == 1)

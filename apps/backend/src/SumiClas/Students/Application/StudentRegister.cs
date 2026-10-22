@@ -19,17 +19,17 @@ public static class StudentRegister
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var guardianId = userProvider.GetCurrentUserId();
+            Guid guardianId = userProvider.GetCurrentUserId();
 
-            if (!Enum.TryParse<GuardianRole>(command.FirstGuardianRole, ignoreCase: true, out var role)
+            if (!Enum.TryParse<GuardianRole>(command.FirstGuardianRole, ignoreCase: true, out GuardianRole role)
                 || !Enum.IsDefined(role))
             {
                 throw new StudentExceptions.InvalidGuardianRole();
             }
 
-            var name = StudentName.Create(command.FirstName, command.FirstSurname, command.SecondSurname);
+            StudentName name = StudentName.Create(command.FirstName, command.FirstSurname, command.SecondSurname);
 
-            var student = Student.Register(command.Id, name, guardianId, role);
+            Student student = Student.Register(command.Id, name, guardianId, role);
 
             await queryBus.Send(new UserFinderById.Query(guardianId), ct);
 

@@ -13,7 +13,7 @@ public sealed class ProvinceSpecification : Specification<Province>
         if (normalizedName is not null) AddCriteria(province => province.NormalizedName == normalizedName);
         if (ids is not null)
         {
-            var provinceIds = ids.ToArray();
+            Guid[] provinceIds = ids.ToArray();
             AddCriteria(province => provinceIds.Contains(province.Id));
         }
     }

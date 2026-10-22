@@ -19,8 +19,8 @@ public static class SessionRevoke
                 return;
             }
 
-            var hash = refreshTokenGenerator.Hash(command.RefreshToken);
-            var found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
+            string hash = refreshTokenGenerator.Hash(command.RefreshToken);
+            IReadOnlyCollection<Session> found = await repository.SearchAsync(new SessionSpecification(tokenHash: hash), ct);
             found.FirstOrDefault()?.Revoke(clock);
         }
     }

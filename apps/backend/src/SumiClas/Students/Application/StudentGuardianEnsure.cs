@@ -14,7 +14,7 @@ public static class StudentGuardianEnsure
     {
         public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var student = await finder.FindByIdAsync(query.StudentId, ct);
+            Student student = await finder.FindByIdAsync(query.StudentId, ct);
 
             if (student.Guardians.All(guardian => guardian.GuardianId != query.UserId))
             {

@@ -21,7 +21,7 @@ public sealed class SchoolYearSpecification : Specification<SchoolYear>
         if (status is { } state) AddCriteria(schoolYear => schoolYear.Status == state);
         if (ids is not null)
         {
-            var schoolYearIds = ids.ToArray();
+            Guid[] schoolYearIds = ids.ToArray();
             AddCriteria(schoolYear => schoolYearIds.Contains(schoolYear.Id));
         }
     }

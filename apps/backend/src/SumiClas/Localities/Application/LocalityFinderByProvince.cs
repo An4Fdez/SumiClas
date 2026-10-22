@@ -16,7 +16,7 @@ public static class LocalityFinderByProvince
     {
         public async Task<IReadOnlyCollection<LocalityResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var localities = await repository.SearchAsync(
+            IReadOnlyCollection<Locality> localities = await repository.SearchAsync(
                 new LocalitiesInProvinceByNameSpecification(query.ProvinceId, query.Name), ct);
             return localities
                 .Select(locality => new LocalityResponse(locality.Id, locality.ProvinceId, locality.Name))

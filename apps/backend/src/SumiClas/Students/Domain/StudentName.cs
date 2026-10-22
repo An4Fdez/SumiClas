@@ -19,7 +19,7 @@ public sealed class StudentName : ValueObject
     {
         Validate(firstName, firstSurname);
 
-        var normalizedSecondSurname = string.IsNullOrWhiteSpace(secondSurname) ? null : secondSurname.Trim();
+        string? normalizedSecondSurname = string.IsNullOrWhiteSpace(secondSurname) ? null : secondSurname.Trim();
         return new StudentName(firstName.Trim(), firstSurname.Trim(), normalizedSecondSurname);
     }
 
