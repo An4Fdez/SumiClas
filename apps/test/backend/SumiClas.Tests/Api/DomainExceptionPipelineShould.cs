@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
-using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
-using SumiClas.Users.Domain;
 using System.Net;
 using System.Text.Json;
 
@@ -46,24 +44,16 @@ public class DomainExceptionPipelineShould
         (await BodyOf(response)).TryGetProperty("code", out _).Should().BeFalse();
     }
 
-    [TestCase("/not-yet-converted-archived", HttpStatusCode.BadRequest, "SchoolYear.Archived")]
-    [TestCase("/not-yet-converted-missing", HttpStatusCode.NotFound, "SchoolYear.NotFound")]
-    [TestCase("/not-yet-converted-credentials", HttpStatusCode.Unauthorized, "Authentication.InvalidCredentials")]
-    [TestCase("/not-yet-converted-access", HttpStatusCode.Forbidden, "User.ClassAccessForbidden")]
-    [TestCase("/not-yet-converted-delegate", HttpStatusCode.Forbidden, "User.ClassRepresentativeForbidden")]
-    [TestCase("/not-yet-converted-user", HttpStatusCode.NotFound, "User.NotFound")]
-    public async Task answer_with_the_status_of_its_code_a_domain_exception_from_an_endpoint_that_declares_none(
-        string path,
-        HttpStatusCode expected,
-        string code)
+    [Test]
+    public async Task answer_a_500_without_code_when_the_endpoint_declares_no_domain_exceptions()
     {
         await using WebApplication app = await StartAsync();
         using HttpClient client = ClientOf(app);
 
-        HttpResponseMessage response = await client.GetAsync(path);
+        HttpResponseMessage response = await client.GetAsync("/none");
 
-        response.StatusCode.Should().Be(expected);
-        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(code);
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        (await BodyOf(response)).TryGetProperty("code", out _).Should().BeFalse();
     }
 
     [Test]
@@ -107,13 +97,8 @@ public class DomainExceptionPipelineShould
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
         app.MapGet("/undeclared", IResult () => throw new SampleExceptions.Forbidden())
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
+        app.MapGet("/none", IResult () => throw new SampleExceptions.NotFound());
         app.MapGet("/unexpected", IResult () => throw new InvalidOperationException());
-        app.MapGet("/not-yet-converted-archived", IResult () => throw new SchoolYearExceptions.Archived());
-        app.MapGet("/not-yet-converted-missing", IResult () => throw new SchoolYearExceptions.NotFound());
-        app.MapGet("/not-yet-converted-credentials", IResult () => throw new AuthenticationExceptions.InvalidCredentials());
-        app.MapGet("/not-yet-converted-access", IResult () => throw new UserExceptions.ClassAccessForbidden());
-        app.MapGet("/not-yet-converted-delegate", IResult () => throw new UserExceptions.ClassRepresentativeForbidden());
-        app.MapGet("/not-yet-converted-user", IResult () => throw new UserExceptions.NotFound());
         await app.StartAsync();
         return app;
     }

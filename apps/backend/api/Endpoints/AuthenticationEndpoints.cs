@@ -98,12 +98,12 @@ public sealed class AuthenticationEndpoints : IEndpoints
                 await sender.Send(new SessionRevoke.Command(refreshToken), CancellationToken.None);
 
                 RefreshCookie.Clear(response, options);
-                return ResultExtensions.RefreshTokenInvalidProblem();
+                return DomainProblem.RefreshTokenInvalid();
             }
             catch (AuthenticationExceptions.RefreshTokenInvalid)
             {
                 RefreshCookie.Clear(response, options);
-                return ResultExtensions.RefreshTokenInvalidProblem();
+                return DomainProblem.RefreshTokenInvalid();
             }
         })
             .WithName("SessionRotate")

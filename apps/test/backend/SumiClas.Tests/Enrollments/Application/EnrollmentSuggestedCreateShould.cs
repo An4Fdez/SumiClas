@@ -12,7 +12,6 @@ using SumiClas.Shared.Domain;
 using SumiClas.Tests.Classes.Application;
 using SumiClas.Tests.Enrollments.Domain;
 using SumiClas.Tests.Shared;
-using SumiClas.Tests.Shared.Domain;
 using SumiClas.Users.Application;
 
 [TestFixture]

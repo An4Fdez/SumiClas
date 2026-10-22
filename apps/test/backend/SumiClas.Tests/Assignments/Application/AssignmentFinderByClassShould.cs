@@ -11,7 +11,6 @@ using SumiClas.Subjects.Application;
 using SumiClas.Tests.Assignments.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Shared.Application;
-using SumiClas.Tests.Shared.Domain;
 using SumiClas.Tests.Subjects.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;

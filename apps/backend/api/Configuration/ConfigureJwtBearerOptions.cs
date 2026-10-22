@@ -42,9 +42,9 @@ public sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions) :
             {
                 context.HandleResponse();
                 context.Response.Headers.WWWAuthenticate = JwtBearerDefaults.AuthenticationScheme;
-                await ResultExtensions.UnauthenticatedProblem().ExecuteAsync(context.HttpContext);
+                await DomainProblem.Unauthenticated().ExecuteAsync(context.HttpContext);
             },
-            OnForbidden = context => ResultExtensions.ForbiddenProblem().ExecuteAsync(context.HttpContext),
+            OnForbidden = context => DomainProblem.Forbidden().ExecuteAsync(context.HttpContext),
         };
     }
 

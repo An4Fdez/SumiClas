@@ -47,7 +47,7 @@ public class AuthenticationEndpointsShould
         HttpResponseMessage response = await PostRefreshAsync(app, raw);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await CodeOf(response)).Should().Be(AuthenticationErrors.RefreshTokenInvalid.Code);
+        (await CodeOf(response)).Should().Be("Authentication.RefreshTokenInvalid");
         this.ShouldHaveClearedTheCookie(response);
         this.ShouldHaveRevokedWithoutBeingCancellable(raw);
     }
@@ -61,7 +61,7 @@ public class AuthenticationEndpointsShould
         HttpResponseMessage response = await PostRefreshAsync(app, StringMother.Random("raw"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await CodeOf(response)).Should().Be(AuthenticationErrors.RefreshTokenInvalid.Code);
+        (await CodeOf(response)).Should().Be("Authentication.RefreshTokenInvalid");
         this.ShouldHaveClearedTheCookie(response);
         this.ShouldNotHaveRevoked();
     }
@@ -144,7 +144,7 @@ public class AuthenticationEndpointsShould
         HttpResponseMessage response = await PostAsync(app, "/auth/login", LoginBody);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await CodeOf(response)).Should().Be(AuthenticationErrors.InvalidCredentials.Code);
+        (await CodeOf(response)).Should().Be("Authentication.InvalidCredentials");
         response.Headers.Contains("Set-Cookie").Should().BeFalse();
     }
 
