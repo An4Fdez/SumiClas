@@ -49,10 +49,9 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(other, expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.IsSuccess.Should().BeTrue();
         other.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
         expense.Participants.Should().BeEquivalentTo(
         [
@@ -78,10 +77,9 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.IsSuccess.Should().BeTrue();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
     }
 
@@ -108,14 +106,14 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_when_the_expense_does_not_exist()
+    public async Task throw_not_found_without_asking_when_the_expense_does_not_exist()
     {
         this.ShouldFetchNoClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(GuidMother.Random(), GuidMother.Random()));
 
-        result.Error.Should().Be(ClassExpenseErrors.NotFound);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
@@ -183,7 +181,7 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_not_a_participant_and_leave_the_participants_unchanged_for_an_unknown_guardian()
+    public async Task throw_not_a_participant_and_leave_the_participants_unchanged_for_an_unknown_guardian()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -198,10 +196,10 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseUnpaidMarkCommandMother.With(expenseId, GuidMother.Random()));
 
-        result.Error.Should().Be(ClassExpenseErrors.NotAParticipant);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.NotAParticipant>();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Paid(guardianId)]);
     }
 
@@ -262,9 +260,8 @@ public class ClassExpenseUnpaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
+        await this._useCase.ExecuteAsync(ClassExpenseUnpaidMarkCommandMother.With(expenseId, guardianId));
 
-        result.IsSuccess.Should().BeTrue();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
     }
 

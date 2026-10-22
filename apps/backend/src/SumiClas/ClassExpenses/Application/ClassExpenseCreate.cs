@@ -17,17 +17,17 @@ public static class ClassExpenseCreate
         string Item,
         decimal TotalAmount,
         IReadOnlyCollection<Guid> ParticipantIds,
-        Guid? RelatedEventId) : IRequest<Result>, ICommand;
+        Guid? RelatedEventId) : IRequest, ICommand;
 
     public sealed class Create(IClassExpenseRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
             var authorId = current;
 
-            var creation = ClassExpense.Create(
+            var classExpense = ClassExpense.Create(
                 command.Id,
                 command.ClassId,
                 command.Item,
@@ -36,10 +36,6 @@ public static class ClassExpenseCreate
                 command.RelatedEventId,
                 authorId,
                 clock);
-            if (creation.IsFailure)
-            {
-                return Result.Failure(creation.Error!);
-            }
 
             await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
@@ -49,11 +45,11 @@ public static class ClassExpenseCreate
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var participantIds = creation.Value.Participants.Select(participant => participant.GuardianId).ToList();
+            var participantIds = classExpense.Participants.Select(participant => participant.GuardianId).ToList();
             var participants = await queryBus.Send(new UserFinderByIds.Query(participantIds), ct);
             if (participants.Count != participantIds.Count)
             {
-                return Result.Failure(ClassExpenseErrors.ParticipantNotFound);
+                throw new ClassExpenseExceptions.ParticipantNotFound();
             }
 
             foreach (var participantId in participantIds)
@@ -61,7 +57,7 @@ public static class ClassExpenseCreate
                 var isMember = await queryBus.Send(new UserIsClassMember.Query(participantId, command.ClassId), ct);
                 if (!isMember)
                 {
-                    return Result.Failure(ClassExpenseErrors.ParticipantNotInClass);
+                    throw new ClassExpenseExceptions.ParticipantNotInClass();
                 }
             }
 
@@ -70,15 +66,13 @@ public static class ClassExpenseCreate
                 await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
             }
 
-            await repository.AddAsync(creation.Value, ct);
-
-            return Result.Success();
+            await repository.AddAsync(classExpense, ct);
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }

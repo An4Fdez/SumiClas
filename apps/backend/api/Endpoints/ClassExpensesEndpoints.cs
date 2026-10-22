@@ -1,8 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 using SumiClas.Api.Http;
+using SumiClas.CalendarEvents.Domain;
 using SumiClas.ClassExpenses.Application;
+using SumiClas.ClassExpenses.Domain;
 using SumiClas.Shared.Application;
+using SumiClas.Shared.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -22,7 +25,7 @@ public sealed class ClassExpensesEndpoints : IEndpoints
 
         classExpenses.MapPost("/", async (ClassExpenseCreateRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(
+            await sender.Send(
                 new ClassExpenseCreate.Command(
                     request.Id,
                     request.ClassId,
@@ -32,42 +35,69 @@ public sealed class ClassExpensesEndpoints : IEndpoints
                     request.RelatedEventId),
                 ct);
 
-            return result.ToCreated();
+            return Results.StatusCode(StatusCodes.Status201Created);
         })
             .WithName("ClassExpenseCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .Maps<ClassExpenseExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.ClassRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.ItemRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.TotalAmountMustBePositive>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.AtLeastOneParticipantRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.AuthorRequired>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.ParticipantNotInClass>(StatusCodes.Status400BadRequest)
+            .Maps<ClassExpenseExceptions.ParticipantNotFound>(StatusCodes.Status404NotFound)
+            .Maps<CalendarEventExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .RequiresSession()
+            .RequiresUser()
+            .RequiresClass()
+            .RequiresClassRepresentative()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         classExpenses.MapPut("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new ClassExpensePaidMark.Command(classExpenseId, guardianId), ct);
+            await sender.Send(new ClassExpensePaidMark.Command(classExpenseId, guardianId), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("ClassExpensePaidMark")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<ClassExpenseExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<ClassExpenseExceptions.NotAParticipant>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresClass()
+            .RequiresClassMembership()
+            .RequiresClassRepresentative()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         classExpenses.MapDelete("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new ClassExpenseUnpaidMark.Command(classExpenseId, guardianId), ct);
+            await sender.Send(new ClassExpenseUnpaidMark.Command(classExpenseId, guardianId), ct);
 
-            return result.ToNoContent();
+            return Results.NoContent();
         })
             .WithName("ClassExpenseUnpaidMark")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<ClassExpenseExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<ClassExpenseExceptions.NotAParticipant>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresClass()
+            .RequiresClassMembership()
+            .RequiresClassRepresentative()
+            .RequiresActiveSchoolYear()
+            .ConflictsOnSave();
 
         classExpenses.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new ClassExpenseFinderByClass.Query(classId, limit, cursor), ct)).ToOk())
+            Results.Ok(await sender.Send(new ClassExpenseFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("ClassExpenseFinderByClass")
             .Produces<PagedResponse<ClassExpenseResponse>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .Maps<PaginationExceptions.InvalidLimit>(StatusCodes.Status400BadRequest)
+            .Maps<PaginationExceptions.InvalidCursor>(StatusCodes.Status400BadRequest)
+            .RequiresSession()
+            .RequiresClass()
+            .RequiresClassMembership();
     }
 }

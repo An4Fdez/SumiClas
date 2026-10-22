@@ -11,11 +11,11 @@ namespace SumiClas.ClassExpenses.Application;
 public static class ClassExpenseFinderByClass
 {
     /// <summary>The expenses of the class with who participates and who has paid, newest first, one page at a time.</summary>
-    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<Result<PagedResponse<ClassExpenseResponse>>>;
+    public sealed record Query(Guid ClassId, int? Limit = null, string? Cursor = null) : IQuery<PagedResponse<ClassExpenseResponse>>;
 
     public sealed class Finder(IClassExpenseRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<PagedResponse<ClassExpenseResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<PagedResponse<ClassExpenseResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
@@ -66,13 +66,13 @@ public static class ClassExpenseFinderByClass
                         .ToList()))
                 .ToList();
 
-            return Result<PagedResponse<ClassExpenseResponse>>.Success(new PagedResponse<ClassExpenseResponse>(items, nextCursor));
+            return new PagedResponse<ClassExpenseResponse>(items, nextCursor);
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<PagedResponse<ClassExpenseResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, PagedResponse<ClassExpenseResponse>>
     {
-        public Task<Result<PagedResponse<ClassExpenseResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<PagedResponse<ClassExpenseResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

@@ -10,17 +10,14 @@ namespace SumiClas.ClassExpenses.Application;
 
 public static class ClassExpenseUnpaidMark
 {
-    public sealed record Command(Guid ClassExpenseId, Guid GuardianId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid ClassExpenseId, Guid GuardianId) : IRequest, ICommand;
 
     public sealed class Mark(IClassExpenseRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var classExpense = await repository.GetByIdAsync(command.ClassExpenseId, ct);
-            if (classExpense is null)
-            {
-                return Result.Failure(ClassExpenseErrors.NotFound);
-            }
+            var classExpense = await repository.GetByIdAsync(command.ClassExpenseId, ct)
+                ?? throw new ClassExpenseExceptions.NotFound();
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);
 
@@ -38,13 +35,13 @@ public static class ClassExpenseUnpaidMark
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            return classExpense.MarkAsUnpaid(command.GuardianId);
+            classExpense.MarkAsUnpaid(command.GuardianId);
         }
     }
 
-    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => mark.ExecuteAsync(command, ct);
     }
 }

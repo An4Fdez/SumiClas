@@ -68,10 +68,10 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldFindCalendarEvents(CalendarEventSummaryResponseMother.With(eventId, eventTitle));
         this.ShouldSearchClassExpenses(expense, ClassExpenseMother.With(classId: GuidMother.Random()));
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        ClassExpenseResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        ClassExpenseResponse item = result.Items.Should().ContainSingle().Subject;
         item.Id.Should().Be(expense.Id);
         item.ClassId.Should().Be(classId);
         item.Item.Should().Be(expense.Item);
@@ -85,7 +85,7 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             new ExpenseParticipantResponse(alphaId, alphaName, false),
             new ExpenseParticipantResponse(betaId, betaName, true),
             new ExpenseParticipantResponse(gammaId, gammaName, true));
-        result.Value.NextCursor.Should().BeNull();
+        result.NextCursor.Should().BeNull();
         this.ShouldHaveAskedForClass(classId);
     }
 
@@ -108,12 +108,12 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(withEvent, withoutEvent);
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.Items.Should().OnlyContain(item => item.RelatedEvent == null);
-        ClassExpenseResponse first = result.Value.Items.First();
+        result.Items.Should().HaveCount(2);
+        result.Items.Should().OnlyContain(item => item.RelatedEvent == null);
+        ClassExpenseResponse first = result.Items.First();
         first.AuthorName.Should().BeEmpty();
         first.AuthorRole.Should().BeNull();
         first.Participants.Should().Equal(new ExpenseParticipantResponse(guardianId, string.Empty, false));
@@ -131,12 +131,11 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldFindCalendarEvents();
         this.ShouldSearchNoClassExpenses();
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Items.Should().BeEmpty();
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().BeEmpty();
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -154,11 +153,11 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(minute1, minute3, minute2);
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(minute3.Id, minute2.Id);
-        PageCursor.TryDecode(result.Value.NextCursor, out PageCursor cursor).Should().BeTrue();
+        result.Items.Select(item => item.Id).Should().Equal(minute3.Id, minute2.Id);
+        PageCursor.TryDecode(result.NextCursor, out PageCursor cursor).Should().BeTrue();
         cursor.Key.Should().Be(minute2.CreatedAt.UtcTicks);
         cursor.Id.Should().Be(minute2.Id);
     }
@@ -177,11 +176,11 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(1)),
             ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(2)));
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().HaveCount(2);
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -199,14 +198,14 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(minute2, minute4, minute1, minute3);
-        Result<PagedResponse<ClassExpenseResponse>> firstPage = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> firstPage = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithLimit(classId, 2));
 
-        Result<PagedResponse<ClassExpenseResponse>> secondPage = await this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithCursor(classId, 2, firstPage.Value.NextCursor!));
+        PagedResponse<ClassExpenseResponse> secondPage = await this._useCase.ExecuteAsync(
+            ClassExpenseFinderByClassQueryMother.WithCursor(classId, 2, firstPage.NextCursor!));
 
-        secondPage.Value.Items.Select(item => item.Id).Should().Equal(minute2.Id, minute1.Id);
-        secondPage.Value.NextCursor.Should().BeNull();
+        secondPage.Items.Select(item => item.Id).Should().Equal(minute2.Id, minute1.Id);
+        secondPage.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -231,10 +230,10 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
 
         for (int requested = 0; requested <= tied.Length; requested++)
         {
-            Result<PagedResponse<ClassExpenseResponse>> page = await this._useCase.ExecuteAsync(
+            PagedResponse<ClassExpenseResponse> page = await this._useCase.ExecuteAsync(
                 ClassExpenseFinderByClassQueryMother.With(classId, 1, cursor));
-            seen.AddRange(page.Value.Items.Select(item => item.Id));
-            cursor = page.Value.NextCursor;
+            seen.AddRange(page.Items.Select(item => item.Id));
+            cursor = page.NextCursor;
             if (cursor is null)
             {
                 break;
@@ -263,10 +262,10 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         this.ShouldFindCalendarEvents();
         this.ShouldSearchClassExpenses(low, high);
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
+        result.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
     }
 
     [Test]
@@ -283,11 +282,11 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
             .Select(minutes => ClassExpenseMother.With(classId: classId, createdAt: Now.AddMinutes(minutes)))
             .ToArray());
 
-        Result<PagedResponse<ClassExpenseResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<ClassExpenseResponse> result = await this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Should().HaveCount(Pagination.DefaultLimit);
-        result.Value.NextCursor.Should().NotBeNull();
+        result.Items.Should().HaveCount(Pagination.DefaultLimit);
+        result.NextCursor.Should().NotBeNull();
     }
 
     [Test]

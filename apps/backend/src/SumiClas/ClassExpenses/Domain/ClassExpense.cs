@@ -43,7 +43,7 @@ public sealed class ClassExpense : AggregateRoot
         // For reflection purposes (EF Core materialization)
     }
 
-    public static Result<ClassExpense> Create(
+    public static ClassExpense Create(
         Guid id,
         Guid classId,
         string item,
@@ -55,13 +55,9 @@ public sealed class ClassExpense : AggregateRoot
     {
         var distinctParticipantIds = participantIds.Where(participantId => participantId != Guid.Empty).Distinct().ToList();
 
-        var validation = Validate(id, classId, item, totalAmount, distinctParticipantIds, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<ClassExpense>.Failure(validation.Error!);
-        }
+        Validate(id, classId, item, totalAmount, distinctParticipantIds, authorId);
 
-        var expense = new ClassExpense(
+        return new ClassExpense(
             id,
             classId,
             item.Trim(),
@@ -70,52 +66,48 @@ public sealed class ClassExpense : AggregateRoot
             authorId,
             clock.UtcNow,
             distinctParticipantIds.Select(guardianId => new ExpenseParticipant(guardianId, false)));
-
-        return Result<ClassExpense>.Success(expense);
     }
 
-    private static Result Validate(Guid id, Guid classId, string item, decimal totalAmount, IReadOnlyCollection<Guid> distinctParticipantIds, Guid authorId)
+    private static void Validate(Guid id, Guid classId, string item, decimal totalAmount, IReadOnlyCollection<Guid> distinctParticipantIds, Guid authorId)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(ClassExpenseErrors.IdRequired);
+            throw new ClassExpenseExceptions.IdRequired();
         }
         if (classId == Guid.Empty)
         {
-            return Result.Failure(ClassExpenseErrors.ClassRequired);
+            throw new ClassExpenseExceptions.ClassRequired();
         }
         if (string.IsNullOrWhiteSpace(item))
         {
-            return Result.Failure(ClassExpenseErrors.ItemRequired);
+            throw new ClassExpenseExceptions.ItemRequired();
         }
         if (totalAmount <= 0)
         {
-            return Result.Failure(ClassExpenseErrors.TotalAmountMustBePositive);
+            throw new ClassExpenseExceptions.TotalAmountMustBePositive();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(ClassExpenseErrors.AuthorRequired);
+            throw new ClassExpenseExceptions.AuthorRequired();
         }
         if (distinctParticipantIds.Count == 0)
         {
-            return Result.Failure(ClassExpenseErrors.AtLeastOneParticipantRequired);
+            throw new ClassExpenseExceptions.AtLeastOneParticipantRequired();
         }
-        return Result.Success();
     }
 
-    public Result MarkAsPaid(Guid guardianId) => SetPaidStatus(guardianId, true);
+    public void MarkAsPaid(Guid guardianId) => SetPaidStatus(guardianId, true);
 
-    public Result MarkAsUnpaid(Guid guardianId) => SetPaidStatus(guardianId, false);
+    public void MarkAsUnpaid(Guid guardianId) => SetPaidStatus(guardianId, false);
 
-    private Result SetPaidStatus(Guid guardianId, bool hasPaid)
+    private void SetPaidStatus(Guid guardianId, bool hasPaid)
     {
         var index = _participants.FindIndex(p => p.GuardianId == guardianId);
         if (index < 0)
         {
-            return Result.Failure(ClassExpenseErrors.NotAParticipant);
+            throw new ClassExpenseExceptions.NotAParticipant();
         }
 
         _participants[index] = new ExpenseParticipant(guardianId, hasPaid);
-        return Result.Success();
     }
 }

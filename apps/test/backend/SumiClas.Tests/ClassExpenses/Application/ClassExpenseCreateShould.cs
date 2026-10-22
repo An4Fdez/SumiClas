@@ -52,7 +52,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldBeClassMember(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.With(
             expenseId,
             classId,
             "  " + item + " ",
@@ -60,7 +60,6 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
             [firstGuardianId, secondGuardianId],
             null));
 
-        result.IsSuccess.Should().BeTrue();
         ClassExpense added = this.Added.Single();
         added.Id.Should().Be(expenseId);
         added.ClassId.Should().Be(classId);
@@ -94,13 +93,12 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldFindCalendarEvent(eventId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(
                 classId: classId,
                 participantIds: [guardianId],
                 relatedEventId: eventId));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().RelatedEventId.Should().Be(eventId);
         this.ShouldHaveAskedForCalendarEvent(eventId);
     }
@@ -123,11 +121,10 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldBeClassMember(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
+        await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
             classId: classId,
             participantIds: [firstGuardianId, Guid.Empty, secondGuardianId, firstGuardianId]));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Participants.Select(participant => participant.GuardianId)
             .Should().Equal(firstGuardianId, secondGuardianId);
         this.QueryBus.Verify(
@@ -156,13 +153,12 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldBeClassMember(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(
                 classId: classId,
                 participantIds: [guardianId],
                 totalAmount: smallest));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().TotalAmount.Should().Be(smallest);
     }
 
@@ -185,7 +181,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_participant_not_in_class_without_adding_when_a_participant_does_not_belong_to_the_class()
+    public async Task throw_participant_not_in_class_without_adding_when_a_participant_does_not_belong_to_the_class()
     {
         this.ShouldCaptureAddedClassExpenses();
         Guid classId = GuidMother.Random();
@@ -202,10 +198,10 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldBeClassMember(memberId, classId);
         this.ShouldNotBeClassMember(outsiderId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(classId: classId, participantIds: [memberId, outsiderId]));
 
-        result.Error.Should().Be(ClassExpenseErrors.ParticipantNotInClass);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.ParticipantNotInClass>();
         this.Added.Should().BeEmpty();
     }
 
@@ -223,106 +219,106 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_amount_must_be_positive_without_asking_or_adding_when_the_amount_is_negative()
+    public async Task throw_amount_must_be_positive_without_asking_or_adding_when_the_amount_is_negative()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(totalAmount: -1));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(totalAmount: -1));
 
-        result.Error.Should().Be(ClassExpenseErrors.TotalAmountMustBePositive);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.TotalAmountMustBePositive>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_participant_required_without_asking_or_adding_when_there_are_no_participants()
+    public async Task throw_participant_required_without_asking_or_adding_when_there_are_no_participants()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(participantIds: []));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(participantIds: []));
 
-        result.Error.Should().Be(ClassExpenseErrors.AtLeastOneParticipantRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.AtLeastOneParticipantRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_participant_required_when_the_only_participant_ids_are_empty()
+    public async Task throw_participant_required_when_the_only_participant_ids_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(participantIds: [Guid.Empty, Guid.Empty]));
 
-        result.Error.Should().Be(ClassExpenseErrors.AtLeastOneParticipantRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.AtLeastOneParticipantRequired>();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_and_the_class_are_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_and_the_class_are_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(id: Guid.Empty, classId: Guid.Empty));
 
-        result.Error.Should().Be(ClassExpenseErrors.IdRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_is_empty_and_the_item_is_blank()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_is_empty_and_the_item_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(classId: Guid.Empty, item: "  "));
 
-        result.Error.Should().Be(ClassExpenseErrors.ClassRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.ClassRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_item_required_without_asking_or_adding_when_the_item_is_blank_and_the_amount_is_zero()
+    public async Task throw_item_required_without_asking_or_adding_when_the_item_is_blank_and_the_amount_is_zero()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(item: "  ", totalAmount: 0));
 
-        result.Error.Should().Be(ClassExpenseErrors.ItemRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.ItemRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_amount_must_be_positive_without_asking_or_adding_when_it_is_zero_and_the_user_id_is_empty()
+    public async Task throw_amount_must_be_positive_without_asking_or_adding_when_it_is_zero_and_the_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(totalAmount: 0));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(totalAmount: 0));
 
-        result.Error.Should().Be(ClassExpenseErrors.TotalAmountMustBePositive);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.TotalAmountMustBePositive>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_user_id_is_empty_and_no_participants()
+    public async Task throw_author_required_without_asking_or_adding_when_the_user_id_is_empty_and_no_participants()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(participantIds: []));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(participantIds: []));
 
-        result.Error.Should().Be(ClassExpenseErrors.AuthorRequired);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -404,7 +400,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_participant_not_found_without_asking_for_the_event_when_a_participant_does_not_exist()
+    public async Task throw_participant_not_found_without_asking_for_the_event_when_a_participant_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         Guid eventId = GuidMother.Random();
@@ -419,12 +415,12 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldFindOnlyUsers(existingGuardianId);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
             classId: classId,
             participantIds: [existingGuardianId, GuidMother.Random()],
             relatedEventId: eventId));
 
-        result.Error.Should().Be(ClassExpenseErrors.ParticipantNotFound);
+        await act.Should().ThrowAsync<ClassExpenseExceptions.ParticipantNotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<CalendarEventFinderById.Query>(), It.IsAny<CancellationToken>()),
