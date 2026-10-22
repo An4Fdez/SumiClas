@@ -31,9 +31,8 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.IsSuccess.Should().BeTrue();
         lostItem.Recovered.Should().BeTrue();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -49,9 +48,8 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.IsSuccess.Should().BeTrue();
         lostItem.Recovered.Should().BeTrue();
     }
 
@@ -62,9 +60,8 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(lostItem.AuthorId);
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.IsSuccess.Should().BeTrue();
         lostItem.Recovered.Should().BeTrue();
     }
 
@@ -82,14 +79,14 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_without_asking_when_the_item_does_not_exist()
+    public async Task throw_not_found_without_asking_when_the_item_does_not_exist()
     {
         this.ShouldFetchNoLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemRecoveredMarkCommandMother.With(GuidMother.Random()));
 
-        result.Error.Should().Be(LostItemErrors.NotFound);
+        await act.Should().ThrowAsync<LostItemExceptions.NotFound>();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
@@ -145,15 +142,15 @@ public class LostItemRecoveredMarkShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_mark_forbidden_and_keep_the_state_when_the_user_is_not_the_author()
+    public async Task throw_mark_forbidden_and_keep_the_state_when_the_user_is_not_the_author()
     {
         LostItem lostItem = LostItemMother.With(recovered: false);
         this.ShouldFetchLostItems(lostItem);
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemRecoveredMarkCommandMother.With(lostItem.Id));
 
-        result.Error.Should().Be(LostItemErrors.MarkForbidden);
+        await act.Should().ThrowAsync<LostItemExceptions.MarkForbidden>();
         lostItem.Recovered.Should().BeFalse();
     }
 

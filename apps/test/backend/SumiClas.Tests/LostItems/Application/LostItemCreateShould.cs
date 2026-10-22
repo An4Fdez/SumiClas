@@ -45,7 +45,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
             itemId,
             "School",
             classId,
@@ -54,7 +54,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             "  " + photoUrl + " ",
             true));
 
-        result.IsSuccess.Should().BeTrue();
         LostItem added = this.Added.Single();
         added.Id.Should().Be(itemId);
         added.Scope.Should().Be(ItemScope.School);
@@ -82,10 +81,9 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.IsSuccess.Should().BeTrue();
         LostItem added = this.Added.Single();
         added.Scope.Should().Be(ItemScope.Class);
         added.ClassId.Should().Be(classId);
@@ -110,10 +108,9 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: scope, classId: classId));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Scope.Should().Be(expected);
     }
 
@@ -135,10 +132,9 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(classId: classId, status: status));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().Status.Should().Be(expected);
     }
 
@@ -157,7 +153,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
+        await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
             GuidMother.Random(),
             "Class",
             classId,
@@ -166,7 +162,6 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             photoUrl,
             false));
 
-        result.IsSuccess.Should().BeTrue();
         this.Added.Single().PhotoUrl.Should().BeNull();
     }
 
@@ -208,15 +203,15 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     [TestCase("")]
     [TestCase("2")]
     [TestCase("-1")]
-    public async Task return_invalid_scope_without_asking_or_adding_when_the_scope_is_not_valid(string scope)
+    public async Task throw_invalid_scope_without_asking_or_adding_when_the_scope_is_not_valid(string scope)
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(id: Guid.Empty, scope: scope, status: "garbage"));
 
-        result.Error.Should().Be(LostItemErrors.InvalidScope);
+        await act.Should().ThrowAsync<LostItemExceptions.InvalidScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -225,39 +220,39 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     [TestCase("")]
     [TestCase("2")]
     [TestCase("-1")]
-    public async Task return_invalid_status_without_asking_or_adding_when_the_status_is_not_valid(string status)
+    public async Task throw_invalid_status_without_asking_or_adding_when_the_status_is_not_valid(string status)
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(id: Guid.Empty, status: status));
 
-        result.Error.Should().Be(LostItemErrors.InvalidStatus);
+        await act.Should().ThrowAsync<LostItemExceptions.InvalidStatus>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_id_required_without_asking_or_adding_when_the_id_is_empty()
+    public async Task throw_id_required_without_asking_or_adding_when_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(id: Guid.Empty));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(id: Guid.Empty));
 
-        result.Error.Should().Be(LostItemErrors.IdRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.IdRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_class_scope_has_no_class()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
             GuidMother.Random(),
             "Class",
             null,
@@ -266,114 +261,114 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             null,
             false));
 
-        result.Error.Should().Be(LostItemErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<LostItemExceptions.ClassRequiredForClassScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_scope_has_an_empty_class()
+    public async Task throw_class_required_when_the_class_scope_has_an_empty_class()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "Class", classId: Guid.Empty));
 
-        result.Error.Should().Be(LostItemErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<LostItemExceptions.ClassRequiredForClassScope>();
     }
 
     [Test]
-    public async Task return_description_required_without_asking_or_adding_when_the_description_is_blank()
+    public async Task throw_description_required_without_asking_or_adding_when_the_description_is_blank()
     {
         string description = "   ";
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(description: description));
 
-        result.Error.Should().Be(LostItemErrors.DescriptionRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.DescriptionRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_photo_confirmation_required_without_asking_or_adding_when_it_is_not_confirmed()
+    public async Task throw_photo_confirmation_required_without_asking_or_adding_when_it_is_not_confirmed()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.WithPhoto(StringMother.Random("photo"), false));
 
-        result.Error.Should().Be(LostItemErrors.PhotoPrivacyConfirmationRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.PhotoPrivacyConfirmationRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
+    public async Task throw_author_required_without_asking_or_adding_when_the_current_user_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid());
 
-        result.Error.Should().Be(LostItemErrors.AuthorRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.AuthorRequired>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_invalid_scope_when_the_scope_and_the_status_are_not_valid()
+    public async Task throw_invalid_scope_when_the_scope_and_the_status_are_not_valid()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "garbage", status: "garbage"));
 
-        result.Error.Should().Be(LostItemErrors.InvalidScope);
+        await act.Should().ThrowAsync<LostItemExceptions.InvalidScope>();
     }
 
     [Test]
-    public async Task return_invalid_status_when_the_status_is_not_valid_and_the_id_is_empty()
+    public async Task throw_invalid_status_when_the_status_is_not_valid_and_the_id_is_empty()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(id: Guid.Empty, status: "garbage"));
 
-        result.Error.Should().Be(LostItemErrors.InvalidStatus);
+        await act.Should().ThrowAsync<LostItemExceptions.InvalidStatus>();
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_is_empty_and_the_class_scope_has_no_class()
+    public async Task throw_id_required_when_the_id_is_empty_and_the_class_scope_has_no_class()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(id: Guid.Empty, scope: "Class", classId: Guid.Empty));
 
-        result.Error.Should().Be(LostItemErrors.IdRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.IdRequired>();
     }
 
     [Test]
-    public async Task return_class_required_when_the_class_is_empty_and_the_description_is_blank()
+    public async Task throw_class_required_when_the_class_is_empty_and_the_description_is_blank()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "Class", classId: Guid.Empty, description: "  "));
 
-        result.Error.Should().Be(LostItemErrors.ClassRequiredForClassScope);
+        await act.Should().ThrowAsync<LostItemExceptions.ClassRequiredForClassScope>();
     }
 
     [Test]
-    public async Task return_description_required_when_the_description_is_blank_and_the_photo_is_not_confirmed()
+    public async Task throw_description_required_when_the_description_is_blank_and_the_photo_is_not_confirmed()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
             GuidMother.Random(),
             "School",
             null,
@@ -382,18 +377,18 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             StringMother.Random("photo"),
             false));
 
-        result.Error.Should().Be(LostItemErrors.DescriptionRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.DescriptionRequired>();
     }
 
     [Test]
-    public async Task return_photo_confirmation_required_when_it_is_not_confirmed_and_the_author_id_is_empty()
+    public async Task throw_photo_confirmation_required_when_it_is_not_confirmed_and_the_author_id_is_empty()
     {
         this.ShouldResolveCurrentUser(Guid.Empty);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.WithPhoto(StringMother.Random("photo"), false));
 
-        result.Error.Should().Be(LostItemErrors.PhotoPrivacyConfirmationRequired);
+        await act.Should().ThrowAsync<LostItemExceptions.PhotoPrivacyConfirmationRequired>();
     }
 
     [Test]
@@ -491,12 +486,12 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_no_class()
     {
         this.ShouldCaptureAddedLostItems();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.With(
             GuidMother.Random(),
             "School",
             null,
@@ -505,21 +500,21 @@ public class LostItemCreateShould : LostItemsUnitTestCase
             null,
             false));
 
-        result.Error.Should().Be(LostItemErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<LostItemExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async Task return_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
+    public async Task throw_class_required_without_asking_or_adding_when_the_school_scope_has_an_empty_class()
     {
         this.ShouldCaptureAddedLostItems();
         this.ShouldResolveCurrentUser(GuidMother.Random());
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "School", classId: Guid.Empty));
 
-        result.Error.Should().Be(LostItemErrors.ClassRequiredForSchoolScope);
+        await act.Should().ThrowAsync<LostItemExceptions.ClassRequiredForSchoolScope>();
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }

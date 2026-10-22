@@ -57,10 +57,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers(UserClassMemberResponseMother.Representative(authorId, authorName));
         this.ShouldSearchLostItems(lostItem);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        LostItemResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        LostItemResponse item = result.Items.Should().ContainSingle().Subject;
         item.Id.Should().Be(lostItem.Id);
         item.Scope.Should().Be("Class");
         item.ClassId.Should().Be(classId);
@@ -72,7 +72,7 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         item.AuthorName.Should().Be(authorName);
         item.AuthorRole.Should().Be("ClassRepresentative");
         item.CreatedAt.Should().Be(lostItem.CreatedAt);
-        result.Value.NextCursor.Should().BeNull();
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -91,10 +91,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             UserClassMemberResponseMother.Participant(authorId, StringMother.Random("author")));
         this.ShouldSearchLostItems(LostItemMother.With(schoolId: schoolId, authorId: authorId));
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        LostItemResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        LostItemResponse item = result.Items.Should().ContainSingle().Subject;
         item.Scope.Should().Be("School");
         item.ClassId.Should().BeNull();
         item.Status.Should().Be("Lost");
@@ -117,10 +117,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(LostItemMother.ForClass(classId));
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        LostItemResponse item = result.Value.Items.Should().ContainSingle().Subject;
+        LostItemResponse item = result.Items.Should().ContainSingle().Subject;
         item.AuthorName.Should().BeEmpty();
         item.AuthorRole.Should().BeNull();
     }
@@ -141,10 +141,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(school, mine, LostItemMother.ForClass(GuidMother.Random()));
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
+        result.Items.Select(item => item.Id).Should().BeEquivalentTo([school.Id, mine.Id]);
     }
 
     [Test]
@@ -161,12 +161,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchNoLostItems();
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Items.Should().BeEmpty();
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().BeEmpty();
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -187,10 +186,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(schoolOld, classNewest, schoolNew, classMiddle);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id)
+        result.Items.Select(item => item.Id)
             .Should().Equal(classNewest.Id, schoolNew.Id, classMiddle.Id, schoolOld.Id);
     }
 
@@ -211,11 +210,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(minute1, minute3, minute2);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(minute3.Id, minute2.Id);
-        PageCursor.TryDecode(result.Value.NextCursor, out PageCursor cursor).Should().BeTrue();
+        result.Items.Select(item => item.Id).Should().Equal(minute3.Id, minute2.Id);
+        PageCursor.TryDecode(result.NextCursor, out PageCursor cursor).Should().BeTrue();
         cursor.Key.Should().Be(minute2.CreatedAt.UtcTicks);
         cursor.Id.Should().Be(minute2.Id);
     }
@@ -236,11 +235,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(1)),
             LostItemMother.ForClass(classId, createdAt: Now.AddMinutes(2)));
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithLimit(classId, 2));
 
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.NextCursor.Should().BeNull();
+        result.Items.Should().HaveCount(2);
+        result.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -260,14 +259,14 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldAllowClassAccess(currentUserId, classId);
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(minute2, minute4, minute1, minute3);
-        Result<PagedResponse<LostItemResponse>> firstPage = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> firstPage = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithLimit(classId, 2));
 
-        Result<PagedResponse<LostItemResponse>> secondPage = await this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithCursor(classId, 2, firstPage.Value.NextCursor!));
+        PagedResponse<LostItemResponse> secondPage = await this._useCase.ExecuteAsync(
+            LostItemFinderByClassQueryMother.WithCursor(classId, 2, firstPage.NextCursor!));
 
-        secondPage.Value.Items.Select(item => item.Id).Should().Equal(minute2.Id, minute1.Id);
-        secondPage.Value.NextCursor.Should().BeNull();
+        secondPage.Items.Select(item => item.Id).Should().Equal(minute2.Id, minute1.Id);
+        secondPage.NextCursor.Should().BeNull();
     }
 
     [Test]
@@ -295,10 +294,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
 
         for (int requested = 0; requested <= tied.Length; requested++)
         {
-            Result<PagedResponse<LostItemResponse>> page = await this._useCase.ExecuteAsync(
+            PagedResponse<LostItemResponse> page = await this._useCase.ExecuteAsync(
                 LostItemFinderByClassQueryMother.With(classId, 1, cursor));
-            seen.AddRange(page.Value.Items.Select(item => item.Id));
-            cursor = page.Value.NextCursor;
+            seen.AddRange(page.Items.Select(item => item.Id));
+            cursor = page.NextCursor;
             if (cursor is null)
             {
                 break;
@@ -325,10 +324,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(low, high);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
+        result.Items.Select(item => item.Id).Should().Equal(high.Id, low.Id);
     }
 
     [Test]
@@ -347,11 +346,11 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
             .Select(minutes => LostItemMother.With(schoolId: schoolId, createdAt: Now.AddMinutes(minutes)))
             .ToArray());
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Should().HaveCount(Pagination.DefaultLimit);
-        result.Value.NextCursor.Should().NotBeNull();
+        result.Items.Should().HaveCount(Pagination.DefaultLimit);
+        result.NextCursor.Should().NotBeNull();
     }
 
     [Test]
@@ -432,10 +431,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldHaveClassMembers();
         this.ShouldSearchLostItems(mine, otherSchool);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Value.Items.Select(item => item.Id).Should().Equal(mine.Id);
+        result.Items.Select(item => item.Id).Should().Equal(mine.Id);
     }
 
     [Test]

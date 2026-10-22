@@ -57,7 +57,7 @@ public sealed class LostItem : AggregateRoot
         CreatedAt = createdAt;
     }
 
-    public static Result<LostItem> Create(
+    public static LostItem Create(
         Guid id,
         ItemScope scope,
         Guid? classId,
@@ -69,13 +69,9 @@ public sealed class LostItem : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var validation = Validate(id, scope, classId, schoolId, description, photoUrl, photoPrivacyConfirmed, authorId);
-        if (validation.IsFailure)
-        {
-            return Result<LostItem>.Failure(validation.Error!);
-        }
+        Validate(id, scope, classId, schoolId, description, photoUrl, photoPrivacyConfirmed, authorId);
 
-        var lostItem = new LostItem(
+        return new LostItem(
             id,
             scope,
             scope == ItemScope.Class ? classId : null,
@@ -87,11 +83,9 @@ public sealed class LostItem : AggregateRoot
             photoPrivacyConfirmed,
             authorId,
             clock.UtcNow);
-
-        return Result<LostItem>.Success(lostItem);
     }
 
-    private static Result Validate(
+    private static void Validate(
         Guid id,
         ItemScope scope,
         Guid? classId,
@@ -103,29 +97,28 @@ public sealed class LostItem : AggregateRoot
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(LostItemErrors.IdRequired);
+            throw new LostItemExceptions.IdRequired();
         }
         if (scope == ItemScope.Class && (classId is null || classId == Guid.Empty))
         {
-            return Result.Failure(LostItemErrors.ClassRequiredForClassScope);
+            throw new LostItemExceptions.ClassRequiredForClassScope();
         }
         if (scope == ItemScope.School && (schoolId is null || schoolId == Guid.Empty))
         {
-            return Result.Failure(LostItemErrors.SchoolRequiredForSchoolScope);
+            throw new LostItemExceptions.SchoolRequiredForSchoolScope();
         }
         if (string.IsNullOrWhiteSpace(description))
         {
-            return Result.Failure(LostItemErrors.DescriptionRequired);
+            throw new LostItemExceptions.DescriptionRequired();
         }
         if (!string.IsNullOrWhiteSpace(photoUrl) && !photoPrivacyConfirmed)
         {
-            return Result.Failure(LostItemErrors.PhotoPrivacyConfirmationRequired);
+            throw new LostItemExceptions.PhotoPrivacyConfirmationRequired();
         }
         if (authorId == Guid.Empty)
         {
-            return Result.Failure(LostItemErrors.AuthorRequired);
+            throw new LostItemExceptions.AuthorRequired();
         }
-        return Result.Success();
     }
 
     public void MarkAsRecovered() => Recovered = true;

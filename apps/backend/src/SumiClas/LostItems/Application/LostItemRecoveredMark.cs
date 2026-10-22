@@ -10,23 +10,20 @@ namespace SumiClas.LostItems.Application;
 
 public static class LostItemRecoveredMark
 {
-    public sealed record Command(Guid LostItemId) : IRequest<Result>, ICommand;
+    public sealed record Command(Guid LostItemId) : IRequest, ICommand;
 
     public sealed class Mark(ILostItemRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var lostItem = await repository.GetByIdAsync(command.LostItemId, ct);
-            if (lostItem is null)
-            {
-                return Result.Failure(LostItemErrors.NotFound);
-            }
+            var lostItem = await repository.GetByIdAsync(command.LostItemId, ct)
+                ?? throw new LostItemExceptions.NotFound();
 
             var current = userProvider.GetCurrentUserId();
 
             if (lostItem.AuthorId != current)
             {
-                return Result.Failure(LostItemErrors.MarkForbidden);
+                throw new LostItemExceptions.MarkForbidden();
             }
 
             if (lostItem.ClassId is { } classId)
@@ -37,13 +34,12 @@ public static class LostItemRecoveredMark
             }
 
             lostItem.MarkAsRecovered();
-            return Result.Success();
         }
     }
 
-    public sealed class Handler(Mark mark) : IRequestHandler<Command, Result>
+    public sealed class Handler(Mark mark) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => mark.ExecuteAsync(command, ct);
     }
 }

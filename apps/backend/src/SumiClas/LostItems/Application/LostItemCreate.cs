@@ -21,11 +21,11 @@ public static class LostItemCreate
         string Status,
         string Description,
         string? PhotoUrl,
-        bool PhotoPrivacyConfirmed) : IRequest<Result>, ICommand;
+        bool PhotoPrivacyConfirmed) : IRequest, ICommand;
 
     public sealed class Create(ILostItemRepository repository, IQueryBus queryBus, IClock clock, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Command command, CancellationToken ct = default)
+        public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
@@ -33,17 +33,17 @@ public static class LostItemCreate
 
             if (!Enum.TryParse<ItemScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
             {
-                return Result.Failure(LostItemErrors.InvalidScope);
+                throw new LostItemExceptions.InvalidScope();
             }
             if (!Enum.TryParse<ItemStatus>(command.Status, ignoreCase: true, out var status) || !Enum.IsDefined(status))
             {
-                return Result.Failure(LostItemErrors.InvalidStatus);
+                throw new LostItemExceptions.InvalidStatus();
             }
 
             // The school of a school-wide lost item is only known after looking up the class, so the aggregate is
             // built twice: once only to validate the input before any IO (the school is provisional and discarded),
             // and once with the real school.
-            var validation = LostItem.Create(
+            var lostItem = LostItem.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -54,14 +54,10 @@ public static class LostItemCreate
                 command.PhotoPrivacyConfirmed,
                 authorId,
                 clock);
-            if (validation.IsFailure)
-            {
-                return Result.Failure(validation.Error!);
-            }
 
             if (command.ClassId is not { } classId || classId == Guid.Empty)
             {
-                return Result.Failure(LostItemErrors.ClassRequiredForSchoolScope);
+                throw new LostItemExceptions.ClassRequiredForSchoolScope();
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
@@ -72,12 +68,11 @@ public static class LostItemCreate
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var lostItem = validation.Value;
             if (scope == ItemScope.School)
             {
                 var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
-                var creation = LostItem.Create(
+                lostItem = LostItem.Create(
                     command.Id,
                     scope,
                     command.ClassId,
@@ -88,23 +83,15 @@ public static class LostItemCreate
                     command.PhotoPrivacyConfirmed,
                     authorId,
                     clock);
-                if (creation.IsFailure)
-                {
-                    return Result.Failure(creation.Error!);
-                }
-
-                lostItem = creation.Value;
             }
 
             await repository.AddAsync(lostItem, ct);
-
-            return Result.Success();
         }
     }
 
-    public sealed class Handler(Create create) : IRequestHandler<Command, Result>
+    public sealed class Handler(Create create) : IRequestHandler<Command>
     {
-        public Task<Result> Handle(Command command, CancellationToken ct)
+        public Task Handle(Command command, CancellationToken ct)
             => create.ExecuteAsync(command, ct);
     }
 }
