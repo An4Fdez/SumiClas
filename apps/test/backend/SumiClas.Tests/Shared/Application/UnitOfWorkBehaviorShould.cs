@@ -50,15 +50,13 @@ public class UnitOfWorkBehaviorShould
     }
 
     [Test]
-    public async Task roll_back_and_return_its_error_without_saving_when_an_event_handler_fails()
+    public async Task roll_back_and_propagate_it_without_saving_when_an_event_handler_throws()
     {
-        Error dispatchError = ErrorMother.Random();
-        this.ShouldFailDispatching(dispatchError);
+        this.ShouldThrowDispatching(new SampleExceptions.NotFound());
 
-        Result response = await this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
+        Func<Task> act = () => this.HandlePlainAsync(() => Task.FromResult(Result.Success()));
 
-        response.IsFailure.Should().BeTrue();
-        response.Error.Should().Be(dispatchError);
+        await act.Should().ThrowAsync<SampleExceptions.NotFound>();
         this.VerifyRolledBackOnce();
         this.VerifyNeverCommitted();
         this.VerifyNeverSaved();
@@ -191,14 +189,13 @@ public class UnitOfWorkBehaviorShould
     }
 
     [Test]
-    public async Task roll_back_and_throw_the_error_of_the_event_handler_when_a_command_that_returns_a_value_succeeds()
+    public async Task roll_back_and_propagate_it_when_an_event_handler_throws_and_the_command_returns_a_value()
     {
-        Error dispatchError = ErrorMother.Random();
-        this.ShouldFailDispatching(dispatchError);
+        this.ShouldThrowDispatching(new SampleExceptions.NotFound());
 
         Func<Task> act = () => this.HandleConvertedAsync(() => Task.FromResult(System.Random.Shared.Next()));
 
-        (await act.Should().ThrowAsync<ResultFailureException>()).Which.Error.Should().Be(dispatchError);
+        await act.Should().ThrowAsync<SampleExceptions.NotFound>();
         this.VerifyRolledBackOnce();
         this.VerifyNeverCommitted();
         this.VerifyNeverSaved();
@@ -276,12 +273,7 @@ public class UnitOfWorkBehaviorShould
     private void ShouldDispatchEvents()
         => this._dispatcher
             .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
-
-    private void ShouldFailDispatching(Error error)
-        => this._dispatcher
-            .Setup(dispatcher => dispatcher.DispatchAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
+            .Returns(Task.CompletedTask);
 
     private void ShouldThrowDispatching(Exception exception)
         => this._dispatcher

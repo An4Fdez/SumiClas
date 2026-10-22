@@ -39,16 +39,15 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.IsSuccess.Should().BeTrue();
         user.ClassRoles.Should().BeEquivalentTo(
             [ClassRoleAssignmentMother.Representative(otherClassId), ClassRoleAssignmentMother.Participant(classId)]);
     }
 
     [Test]
-    public async Task return_last_representative_cannot_resign_and_keep_the_role_when_the_user_is_the_only_one()
+    public async Task throw_last_representative_cannot_resign_and_keep_the_role_when_the_user_is_the_only_one()
     {
         Guid classId = GuidMother.Random();
         User user = UserMother.Representative(classId);
@@ -59,10 +58,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user);
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.LastClassRepresentativeCannotResign);
+        await act.Should().ThrowAsync<UserExceptions.LastClassRepresentativeCannotResign>();
         user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Representative(classId));
     }
 
@@ -78,14 +77,14 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user, UserMother.Representative(GuidMother.Random()));
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.LastClassRepresentativeCannotResign);
+        await act.Should().ThrowAsync<UserExceptions.LastClassRepresentativeCannotResign>();
     }
 
     [Test]
-    public async Task return_not_class_representative_when_the_user_is_a_participant_and_another_user_is_the_only_one()
+    public async Task throw_not_class_representative_when_the_user_is_a_participant_and_another_user_is_the_only_one()
     {
         Guid classId = GuidMother.Random();
         User user = UserMother.Participant(classId);
@@ -96,15 +95,15 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user, UserMother.Representative(classId));
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.NotClassRepresentative);
+        await act.Should().ThrowAsync<UserExceptions.NotClassRepresentative>();
         user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Participant(classId));
     }
 
     [Test]
-    public async Task return_no_role_assigned_when_the_user_only_has_a_role_in_another_class()
+    public async Task throw_no_role_assigned_when_the_user_only_has_a_role_in_another_class()
     {
         Guid classId = GuidMother.Random();
         Guid otherClassId = GuidMother.Random();
@@ -116,10 +115,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user);
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.NoRoleAssignedInClass);
+        await act.Should().ThrowAsync<UserExceptions.NoRoleAssignedInClass>();
         user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Representative(otherClassId));
     }
 
@@ -184,7 +183,7 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_searching_when_the_current_user_does_not_exist()
+    public async Task throw_user_not_found_without_searching_when_the_current_user_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
@@ -193,15 +192,15 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFetchNoUsers();
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 
     [Test]
-    public async Task return_class_id_required_when_the_class_id_is_empty()
+    public async Task throw_class_id_required_when_the_class_id_is_empty()
     {
         User user = UserMother.Representative(Guid.Empty);
         this.ShouldResolveCurrentUser(user.Id);
@@ -211,10 +210,10 @@ public class UserClassRepresentativeResignShould : UsersUnitTestCase
         this.ShouldSearchUsers(user, UserMother.Representative(Guid.Empty));
         this.ShouldFind(user);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeResignCommandMother.WithClassId(Guid.Empty));
 
-        result.Error.Should().Be(UserErrors.ClassIdRequired);
+        await act.Should().ThrowAsync<UserExceptions.ClassIdRequired>();
         user.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Representative(Guid.Empty));
     }
 }

@@ -9,6 +9,7 @@ using SumiClas.Classes.Domain;
 using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Users.Domain;
 
 [TestFixture]
 public class DomainExceptionProfilesShould
@@ -74,6 +75,44 @@ public class DomainExceptionProfilesShould
             new DomainExceptionStatus(
                 typeof(AuthenticationExceptions.Unauthenticated),
                 StatusCodes.Status401Unauthorized),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_missing_user_as_404()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresUser();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(UserExceptions.NotFound), StatusCodes.Status404NotFound),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_user_outside_the_class_as_403()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresClassMembership();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(typeof(UserExceptions.ClassAccessForbidden), StatusCodes.Status403Forbidden),
+        ]);
+    }
+
+    [Test]
+    public async Task declare_a_user_who_is_not_a_delegate_as_403()
+    {
+        await using WebApplication app = WebApplication.CreateSlimBuilder().Build();
+        app.MapGet("/sample", () => "sample").RequiresClassRepresentative();
+
+        DeclaredBy(app).Should().BeEquivalentTo(
+        [
+            new DomainExceptionStatus(
+                typeof(UserExceptions.ClassRepresentativeForbidden),
+                StatusCodes.Status403Forbidden),
         ]);
     }
 

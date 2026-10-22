@@ -1,6 +1,7 @@
 namespace SumiClas.Tests.Users.Application;
 
 using AwesomeAssertions;
+using MediatR;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
@@ -24,9 +25,9 @@ public class UserClassRepresentativeEnsureShould : UsersUnitTestCase
         User representative = UserMother.Representative(classId);
         this.ShouldSearchUsers(representative);
 
-        Result result = await this.Ask(representative.Id, classId);
+        Func<Task> act = () => this.Ask(representative.Id, classId);
 
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
@@ -36,9 +37,9 @@ public class UserClassRepresentativeEnsureShould : UsersUnitTestCase
         User participant = UserMother.Participant(classId);
         this.ShouldSearchUsers(participant);
 
-        Result result = await this.Ask(participant.Id, classId);
+        Func<Task> act = () => this.Ask(participant.Id, classId);
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
     }
 
     [Test]
@@ -47,9 +48,9 @@ public class UserClassRepresentativeEnsureShould : UsersUnitTestCase
         User representative = UserMother.Representative(GuidMother.Random());
         this.ShouldSearchUsers(representative);
 
-        Result result = await this.Ask(representative.Id, GuidMother.Random());
+        Func<Task> act = () => this.Ask(representative.Id, GuidMother.Random());
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
     }
 
     [Test]
@@ -58,11 +59,11 @@ public class UserClassRepresentativeEnsureShould : UsersUnitTestCase
         Guid classId = GuidMother.Random();
         this.ShouldSearchUsers(UserMother.Representative(classId));
 
-        Result result = await this.Ask(GuidMother.Random(), classId);
+        Func<Task> act = () => this.Ask(GuidMother.Random(), classId);
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
     }
 
-    private Task<Result> Ask(Guid userId, Guid classId)
+    private Task<Unit> Ask(Guid userId, Guid classId)
         => this._useCase.ExecuteAsync(UserClassRepresentativeEnsureQueryMother.With(userId, classId));
 }

@@ -7,14 +7,13 @@ namespace SumiClas.Shared.Application;
 /// <summary>
 /// The root command opens a database transaction. Once it succeeds, the domain events raised by the aggregates are
 /// pulled and their handlers run in the same transaction; only if all of them succeed is everything saved and
-/// committed. A failed <see cref="Result"/>, a failed handler or an exception rolls everything back.
+/// committed. A failed <see cref="Result"/> or an exception (also from an event handler) rolls everything back.
 /// A unique-key violation (<see cref="DuplicateKeyException"/>) also rolls back, but becomes the failed result
 /// <see cref="SharedErrors.AlreadyExists"/> (HTTP 409) instead of an exception. A lost optimistic-concurrency race
 /// (<see cref="ConcurrencyConflictException"/>) behaves the same way and becomes
 /// <see cref="SharedErrors.ConcurrencyConflict"/> (HTTP 409).
 /// Temporary bridge: a command that already returns its value instead of a <see cref="Result"/> fails by throwing, so
-/// those two conditions become <see cref="SharedExceptions"/> and a failed event handler a
-/// <see cref="ResultFailureException"/>.
+/// those two conditions become <see cref="SharedExceptions"/>.
 /// Use cases never touch the unit of work.
 /// </summary>
 public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
@@ -46,17 +45,7 @@ public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWo
                 return response;
             }
 
-            var dispatch = await dispatcher.DispatchAsync(ct);
-            if (dispatch.IsFailure)
-            {
-                if (!ResultResponse)
-                {
-                    throw new ResultFailureException(dispatch.Error!);
-                }
-
-                await unitOfWork.RollbackTransactionAsync(ct);
-                return FailedResponse(dispatch.Error!);
-            }
+            await dispatcher.DispatchAsync(ct);
 
             await unitOfWork.SaveChangesAsync(ct);
             await unitOfWork.CommitTransactionAsync(ct);

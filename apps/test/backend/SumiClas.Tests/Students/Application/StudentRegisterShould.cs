@@ -226,8 +226,7 @@ public class StudentRegisterShould : StudentsUnitTestCase
 
         Func<Task> act = () => this._useCase.ExecuteAsync(StudentRegisterCommandMother.WithId(GuidMother.Random()));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.Added.Should().BeEmpty();
     }
 }

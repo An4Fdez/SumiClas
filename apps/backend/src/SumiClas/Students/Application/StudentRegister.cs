@@ -31,7 +31,7 @@ public static class StudentRegister
 
             var student = Student.Register(command.Id, name, guardianId, role);
 
-            (await queryBus.Send(new UserFinderById.Query(guardianId), ct)).OrThrow();
+            await queryBus.Send(new UserFinderById.Query(guardianId), ct);
 
             await repository.AddAsync(student, ct);
         }

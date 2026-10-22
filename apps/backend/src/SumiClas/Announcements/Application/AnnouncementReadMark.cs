@@ -23,19 +23,11 @@ public static class AnnouncementReadMark
                 return Result.Failure(AnnouncementErrors.NotFound);
             }
 
-            var reader = await queryBus.Send(new UserFinderById.Query(current), ct);
-            if (reader.IsFailure)
-            {
-                return Result.Failure(reader.Error!);
-            }
+            await queryBus.Send(new UserFinderById.Query(current), ct);
 
             if (announcement.ClassId is { } classId)
             {
-                var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, classId), ct);
-                if (access.IsFailure)
-                {
-                    return access;
-                }
+                await queryBus.Send(new UserClassAccessEnsure.Query(current, classId), ct);
             }
 
             return announcement.MarkAsReadBy(current, clock);

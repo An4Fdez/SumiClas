@@ -25,4 +25,7 @@ public static class UserRegisterCommandMother
     public static UserRegister.Command WithEmail(string email) => With(email: email);
 
     public static UserRegister.Command WithFullName(string fullName) => With(fullName: fullName);
+
+    public static UserRegister.Command WithoutEmail()
+        => new(GuidMother.Random(), StringMother.Random("User"), null!, StringMother.Random("password"));
 }

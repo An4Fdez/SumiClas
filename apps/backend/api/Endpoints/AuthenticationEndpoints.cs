@@ -4,7 +4,9 @@ using Microsoft.Extensions.Options;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Sessions.Application;
+using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
+using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -30,13 +32,23 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthPolicy);
 
         credentials.MapPost("/register", async (AccountRegisterRequest request, ISender sender, CancellationToken ct) =>
-            (await sender.Send(new UserRegister.Command(request.Id, request.FullName, request.Email, request.Password), ct)).ToCreated())
+        {
+            await sender.Send(new UserRegister.Command(request.Id, request.FullName, request.Email, request.Password), ct);
+
+            return Results.StatusCode(StatusCodes.Status201Created);
+        })
             .WithName("UserRegister")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .Maps<AuthenticationExceptions.PasswordTooWeak>(StatusCodes.Status400BadRequest)
+            .Maps<UserExceptions.InvalidEmailFormat>(StatusCodes.Status400BadRequest)
+            .Maps<UserExceptions.IdRequired>(StatusCodes.Status400BadRequest)
+            .Maps<UserExceptions.FullNameRequired>(StatusCodes.Status400BadRequest)
+            .Maps<UserExceptions.EmailAlreadyRegistered>(StatusCodes.Status409Conflict)
+            .ConflictsOnSave();
 
         credentials.MapPost("/login", async (
                 AccountLoginRequest request,
@@ -58,7 +70,8 @@ public sealed class AuthenticationEndpoints : IEndpoints
             .Produces<AccountSessionResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .Maps<AuthenticationExceptions.InvalidCredentials>(StatusCodes.Status401Unauthorized);
 
         var session = authentication.MapGroup(string.Empty)
             .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthRefreshPolicy);

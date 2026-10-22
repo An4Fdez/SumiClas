@@ -34,11 +34,7 @@ public static class AnnouncementFinderByClass
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return Result<PagedResponse<AnnouncementResponse>>.Failure(access.Error!);
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
             var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 

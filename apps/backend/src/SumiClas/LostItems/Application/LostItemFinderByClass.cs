@@ -33,11 +33,7 @@ public static class LostItemFinderByClass
 
             var current = userProvider.GetCurrentUserId();
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return Result<PagedResponse<LostItemResponse>>.Failure(access.Error!);
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
             var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 

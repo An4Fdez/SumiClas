@@ -384,17 +384,17 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_adding_or_asking_for_the_class_when_the_author_does_not_exist()
+    public async Task throw_user_not_found_without_adding_or_asking_for_the_class_when_the_author_does_not_exist()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldNotFindUser(authorId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "Class", classId: GuidMother.Random()));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.ShouldHaveAskedOnlyForTheAuthor();
     }
@@ -467,7 +467,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
@@ -478,10 +478,10 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldDenyClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.ClassScopeWithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         this.Added.Should().BeEmpty();
     }
 
@@ -544,7 +544,7 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_representative_forbidden_without_adding_the_school_event_when_not_a_delegate()
+    public async Task throw_representative_forbidden_without_adding_the_school_event_when_not_a_delegate()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid classId = GuidMother.Random();
@@ -555,10 +555,10 @@ public class CalendarEventCreateShould : CalendarEventsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldDenyClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventCreateCommandMother.Valid(scope: "School", classId: classId));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         this.Added.Should().BeEmpty();
     }
 

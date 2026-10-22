@@ -37,8 +37,8 @@ public static class SessionRotate
                 return Done(new SessionRotateOutcome.Invalid());
             }
 
-            var user = await queryBus.Send(new UserFinderById.Query(session.UserId), ct);
-            if (user.IsFailure)
+            var user = await queryBus.Send(new UserFinderByIdOrNull.Query(session.UserId), ct);
+            if (user is null)
             {
                 return Done(new SessionRotateOutcome.Invalid());
             }
@@ -61,7 +61,7 @@ public static class SessionRotate
 
                     return Done(new SessionRotateOutcome.Rotated(
                         new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, session.UserId,
-                            user.Value.FullName, refreshToken, rotated.NewToken.ExpiresAt)));
+                            user.FullName, refreshToken, rotated.NewToken.ExpiresAt)));
                 case SessionRotation.Reused:
                     return Done(new SessionRotateOutcome.Reused());
                 default:

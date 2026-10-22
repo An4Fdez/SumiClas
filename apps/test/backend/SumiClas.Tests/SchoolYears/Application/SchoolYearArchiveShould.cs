@@ -97,8 +97,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         schoolYear.Status.Should().Be(SchoolYearStatus.Active);
         schoolYear.DomainEvents.Should().BeEmpty();
     }
@@ -114,8 +113,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         schoolYear.Status.Should().Be(SchoolYearStatus.Active);
     }
 

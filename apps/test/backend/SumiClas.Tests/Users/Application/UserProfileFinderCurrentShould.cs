@@ -33,15 +33,15 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_not_found_when_the_user_does_not_exist()
+    public async Task throw_not_found_when_the_user_does_not_exist()
     {
         this.ShouldResolveCurrentUser(GuidMother.Random());
         this.ShouldFetchNoUsers();
 
-        Result<UserProfileResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             new UserProfileFinderCurrent.Query());
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
     }
 
     [Test]
@@ -57,14 +57,12 @@ public class UserProfileFinderCurrentShould : UsersUnitTestCase
         this.ShouldResolveCurrentUser(user.Id);
         this.ShouldFind(user);
 
-        Result<UserProfileResponse> result = await this._useCase.ExecuteAsync(
+        UserProfileResponse result = await this._useCase.ExecuteAsync(
             new UserProfileFinderCurrent.Query());
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(user.Id);
-        result.Value.FullName.Should().Be(fullName);
-        result.Value.Email.Should().Be(email);
-        result.Value.ClassRoles.Select(role => (role.ClassId, role.Role))
+        result.Id.Should().Be(user.Id);
+        result.FullName.Should().Be(fullName);
+        result.Email.Should().Be(email);
+        result.ClassRoles.Select(role => (role.ClassId, role.Role))
             .Should().Equal((classId, "ClassRepresentative"));
     }
 }

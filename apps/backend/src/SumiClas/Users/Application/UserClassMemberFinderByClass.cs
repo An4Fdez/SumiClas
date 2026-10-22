@@ -2,7 +2,6 @@ using MediatR;
 using SumiClas.Classes.Application;
 using SumiClas.Enrollments.Application;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Users.Domain;
 
@@ -16,11 +15,11 @@ public static class UserClassMemberFinderByClass
     /// The members of a class: the guardians of the students with a confirmed enrollment plus the class delegates.
     /// Participants have no stored role, so they are computed. Only members of the class may ask.
     /// </summary>
-    public sealed record Query(Guid ClassId) : IQuery<Result<IReadOnlyCollection<UserClassMemberResponse>>>;
+    public sealed record Query(Guid ClassId) : IQuery<IReadOnlyCollection<UserClassMemberResponse>>;
 
     public sealed class Finder(IUserRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
     {
-        public async Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<IReadOnlyCollection<UserClassMemberResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var current = userProvider.GetCurrentUserId();
 
@@ -41,11 +40,11 @@ public static class UserClassMemberFinderByClass
             var users = await repository.SearchAsync(new UserSpecification(ids: memberIds), ct);
             if (users.All(user => user.Id != current))
             {
-                return Result<IReadOnlyCollection<UserClassMemberResponse>>.Failure(UserErrors.ClassMembersForbidden);
+                throw new UserExceptions.ClassMembersForbidden();
             }
 
             var representativeRole = ClassRoleType.ClassRepresentative.ToString();
-            IReadOnlyCollection<UserClassMemberResponse> members = users
+            return users
                 .Select(user => new UserClassMemberResponse(
                     user.Id,
                     user.FullName,
@@ -54,14 +53,12 @@ public static class UserClassMemberFinderByClass
                 .OrderBy(member => member.ClassRole == representativeRole ? 0 : 1)
                 .ThenBy(member => member.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-
-            return Result<IReadOnlyCollection<UserClassMemberResponse>>.Success(members);
         }
     }
 
-    public sealed class Handler(Finder finder) : IRequestHandler<Query, Result<IReadOnlyCollection<UserClassMemberResponse>>>
+    public sealed class Handler(Finder finder) : IRequestHandler<Query, IReadOnlyCollection<UserClassMemberResponse>>
     {
-        public Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> Handle(Query query, CancellationToken ct)
+        public Task<IReadOnlyCollection<UserClassMemberResponse>> Handle(Query query, CancellationToken ct)
             => finder.ExecuteAsync(query, ct);
     }
 }

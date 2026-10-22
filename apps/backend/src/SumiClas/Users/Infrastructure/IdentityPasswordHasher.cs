@@ -11,7 +11,7 @@ public sealed class IdentityPasswordHasher : IPasswordHasher
 
     public IdentityPasswordHasher()
     {
-        _throwawayHash = Generate(Password.Create(Guid.NewGuid().ToString("N")).Value);
+        _throwawayHash = Generate(Password.Create(Guid.NewGuid().ToString("N")));
     }
 
     // The Identity hasher never reads the user it is given, so none is passed.

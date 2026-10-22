@@ -39,18 +39,10 @@ public static class AssignmentCreate
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
-            if (author.IsFailure)
-            {
-                return Result.Failure(author.Error!);
-            }
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(authorId, command.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return access;
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(authorId, command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 

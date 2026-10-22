@@ -397,16 +397,16 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
+    public async Task throw_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldNotFindUser(authorId);
         this.ShouldCaptureAddedLostItems();
 
-        Result result = await this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "Class"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(LostItemCreateCommandMother.Valid(scope: "Class"));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),
@@ -472,7 +472,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_adding_when_the_author_does_not_belong_to_the_class()
+    public async Task throw_class_access_forbidden_without_adding_when_the_author_does_not_belong_to_the_class()
     {
         this.ShouldCaptureAddedLostItems();
         Guid classId = GuidMother.Random();
@@ -483,10 +483,10 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldDenyClassAccess(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "Class", classId: classId));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         this.Added.Should().BeEmpty();
     }
 
@@ -546,7 +546,7 @@ public class LostItemCreateShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_adding_the_school_item_when_the_author_is_not_in_the_class()
+    public async Task throw_class_access_forbidden_without_adding_the_school_item_when_the_author_is_not_in_the_class()
     {
         this.ShouldCaptureAddedLostItems();
         Guid classId = GuidMother.Random();
@@ -557,10 +557,10 @@ public class LostItemCreateShould : LostItemsUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldDenyClassAccess(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemCreateCommandMother.Valid(scope: "School", classId: classId));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         this.Added.Should().BeEmpty();
     }
 

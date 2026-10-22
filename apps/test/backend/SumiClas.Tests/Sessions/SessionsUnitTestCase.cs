@@ -68,7 +68,7 @@ public abstract class SessionsUnitTestCase : UnitTestCase
     protected void ShouldNotFindUser(Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<UserFinderById.Query>(query => query.UserId == userId),
+                It.Is<UserFinderByIdOrNull.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
+            .ReturnsAsync((UserResponse?)null);
 }

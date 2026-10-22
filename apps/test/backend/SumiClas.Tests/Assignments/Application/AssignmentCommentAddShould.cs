@@ -119,7 +119,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
+    public async Task throw_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
     {
         Guid assignmentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
@@ -128,10 +128,10 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldNotFindUser(authorId);
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         assignment.Comments.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),
@@ -241,7 +241,7 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_commenting_when_the_user_does_not_belong_to_the_class()
+    public async Task throw_class_access_forbidden_without_commenting_when_the_user_does_not_belong_to_the_class()
     {
         Guid assignmentId = GuidMother.Random();
         Guid authorId = GuidMother.Random();
@@ -253,10 +253,10 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
         this.ShouldDenyClassAccess(authorId, assignment.ClassId);
         this.ShouldFetchAssignments(assignment);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AssignmentCommentAddCommandMother.WithText(assignmentId, StringMother.Random("comment")));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         assignment.Comments.Should().BeEmpty();
     }
 }

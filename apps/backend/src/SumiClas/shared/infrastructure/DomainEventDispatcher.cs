@@ -7,7 +7,7 @@ namespace SumiClas.Shared.Infrastructure;
 
 public sealed class DomainEventDispatcher(SumiClasDbContext dbContext, IServiceProvider serviceProvider) : IDomainEventDispatcher
 {
-    public async Task<Result> DispatchAsync(CancellationToken ct = default)
+    public async Task DispatchAsync(CancellationToken ct = default)
     {
         while (true)
         {
@@ -17,7 +17,7 @@ public sealed class DomainEventDispatcher(SumiClasDbContext dbContext, IServiceP
                 .ToList();
             if (aggregates.Count == 0)
             {
-                return Result.Success();
+                return;
             }
 
             var domainEvents = aggregates.SelectMany(aggregate => aggregate.DomainEvents).ToList();
@@ -33,11 +33,7 @@ public sealed class DomainEventDispatcher(SumiClasDbContext dbContext, IServiceP
 
                 foreach (var handler in serviceProvider.GetServices(handlerType))
                 {
-                    var result = await (Task<Result>)handle.Invoke(handler, [domainEvent, ct])!;
-                    if (result.IsFailure)
-                    {
-                        return result;
-                    }
+                    await (Task)handle.Invoke(handler, [domainEvent, ct])!;
                 }
             }
         }

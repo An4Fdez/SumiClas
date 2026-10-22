@@ -45,6 +45,7 @@ public sealed class StudentsEndpoints : IEndpoints
             .Maps<StudentExceptions.FirstSurnameRequired>(StatusCodes.Status400BadRequest)
             .Maps<StudentExceptions.FirstGuardianRequired>(StatusCodes.Status400BadRequest)
             .Maps<StudentExceptions.InvalidGuardianRole>(StatusCodes.Status400BadRequest)
+            .RequiresUser()
             .ConflictsOnSave();
 
         students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>
@@ -63,6 +64,7 @@ public sealed class StudentsEndpoints : IEndpoints
             .Maps<StudentExceptions.InvalidGuardianRole>(StatusCodes.Status400BadRequest)
             .Maps<StudentExceptions.GuardianIdRequired>(StatusCodes.Status400BadRequest)
             .Maps<StudentExceptions.GuardianAlreadyLinked>(StatusCodes.Status400BadRequest)
+            .RequiresUser()
             .Maps<StudentExceptions.NotFound>(StatusCodes.Status404NotFound)
             .Maps<StudentExceptions.GuardianChangeForbidden>(StatusCodes.Status403Forbidden)
             .ConflictsOnSave();

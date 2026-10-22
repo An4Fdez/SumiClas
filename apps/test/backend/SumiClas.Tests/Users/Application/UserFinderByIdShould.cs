@@ -25,23 +25,21 @@ public class UserFinderByIdShould : UsersUnitTestCase
         User user = UserMother.WithName(fullName);
         this.ShouldFind(user);
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        UserResponse result = await this._useCase.ExecuteAsync(
             UserFinderByIdQueryMother.WithUserId(user.Id),
             CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(UserResponseMother.Create(user.Id, fullName));
+        result.Should().Be(UserResponseMother.Create(user.Id, fullName));
     }
 
     [Test]
-    public async Task return_not_found_for_an_id_other_than_the_one_that_exists()
+    public async Task throw_not_found_for_an_id_other_than_the_one_that_exists()
     {
         this.ShouldFetchUsers(UserMother.Random());
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserFinderByIdQueryMother.WithUserId(GuidMother.Random()),
             CancellationToken.None);
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
     }
 }

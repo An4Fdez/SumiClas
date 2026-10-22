@@ -149,8 +149,7 @@ public class StudentGuardianAddShould : StudentsUnitTestCase
         Func<Task> act = () => this._useCase.ExecuteAsync(
             StudentGuardianAddCommandMother.With(student.Id, newGuardianId, nameof(GuardianRole.Father)));
 
-        (await act.Should().ThrowAsync<ResultFailureException>())
-            .Which.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         student.Guardians.Should().Equal(GuardianLinkMother.Mother(currentId));
     }
 

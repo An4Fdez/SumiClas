@@ -66,10 +66,6 @@ public static class AnnouncementCreate
             }
 
             var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
-            if (author.IsFailure)
-            {
-                return Result.Failure(author.Error!);
-            }
 
             if (command.RelatedEventId is { } relatedEventId)
             {
@@ -82,11 +78,7 @@ public static class AnnouncementCreate
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
-            var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
-            if (representative.IsFailure)
-            {
-                return representative;
-            }
+            await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 

@@ -41,19 +41,11 @@ public static class ClassExpenseCreate
                 return Result.Failure(creation.Error!);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
-            if (author.IsFailure)
-            {
-                return Result.Failure(author.Error!);
-            }
+            await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var representative = await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, command.ClassId), ct);
-            if (representative.IsFailure)
-            {
-                return representative;
-            }
+            await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
@@ -66,8 +58,8 @@ public static class ClassExpenseCreate
 
             foreach (var participantId in participantIds)
             {
-                var membership = await queryBus.Send(new UserClassAccessEnsure.Query(participantId, command.ClassId), ct);
-                if (membership.IsFailure)
+                var isMember = await queryBus.Send(new UserIsClassMember.Query(participantId, command.ClassId), ct);
+                if (!isMember)
                 {
                     return Result.Failure(ClassExpenseErrors.ParticipantNotInClass);
                 }

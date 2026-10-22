@@ -206,7 +206,7 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_without_marking_when_the_user_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_without_marking_when_the_user_is_not_a_delegate()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -220,9 +220,11 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldDenyClassRepresentative(currentUserId, expense.ClassId);
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+            ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
     }
 
@@ -269,7 +271,7 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_when_the_own_share_is_marked_without_being_in_the_class()
+    public async Task throw_class_access_forbidden_when_the_own_share_is_marked_without_being_in_the_class()
     {
         Guid expenseId = GuidMother.Random();
         Guid guardianId = GuidMother.Random();
@@ -282,9 +284,11 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
         this.ShouldDenyClassAccess(guardianId, expense.ClassId);
         this.ShouldFetchClassExpenses(expense);
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+            ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
+
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         expense.Participants.Should().BeEquivalentTo([ExpenseParticipantMother.Unpaid(guardianId)]);
     }
 }

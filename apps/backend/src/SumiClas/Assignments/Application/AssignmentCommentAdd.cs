@@ -24,19 +24,11 @@ public static class AssignmentCommentAdd
                 return Result.Failure(AssignmentErrors.NotFound);
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(current), ct);
-            if (author.IsFailure)
-            {
-                return Result.Failure(author.Error!);
-            }
+            await queryBus.Send(new UserFinderById.Query(current), ct);
 
             var schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, assignment.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return access;
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, assignment.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 

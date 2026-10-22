@@ -256,7 +256,7 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_asking_for_the_student_when_the_author_does_not_exist()
+    public async Task throw_user_not_found_without_asking_for_the_student_when_the_author_does_not_exist()
     {
         this.ShouldCaptureAddedCalendarEvents();
         Guid authorId = GuidMother.Random();
@@ -264,10 +264,10 @@ public class CalendarEventBirthdayCreateShould : CalendarEventsUnitTestCase
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldNotFindUser(authorId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             CalendarEventBirthdayCreateCommandMother.Valid(studentId: studentId));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<StudentFinderById.Query>(), It.IsAny<CancellationToken>()),

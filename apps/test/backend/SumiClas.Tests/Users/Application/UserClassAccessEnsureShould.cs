@@ -1,6 +1,7 @@
 namespace SumiClas.Tests.Users.Application;
 
 using AwesomeAssertions;
+using MediatR;
 using Moq;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
@@ -25,9 +26,8 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
         User representative = UserMother.Representative(classId);
         this.ShouldSearchUsers(representative);
 
-        Result result = await this.Ask(representative.Id, classId);
+        await this.Ask(representative.Id, classId);
 
-        result.IsSuccess.Should().BeTrue();
         this.QueryBus.VerifyNoOtherCalls();
     }
 
@@ -43,9 +43,9 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
             EnrollmentResponseMother.OfStatus(classId, studentId, EnrollmentResponseMother.CONFIRMED));
         this.ShouldFindGuardians((studentId, guardian.Id));
 
-        Result result = await this.Ask(guardian.Id, classId);
+        Func<Task> act = () => this.Ask(guardian.Id, classId);
 
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
@@ -62,9 +62,9 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
             EnrollmentResponseMother.OfStatus(classId, suggestedStudentId, EnrollmentResponseMother.SUGGESTED));
         this.ShouldFindGuardians((confirmedStudentId, GuidMother.Random()), (suggestedStudentId, guardian.Id));
 
-        Result result = await this.Ask(guardian.Id, classId);
+        Func<Task> act = () => this.Ask(guardian.Id, classId);
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
     }
 
     [Test]
@@ -81,9 +81,9 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
             EnrollmentResponseMother.OfStatus(otherClassId, studentId, EnrollmentResponseMother.CONFIRMED));
         this.ShouldFindGuardians((studentId, guardian.Id));
 
-        Result result = await this.Ask(guardian.Id, classId);
+        Func<Task> act = () => this.Ask(guardian.Id, classId);
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
     }
 
     [Test]
@@ -95,9 +95,9 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
         this.ShouldFindEnrollments(classId);
         this.ShouldFindGuardians();
 
-        Result result = await this.Ask(otherClassRepresentative.Id, classId);
+        Func<Task> act = () => this.Ask(otherClassRepresentative.Id, classId);
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
     }
 
     [Test]
@@ -109,9 +109,9 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
         this.ShouldFindEnrollments(classId);
         this.ShouldFindGuardians();
 
-        Result result = await this.Ask(GuidMother.Random(), classId);
+        Func<Task> act = () => this.Ask(GuidMother.Random(), classId);
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
     }
 
     [Test]
@@ -125,11 +125,11 @@ public class UserClassAccessEnsureShould : UsersUnitTestCase
             EnrollmentResponseMother.OfStatus(classId, studentId, EnrollmentResponseMother.CONFIRMED));
         this.ShouldFindGuardians((studentId, GuidMother.Random()));
 
-        Result result = await this.Ask(GuidMother.Random(), classId);
+        Func<Task> act = () => this.Ask(GuidMother.Random(), classId);
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
     }
 
-    private Task<Result> Ask(Guid userId, Guid classId)
+    private Task<Unit> Ask(Guid userId, Guid classId)
         => this._useCase.ExecuteAsync(UserClassAccessEnsureQueryMother.With(userId, classId));
 }

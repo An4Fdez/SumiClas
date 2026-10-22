@@ -34,51 +34,45 @@ public sealed class User : AggregateRoot
         // For reflection purposes (EF Core materialization)
     }
 
-    public static Result<User> Register(Guid id, string fullName, Email email, string passwordHash, IClock clock)
+    public static User Register(Guid id, string fullName, Email email, string passwordHash, IClock clock)
     {
-        var validation = Validate(id, fullName, passwordHash);
-        if (validation.IsFailure)
-        {
-            return Result<User>.Failure(validation.Error!);
-        }
+        Validate(id, fullName, passwordHash);
 
-        return Result<User>.Success(new User(id, fullName.Trim(), email, passwordHash, clock.UtcNow, []));
+        return new User(id, fullName.Trim(), email, passwordHash, clock.UtcNow, []);
     }
 
-    private static Result Validate(Guid id, string fullName, string passwordHash)
+    private static void Validate(Guid id, string fullName, string passwordHash)
     {
         if (id == Guid.Empty)
         {
-            return Result.Failure(UserErrors.IdRequired);
+            throw new UserExceptions.IdRequired();
         }
         if (string.IsNullOrWhiteSpace(fullName))
         {
-            return Result.Failure(UserErrors.FullNameRequired);
+            throw new UserExceptions.FullNameRequired();
         }
         if (string.IsNullOrWhiteSpace(passwordHash))
         {
-            return Result.Failure(UserErrors.PasswordHashRequired);
+            throw new UserExceptions.PasswordHashRequired();
         }
-        return Result.Success();
     }
 
     /// <summary>Stores a newer hash of the same password (the hasher asks for it when its parameters have been strengthened).</summary>
-    public Result ReplacePasswordHash(string newHash, IClock clock)
+    public void ReplacePasswordHash(string newHash, IClock clock)
     {
         if (string.IsNullOrWhiteSpace(newHash))
         {
-            return Result.Failure(UserErrors.PasswordHashRequired);
+            throw new UserExceptions.PasswordHashRequired();
         }
 
         PasswordHash = newHash;
         PasswordChangedAt = clock.UtcNow;
-        return Result.Success();
     }
 
     /// <summary>Default role when joining a class — always allowed, no limit.</summary>
-    public Result AssignAsParticipant(Guid classId)
+    public void AssignAsParticipant(Guid classId)
     {
-        return Upsert(classId, ClassRoleType.Participant);
+        Upsert(classId, ClassRoleType.Participant);
     }
 
     public const int MaxClassRepresentativesPerClass = 3;
@@ -88,43 +82,39 @@ public sealed class User : AggregateRoot
     /// other User aggregates, so the caller (a use case or event handler with the repository) supplies how many
     /// representatives the class has now. Assigning the role to someone who already holds it is always allowed.
     /// </summary>
-    public Result AssignAsClassRepresentative(Guid classId, int currentClassRepresentativeCount)
+    public void AssignAsClassRepresentative(Guid classId, int currentClassRepresentativeCount)
     {
         var alreadyRepresentative = _classRoles
             .Any(r => r.ClassId == classId && r.Role == ClassRoleType.ClassRepresentative);
 
         if (!alreadyRepresentative && currentClassRepresentativeCount >= MaxClassRepresentativesPerClass)
         {
-            return Result.Failure(UserErrors.MaxClassRepresentativesReached);
+            throw new UserExceptions.MaxClassRepresentativesReached();
         }
 
-        return Upsert(classId, ClassRoleType.ClassRepresentative);
+        Upsert(classId, ClassRoleType.ClassRepresentative);
     }
 
-    public Result ResignAsClassRepresentative(Guid classId)
+    public void ResignAsClassRepresentative(Guid classId)
     {
-        var current = _classRoles.FirstOrDefault(r => r.ClassId == classId);
-        if (current is null)
-        {
-            return Result.Failure(UserErrors.NoRoleAssignedInClass);
-        }
+        var current = _classRoles.FirstOrDefault(r => r.ClassId == classId)
+            ?? throw new UserExceptions.NoRoleAssignedInClass();
         if (current.Role != ClassRoleType.ClassRepresentative)
         {
-            return Result.Failure(UserErrors.NotClassRepresentative);
+            throw new UserExceptions.NotClassRepresentative();
         }
 
-        return Upsert(classId, ClassRoleType.Participant);
+        Upsert(classId, ClassRoleType.Participant);
     }
 
-    private Result Upsert(Guid classId, ClassRoleType role)
+    private void Upsert(Guid classId, ClassRoleType role)
     {
         if (classId == Guid.Empty)
         {
-            return Result.Failure(UserErrors.ClassIdRequired);
+            throw new UserExceptions.ClassIdRequired();
         }
 
         _classRoles.RemoveAll(r => r.ClassId == classId);
         _classRoles.Add(new ClassRoleAssignment(classId, role));
-        return Result.Success();
     }
 }

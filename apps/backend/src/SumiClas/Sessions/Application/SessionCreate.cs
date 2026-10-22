@@ -25,13 +25,9 @@ public static class SessionCreate
         public async Task<Result<SessionResponse>> ExecuteAsync(Command command, CancellationToken ct = default)
         {
             var user = await queryBus.Send(new UserPasswordVerify.Query(command.Email, command.Password), ct);
-            if (user.IsFailure)
-            {
-                return Result<SessionResponse>.Failure(user.Error!);
-            }
 
             var refreshToken = refreshTokenGenerator.Generate();
-            var session = Session.Create(user.Value.Id, refreshTokenGenerator.Hash(refreshToken), clock);
+            var session = Session.Create(user.Id, refreshTokenGenerator.Hash(refreshToken), clock);
 
             if (session.IsFailure)
             {
@@ -40,15 +36,15 @@ public static class SessionCreate
 
             await repository.AddAsync(session.Value, ct);
 
-            var accessToken = accessTokenGenerator.Generate(user.Value.Id);
+            var accessToken = accessTokenGenerator.Generate(user.Id);
             if (accessToken.IsFailure)
             {
                 return Result<SessionResponse>.Failure(accessToken.Error!);
             }
 
             return Result<SessionResponse>.Success(
-                new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Value.Id,
-                    user.Value.FullName, refreshToken, session.Value.RefreshTokens.Single().ExpiresAt));
+                new SessionResponse(accessToken.Value.Value, accessToken.Value.ExpiresAt, user.Id,
+                    user.FullName, refreshToken, session.Value.RefreshTokens.Single().ExpiresAt));
         }
     }
 

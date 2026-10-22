@@ -27,6 +27,13 @@ public class SessionCreateShould : SessionsUnitTestCase
             this.Clock.Object);
     }
 
+    [SetUp]
+    public void SetUp()
+    {
+        this._refreshTokenGenerator.Reset();
+        this._accessTokenGenerator.Reset();
+    }
+
     [Test]
     public async Task return_the_session_and_store_only_the_hash_in_a_new_session_when_credentials_are_valid()
     {
@@ -62,17 +69,16 @@ public class SessionCreateShould : SessionsUnitTestCase
     }
 
     [Test]
-    public async Task propagate_the_failure_and_create_nothing_when_the_credential_check_fails()
+    public async Task throw_and_create_nothing_when_the_credential_check_fails()
     {
         string email = StringMother.Random("email") + "@example.com";
         this.ShouldRejectCredentials();
         SessionCreate.Command command =
             SessionCreateCommandMother.WithCredentials(email, StringMother.Random("password"));
 
-        Result<SessionResponse> result = await this._useCase.ExecuteAsync(command);
+        Func<Task> act = () => this._useCase.ExecuteAsync(command);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AuthenticationErrors.InvalidCredentials);
+        await act.Should().ThrowAsync<AuthenticationExceptions.InvalidCredentials>();
         this._refreshTokenGenerator.Verify(generator => generator.Generate(), Times.Never);
         this.ShouldNotHaveSaved();
         this._accessTokenGenerator.Verify(generator => generator.Generate(It.IsAny<Guid>()), Times.Never);
@@ -99,12 +105,12 @@ public class SessionCreateShould : SessionsUnitTestCase
     private void ShouldRejectCredentials()
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserPasswordVerify.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(AuthenticationErrors.InvalidCredentials));
+            .ThrowsAsync(new AuthenticationExceptions.InvalidCredentials());
 
     private void ShouldAcceptCredentials(Guid userId, string fullName)
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserPasswordVerify.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, fullName)));
+            .ReturnsAsync(UserResponseMother.With(userId, fullName));
 
     private void ShouldGenerateRefreshToken(string raw)
         => this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(raw);

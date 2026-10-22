@@ -46,11 +46,9 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((zoeStudentId, zoe.Id), (anaStudentId, ana.Id), (anaStudentId, representative.Id));
         this.ShouldSearchUsers(zoe, ana, representative);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Select(member => member.FullName).Should().Equal(representativeName, anaName, zoeName);
-        result.Value.Select(member => member.ClassRole)
+        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
+        result.Select(member => member.FullName).Should().Equal(representativeName, anaName, zoeName);
+        result.Select(member => member.ClassRole)
             .Should().Equal("ClassRepresentative", "Participant", "Participant");
         this.ShouldHaveAskedForClass(classId);
     }
@@ -71,9 +69,9 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((firstStudentId, parent.Id), (secondStudentId, parent.Id));
         this.ShouldSearchUsers(parent);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
 
-        result.Value.Select(member => member.UserId).Should().Equal(parent.Id);
+        result.Select(member => member.UserId).Should().Equal(parent.Id);
     }
 
     [Test]
@@ -93,9 +91,9 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((confirmedStudentId, confirmedParent.Id), (suggestedStudentId, suggestedParent.Id));
         this.ShouldSearchUsers(confirmedParent, suggestedParent);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
 
-        result.Value.Select(member => member.UserId).Should().Equal(confirmedParent.Id);
+        result.Select(member => member.UserId).Should().Equal(confirmedParent.Id);
     }
 
     [Test]
@@ -113,12 +111,10 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((studentId, parent.Id));
         this.ShouldSearchUsers(parent, representative);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.First().UserId.Should().Be(representative.Id);
-        result.Value.First().ClassRole.Should().Be("ClassRepresentative");
-        result.Value.Should().HaveCount(2);
+        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
+        result.First().UserId.Should().Be(representative.Id);
+        result.First().ClassRole.Should().Be("ClassRepresentative");
+        result.Should().HaveCount(2);
     }
 
     [Test]
@@ -136,13 +132,13 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((studentId, parent.Id));
         this.ShouldSearchUsers(parent, otherClassRepresentative);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        IReadOnlyCollection<UserClassMemberResponse> result = await this.Ask(classId);
 
-        result.Value.Select(member => member.UserId).Should().Equal(parent.Id);
+        result.Select(member => member.UserId).Should().Equal(parent.Id);
     }
 
     [Test]
-    public async Task return_class_members_forbidden_when_the_requester_is_not_a_member()
+    public async Task throw_class_members_forbidden_when_the_requester_is_not_a_member()
     {
         Guid classId = GuidMother.Random();
         Guid studentId = GuidMother.Random();
@@ -156,10 +152,9 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         this.ShouldFindGuardians((studentId, parent.Id));
         this.ShouldSearchUsers(parent, outsider);
 
-        Result<IReadOnlyCollection<UserClassMemberResponse>> result = await this.Ask(classId);
+        Func<Task> act = () => this.Ask(classId);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(UserErrors.ClassMembersForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassMembersForbidden>();
     }
 
     [Test]
@@ -204,7 +199,7 @@ public class UserClassMemberFinderByClassShould : UsersUnitTestCase
         properties.Should().BeEquivalentTo("UserId", "FullName", "ClassRole");
     }
 
-    private Task<Result<IReadOnlyCollection<UserClassMemberResponse>>> Ask(Guid classId)
+    private Task<IReadOnlyCollection<UserClassMemberResponse>> Ask(Guid classId)
         => this._useCase.ExecuteAsync(
             UserClassMemberFinderByClassQueryMother.WithClassId(classId),
             CancellationToken.None);

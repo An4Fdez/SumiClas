@@ -387,7 +387,7 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
+    public async Task throw_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
     {
         Guid classId = GuidMother.Random();
         Guid currentUserId = GuidMother.Random();
@@ -395,10 +395,10 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldDenyClassAccess(currentUserId, classId);
 
-        Result<PagedResponse<LostItemResponse>> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             LostItemFinderByClassQueryMother.WithClassId(classId));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         this.ShouldNotHaveSearched();
     }
 

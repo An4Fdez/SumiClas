@@ -1,7 +1,6 @@
 using MediatR;
 using SumiClas.Enrollments.Application;
 using SumiClas.Shared.Application;
-using SumiClas.Shared.Domain;
 using SumiClas.Students.Application;
 using SumiClas.Users.Domain;
 
@@ -12,21 +11,21 @@ public static class UserClassAccessEnsure
     private const string ConfirmedStatus = "Confirmed";
 
     /// <summary>
-    /// Succeeds when the user belongs to the class: a delegate of the class, or a guardian of a student with a
+    /// Completes when the user belongs to the class: a delegate of the class, or a guardian of a student with a
     /// confirmed enrollment in it. Other use cases ask this before reading or changing the data of a class.
     /// </summary>
-    public sealed record Query(Guid UserId, Guid ClassId) : IQuery<Result>;
+    public sealed record Query(Guid UserId, Guid ClassId) : IQuery<Unit>;
 
     public sealed class Ensure(IUserRepository repository, IQueryBus queryBus) : IUseCase
     {
-        public async Task<Result> ExecuteAsync(Query query, CancellationToken ct = default)
+        public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
             var representatives = await repository.SearchAsync(
                 new UserSpecification(id: query.UserId, classId: query.ClassId, classRole: ClassRoleType.ClassRepresentative),
                 ct);
             if (representatives.Count > 0)
             {
-                return Result.Success();
+                return Unit.Value;
             }
 
             var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
@@ -38,14 +37,14 @@ public static class UserClassAccessEnsure
             var guardianIds = await queryBus.Send(new StudentGuardianFinderByStudents.Query(studentIds), ct);
 
             return guardianIds.Contains(query.UserId)
-                ? Result.Success()
-                : Result.Failure(UserErrors.ClassAccessForbidden);
+                ? Unit.Value
+                : throw new UserExceptions.ClassAccessForbidden();
         }
     }
 
-    public sealed class Handler(Ensure ensure) : IRequestHandler<Query, Result>
+    public sealed class Handler(Ensure ensure) : IRequestHandler<Query, Unit>
     {
-        public Task<Result> Handle(Query query, CancellationToken ct)
+        public Task<Unit> Handle(Query query, CancellationToken ct)
             => ensure.ExecuteAsync(query, ct);
     }
 }

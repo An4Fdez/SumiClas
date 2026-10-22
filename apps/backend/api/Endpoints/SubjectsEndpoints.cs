@@ -28,6 +28,7 @@ public sealed class SubjectsEndpoints : IEndpoints
             .Maps<SubjectExceptions.LabelRequired>(StatusCodes.Status400BadRequest)
             .RequiresSession()
             .RequiresClass()
+            .RequiresClassRepresentative()
             .RequiresActiveSchoolYear()
             .ConflictsOnSave();
 
@@ -36,6 +37,7 @@ public sealed class SubjectsEndpoints : IEndpoints
             .WithName("SubjectFinderByClass")
             .Produces<IReadOnlyCollection<SubjectResponse>>(StatusCodes.Status200OK)
             .RequiresSession()
-            .RequiresClass();
+            .RequiresClass()
+            .RequiresClassMembership();
     }
 }

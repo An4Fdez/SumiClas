@@ -29,7 +29,7 @@ public static class StudentGuardianAdd
                 throw new StudentExceptions.GuardianChangeForbidden();
             }
 
-            (await queryBus.Send(new UserFinderById.Query(command.GuardianId), ct)).OrThrow();
+            await queryBus.Send(new UserFinderById.Query(command.GuardianId), ct);
 
             student.AddGuardian(command.GuardianId, role);
         }

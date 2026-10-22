@@ -100,26 +100,26 @@ public abstract class SubjectsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
     protected void ShouldDenyClassAccess(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
+            .ThrowsAsync(new UserExceptions.ClassAccessForbidden());
 
     protected void ShouldAllowClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
     protected void ShouldDenyClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(UserErrors.ClassRepresentativeForbidden));
+            .ThrowsAsync(new UserExceptions.ClassRepresentativeForbidden());
 }

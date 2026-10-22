@@ -19,7 +19,7 @@ public static class SubjectFinderByClass
 
             var current = userProvider.GetCurrentUserId();
 
-            (await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct)).OrThrow();
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
             var subjects = await repository.SearchAsync(new SubjectSpecification(classId: query.ClassId), ct);
             return subjects

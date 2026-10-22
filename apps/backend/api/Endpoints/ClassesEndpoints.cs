@@ -3,6 +3,7 @@ using MediatR;
 using SumiClas.Api.Http;
 using SumiClas.Classes.Application;
 using SumiClas.Classes.Domain;
+using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Endpoints;
 
@@ -33,6 +34,8 @@ public sealed class ClassesEndpoints : IEndpoints
             .Maps<ClassExceptions.CreatorRequired>(StatusCodes.Status400BadRequest)
             .RequiresSession()
             .RequiresActiveSchoolYear()
+            .Maps<UserExceptions.NotFound>(StatusCodes.Status404NotFound)
+            .Maps<UserExceptions.ClassRepresentativeAlreadyExists>(StatusCodes.Status409Conflict)
             .ConflictsOnSave();
 
         classes.MapPut("/{classId:guid}/name", async (Guid classId, ClassRenameRequest request, ISender sender, CancellationToken ct) =>
@@ -47,6 +50,7 @@ public sealed class ClassesEndpoints : IEndpoints
             .Maps<ClassExceptions.NameRequired>(StatusCodes.Status400BadRequest)
             .RequiresSession()
             .RequiresClass()
+            .RequiresClassRepresentative()
             .RequiresActiveSchoolYear()
             .ConflictsOnSave();
 

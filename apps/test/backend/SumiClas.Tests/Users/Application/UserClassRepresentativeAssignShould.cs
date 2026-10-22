@@ -40,10 +40,9 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldSearchUsers(acting, target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.IsSuccess.Should().BeTrue();
         target.ClassRoles.Should().BeEquivalentTo(
             [ClassRoleAssignmentMother.Participant(otherClassId), ClassRoleAssignmentMother.Representative(classId)]);
     }
@@ -62,15 +61,14 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldSearchUsers(acting, other, target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.IsSuccess.Should().BeTrue();
         target.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Representative(classId));
     }
 
     [Test]
-    public async Task return_max_class_representatives_reached_and_leave_the_target_untouched_when_there_are_three()
+    public async Task throw_max_class_representatives_reached_and_leave_the_target_untouched_when_there_are_three()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Representative(classId);
@@ -84,10 +82,10 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldSearchUsers(acting, second, third, target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.Error.Should().Be(UserErrors.MaxClassRepresentativesReached);
+        await act.Should().ThrowAsync<UserExceptions.MaxClassRepresentativesReached>();
         target.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Participant(classId));
     }
 
@@ -110,10 +108,11 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
             target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.IsSuccess.Should().BeTrue();
+        target.ClassRoles.Should().ContainSingle()
+            .Which.Should().Be(new ClassRoleAssignment(classId, ClassRoleType.ClassRepresentative));
     }
 
     [Test]
@@ -130,10 +129,9 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldSearchUsers(acting, second, target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.IsSuccess.Should().BeTrue();
         target.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Representative(classId));
     }
 
@@ -199,7 +197,7 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_assign_forbidden_and_leave_the_target_untouched_when_the_current_user_is_a_participant()
+    public async Task throw_assign_forbidden_and_leave_the_target_untouched_when_the_current_user_is_a_participant()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Participant(classId);
@@ -210,15 +208,15 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldSearchUsers(acting, target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.Error.Should().Be(UserErrors.AssignForbidden);
+        await act.Should().ThrowAsync<UserExceptions.AssignForbidden>();
         target.ClassRoles.Should().Equal(ClassRoleAssignmentMother.Participant(classId));
     }
 
     [Test]
-    public async Task return_assign_forbidden_when_a_participant_acts_even_if_another_user_represents_the_class()
+    public async Task throw_assign_forbidden_when_a_participant_acts_even_if_another_user_represents_the_class()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Participant(classId);
@@ -230,15 +228,15 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldSearchUsers(acting, representative, target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.Error.Should().Be(UserErrors.AssignForbidden);
+        await act.Should().ThrowAsync<UserExceptions.AssignForbidden>();
         target.ClassRoles.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_assign_forbidden_when_the_current_user_is_a_representative_of_another_class_only()
+    public async Task throw_assign_forbidden_when_the_current_user_is_a_representative_of_another_class_only()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Representative(GuidMother.Random());
@@ -249,15 +247,15 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldSearchUsers(acting, target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
-        result.Error.Should().Be(UserErrors.AssignForbidden);
+        await act.Should().ThrowAsync<UserExceptions.AssignForbidden>();
         target.ClassRoles.Should().BeEmpty();
     }
 
     [Test]
-    public async Task return_assign_forbidden_before_user_not_found_when_both_fail()
+    public async Task throw_assign_forbidden_before_user_not_found_when_both_fail()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Participant(classId);
@@ -267,14 +265,14 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldSearchUsers(acting);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(GuidMother.Random(), classId));
 
-        result.Error.Should().Be(UserErrors.AssignForbidden);
+        await act.Should().ThrowAsync<UserExceptions.AssignForbidden>();
     }
 
     [Test]
-    public async Task return_user_not_found_when_the_target_does_not_exist()
+    public async Task throw_user_not_found_when_the_target_does_not_exist()
     {
         Guid classId = GuidMother.Random();
         User acting = UserMother.Representative(classId);
@@ -285,14 +283,14 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldFetchUsers(acting);
         this.ShouldSearchUsers(acting);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(GuidMother.Random(), classId));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
     }
 
     [Test]
-    public async Task return_class_id_required_and_leave_the_target_untouched_when_the_class_id_is_empty()
+    public async Task throw_class_id_required_and_leave_the_target_untouched_when_the_class_id_is_empty()
     {
         User acting = UserMother.Representative(Guid.Empty);
         User target = UserMother.Random();
@@ -303,10 +301,10 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
         this.ShouldSearchUsers(acting, target);
         this.ShouldFind(target);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserClassRepresentativeAssignCommandMother.With(target.Id, Guid.Empty));
 
-        result.Error.Should().Be(UserErrors.ClassIdRequired);
+        await act.Should().ThrowAsync<UserExceptions.ClassIdRequired>();
         target.ClassRoles.Should().BeEmpty();
     }
 }

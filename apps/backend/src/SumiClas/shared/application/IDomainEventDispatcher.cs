@@ -6,7 +6,7 @@ public interface IDomainEventDispatcher
 {
     /// <summary>
     /// Pulls the pending domain events from the aggregates tracked in the current unit of work and runs their
-    /// handlers, repeating while handlers raise new events. Stops at the first failed handler.
+    /// handlers, repeating while handlers raise new events. A handler that throws stops the dispatch.
     /// </summary>
-    Task<Result> DispatchAsync(CancellationToken ct = default);
+    Task DispatchAsync(CancellationToken ct = default);
 }

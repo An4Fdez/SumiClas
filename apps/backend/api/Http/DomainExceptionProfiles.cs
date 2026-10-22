@@ -2,6 +2,7 @@ using SumiClas.Classes.Domain;
 using SumiClas.Schools.Domain;
 using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Domain;
+using SumiClas.Users.Domain;
 
 namespace SumiClas.Api.Http;
 
@@ -14,6 +15,18 @@ public static class DomainExceptionProfiles
     /// <summary>The endpoint acts on behalf of the current user, so nobody may be identified.</summary>
     public static RouteHandlerBuilder RequiresSession(this RouteHandlerBuilder builder)
         => builder.Maps<AuthenticationExceptions.Unauthenticated>(StatusCodes.Status401Unauthorized);
+
+    /// <summary>The endpoint relies on a user other than the current one, who may not exist.</summary>
+    public static RouteHandlerBuilder RequiresUser(this RouteHandlerBuilder builder)
+        => builder.Maps<UserExceptions.NotFound>(StatusCodes.Status404NotFound);
+
+    /// <summary>The endpoint reads or changes the data of a class, so the user must belong to it.</summary>
+    public static RouteHandlerBuilder RequiresClassMembership(this RouteHandlerBuilder builder)
+        => builder.Maps<UserExceptions.ClassAccessForbidden>(StatusCodes.Status403Forbidden);
+
+    /// <summary>The endpoint does what only a delegate of the class may do.</summary>
+    public static RouteHandlerBuilder RequiresClassRepresentative(this RouteHandlerBuilder builder)
+        => builder.Maps<UserExceptions.ClassRepresentativeForbidden>(StatusCodes.Status403Forbidden);
 
     /// <summary>The unit of work raises these when saving a command: a duplicated key or a lost race.</summary>
     public static RouteHandlerBuilder ConflictsOnSave(this RouteHandlerBuilder builder)

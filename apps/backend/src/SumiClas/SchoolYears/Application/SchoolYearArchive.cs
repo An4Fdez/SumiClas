@@ -33,7 +33,7 @@ public static class SchoolYearArchive
                 }
             }
 
-            throw new ResultFailureException(UserErrors.ClassRepresentativeForbidden);
+            throw new UserExceptions.ClassRepresentativeForbidden();
         }
     }
 

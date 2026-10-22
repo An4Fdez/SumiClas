@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using SumiClas.Shared.Domain;
 
 namespace SumiClas.Users.Domain;
@@ -19,10 +20,21 @@ public sealed class Password : ValueObject
         Value = value;
     }
 
-    public static Result<Password> Create(string? value)
-        => value is { Length: >= MinLength and <= MaxLength }
-            ? Result<Password>.Success(new Password(value))
-            : Result<Password>.Failure(AuthenticationErrors.PasswordTooWeak);
+    public static Password Create(string? value)
+        => TryCreate(value, out var password) ? password : throw new AuthenticationExceptions.PasswordTooWeak();
+
+    /// <summary>For the callers that must keep going with a password outside the current rules.</summary>
+    public static bool TryCreate(string? value, [NotNullWhen(true)] out Password? password)
+    {
+        if (value is { Length: >= MinLength and <= MaxLength })
+        {
+            password = new Password(value);
+            return true;
+        }
+
+        password = null;
+        return false;
+    }
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {

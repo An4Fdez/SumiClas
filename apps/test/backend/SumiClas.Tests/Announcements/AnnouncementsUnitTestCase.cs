@@ -79,14 +79,14 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, StringMother.Random("name"))));
+            .ReturnsAsync(UserResponseMother.With(userId, StringMother.Random("name")));
 
     protected void ShouldNotFindUser(Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
+            .ThrowsAsync(new UserExceptions.NotFound());
 
     protected void ShouldFindClassInSchoolYear(Guid classId, Guid schoolYearId)
         => this.QueryBus
@@ -155,26 +155,26 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
     protected void ShouldDenyClassAccess(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassAccessEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(UserErrors.ClassAccessForbidden));
+            .ThrowsAsync(new UserExceptions.ClassAccessForbidden());
 
     protected void ShouldAllowClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Unit.Value);
 
     protected void ShouldDenyClassRepresentative(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(UserErrors.ClassRepresentativeForbidden));
+            .ThrowsAsync(new UserExceptions.ClassRepresentativeForbidden());
 }

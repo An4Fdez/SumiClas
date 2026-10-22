@@ -36,13 +36,12 @@ public class UserRegisterShould : UsersUnitTestCase
         this.ShouldSearchNoUsers();
         this.ShouldCaptureSavedUsers();
 
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.With(
+        await this._useCase.ExecuteAsync(UserRegisterCommandMother.With(
             userId,
             "  " + fullName + " ",
             " " + email.ToUpperInvariant() + " ",
             password));
 
-        result.IsSuccess.Should().BeTrue();
         User user = this.Saved.Single();
         user.Id.Should().Be(userId);
         user.FullName.Should().Be(fullName);
@@ -53,22 +52,22 @@ public class UserRegisterShould : UsersUnitTestCase
     }
 
     [Test]
-    public async Task return_password_too_weak_without_hashing_when_the_password_is_too_short()
+    public async Task throw_password_too_weak_without_hashing_when_the_password_is_too_short()
     {
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithPassword("1234567"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.WithPassword("1234567"));
 
-        result.Error.Should().Be(AuthenticationErrors.PasswordTooWeak);
+        await act.Should().ThrowAsync<AuthenticationExceptions.PasswordTooWeak>();
         this._hasher.Verify(hasher => hasher.Generate(It.IsAny<Password>()), Times.Never);
         this.ShouldNotHaveSaved();
     }
 
     [Test]
-    public async Task return_password_too_weak_when_the_password_is_too_long()
+    public async Task throw_password_too_weak_when_the_password_is_too_long()
     {
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserRegisterCommandMother.WithPassword(new string('a', Password.MaxLength + 1)));
 
-        result.Error.Should().Be(AuthenticationErrors.PasswordTooWeak);
+        await act.Should().ThrowAsync<AuthenticationExceptions.PasswordTooWeak>();
         this.ShouldNotHaveSaved();
     }
 
@@ -80,10 +79,9 @@ public class UserRegisterShould : UsersUnitTestCase
         this.ShouldCaptureSavedUsers();
 
         this.ShouldHashPasswords();
-        Result result = await this._useCase.ExecuteAsync(
+        await this._useCase.ExecuteAsync(
             UserRegisterCommandMother.WithPassword(new string('a', length)));
 
-        result.IsSuccess.Should().BeTrue();
         this.Saved.Single().PasswordHash.Should().Be($"hash-of-{length}-chars");
     }
 
@@ -94,30 +92,29 @@ public class UserRegisterShould : UsersUnitTestCase
         this.ShouldCaptureSavedUsers();
 
         this.ShouldHashPasswords();
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithPassword("        "));
+        await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithPassword("        "));
 
-        result.IsSuccess.Should().BeTrue();
         this.Saved.Single().PasswordHash.Should().Be("hash-of-8-chars");
     }
 
     [Test]
-    public async Task return_password_hash_required_when_the_hasher_returns_a_blank_hash()
+    public async Task throw_password_hash_required_when_the_hasher_returns_a_blank_hash()
     {
         this.ShouldGenerateHash("   ");
 
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.Random());
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.Random());
 
-        result.Error.Should().Be(UserErrors.PasswordHashRequired);
+        await act.Should().ThrowAsync<UserExceptions.PasswordHashRequired>();
         this.ShouldNotHaveSaved();
     }
 
     [Test]
-    public async Task return_id_required_when_the_id_is_empty()
+    public async Task throw_id_required_when_the_id_is_empty()
     {
         this.ShouldHashPasswords();
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithId(Guid.Empty));
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.WithId(Guid.Empty));
 
-        result.Error.Should().Be(UserErrors.IdRequired);
+        await act.Should().ThrowAsync<UserExceptions.IdRequired>();
         this.ShouldNotHaveSaved();
     }
 
@@ -128,30 +125,47 @@ public class UserRegisterShould : UsersUnitTestCase
         string email = StringMother.Random("user") + "@example.com";
         this.ShouldSearchUsers(UserMother.WithEmail(email));
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserRegisterCommandMother.WithEmail(email.ToUpperInvariant()));
 
-        result.Error.Should().Be(UserErrors.EmailAlreadyRegistered);
+        await act.Should().ThrowAsync<UserExceptions.EmailAlreadyRegistered>();
         this.ShouldNotHaveSaved();
     }
 
     [Test]
     public async Task fail_with_invalid_email_format_without_hashing_when_the_email_is_invalid()
     {
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithEmail("not-an-email"));
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.WithEmail("not-an-email"));
 
-        result.Error.Should().Be(UserErrors.InvalidEmailFormat);
+        await act.Should().ThrowAsync<UserExceptions.InvalidEmailFormat>();
         this._hasher.Verify(hasher => hasher.Generate(It.IsAny<Password>()), Times.Never);
         this.ShouldNotHaveSaved();
+    }
+
+    [Test]
+    public async Task fail_with_invalid_email_format_when_the_email_is_missing()
+    {
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.WithoutEmail());
+
+        await act.Should().ThrowAsync<UserExceptions.InvalidEmailFormat>();
+    }
+
+    [Test]
+    public async Task throw_password_too_weak_before_checking_the_email_when_both_are_invalid()
+    {
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            UserRegisterCommandMother.With(email: "not-an-email", password: "1234567"));
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.PasswordTooWeak>();
     }
 
     [Test]
     public async Task fail_with_full_name_required_when_the_name_is_blank()
     {
         this.ShouldHashPasswords();
-        Result result = await this._useCase.ExecuteAsync(UserRegisterCommandMother.WithFullName("   "));
+        Func<Task> act = () => this._useCase.ExecuteAsync(UserRegisterCommandMother.WithFullName("   "));
 
-        result.Error.Should().Be(UserErrors.FullNameRequired);
+        await act.Should().ThrowAsync<UserExceptions.FullNameRequired>();
         this.ShouldNotHaveSaved();
     }
 

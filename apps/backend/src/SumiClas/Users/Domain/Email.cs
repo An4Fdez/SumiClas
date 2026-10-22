@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using SumiClas.Shared.Domain;
 
@@ -12,15 +13,21 @@ public sealed partial class Email : ValueObject
         Value = value;
     }
 
-    public static Result<Email> Create(string value)
+    public static Email Create(string value)
+        => TryCreate(value, out var email) ? email : throw new UserExceptions.InvalidEmailFormat();
+
+    /// <summary>For the callers that must treat a malformed email as "no such account" instead of failing.</summary>
+    public static bool TryCreate(string? value, [NotNullWhen(true)] out Email? email)
     {
         var trimmed = value?.Trim();
         if (string.IsNullOrEmpty(trimmed) || !EmailFormat().IsMatch(trimmed))
         {
-            return Result<Email>.Failure(UserErrors.InvalidEmailFormat);
+            email = null;
+            return false;
         }
 
-        return Result<Email>.Success(new Email(trimmed.ToLowerInvariant()));
+        email = new Email(trimmed.ToLowerInvariant());
+        return true;
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

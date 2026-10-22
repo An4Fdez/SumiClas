@@ -22,7 +22,7 @@ public static class SubjectCreate
 
             var current = userProvider.GetCurrentUserId();
 
-            (await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct)).OrThrow();
+            await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 

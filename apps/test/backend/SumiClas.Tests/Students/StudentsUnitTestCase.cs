@@ -60,12 +60,12 @@ public abstract class StudentsUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, StringMother.Random("name"))));
+            .ReturnsAsync(UserResponseMother.With(userId, StringMother.Random("name")));
 
     protected void ShouldNotFindUser(Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
+            .ThrowsAsync(new UserExceptions.NotFound());
 }

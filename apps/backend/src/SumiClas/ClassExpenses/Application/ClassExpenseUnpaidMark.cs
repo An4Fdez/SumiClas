@@ -27,12 +27,13 @@ public static class ClassExpenseUnpaidMark
             var current = userProvider.GetCurrentUserId();
 
             // A family marks its own share; marking someone else's is for the class delegate.
-            var permission = current == command.GuardianId
-                ? await queryBus.Send(new UserClassAccessEnsure.Query(current, classExpense.ClassId), ct)
-                : await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, classExpense.ClassId), ct);
-            if (permission.IsFailure)
+            if (current == command.GuardianId)
             {
-                return permission;
+                await queryBus.Send(new UserClassAccessEnsure.Query(current, classExpense.ClassId), ct);
+            }
+            else
+            {
+                await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, classExpense.ClassId), ct);
             }
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);

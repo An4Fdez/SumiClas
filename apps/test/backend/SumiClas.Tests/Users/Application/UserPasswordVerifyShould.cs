@@ -36,17 +36,15 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         this.GivenAnAccount(userId, fullName, email, storedHash);
         this.ShouldVerifyPassword(storedHash, password, PasswordVerification.Success);
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        UserResponse result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, password),
             CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(UserResponseMother.Create(userId, fullName));
+        result.Should().Be(UserResponseMother.Create(userId, fullName));
         this._hasher.Verify(hasher => hasher.Generate(It.IsAny<Password>()), Times.Never);
     }
 
     [Test]
-    public async Task return_invalid_credentials_when_the_password_is_wrong()
+    public async Task throw_invalid_credentials_when_the_password_is_wrong()
     {
         string email = StringMother.Random("user") + "@example.com";
         string wrongPassword = StringMother.Random("wrong");
@@ -54,26 +52,25 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, storedHash);
         this.ShouldVerifyPassword(storedHash, wrongPassword, PasswordVerification.Failed);
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, wrongPassword),
             CancellationToken.None);
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(AuthenticationErrors.InvalidCredentials);
+        await act.Should().ThrowAsync<AuthenticationExceptions.InvalidCredentials>();
     }
 
     [Test]
-    public async Task return_the_same_error_and_still_verify_once_when_the_email_is_unknown()
+    public async Task throw_the_same_error_and_still_verify_once_when_the_email_is_unknown()
     {
         string unknownEmail = StringMother.Random("nobody") + "@example.com";
         string unknownPassword = StringMother.Random("password");
         this.ShouldSearchNoUsers();
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(unknownEmail, unknownPassword),
             CancellationToken.None);
 
-        result.Error.Should().Be(AuthenticationErrors.InvalidCredentials);
+        await act.Should().ThrowAsync<AuthenticationExceptions.InvalidCredentials>();
         this._hasher.Verify(hasher => hasher.Verify(null, unknownPassword), Times.Once);
     }
 
@@ -89,11 +86,9 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         this.ShouldVerifyPassword(oldHash, password, PasswordVerification.SuccessRehashNeeded);
         this.AdvanceClock(TimeSpan.FromDays(1));
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        UserResponse result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, password),
             CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
         user.PasswordHash.Should().Be(newHash);
         user.PasswordChangedAt.Should().Be(Now.AddDays(1));
     }
@@ -106,11 +101,9 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
         User user = this.GivenAnAccount(GuidMother.Random(), StringMother.Random("name"), email, oldHash);
         this.ShouldVerifyPassword(oldHash, "short", PasswordVerification.SuccessRehashNeeded);
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        UserResponse result = await this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithCredentials(email, "short"),
             CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
         user.PasswordHash.Should().Be(oldHash);
         this._hasher.Verify(hasher => hasher.Generate(It.IsAny<Password>()), Times.Never);
     }
@@ -118,11 +111,11 @@ public class UserPasswordVerifyShould : UsersUnitTestCase
     [Test]
     public async Task fail_as_invalid_credentials_instead_of_throwing_when_the_fields_are_null()
     {
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserPasswordVerifyQueryMother.WithNullFields(),
             CancellationToken.None);
 
-        result.Error.Should().Be(AuthenticationErrors.InvalidCredentials);
+        await act.Should().ThrowAsync<AuthenticationExceptions.InvalidCredentials>();
         this._hasher.Verify(hasher => hasher.Verify(null, string.Empty), Times.Once);
     }
 

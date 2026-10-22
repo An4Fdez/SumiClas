@@ -227,8 +227,8 @@ public class SessionRotateShould : SessionsUnitTestCase
 
     private void ShouldFindUser(Guid userId, string fullName)
         => this.QueryBus
-            .Setup(bus => bus.Send(It.IsAny<UserFinderById.Query>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, fullName)));
+            .Setup(bus => bus.Send(It.IsAny<UserFinderByIdOrNull.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(UserResponseMother.With(userId, fullName));
 
     private void ShouldGenerateRefreshToken(string raw)
         => this._refreshTokenGenerator.Setup(generator => generator.Generate()).Returns(raw);

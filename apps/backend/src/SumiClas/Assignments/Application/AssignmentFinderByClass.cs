@@ -33,11 +33,7 @@ public static class AssignmentFinderByClass
 
             var current = userProvider.GetCurrentUserId();
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return Result<PagedResponse<AssignmentResponse>>.Failure(access.Error!);
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
             var candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page.Value), ct);
             var (assignments, nextCursor) = Pagination.Cut(

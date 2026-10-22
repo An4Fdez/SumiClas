@@ -48,8 +48,8 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(firstGuardianId, classId);
-        this.ShouldAllowClassAccess(secondGuardianId, classId);
+        this.ShouldBeClassMember(firstGuardianId, classId);
+        this.ShouldBeClassMember(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.With(
@@ -90,7 +90,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(guardianId, classId);
+        this.ShouldBeClassMember(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldFindCalendarEvent(eventId);
 
@@ -118,8 +118,8 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(firstGuardianId, classId);
-        this.ShouldAllowClassAccess(secondGuardianId, classId);
+        this.ShouldBeClassMember(firstGuardianId, classId);
+        this.ShouldBeClassMember(secondGuardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(
@@ -152,7 +152,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(guardianId, classId);
+        this.ShouldBeClassMember(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
 
         Result result = await this._useCase.ExecuteAsync(
@@ -166,7 +166,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
+    public async Task throw_class_representative_forbidden_without_adding_when_the_author_is_not_a_delegate()
     {
         this.ShouldCaptureAddedClassExpenses();
         Guid classId = GuidMother.Random();
@@ -177,9 +177,9 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldFindClassInSchoolYear(classId, schoolYearId);
         this.ShouldDenyClassRepresentative(authorId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid(classId: classId));
 
-        result.Error.Should().Be(UserErrors.ClassRepresentativeForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassRepresentativeForbidden>();
         this.Added.Should().BeEmpty();
     }
 
@@ -198,8 +198,8 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(memberId, classId);
-        this.ShouldDenyClassAccess(outsiderId, classId);
+        this.ShouldBeClassMember(memberId, classId);
+        this.ShouldNotBeClassMember(outsiderId, classId);
 
         Result result = await this._useCase.ExecuteAsync(
             ClassExpenseCreateCommandMother.Valid(classId: classId, participantIds: [memberId, outsiderId]));
@@ -327,16 +327,16 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
+    public async Task throw_user_not_found_without_asking_for_the_class_when_the_author_does_not_exist()
     {
         Guid authorId = GuidMother.Random();
         this.ShouldResolveCurrentUser(authorId);
         this.ShouldNotFindUser(authorId);
         this.ShouldCaptureAddedClassExpenses();
 
-        Result result = await this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid());
+        Func<Task> act = () => this._useCase.ExecuteAsync(ClassExpenseCreateCommandMother.Valid());
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         this.Added.Should().BeEmpty();
         this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<ClassFinderById.Query>(), It.IsAny<CancellationToken>()),
@@ -444,7 +444,7 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         Guid guardianId = GuidMother.Random();
         this.ShouldFindAllRequestedUsers();
-        this.ShouldAllowClassAccess(guardianId, classId);
+        this.ShouldBeClassMember(guardianId, classId);
         this.ShouldCaptureAddedClassExpenses();
         this.ShouldNotFindCalendarEvent(eventId);
 
@@ -463,14 +463,14 @@ public class ClassExpenseCreateShould : ClassExpensesUnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Success(UserResponseMother.With(userId, StringMother.Random("name"))));
+            .ReturnsAsync(UserResponseMother.With(userId, StringMother.Random("name")));
 
     private void ShouldNotFindUser(Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
                 It.Is<UserFinderById.Query>(query => query.UserId == userId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UserResponse>.Failure(UserErrors.NotFound));
+            .ThrowsAsync(new UserExceptions.NotFound());
 
     private void ShouldFindAllRequestedUsers()
         => this.QueryBus

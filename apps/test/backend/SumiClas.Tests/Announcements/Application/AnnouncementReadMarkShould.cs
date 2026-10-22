@@ -148,7 +148,7 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_class_access_forbidden_without_adding_a_receipt_when_the_user_is_not_in_the_class()
+    public async Task throw_class_access_forbidden_without_adding_a_receipt_when_the_user_is_not_in_the_class()
     {
         Guid announcementId = GuidMother.Random();
         Guid classId = GuidMother.Random();
@@ -163,10 +163,10 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldFindUser(readerId);
         this.ShouldDenyClassAccess(readerId, classId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.Error.Should().Be(UserErrors.ClassAccessForbidden);
+        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
         announcement.ReadReceipts.Should().BeEmpty();
     }
 
@@ -191,7 +191,7 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_user_not_found_without_adding_a_receipt_when_the_reader_does_not_exist()
+    public async Task throw_user_not_found_without_adding_a_receipt_when_the_reader_does_not_exist()
     {
         Guid announcementId = GuidMother.Random();
         Guid readerId = GuidMother.Random();
@@ -200,10 +200,10 @@ public class AnnouncementReadMarkShould : AnnouncementsUnitTestCase
         this.ShouldResolveCurrentUser(readerId);
         this.ShouldNotFindUser(readerId);
 
-        Result result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementReadMarkCommandMother.WithAnnouncementId(announcementId));
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
         announcement.ReadReceipts.Should().BeEmpty();
     }
 

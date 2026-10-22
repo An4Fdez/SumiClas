@@ -25,33 +25,31 @@ public class UserFinderByEmailShould : UsersUnitTestCase
         User user = UserMother.With(fullName: fullName, email: EmailMother.Create(email));
         this.ShouldSearchUsers(user);
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        UserResponse result = await this._useCase.ExecuteAsync(
             UserFinderByEmailQueryMother.WithEmail("  " + email.ToUpperInvariant() + " "),
             CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(UserResponseMother.Create(user.Id, fullName));
+        result.Should().Be(UserResponseMother.Create(user.Id, fullName));
     }
 
     [Test]
-    public async Task return_not_found_when_the_email_is_unknown()
+    public async Task throw_not_found_when_the_email_is_unknown()
     {
         this.ShouldSearchNoUsers();
 
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserFinderByEmailQueryMother.WithEmail(StringMother.Random("nobody") + "@example.com"),
             CancellationToken.None);
 
-        result.Error.Should().Be(UserErrors.NotFound);
+        await act.Should().ThrowAsync<UserExceptions.NotFound>();
     }
 
     [Test]
-    public async Task return_invalid_email_format_when_the_email_is_malformed()
+    public async Task throw_invalid_email_format_when_the_email_is_malformed()
     {
-        Result<UserResponse> result = await this._useCase.ExecuteAsync(
+        Func<Task> act = () => this._useCase.ExecuteAsync(
             UserFinderByEmailQueryMother.WithEmail("nonsense"),
             CancellationToken.None);
 
-        result.Error.Should().Be(UserErrors.InvalidEmailFormat);
+        await act.Should().ThrowAsync<UserExceptions.InvalidEmailFormat>();
     }
 }

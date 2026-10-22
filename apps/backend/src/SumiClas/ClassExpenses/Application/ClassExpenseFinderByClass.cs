@@ -33,11 +33,7 @@ public static class ClassExpenseFinderByClass
 
             var current = userProvider.GetCurrentUserId();
 
-            var access = await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
-            if (access.IsFailure)
-            {
-                return Result<PagedResponse<ClassExpenseResponse>>.Failure(access.Error!);
-            }
+            await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
             var candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page.Value), ct);
             var (expenses, nextCursor) = Pagination.Cut(

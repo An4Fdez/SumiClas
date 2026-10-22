@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.SchoolYears.Domain;
+using SumiClas.Shared.Domain;
+using SumiClas.Users.Domain;
 using System.Net;
 using System.Text.Json;
 
@@ -46,6 +48,10 @@ public class DomainExceptionPipelineShould
 
     [TestCase("/not-yet-converted-archived", HttpStatusCode.BadRequest, "SchoolYear.Archived")]
     [TestCase("/not-yet-converted-missing", HttpStatusCode.NotFound, "SchoolYear.NotFound")]
+    [TestCase("/not-yet-converted-credentials", HttpStatusCode.Unauthorized, "Authentication.InvalidCredentials")]
+    [TestCase("/not-yet-converted-access", HttpStatusCode.Forbidden, "User.ClassAccessForbidden")]
+    [TestCase("/not-yet-converted-delegate", HttpStatusCode.Forbidden, "User.ClassRepresentativeForbidden")]
+    [TestCase("/not-yet-converted-user", HttpStatusCode.NotFound, "User.NotFound")]
     public async Task answer_with_the_status_of_its_code_a_domain_exception_from_an_endpoint_that_declares_none(
         string path,
         HttpStatusCode expected,
@@ -104,6 +110,10 @@ public class DomainExceptionPipelineShould
         app.MapGet("/unexpected", IResult () => throw new InvalidOperationException());
         app.MapGet("/not-yet-converted-archived", IResult () => throw new SchoolYearExceptions.Archived());
         app.MapGet("/not-yet-converted-missing", IResult () => throw new SchoolYearExceptions.NotFound());
+        app.MapGet("/not-yet-converted-credentials", IResult () => throw new AuthenticationExceptions.InvalidCredentials());
+        app.MapGet("/not-yet-converted-access", IResult () => throw new UserExceptions.ClassAccessForbidden());
+        app.MapGet("/not-yet-converted-delegate", IResult () => throw new UserExceptions.ClassRepresentativeForbidden());
+        app.MapGet("/not-yet-converted-user", IResult () => throw new UserExceptions.NotFound());
         await app.StartAsync();
         return app;
     }
