@@ -15,7 +15,7 @@ public sealed class ClassSpecification : Specification<Class>
         if (name is not null) AddCriteria(schoolClass => schoolClass.Name == name);
         if (ids is not null)
         {
-            var classIds = ids.ToArray();
+            Guid[] classIds = ids.ToArray();
             AddCriteria(schoolClass => classIds.Contains(schoolClass.Id));
         }
     }

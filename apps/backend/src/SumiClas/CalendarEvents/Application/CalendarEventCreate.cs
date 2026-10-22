@@ -29,15 +29,15 @@ public static class CalendarEventCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
-            if (!Enum.TryParse<EventScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
+            if (!Enum.TryParse<EventScope>(command.Scope, ignoreCase: true, out EventScope scope) || !Enum.IsDefined(scope))
             {
                 throw new CalendarEventExceptions.InvalidScope();
             }
-            if (!Enum.TryParse<EventType>(command.Type, ignoreCase: true, out var type) || !Enum.IsDefined(type))
+            if (!Enum.TryParse<EventType>(command.Type, ignoreCase: true, out EventType type) || !Enum.IsDefined(type))
             {
                 throw new CalendarEventExceptions.InvalidType();
             }
@@ -45,7 +45,7 @@ public static class CalendarEventCreate
             // The school of a school-wide event is only known after looking up the class, so the aggregate is built
             // twice: once only to validate the input before any IO (the school is provisional and discarded), and
             // once with the real school.
-            var calendarEvent = CalendarEvent.Create(
+            CalendarEvent calendarEvent = CalendarEvent.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -64,9 +64,9 @@ public static class CalendarEventCreate
                 throw new CalendarEventExceptions.ClassRequiredForSchoolScope();
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
+            UserResponse author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
             await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
 
@@ -74,7 +74,7 @@ public static class CalendarEventCreate
 
             if (scope == EventScope.School)
             {
-                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
+                Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
                 calendarEvent = CalendarEvent.Create(
                     command.Id,

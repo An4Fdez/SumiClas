@@ -13,7 +13,7 @@ public static class ClassFinderByIds
     {
         public async Task<IReadOnlyCollection<ClassResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var classes = await repository.SearchAsync(new ClassSpecification(ids: query.ClassIds), ct);
+            IReadOnlyCollection<Class> classes = await repository.SearchAsync(new ClassSpecification(ids: query.ClassIds), ct);
             return classes
                 .Select(schoolClass => new ClassResponse(schoolClass.Id, schoolClass.SchoolYearId, schoolClass.Name))
                 .ToList();

@@ -23,11 +23,11 @@ public static class ClassExpenseCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
-            var classExpense = ClassExpense.Create(
+            ClassExpense classExpense = ClassExpense.Create(
                 command.Id,
                 command.ClassId,
                 command.Item,
@@ -39,22 +39,22 @@ public static class ClassExpenseCreate
 
             await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
             await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var participantIds = classExpense.Participants.Select(participant => participant.GuardianId).ToList();
-            var participants = await queryBus.Send(new UserFinderByIds.Query(participantIds), ct);
+            List<Guid> participantIds = classExpense.Participants.Select(participant => participant.GuardianId).ToList();
+            IReadOnlyCollection<UserResponse> participants = await queryBus.Send(new UserFinderByIds.Query(participantIds), ct);
             if (participants.Count != participantIds.Count)
             {
                 throw new ClassExpenseExceptions.ParticipantNotFound();
             }
 
-            foreach (var participantId in participantIds)
+            foreach (Guid participantId in participantIds)
             {
-                var isMember = await queryBus.Send(new UserIsClassMember.Query(participantId, command.ClassId), ct);
+                bool isMember = await queryBus.Send(new UserIsClassMember.Query(participantId, command.ClassId), ct);
                 if (!isMember)
                 {
                     throw new ClassExpenseExceptions.ParticipantNotInClass();

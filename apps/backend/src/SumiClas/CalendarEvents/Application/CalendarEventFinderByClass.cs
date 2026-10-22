@@ -24,30 +24,30 @@ public static class CalendarEventFinderByClass
     {
         public async Task<IReadOnlyCollection<CalendarEventResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
+            Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
-            var enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
-            var studentIds = enrollments
+            IReadOnlyCollection<EnrollmentResponse> enrollments = await queryBus.Send(new EnrollmentFinderByClass.Query(query.ClassId), ct);
+            List<Guid> studentIds = enrollments
                 .Where(enrollment => enrollment.Status == "Confirmed")
                 .Select(enrollment => enrollment.StudentId)
                 .Distinct()
                 .ToList();
 
-            var events = (await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.School, schoolId: school), ct)).ToList();
+            List<CalendarEvent> events = (await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.School, schoolId: school), ct)).ToList();
             events.AddRange(await repository.SearchAsync(new CalendarEventSpecification(scope: EventScope.Class, classId: query.ClassId), ct));
             if (studentIds.Count > 0)
             {
                 events.AddRange(await repository.SearchAsync(new CalendarEventSpecification(studentIds: studentIds), ct));
             }
 
-            var authorIds = events.Select(calendarEvent => calendarEvent.AuthorId).Distinct().ToList();
-            var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
+            List<Guid> authorIds = events.Select(calendarEvent => calendarEvent.AuthorId).Distinct().ToList();
+            Dictionary<Guid, UserClassMemberResponse> authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
                 .ToDictionary(author => author.UserId);
 
             IReadOnlyCollection<CalendarEventResponse> response = events

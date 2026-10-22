@@ -16,12 +16,12 @@ public static class ClassExpensePaidMark
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var classExpense = await repository.GetByIdAsync(command.ClassExpenseId, ct)
+            ClassExpense classExpense = await repository.GetByIdAsync(command.ClassExpenseId, ct)
                 ?? throw new ClassExpenseExceptions.NotFound();
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             // A family marks its own share; marking someone else's is for the class delegate.
             if (current == command.GuardianId)

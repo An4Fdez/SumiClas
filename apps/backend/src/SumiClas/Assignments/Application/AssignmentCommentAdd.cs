@@ -16,14 +16,14 @@ public static class AssignmentCommentAdd
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var assignment = await repository.GetByIdAsync(command.AssignmentId, ct)
+            Assignment assignment = await repository.GetByIdAsync(command.AssignmentId, ct)
                 ?? throw new AssignmentExceptions.NotFound();
 
             await queryBus.Send(new UserFinderById.Query(current), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, assignment.ClassId), ct);
 

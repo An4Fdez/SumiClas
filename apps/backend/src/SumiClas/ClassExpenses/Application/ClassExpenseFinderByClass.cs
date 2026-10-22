@@ -17,33 +17,33 @@ public static class ClassExpenseFinderByClass
     {
         public async Task<PagedResponse<ClassExpenseResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            PageRequest pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
-            var page = Pagination.ByCreatedAt(pageRequest);
+            KeysetPage<DateTimeOffset> page = Pagination.ByCreatedAt(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page), ct);
-            var (expenses, nextCursor) = Pagination.Cut(
+            IReadOnlyCollection<ClassExpense> candidates = await repository.SearchAsync(new ClassExpenseSpecification(classId: query.ClassId, page: page), ct);
+            (IReadOnlyList<ClassExpense> expenses, string? nextCursor) = Pagination.Cut(
                 candidates.OrderByDescending(expense => expense.CreatedAt).ThenByDescending(expense => expense.Id, Pagination.IdComparer).ToList(),
                 pageRequest.Limit,
                 expense => Pagination.CursorOf(expense.CreatedAt, expense.Id));
 
-            var userIds = expenses
+            List<Guid> userIds = expenses
                 .Select(expense => expense.AuthorId)
                 .Concat(expenses.SelectMany(expense => expense.Participants.Select(participant => participant.GuardianId)))
                 .Distinct()
                 .ToList();
-            var users = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, userIds), ct))
+            Dictionary<Guid, UserClassMemberResponse> users = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, userIds), ct))
                 .ToDictionary(user => user.UserId);
 
-            var eventIds = expenses.Where(expense => expense.RelatedEventId is not null)
+            List<Guid> eventIds = expenses.Where(expense => expense.RelatedEventId is not null)
                 .Select(expense => expense.RelatedEventId!.Value).Distinct().ToList();
-            var events = (await queryBus.Send(new CalendarEventFinderByIds.Query(eventIds), ct))
+            Dictionary<Guid, CalendarEventSummaryResponse> events = (await queryBus.Send(new CalendarEventFinderByIds.Query(eventIds), ct))
                 .ToDictionary(calendarEvent => calendarEvent.Id);
 
             IReadOnlyCollection<ClassExpenseResponse> items = expenses

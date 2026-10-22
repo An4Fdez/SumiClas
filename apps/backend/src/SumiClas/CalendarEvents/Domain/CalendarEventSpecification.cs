@@ -43,13 +43,13 @@ public sealed class CalendarEventSpecification : Specification<CalendarEvent>
         if (createdAt is { } created) AddCriteria(calendarEvent => calendarEvent.CreatedAt == created);
         if (ids is not null)
         {
-            var eventIds = ids.ToArray();
+            Guid[] eventIds = ids.ToArray();
             AddCriteria(calendarEvent => eventIds.Contains(calendarEvent.Id));
         }
 
         if (studentIds is not null)
         {
-            var students = studentIds.ToArray();
+            Guid[] students = studentIds.ToArray();
             AddCriteria(calendarEvent => calendarEvent.StudentId.HasValue && students.Contains(calendarEvent.StudentId.Value));
         }
     }

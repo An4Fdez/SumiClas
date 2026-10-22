@@ -22,7 +22,7 @@ public static class EnrollmentSuggestedCreate
     {
         public async Task<EnrollmentSuggestedCreateResponse> ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             if (command.ClassId == Guid.Empty || command.PreviousClassId == Guid.Empty)
             {
@@ -34,16 +34,16 @@ public static class EnrollmentSuggestedCreate
                 throw new EnrollmentExceptions.SameClass();
             }
 
-            var newClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse newClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
-            var previousClass = await queryBus.Send(new ClassFinderById.Query(command.PreviousClassId), ct);
+            ClassResponse previousClass = await queryBus.Send(new ClassFinderById.Query(command.PreviousClassId), ct);
 
-            var newSchoolYearId = newClass.SchoolYearId;
-            var previousSchoolYearId = previousClass.SchoolYearId;
+            Guid newSchoolYearId = newClass.SchoolYearId;
+            Guid previousSchoolYearId = previousClass.SchoolYearId;
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(newSchoolYearId), ct);
 
-            var isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, command.ClassId), ct);
+            bool isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, command.ClassId), ct);
             if (!isRepresentative)
             {
                 throw new EnrollmentExceptions.SuggestForbidden();
@@ -54,15 +54,15 @@ public static class EnrollmentSuggestedCreate
                 throw new EnrollmentExceptions.SameSchoolYear();
             }
 
-            var schoolYears = await queryBus.Send(new SchoolYearFinderByIds.Query([newSchoolYearId, previousSchoolYearId]), ct);
-            var newSchoolYear = schoolYears.FirstOrDefault(schoolYear => schoolYear.Id == newSchoolYearId);
-            var previousSchoolYear = schoolYears.FirstOrDefault(schoolYear => schoolYear.Id == previousSchoolYearId);
+            IReadOnlyCollection<SchoolYearResponse> schoolYears = await queryBus.Send(new SchoolYearFinderByIds.Query([newSchoolYearId, previousSchoolYearId]), ct);
+            SchoolYearResponse? newSchoolYear = schoolYears.FirstOrDefault(schoolYear => schoolYear.Id == newSchoolYearId);
+            SchoolYearResponse? previousSchoolYear = schoolYears.FirstOrDefault(schoolYear => schoolYear.Id == previousSchoolYearId);
             if (newSchoolYear is null || previousSchoolYear is null || newSchoolYear.SchoolId != previousSchoolYear.SchoolId)
             {
                 throw new EnrollmentExceptions.DifferentSchool();
             }
 
-            var candidates = (await repository.SearchAsync(
+            List<Guid> candidates = (await repository.SearchAsync(
                     new EnrollmentSpecification(classId: command.PreviousClassId, status: EnrollmentStatus.Confirmed), ct))
                 .Select(enrollment => enrollment.StudentId)
                 .Distinct()
@@ -72,25 +72,25 @@ public static class EnrollmentSuggestedCreate
                 return new EnrollmentSuggestedCreateResponse(0, 0);
             }
 
-            var inNewClass = await repository.SearchAsync(
+            IReadOnlyCollection<Enrollment> inNewClass = await repository.SearchAsync(
                 new EnrollmentSpecification(studentIds: candidates, classIds: [command.ClassId]), ct);
 
-            var newSchoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(newSchoolYearId), ct);
-            var confirmedInNewSchoolYear = await repository.SearchAsync(
+            IReadOnlyCollection<ClassResponse> newSchoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(newSchoolYearId), ct);
+            IReadOnlyCollection<Enrollment> confirmedInNewSchoolYear = await repository.SearchAsync(
                 new EnrollmentSpecification(
                     studentIds: candidates,
                     classIds: newSchoolYearClasses.Select(schoolClass => schoolClass.Id).ToList(),
                     status: EnrollmentStatus.Confirmed),
                 ct);
 
-            var alreadyEnrolled = inNewClass.Concat(confirmedInNewSchoolYear)
+            HashSet<Guid> alreadyEnrolled = inNewClass.Concat(confirmedInNewSchoolYear)
                 .Select(enrollment => enrollment.StudentId)
                 .ToHashSet();
 
-            var created = 0;
-            foreach (var studentId in candidates.Where(studentId => !alreadyEnrolled.Contains(studentId)))
+            int created = 0;
+            foreach (Guid studentId in candidates.Where(studentId => !alreadyEnrolled.Contains(studentId)))
             {
-                var suggestion = Enrollment.CreateSuggested(Guid.NewGuid(), studentId, command.ClassId, clock);
+                Enrollment suggestion = Enrollment.CreateSuggested(Guid.NewGuid(), studentId, command.ClassId, clock);
 
                 await repository.AddAsync(suggestion, ct);
                 created++;

@@ -13,7 +13,7 @@ public static class CalendarEventFinderByIds
     {
         public async Task<IReadOnlyCollection<CalendarEventSummaryResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var events = await repository.SearchAsync(new CalendarEventSpecification(ids: query.CalendarEventIds), ct);
+            IReadOnlyCollection<CalendarEvent> events = await repository.SearchAsync(new CalendarEventSpecification(ids: query.CalendarEventIds), ct);
             return events.Select(calendarEvent => new CalendarEventSummaryResponse(calendarEvent.Id, calendarEvent.Title)).ToList();
         }
     }

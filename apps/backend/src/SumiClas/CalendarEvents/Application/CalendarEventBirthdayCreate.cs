@@ -17,11 +17,11 @@ public static class CalendarEventBirthdayCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
-            var birthday = CalendarEvent.CreateBirthday(
+            CalendarEvent birthday = CalendarEvent.CreateBirthday(
                 command.Id,
                 command.StudentId,
                 command.Title,

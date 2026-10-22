@@ -143,7 +143,7 @@ public sealed class CalendarEvent : AggregateRoot
     {
         ValidateBirthday(id, studentId, title, authorId);
 
-        var eventDate = EventDate.RecurringAnnual(month, day);
+        EventDate eventDate = EventDate.RecurringAnnual(month, day);
 
         return new CalendarEvent(
             id,

@@ -15,10 +15,10 @@ public static class ClassRename
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var schoolClass = await repository.GetByIdAsync(command.ClassId, ct)
+            Class schoolClass = await repository.GetByIdAsync(command.ClassId, ct)
                 ?? throw new ClassExceptions.NotFound();
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassRepresentativeEnsure.Query(current, command.ClassId), ct);
 

@@ -22,13 +22,13 @@ public sealed class EnrollmentSpecification : Specification<Enrollment>
         if (confirmedAt is { } confirmed) AddCriteria(enrollment => enrollment.ConfirmedAt == confirmed);
         if (studentIds is not null)
         {
-            var students = studentIds.ToArray();
+            Guid[] students = studentIds.ToArray();
             AddCriteria(enrollment => students.Contains(enrollment.StudentId));
         }
 
         if (classIds is not null)
         {
-            var classes = classIds.ToArray();
+            Guid[] classes = classIds.ToArray();
             AddCriteria(enrollment => classes.Contains(enrollment.ClassId));
         }
     }

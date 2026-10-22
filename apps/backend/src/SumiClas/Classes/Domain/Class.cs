@@ -19,7 +19,7 @@ public sealed class Class : AggregateRoot
     {
         Validate(id, schoolYearId, name, creatorId);
 
-        var schoolClass = new Class(id, schoolYearId, name.Trim());
+        Class schoolClass = new Class(id, schoolYearId, name.Trim());
         schoolClass.AddDomainEvent(new ClassCreatedDomainEvent(id, schoolYearId, schoolClass.Name, creatorId, clock));
         return schoolClass;
     }

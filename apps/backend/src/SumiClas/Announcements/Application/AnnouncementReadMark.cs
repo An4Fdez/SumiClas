@@ -15,9 +15,9 @@ public static class AnnouncementReadMark
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var announcement = await repository.GetByIdAsync(command.AnnouncementId, ct)
+            Announcement announcement = await repository.GetByIdAsync(command.AnnouncementId, ct)
                 ?? throw new AnnouncementExceptions.NotFound();
 
             await queryBus.Send(new UserFinderById.Query(current), ct);

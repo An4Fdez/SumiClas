@@ -17,31 +17,31 @@ public static class AssignmentFinderByClass
     {
         public async Task<PagedResponse<AssignmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            PageRequest pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
-            var page = Pagination.ByDate(pageRequest);
+            KeysetPage<DateOnly> page = Pagination.ByDate(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page), ct);
-            var (assignments, nextCursor) = Pagination.Cut(
+            IReadOnlyCollection<Assignment> candidates = await repository.SearchAsync(new AssignmentSpecification(classId: query.ClassId, page: page), ct);
+            (IReadOnlyList<Assignment> assignments, string? nextCursor) = Pagination.Cut(
                 candidates.OrderBy(assignment => assignment.DueDate).ThenBy(assignment => assignment.Id, Pagination.IdComparer).ToList(),
                 pageRequest.Limit,
                 assignment => Pagination.CursorOf(assignment.DueDate, assignment.Id));
 
-            var subjects = await queryBus.Send(new SubjectFinderByClass.Query(query.ClassId), ct);
-            var subjectLabels = subjects.ToDictionary(subject => subject.Id, subject => subject.Label);
+            IReadOnlyCollection<SubjectResponse> subjects = await queryBus.Send(new SubjectFinderByClass.Query(query.ClassId), ct);
+            Dictionary<Guid, string> subjectLabels = subjects.ToDictionary(subject => subject.Id, subject => subject.Label);
 
-            var authorIds = assignments
+            List<Guid> authorIds = assignments
                 .Select(assignment => assignment.AuthorId)
                 .Concat(assignments.SelectMany(assignment => assignment.Comments.Select(comment => comment.AuthorId)))
                 .Distinct()
                 .ToList();
-            var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
+            Dictionary<Guid, UserClassMemberResponse> authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
                 .ToDictionary(author => author.UserId);
 
             IReadOnlyCollection<AssignmentResponse> items = assignments

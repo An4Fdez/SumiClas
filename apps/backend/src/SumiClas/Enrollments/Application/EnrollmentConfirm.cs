@@ -17,25 +17,25 @@ public static class EnrollmentConfirm
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var enrollment = await repository.GetByIdAsync(command.EnrollmentId, ct);
+            Enrollment? enrollment = await repository.GetByIdAsync(command.EnrollmentId, ct);
             if (enrollment is null)
             {
                 throw new EnrollmentExceptions.NotFound();
             }
 
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new StudentGuardianEnsure.Query(enrollment.StudentId, current), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(enrollment.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(enrollment.ClassId), ct);
 
-            var schoolYearId = schoolClass.SchoolYearId;
+            Guid schoolYearId = schoolClass.SchoolYearId;
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolYearId), ct);
 
-            var schoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct);
-            var classIds = schoolYearClasses.Select(c => c.Id).ToList();
-            var confirmed = await repository.SearchAsync(
+            IReadOnlyCollection<ClassResponse> schoolYearClasses = await queryBus.Send(new ClassFinderBySchoolYear.Query(schoolYearId), ct);
+            List<Guid> classIds = schoolYearClasses.Select(c => c.Id).ToList();
+            IReadOnlyCollection<Enrollment> confirmed = await repository.SearchAsync(
                 new EnrollmentSpecification(studentId: enrollment.StudentId, classIds: classIds, status: EnrollmentStatus.Confirmed), ct);
             if (confirmed.Any(other => other.Id != enrollment.Id))
             {

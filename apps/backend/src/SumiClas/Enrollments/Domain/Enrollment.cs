@@ -35,7 +35,7 @@ public sealed class Enrollment : AggregateRoot
     {
         Validate(id, studentId, classId);
 
-        var now = clock.UtcNow;
+        DateTimeOffset now = clock.UtcNow;
         return new Enrollment(id, studentId, classId, EnrollmentStatus.Confirmed, now, now);
     }
 

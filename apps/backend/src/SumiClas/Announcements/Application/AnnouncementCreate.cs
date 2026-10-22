@@ -28,15 +28,15 @@ public static class AnnouncementCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
-            if (!Enum.TryParse<AnnouncementScope>(command.Scope, ignoreCase: true, out var scope) || !Enum.IsDefined(scope))
+            if (!Enum.TryParse<AnnouncementScope>(command.Scope, ignoreCase: true, out AnnouncementScope scope) || !Enum.IsDefined(scope))
             {
                 throw new AnnouncementExceptions.InvalidScope();
             }
-            if (!Enum.TryParse<Priority>(command.Priority, ignoreCase: true, out var priority) || !Enum.IsDefined(priority))
+            if (!Enum.TryParse<Priority>(command.Priority, ignoreCase: true, out Priority priority) || !Enum.IsDefined(priority))
             {
                 throw new AnnouncementExceptions.InvalidPriority();
             }
@@ -44,7 +44,7 @@ public static class AnnouncementCreate
             // The school of a school-wide announcement is only known after looking up the class, so the aggregate is
             // built twice: once only to validate the input before any IO (the school is provisional and discarded),
             // and once with the real school.
-            var announcement = Announcement.Create(
+            Announcement announcement = Announcement.Create(
                 command.Id,
                 scope,
                 command.ClassId,
@@ -61,14 +61,14 @@ public static class AnnouncementCreate
                 throw new AnnouncementExceptions.ClassRequiredForSchoolScope();
             }
 
-            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
+            UserResponse author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
             if (command.RelatedEventId is { } relatedEventId)
             {
                 await queryBus.Send(new CalendarEventFinderById.Query(relatedEventId), ct);
             }
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);
 
             await queryBus.Send(new UserClassRepresentativeEnsure.Query(authorId, classId), ct);
 
@@ -76,7 +76,7 @@ public static class AnnouncementCreate
 
             if (scope == AnnouncementScope.School)
             {
-                var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
+                Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
                 announcement = Announcement.Create(
                     command.Id,

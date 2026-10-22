@@ -24,9 +24,9 @@ public static class AssignmentCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var authorId = current;
+            Guid authorId = current;
 
             // IsProposal depends on a lookup, so the aggregate is built twice: once only to validate the
             // input before any IO (the provisional flag is discarded), and once with the real flag.
@@ -34,24 +34,24 @@ public static class AssignmentCreate
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
                 command.DueDate, authorId, isProposal: true, clock);
 
-            var author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
+            UserResponse author = await queryBus.Send(new UserFinderById.Query(authorId), ct);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(command.ClassId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(authorId, command.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);
 
-            var subject = await queryBus.Send(new SubjectFinderById.Query(command.SubjectId), ct);
+            SubjectResponse subject = await queryBus.Send(new SubjectFinderById.Query(command.SubjectId), ct);
             if (subject.ClassId != command.ClassId)
             {
                 throw new AssignmentExceptions.SubjectNotInClass();
             }
 
-            var isClassRepresentative = await queryBus.Send(
+            bool isClassRepresentative = await queryBus.Send(
                 new UserIsClassRepresentative.Query(authorId, command.ClassId), ct);
 
-            var assignment = Assignment.Create(
+            Assignment assignment = Assignment.Create(
                 command.Id, command.ClassId, command.SubjectId, command.Title, command.Description,
                 command.DueDate, authorId, isProposal: !isClassRepresentative, clock);
 

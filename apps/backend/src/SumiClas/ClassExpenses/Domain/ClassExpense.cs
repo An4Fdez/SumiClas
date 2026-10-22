@@ -53,7 +53,7 @@ public sealed class ClassExpense : AggregateRoot
         Guid authorId,
         IClock clock)
     {
-        var distinctParticipantIds = participantIds.Where(participantId => participantId != Guid.Empty).Distinct().ToList();
+        List<Guid> distinctParticipantIds = participantIds.Where(participantId => participantId != Guid.Empty).Distinct().ToList();
 
         Validate(id, classId, item, totalAmount, distinctParticipantIds, authorId);
 
@@ -102,7 +102,7 @@ public sealed class ClassExpense : AggregateRoot
 
     private void SetPaidStatus(Guid guardianId, bool hasPaid)
     {
-        var index = _participants.FindIndex(p => p.GuardianId == guardianId);
+        int index = _participants.FindIndex(p => p.GuardianId == guardianId);
         if (index < 0)
         {
             throw new ClassExpenseExceptions.NotAParticipant();

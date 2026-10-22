@@ -1,4 +1,5 @@
 using MediatR;
+using SumiClas.CalendarEvents.Domain;
 using SumiClas.CalendarEvents.Domain.Services;
 using SumiClas.Shared.Application;
 
@@ -12,7 +13,7 @@ public static class CalendarEventFinderById
     {
         public async Task<CalendarEventSummaryResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var found = await finder.FindAsync(query.CalendarEventId, ct);
+            CalendarEvent found = await finder.FindAsync(query.CalendarEventId, ct);
             return new CalendarEventSummaryResponse(found.Id, found.Title);
         }
     }

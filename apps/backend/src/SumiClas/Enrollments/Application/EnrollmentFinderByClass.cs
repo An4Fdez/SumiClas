@@ -12,7 +12,7 @@ public static class EnrollmentFinderByClass
     {
         public async Task<IReadOnlyCollection<EnrollmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var enrollments = await repository.SearchAsync(new EnrollmentSpecification(classId: query.ClassId), ct);
+            IReadOnlyCollection<Enrollment> enrollments = await repository.SearchAsync(new EnrollmentSpecification(classId: query.ClassId), ct);
             return enrollments
                 .Select(enrollment => new EnrollmentResponse(
                     enrollment.Id,

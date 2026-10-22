@@ -18,33 +18,33 @@ public static class AnnouncementFinderByClass
     {
         public async Task<PagedResponse<AnnouncementResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            var current = userProvider.GetCurrentUserId();
+            Guid current = userProvider.GetCurrentUserId();
 
-            var pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
+            PageRequest pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
-            var page = Pagination.ByCreatedAt(pageRequest);
+            KeysetPage<DateTimeOffset> page = Pagination.ByCreatedAt(pageRequest);
 
-            var schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
-            var school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
+            Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
-            var candidates = (await repository.SearchAsync(
+            List<Announcement> candidates = (await repository.SearchAsync(
                     new AnnouncementSpecification(scope: AnnouncementScope.School, schoolId: school, page: page), ct))
                 .Concat(await repository.SearchAsync(new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: query.ClassId, page: page), ct))
                 .OrderByDescending(announcement => announcement.CreatedAt)
                 .ThenByDescending(announcement => announcement.Id, Pagination.IdComparer)
                 .ToList();
-            var (announcements, nextCursor) = Pagination.Cut(candidates, pageRequest.Limit, announcement => Pagination.CursorOf(announcement.CreatedAt, announcement.Id));
+            (IReadOnlyList<Announcement> announcements, string? nextCursor) = Pagination.Cut(candidates, pageRequest.Limit, announcement => Pagination.CursorOf(announcement.CreatedAt, announcement.Id));
 
-            var authorIds = announcements.Select(announcement => announcement.AuthorId).Distinct().ToList();
-            var authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
+            List<Guid> authorIds = announcements.Select(announcement => announcement.AuthorId).Distinct().ToList();
+            Dictionary<Guid, UserClassMemberResponse> authors = (await queryBus.Send(new UserClassMemberFinderByIds.Query(query.ClassId, authorIds), ct))
                 .ToDictionary(author => author.UserId);
 
-            var eventIds = announcements.Where(announcement => announcement.RelatedEventId is not null)
+            List<Guid> eventIds = announcements.Where(announcement => announcement.RelatedEventId is not null)
                 .Select(announcement => announcement.RelatedEventId!.Value).Distinct().ToList();
-            var events = (await queryBus.Send(new CalendarEventFinderByIds.Query(eventIds), ct))
+            Dictionary<Guid, CalendarEventSummaryResponse> events = (await queryBus.Send(new CalendarEventFinderByIds.Query(eventIds), ct))
                 .ToDictionary(calendarEvent => calendarEvent.Id);
 
             IReadOnlyCollection<AnnouncementResponse> items = announcements
