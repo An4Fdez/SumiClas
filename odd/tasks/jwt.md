@@ -23,7 +23,7 @@ Sustituir la identidad falsificable `X-User-Id` por tokens JWT firmados (access 
 - Un `Result` fallido revierte la unidad de trabajo, así que la detección de reutilización y el logout devuelven un resultado exitoso con un resultado de dominio que el endpoint traduce a 401 (RNF-02).
 - Fuera de alcance: autorización por rol y pertenencia a la clase, recuperación de contraseña, bloqueo de cuenta, limpieza de tokens caducados, infraestructura de tests HTTP y de frontend.
 - Decisión del usuario: recuperación y cambio de contraseña, bloqueo de cuenta por intentos, rol dentro del token y limpieza periódica de sesiones caducadas **no son necesarios para el MVP** (consecuencias asumidas: una contraseña olvidada se resuelve a mano, el limitador de 10 por minuto por IP es la única defensa contra fuerza bruta, y la tabla de sesiones solo crece despacio).
-- Decisión del usuario: **solo HTTPS** (sin `UseHttpsRedirection`; no se publica ningún puerto HTTP) y **`/openapi` no es anónimo ni en Development** (exige Bearer; el cliente NSwag se genera descargando el documento con un token en J3a; Swagger UI no puede leerlo).
+- Decisión del usuario: **solo HTTPS** (sin `UseHttpsRedirection`; no se publica ningún puerto HTTP) y **`/openapi` exigía Bearer ni en Development**; revisado el 2026-10-23 por el usuario: ahora es anónimo en Development (Swagger UI no podía leerlo con 401) y la protección queda solo en los endpoints.
 - Regla práctica del usuario para registrar servicios: si seguiría haciendo falta en un proyecto de consola que reutilice el dominio → infraestructura; si solo sirve para recibir peticiones HTTP → capa API.
 
 ## Tareas (ver la sección 10 de la especificación: archivos, dependencias y escenarios)

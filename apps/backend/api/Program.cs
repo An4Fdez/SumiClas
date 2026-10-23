@@ -35,8 +35,8 @@ app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
-    // The document needs a Bearer token even in Development: nothing is anonymous just because it is a dev environment.
-    app.MapOpenApi().WithDocumentPerVersion().RequireAuthorization();
+    // Only the document is anonymous, so Swagger UI can load it; the endpoints it describes still require a Bearer token.
+    app.MapOpenApi().WithDocumentPerVersion().AllowAnonymous();
 }
 
 app.UseSwaggerUI(swaggerUiOptions =>
