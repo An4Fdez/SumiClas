@@ -270,6 +270,28 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
+    public async Task flag_as_done_only_the_assignments_the_current_user_marked()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        Assignment markedByMe = AssignmentMother.DoneBy(GuidMother.Random(), currentUserId, classId);
+        Assignment markedByAClassmate = AssignmentMother.DoneBy(GuidMother.Random(), GuidMother.Random(), classId);
+        Assignment unmarked = AssignmentMother.With(classId: classId);
+        this.ShouldFindClass(classId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldFindSubjectsOfClass(classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldSearchAssignments(markedByMe, markedByAClassmate, unmarked);
+
+        PagedResponse<AssignmentResponse> result = await this._useCase.ExecuteAsync(
+            AssignmentFinderByClassQueryMother.WithClassId(classId));
+
+        result.Items.Where(item => item.Done).Select(item => item.Id).Should().Equal(markedByMe.Id);
+        result.Items.Should().HaveCount(3);
+    }
+
+    [Test]
     public async Task return_the_default_number_of_assignments_when_no_limit_is_given()
     {
         Guid classId = GuidMother.Random();

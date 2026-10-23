@@ -575,7 +575,33 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("AssignmentId");
                         });
 
+                    b.OwnsMany("SumiClas.Assignments.Domain.AssignmentCompletion", "Completions", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("AssignmentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTimeOffset>("CompletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("AssignmentId");
+
+                            b1.ToTable("AssignmentCompletions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("AssignmentId");
+                        });
+
                     b.Navigation("Comments");
+
+                    b.Navigation("Completions");
                 });
 
             modelBuilder.Entity("SumiClas.CalendarEvents.Domain.CalendarEvent", b =>

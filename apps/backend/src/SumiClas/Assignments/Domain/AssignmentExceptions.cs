@@ -26,6 +26,11 @@ public static class AssignmentExceptions
     public sealed class AuthorRequired()
         : DomainException("Assignment.AuthorRequired", "Los deberes deben tener un autor.");
 
+    public sealed class CompletionUserRequired()
+        : DomainException(
+            "Assignment.CompletionUserRequired",
+            "La marca de hecho requiere un usuario.");
+
     public sealed class CommentAuthorRequired()
         : DomainException("Assignment.CommentAuthorRequired", "El comentario debe tener un autor.");
 

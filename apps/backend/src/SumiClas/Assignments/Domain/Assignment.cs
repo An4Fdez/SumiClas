@@ -7,6 +7,9 @@ public sealed class Assignment : AggregateRoot
     private readonly List<AssignmentComment> _comments = new();
     public IReadOnlyCollection<AssignmentComment> Comments => _comments.AsReadOnly();
 
+    private readonly List<AssignmentCompletion> _completions = new();
+    public IReadOnlyCollection<AssignmentCompletion> Completions => _completions.AsReadOnly();
+
     /// <summary>Homework always belongs to a specific class, never school-wide.</summary>
     public Guid ClassId { get; private set; }
 
@@ -101,4 +104,21 @@ public sealed class Assignment : AggregateRoot
 
     public void AddComment(Guid authorId, string text, IClock clock)
         => _comments.Add(AssignmentComment.Create(authorId, text, clock));
+
+    public bool IsDoneBy(Guid userId) => _completions.Any(completion => completion.UserId == userId);
+
+    /// <summary>Idempotent: if the user already marked it as done, does nothing.</summary>
+    public void MarkAsDoneBy(Guid userId, IClock clock)
+    {
+        if (IsDoneBy(userId))
+        {
+            return;
+        }
+
+        _completions.Add(AssignmentCompletion.Create(userId, clock));
+    }
+
+    /// <summary>Idempotent: if the user had not marked it as done, does nothing.</summary>
+    public void UnmarkAsDoneBy(Guid userId)
+        => _completions.RemoveAll(completion => completion.UserId == userId);
 }

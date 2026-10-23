@@ -8,6 +8,7 @@ public sealed record AssignmentCommentResponse(
     string Text,
     DateTimeOffset CreatedAt);
 
+/// <param name="Done">Whether the current user has marked it as done; the marks of the rest of the class are never exposed.</param>
 /// <param name="IsProposal">True when a participant proposed it; false when it is official (published by a delegate).</param>
 public sealed record AssignmentResponse(
     Guid Id,
@@ -22,4 +23,5 @@ public sealed record AssignmentResponse(
     string? AuthorRole,
     bool IsProposal,
     DateTimeOffset CreatedAt,
-    IReadOnlyCollection<AssignmentCommentResponse> Comments);
+    IReadOnlyCollection<AssignmentCommentResponse> Comments,
+    bool Done);

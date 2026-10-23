@@ -1,6 +1,8 @@
 namespace SumiClas.Tests.Assignments.Domain;
 
+using Moq;
 using SumiClas.Assignments.Domain;
+using SumiClas.Shared.Domain;
 using SumiClas.Tests.Shared;
 
 public static class AssignmentMother
@@ -27,4 +29,13 @@ public static class AssignmentMother
             isProposal,
             UnitTestCase.Now,
             comments ?? []);
+
+    public static Assignment DoneBy(Guid assignmentId, Guid userId, Guid? classId = null)
+    {
+        Mock<IClock> clock = new();
+        clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
+        Assignment assignment = With(id: assignmentId, classId: classId);
+        assignment.MarkAsDoneBy(userId, clock.Object);
+        return assignment;
+    }
 }

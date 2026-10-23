@@ -67,7 +67,8 @@ public static class AssignmentFinderByClass
                             authors.GetValueOrDefault(comment.AuthorId)?.ClassRole,
                             comment.Text,
                             comment.CreatedAt))
-                        .ToList()))
+                        .ToList(),
+                    assignment.IsDoneBy(current)))
                 .ToList();
 
             return new PagedResponse<AssignmentResponse>(items, nextCursor);
