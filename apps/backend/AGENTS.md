@@ -367,6 +367,7 @@ Usar el `ProblemDetails` estándar de ASP.NET Core (`builder.Services.AddProblem
 ## Pendiente de decidir (no asumas nada aquí sin preguntar)
 
 - Autenticación/JWT: **hecha en la API** (ver "Autenticación de la API"); el frontend ya la usa (Bearer en memoria + cookie de refresh) y la verificación de extremo a extremo (J4) pasó en una API real y en un Chrome real. La **autorización por rol y pertenencia** está hecha (ver "Autorización"), con huecos concretos anotados allí.
+- **Notificaciones push**: fuera del MVP (decisión del usuario, 2026-10-23); para una versión posterior. No hay nada construido, y el mecanismo está por decidir: la Web Push API del documento de arquitectura exige service worker y PWA, descartados en el stack del frontend (ver el `AGENTS.md` de la raíz). Ver la nota de alcance del §4 del documento de arquitectura.
 - Despliegue/hosting (Docker, Render/Fly.io/Railway según el doc) — no es responsabilidad de este AGENTS.md de código, pero no asumas configuración de infraestructura sin confirmarla.
 - Estrategia de migraciones de EF Core en producción (auto-aplicar al arrancar, como ya hace `ApplySumiClasMigrations()` en todos los entornos, vs. paso de despliegue separado) — ver sección "Base de datos".
 - Cadena de conexión de un entorno real (no local): `ConnectionStrings:SumiClasDb` solo existe hoy en `appsettings.Development.json` con las credenciales de `docker-compose.yml`.

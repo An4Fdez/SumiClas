@@ -69,9 +69,11 @@ Esto resuelve directamente el problema original: los avisos "de verdad important
 - Calendario (excursiones, reuniones, actividades; cumpleaños como vista filtrada del calendario)
 - Deberes en formato "pizarra + comentarios cortos" (no chat libre)
 - Roles y permisos básicos descritos arriba
-- Notificaciones push (ver stack, sección 5)
+- Notificaciones push (ver stack, sección 5) — **fuera del MVP, para una versión posterior** (ver la nota de alcance de debajo)
 
 > **Nota de alcance (2026-10-23): en esta versión de la Beta los avisos, los eventos del calendario y los objetos perdidos se publican solo con alcance `clase`.** La publicación con alcance `colegio` queda para una versión posterior, cuando existan los roles de **admin del colegio** y de **profesor**. Motivo: el §3 la reserva al admin del colegio, y ese rol no se puede asignar con fiabilidad mientras cualquiera pueda crear una clase y quedar como su delegado (§7.1) sin que nadie verifique a la persona. El modelo de datos ya está preparado (campo de colegio en los tres), así que no hay que rehacer la estructura para abrirlo.
+>
+> **Nota de alcance (2026-10-23): las notificaciones push quedan fuera del MVP** y pasan a una versión posterior (decisión del usuario: no son un tema principal para el MVP; las familias abren la app para ver lo publicado). Al retomarlas hay que decidir el mecanismo: el §5 propone la Web Push API, que necesita un service worker y una PWA, y el stack del frontend (Vite + React) descarta la PWA y el service worker de forma definitiva (ver el `AGENTS.md` de la raíz), así que habrá que reabrir esa decisión o elegir otro canal. Hoy no hay nada construido.
 
 **Segunda ola (si el tiempo lo permite):**
 - Gastos de clase en modo *tracking* (registro de quién participa y quién ha pagado, sin mover dinero real dentro de la app)
@@ -90,7 +92,7 @@ Esto resuelve directamente el problema original: los avisos "de verdad important
 - **Backend:** **API REST con .NET 10 Minimal API**. Usar EF Core Migrations desde el primer commit para tener trazabilidad del modelo de datos (útil para la memoria del TFM). Aunque se use Minimal API, conviene organizar el código en capas (Application/Domain/Infrastructure) para que no se convierta en un único archivo de endpoints.
 - **Base de datos:** **PostgreSQL**, vía Npgsql/EF Core. Encaja bien con la jerarquía Colegio→Clase→Matrícula→Usuario y con las relaciones N:M tutores-alumnos.
 - **Autenticación:** email + contraseña o magic link; JWT para sesiones. Sin OAuth social necesario para una Beta cerrada por colegio.
-- **Notificaciones push:** Web Push API (nativa de las PWA) — evita depender de servicios de terceros para la Beta.
+- **Notificaciones push:** Web Push API (nativa de las PWA) — evita depender de servicios de terceros para la Beta. **Fuera del MVP**: ver la nota de alcance del §4.
 - **IA (resumen semanal / búsqueda):** llamada a un LLM (API de Anthropic/OpenAI) con un prompt que recibe el contenido de la semana ya estructurado desde la base de datos (no hace falta RAG complejo: el volumen de datos por clase es pequeño y se puede pasar directo en el contexto).
 - **Hosting:** proveedor con buen soporte para contenedores .NET vía Docker — Render o Fly.io son las opciones más directas; Railway también funciona pero tiene algo menos de documentación específica para .NET.
 
