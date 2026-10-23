@@ -49,6 +49,24 @@ public sealed class AssignmentsEndpoints : IEndpoints
             .WithName("AssignmentCommentAdd")
             .Produces(StatusCodes.Status201Created);
 
+        assignments.MapPut("/{assignmentId:guid}/done", async (Guid assignmentId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AssignmentDoneMark.Command(assignmentId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AssignmentDoneMark")
+            .Produces(StatusCodes.Status204NoContent);
+
+        assignments.MapDelete("/{assignmentId:guid}/done", async (Guid assignmentId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AssignmentDoneUnmark.Command(assignmentId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AssignmentDoneUnmark")
+            .Produces(StatusCodes.Status204NoContent);
+
         assignments.MapGet("/", async (Guid classId, int? limit, string? cursor, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new AssignmentFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("AssignmentFinderByClass")
