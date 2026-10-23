@@ -13,6 +13,7 @@ export type Assignment = {
   authorName: string;
   authorRole?: ClassRole;
   isProposal: boolean;
+  done: boolean;
   createdAt: Date;
   comments: AssignmentComment[];
 };

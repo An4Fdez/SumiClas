@@ -8,7 +8,6 @@ import { SubjectFilterDropdown } from '@/components/app/SubjectFilterDropdown';
 import { useChildContext } from '@/hooks/useChildContext';
 import { useClassAssignments } from '@/hooks/useClassAssignments';
 import { useClassSubjects } from '@/hooks/useClassSubjects';
-import { useDoneAssignments } from '@/hooks/useDoneAssignments';
 import { useHomeworkRepositories } from '@/hooks/useHomeworkRepositories';
 import { useUserRepository } from '@/hooks/useUserRepository';
 import { useWizardIds } from '@/hooks/useWizardIds';
@@ -39,9 +38,9 @@ export default function Homework() {
   const { assignments: assignmentRepository, subjects: subjectRepository } = useHomeworkRepositories();
   const userRepository = useUserRepository();
   const ids = useWizardIds();
-  const { state, reload, loadMore, loadingMore, loadMoreError, addComment } = useClassAssignments(classId);
+  const { state, reload, loadMore, loadingMore, loadMoreError, addComment, setDone, doneError } =
+    useClassAssignments(classId);
   const subjectsList = useClassSubjects(classId);
-  const { done, toggle: toggleDone } = useDoneAssignments();
   const profile = useRef<Profile | null>(null);
 
   const [subjectFilters, setSubjectFilters] = useState<Set<string>>(new Set());
@@ -63,11 +62,11 @@ export default function Homework() {
       loaded
         .filter((a) => subjectFilters.size === 0 || subjectFilters.has(a.subjectId))
         .filter((a) => {
-          if (statusFilter === 'pending') return !done.has(a.id);
-          if (statusFilter === 'done') return done.has(a.id);
+          if (statusFilter === 'pending') return !a.done;
+          if (statusFilter === 'done') return a.done;
           return true;
         }),
-    [loaded, subjectFilters, statusFilter, done],
+    [loaded, subjectFilters, statusFilter],
   );
 
   const groupsByDay = useMemo(() => {
@@ -189,6 +188,12 @@ export default function Homework() {
         )}
       </div>
 
+      {doneError && (
+        <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+          {doneError}
+        </p>
+      )}
+
       {!classId ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
           {currentChild
@@ -268,9 +273,9 @@ export default function Homework() {
                           <AssignmentCard
                             key={assignment.id}
                             assignment={assignment}
-                            done={done.has(assignment.id)}
+                            done={assignment.done}
                             onOpen={() => setOpenAssignmentId(assignment.id)}
-                            onToggleDone={() => toggleDone(assignment.id)}
+                            onToggleDone={() => setDone(assignment.id, !assignment.done)}
                           />
                         ))}
                       </div>
@@ -304,8 +309,8 @@ export default function Homework() {
       {openAssignment && (
         <AssignmentDetailModal
           assignment={openAssignment}
-          done={done.has(openAssignment.id)}
-          onToggleDone={() => toggleDone(openAssignment.id)}
+          done={openAssignment.done}
+          onToggleDone={() => setDone(openAssignment.id, !openAssignment.done)}
           onAddComment={(text) => handleAddComment(openAssignment.id, text)}
           onClose={() => setOpenAssignmentId(null)}
         />

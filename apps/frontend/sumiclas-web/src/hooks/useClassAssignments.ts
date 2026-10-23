@@ -10,6 +10,11 @@ type State =
   | { status: 'ready'; items: Assignment[]; nextCursor?: string }
   | { status: 'error'; message: string };
 
+function withDone(state: State, assignmentId: string, done: boolean): State {
+  if (state.status !== 'ready') return state;
+  return { ...state, items: state.items.map((item) => (item.id === assignmentId ? { ...item, done } : item)) };
+}
+
 type CommentAuthor = Pick<AssignmentComment, 'authorId' | 'authorName' | 'authorRole'>;
 
 function mapComments(state: State, assignmentId: string, change: (comments: AssignmentComment[]) => AssignmentComment[]): State {
@@ -32,11 +37,14 @@ export function useClassAssignments(classId: string | undefined) {
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const generation = useRef(0);
   const pendingComments = useRef(0);
+  const togglingDone = useRef(new Set<string>());
+  const [doneError, setDoneError] = useState<string | null>(null);
 
   useEffect(() => {
     const mine = ++generation.current;
     setLoadingMore(false);
     setLoadMoreError(null);
+    setDoneError(null);
     if (!classId) {
       setState({ status: 'idle' });
       return;
@@ -103,5 +111,24 @@ export function useClassAssignments(classId: string | undefined) {
     [repository],
   );
 
-  return { state, reload, loadMore, loadingMore, loadMoreError, addComment };
+  const setDone = useCallback(
+    (assignmentId: string, done: boolean) => {
+      if (togglingDone.current.has(assignmentId)) return;
+      togglingDone.current.add(assignmentId);
+      const mine = generation.current;
+      setDoneError(null);
+      setState((prev) => withDone(prev, assignmentId, done));
+      const request = done ? repository.markAsDone(assignmentId) : repository.markAsNotDone(assignmentId);
+      request
+        .catch((error: unknown) => {
+          if (generation.current !== mine) return;
+          setState((prev) => withDone(prev, assignmentId, !done));
+          setDoneError(getApiErrorMessage(error));
+        })
+        .finally(() => togglingDone.current.delete(assignmentId));
+    },
+    [repository],
+  );
+
+  return { state, reload, loadMore, loadingMore, loadMoreError, addComment, setDone, doneError };
 }

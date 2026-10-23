@@ -31,6 +31,7 @@ export class NSwagAssignmentRepository implements IAssignmentRepository {
       authorName: item.authorName,
       authorRole: toRole(item.authorRole),
       isProposal: item.isProposal,
+      done: item.done,
       createdAt: item.createdAt,
       comments: (item.comments ?? []).map((comment) => ({
         id: comment.id,
@@ -57,5 +58,13 @@ export class NSwagAssignmentRepository implements IAssignmentRepository {
 
   async addComment(assignmentId: string, text: string): Promise<void> {
     await this.client.assignmentCommentAdd(assignmentId, { text });
+  }
+
+  async markAsDone(assignmentId: string): Promise<void> {
+    await this.client.assignmentDoneMark(assignmentId);
+  }
+
+  async markAsNotDone(assignmentId: string): Promise<void> {
+    await this.client.assignmentDoneUnmark(assignmentId);
   }
 }

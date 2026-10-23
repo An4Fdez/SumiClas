@@ -6,4 +6,6 @@ export interface IAssignmentRepository {
   listByClass(classId: string, page?: PageRequest): Promise<AssignmentPage>;
   create(assignment: NewAssignment): Promise<void>;
   addComment(assignmentId: string, text: string): Promise<void>;
+  markAsDone(assignmentId: string): Promise<void>;
+  markAsNotDone(assignmentId: string): Promise<void>;
 }
