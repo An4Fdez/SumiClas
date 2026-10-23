@@ -13,6 +13,8 @@ using SumiClas.Api.Endpoints;
 using SumiClas.Api.Http;
 using SumiClas.Sessions.Infrastructure;
 using SumiClas.Tests.Sessions.Infrastructure;
+using System.Net;
+using System.Net.Sockets;
 
 /// <summary>
 /// The real API over a loopback socket, composed as Program.cs does (security, exception handling, rate limiting,
@@ -48,7 +50,7 @@ public sealed class EndpointsHost : IAsyncDisposable
             .AddSumiClasApiSecurity(ConfigurationMother.Create(all))
             .AddSumiClasRateLimiting(ConfigurationMother.Create(all))
             .AddSumiClasExceptionHandling();
-        builder.Services.AddValidation();
+        builder.Services.AddSumiClasValidation();
         builder.Services.AddSingleton(sender);
         builder.Services.AddSingleton(Options.Create(RefreshCookieOptionsMother.Default()));
         builder.Services.AddSingleton(TimeProvider.System);
@@ -72,6 +74,30 @@ public sealed class EndpointsHost : IAsyncDisposable
             .ToList();
 
     public HttpClient CreateClient() => new() { BaseAddress = new Uri(this._app.Urls.First()) };
+
+    /// <summary>A client whose requests reach the API from another loopback address, to tell clients apart by IP.</summary>
+    public HttpClient CreateClientFrom(IPAddress address)
+    {
+        SocketsHttpHandler handler = new()
+        {
+            ConnectCallback = async (context, ct) =>
+            {
+                Socket socket = new(SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    socket.Bind(new IPEndPoint(address, 0));
+                    await socket.ConnectAsync(context.DnsEndPoint, ct);
+                    return new NetworkStream(socket, ownsSocket: true);
+                }
+                catch
+                {
+                    socket.Dispose();
+                    throw;
+                }
+            },
+        };
+        return new HttpClient(handler) { BaseAddress = new Uri(this._app.Urls.First()) };
+    }
 
     public string AccessTokenOf(Guid userId)
         => JwtTokenMother.Create(

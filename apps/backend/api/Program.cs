@@ -16,7 +16,7 @@ builder.Services.AddApiVersioning(versionOptions =>
 }).AddApiExplorer(explorerOptions => { explorerOptions.GroupNameFormat = "'v'VVV"; }).AddOpenApi();
 
 builder.Services.AddHealthChecks();
-builder.Services.AddValidation();
+builder.Services.AddSumiClasValidation();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
 builder.Services.AddSumiClasApiSecurity(builder.Configuration);
