@@ -7,8 +7,8 @@ using System.Reflection;
 public static class OpenApiRegistration
 {
     /// <summary>
-    /// Registers the OpenAPI services by reflection: a direct call makes the OpenAPI source generator emit interceptors,
-    /// which only the Web SDK enables, and this test project is not a web project.
+    /// Registers the OpenAPI services by reflection: a direct call makes the OpenAPI source generator emit
+    /// interceptors, which only the Web SDK enables, and this test project is not a web project.
     /// </summary>
     public static void AddOpenApi(IServiceCollection services, Action<OpenApiOptions> configure)
     {

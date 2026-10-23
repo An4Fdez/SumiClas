@@ -189,7 +189,8 @@ public class RequestLimitsShould
     private async Task ShouldHaveRefusedNamingTheField(HttpResponseMessage response, string field)
     {
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await RefusedFieldsOf(response)).Should().Contain(name => string.Equals(name, field, StringComparison.OrdinalIgnoreCase));
+        (await RefusedFieldsOf(response)).Should()
+            .Contain(name => string.Equals(name, field, StringComparison.OrdinalIgnoreCase));
         this._sender.VerifyNoOtherCalls();
     }
 

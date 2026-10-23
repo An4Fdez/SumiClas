@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using SumiClas.Api.Http;
 using System.Text.Json;
 
-/// <summary>The real OpenAPI generator with the transformer, over a loopback socket, reading the document it serves.</summary>
+/// <summary>The real OpenAPI generator with the transformer, over a loopback socket, reading what it serves.</summary>
 [TestFixture]
 public class ProblemResponsesTransformerShould
 {
@@ -64,7 +64,7 @@ public class ProblemResponsesTransformerShould
     }
 
     [Test]
-    public async Task keep_the_description_of_a_response_the_endpoint_declared_without_a_body_and_give_it_the_problem_body()
+    public async Task keep_the_description_of_a_bodyless_declared_response_and_give_it_the_problem_body()
     {
         JsonElement responses = await ResponsesOf("get", "/described");
 

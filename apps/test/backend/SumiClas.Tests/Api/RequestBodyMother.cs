@@ -56,6 +56,16 @@ public static class RequestBodyMother
             null,
             "Mother"));
 
+    public static string Announcement(string scope)
+        => Json(new AnnouncementCreateRequest(
+            GuidMother.Random(),
+            scope,
+            GuidMother.Random(),
+            StringMother.Random("title"),
+            StringMother.Random("body"),
+            "Normal",
+            null));
+
     public static string OfLength(int length) => new('x', length);
 
     private static string Json<T>(T request) => JsonSerializer.Serialize(request, JsonSerializerOptions.Web);

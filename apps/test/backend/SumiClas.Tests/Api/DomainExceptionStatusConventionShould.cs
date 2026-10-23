@@ -70,7 +70,8 @@ public class DomainExceptionStatusConventionShould
 
     private static IEnumerable<(Type Type, string Code)> DefaultBadRequests()
         => typeof(DomainException).Assembly.GetTypes()
-            .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(DomainException).IsAssignableFrom(type))
+            .Where(type => type is { IsClass: true, IsAbstract: false }
+                && typeof(DomainException).IsAssignableFrom(type))
             .Where(type => DomainExceptionConvention.StatusOf(type) == StatusCodes.Status400BadRequest)
             .Select(type => (type, ((DomainException)Activator.CreateInstance(type)!).Code));
 

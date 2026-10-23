@@ -63,7 +63,7 @@ public class DomainExceptionHandlerShould : ApiUnitTestCase
     }
 
     [Test]
-    public async Task answer_the_status_of_the_convention_with_its_code_and_message_when_another_exception_was_declared()
+    public async Task answer_the_status_of_the_convention_with_its_code_when_another_exception_was_declared()
     {
         DefaultHttpContext http = HttpContextMother.WithProblemDetails();
         http.SetEndpoint(EndpointMother.Declaring<SampleExceptions.NotFound>(StatusCodes.Status409Conflict));

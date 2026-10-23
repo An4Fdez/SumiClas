@@ -58,7 +58,8 @@ public class ApiSecurityRegistrationShould
 
         root.GetProperty("components").GetProperty("securitySchemes").TryGetProperty("Bearer", out _).Should().BeTrue();
         root.GetProperty("components").GetProperty("schemas").TryGetProperty("ProblemDetails", out _).Should().BeTrue();
-        JsonElement responses = root.GetProperty("paths").GetProperty("/protected").GetProperty("post").GetProperty("responses");
+        JsonElement responses = root.GetProperty("paths").GetProperty("/protected").GetProperty("post")
+            .GetProperty("responses");
         foreach (string status in new[] { "400", "401", "403", "404", "409" })
         {
             responses.GetProperty(status).GetProperty("content").GetProperty("application/problem+json")

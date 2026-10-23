@@ -59,6 +59,7 @@ public class DomainExceptionConventionShould
 
     private static Type[] DomainExceptions()
         => Library.GetTypes()
-            .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(DomainException).IsAssignableFrom(type))
+            .Where(type => type is { IsClass: true, IsAbstract: false }
+                && typeof(DomainException).IsAssignableFrom(type))
             .ToArray();
 }

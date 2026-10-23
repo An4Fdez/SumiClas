@@ -21,7 +21,8 @@ public class ApplicationRegistrationShould
         using IServiceScope scope = provider.CreateScope();
         ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-        Func<Task> act = () => sender.Send(UserSchoolPublishEnsureQueryMother.With(GuidMother.Random(), GuidMother.Random()));
+        Func<Task> act = () => sender.Send(
+            UserSchoolPublishEnsureQueryMother.With(GuidMother.Random(), GuidMother.Random()));
 
         await act.Should().ThrowAsync<UserExceptions.SchoolPublishForbidden>();
     }

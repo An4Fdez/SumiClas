@@ -75,7 +75,7 @@ public sealed class EndpointsHost : IAsyncDisposable
 
     public HttpClient CreateClient() => new() { BaseAddress = new Uri(this._app.Urls.First()) };
 
-    /// <summary>A client whose requests reach the API from another loopback address, to tell clients apart by IP.</summary>
+    /// <summary>A client that reaches the API from another loopback address, to tell clients apart by IP.</summary>
     public HttpClient CreateClientFrom(IPAddress address)
     {
         SocketsHttpHandler handler = new()

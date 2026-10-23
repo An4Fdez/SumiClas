@@ -56,7 +56,10 @@ public class RateLimitingShould
         using HttpClient client = host.CreateClient();
         await ExhaustAsync(client, "/auth/login", RequestBodyMother.Login());
 
-        using HttpResponseMessage response = await PostAsync(client, "/auth/register", RequestBodyMother.Registration());
+        using HttpResponseMessage response = await PostAsync(
+            client,
+            "/auth/register",
+            RequestBodyMother.Registration());
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
