@@ -12,10 +12,12 @@ namespace SumiClas.Shared.Application;
 /// (<see cref="ConcurrencyConflictException"/>) behaves the same way and becomes
 /// <see cref="SharedExceptions.ConcurrencyConflict"/> (HTTP 409).
 /// Use cases never touch the unit of work.
+/// The constraint is only <see cref="ICommand"/>: a command declared as the plain <see cref="IRequest"/> is not an
+/// <see cref="IRequest{TResponse}"/> in MediatR 12, so asking for that too would leave it outside the pipeline.
 /// </summary>
 public sealed class UnitOfWorkBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : ICommand, IRequest<TResponse>
+    where TRequest : ICommand
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
     {
