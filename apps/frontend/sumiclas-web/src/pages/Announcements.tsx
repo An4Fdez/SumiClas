@@ -20,7 +20,6 @@ type ReadFilter = 'unread' | 'read' | null;
 
 const scopeFilters: { value: ScopeFilter; label: string }[] = [
   { value: 'all', label: 'Todos' },
-  { value: 'school', label: 'Colegio' },
   { value: 'class', label: 'Mi clase' },
 ];
 

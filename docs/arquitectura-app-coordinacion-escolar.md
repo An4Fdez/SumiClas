@@ -71,6 +71,8 @@ Esto resuelve directamente el problema original: los avisos "de verdad important
 - Roles y permisos básicos descritos arriba
 - Notificaciones push (ver stack, sección 5)
 
+> **Nota de alcance (2026-10-23): en esta versión de la Beta los avisos, los eventos del calendario y los objetos perdidos se publican solo con alcance `clase`.** La publicación con alcance `colegio` queda para una versión posterior, cuando existan los roles de **admin del colegio** y de **profesor**. Motivo: el §3 la reserva al admin del colegio, y ese rol no se puede asignar con fiabilidad mientras cualquiera pueda crear una clase y quedar como su delegado (§7.1) sin que nadie verifique a la persona. El modelo de datos ya está preparado (campo de colegio en los tres), así que no hay que rehacer la estructura para abrirlo.
+
 **Segunda ola (si el tiempo lo permite):**
 - Gastos de clase en modo *tracking* (registro de quién participa y quién ha pagado, sin mover dinero real dentro de la app)
 - Objetos perdidos

@@ -38,7 +38,6 @@ const viewLabels: Record<ViewMode, string> = { day: 'Día', week: 'Semana', mont
 
 const scopeFilters: { value: ScopeFilter; label: string }[] = [
   { value: 'all', label: 'Todos' },
-  { value: 'school', label: 'Colegio' },
   { value: 'class', label: 'Mi clase' },
 ];
 
