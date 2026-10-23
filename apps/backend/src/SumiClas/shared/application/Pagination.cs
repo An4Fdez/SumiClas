@@ -68,8 +68,9 @@ public static class Pagination
     public static PageCursor CursorOf(DateOnly date, Guid id) => new(date.DayNumber, id);
 
     /// <summary>
-    /// Compares ids in the order PostgreSQL sorts uuid values (bytes in textual order), which differs from
-    /// <see cref="Guid.CompareTo(Guid)"/>; in-memory merging must use it to agree with the database ordering.
+    /// Compares ids in the order PostgreSQL sorts uuid values (bytes in textual order). In .NET this is the same order
+    /// as <see cref="Guid.CompareTo(Guid)"/>; it is spelled out so that in-memory merging visibly agrees with the
+    /// database ordering, which the PostgreSQL tests check.
     /// </summary>
     public static int CompareIds(Guid left, Guid right)
         => string.CompareOrdinal(left.ToString("D"), right.ToString("D"));
