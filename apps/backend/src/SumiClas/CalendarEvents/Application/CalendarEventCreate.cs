@@ -76,6 +76,8 @@ public static class CalendarEventCreate
             {
                 Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
+                await queryBus.Send(new UserSchoolPublishEnsure.Query(authorId, school), ct);
+
                 calendarEvent = CalendarEvent.Create(
                     command.Id,
                     scope,

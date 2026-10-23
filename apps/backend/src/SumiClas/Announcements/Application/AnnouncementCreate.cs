@@ -78,6 +78,8 @@ public static class AnnouncementCreate
             {
                 Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
+                await queryBus.Send(new UserSchoolPublishEnsure.Query(authorId, school), ct);
+
                 announcement = Announcement.Create(
                     command.Id,
                     scope,

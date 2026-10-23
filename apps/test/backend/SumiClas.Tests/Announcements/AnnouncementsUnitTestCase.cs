@@ -184,4 +184,35 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
                 It.Is<UserClassRepresentativeEnsure.Query>(query => query.UserId == userId && query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UserExceptions.ClassRepresentativeForbidden());
+
+    protected void ShouldAllowPublishingToSchool(Guid userId, Guid schoolId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserSchoolPublishEnsure.Query>(query => query.UserId == userId && query.SchoolId == schoolId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Unit.Value);
+
+    protected void ShouldAllowPublishingToAnySchool()
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<UserSchoolPublishEnsure.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Unit.Value);
+
+    protected void ShouldDenyPublishingToSchool(Guid userId, Guid schoolId)
+        => this.QueryBus
+            .Setup(bus => bus.Send(
+                It.Is<UserSchoolPublishEnsure.Query>(query => query.UserId == userId && query.SchoolId == schoolId),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new UserExceptions.SchoolPublishForbidden());
+
+    protected void ShouldHaveAskedToPublishToSchool(Guid userId, Guid schoolId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<UserSchoolPublishEnsure.Query>(query => query.UserId == userId && query.SchoolId == schoolId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+    protected void ShouldNotHaveAskedToPublishToSchool()
+        => this.QueryBus.Verify(
+            bus => bus.Send(It.IsAny<UserSchoolPublishEnsure.Query>(), It.IsAny<CancellationToken>()),
+            Times.Never);
 }

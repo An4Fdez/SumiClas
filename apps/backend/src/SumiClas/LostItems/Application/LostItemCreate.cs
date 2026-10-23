@@ -72,6 +72,8 @@ public static class LostItemCreate
             {
                 Guid school = await queryBus.Send(new SchoolIdFinderBySchoolYear.Query(schoolClass.SchoolYearId), ct);
 
+                await queryBus.Send(new UserSchoolPublishEnsure.Query(authorId, school), ct);
+
                 lostItem = LostItem.Create(
                     command.Id,
                     scope,

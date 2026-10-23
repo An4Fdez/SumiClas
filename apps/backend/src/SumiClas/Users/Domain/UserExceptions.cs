@@ -54,6 +54,10 @@ public static class UserExceptions
     public sealed class ClassRepresentativeForbidden()
         : DomainException("User.ClassRepresentativeForbidden", "Solo un delegado de la clase puede hacer esto.");
 
+    public sealed class SchoolPublishForbidden() : DomainException(
+        "User.SchoolPublishForbidden",
+        "Publicar a nivel de colegio estará disponible en una versión posterior, cuando existan los roles de administrador del colegio y de profesor.");
+
     public sealed class MaxClassRepresentativesReached()
         : DomainException("User.MaxClassRepresentativesReached", "Esta clase ya tiene el número máximo de delegados.");
 }

@@ -44,6 +44,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldAllowPublishingToSchool(authorId, schoolId);
         this.ShouldCaptureAddedAnnouncements();
 
         await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.With(
@@ -125,6 +126,7 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
         this.ShouldAllowClassRepresentative(authorId, classId);
         this.ShouldEnsureSchoolYearIsActive(schoolYearId);
         this.ShouldFindSchoolOfSchoolYear(schoolYearId, GuidMother.Random());
+        this.ShouldAllowPublishingToAnySchool();
         this.ShouldCaptureAddedAnnouncements();
 
         await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: scope, classId: classId));
@@ -571,5 +573,69 @@ public class AnnouncementCreateShould : AnnouncementsUnitTestCase
 
         await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
         this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task throw_school_publish_forbidden_without_adding_when_the_user_cannot_publish_to_the_school()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldDenyPublishingToSchool(authorId, schoolId);
+
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            AnnouncementCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        await act.Should().ThrowAsync<UserExceptions.SchoolPublishForbidden>();
+        this.Added.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task ask_whether_the_author_can_publish_to_the_school_of_the_class_before_adding_the_announcement()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldAllowPublishingToSchool(authorId, schoolId);
+
+        await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: "School", classId: classId));
+
+        this.ShouldHaveAskedToPublishToSchool(authorId, schoolId);
+        this.Added.Should().ContainSingle();
+    }
+
+    [Test]
+    public async Task not_ask_about_publishing_to_the_school_when_the_scope_is_class()
+    {
+        this.ShouldCaptureAddedAnnouncements();
+        Guid classId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid authorId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(authorId);
+        this.ShouldFindUser(authorId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldAllowClassRepresentative(authorId, classId);
+        this.ShouldEnsureSchoolYearIsActive(schoolYearId);
+
+        await this._useCase.ExecuteAsync(AnnouncementCreateCommandMother.Valid(scope: "Class", classId: classId));
+
+        this.ShouldNotHaveAskedToPublishToSchool();
+        this.Added.Should().ContainSingle();
     }
 }

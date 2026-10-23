@@ -15,6 +15,7 @@ public class DomainExceptionStatusConventionShould
 
     [TestCase(typeof(ClassExceptions.NotFound), StatusCodes.Status404NotFound)]
     [TestCase(typeof(UserExceptions.ClassAccessForbidden), StatusCodes.Status403Forbidden)]
+    [TestCase(typeof(UserExceptions.SchoolPublishForbidden), StatusCodes.Status403Forbidden)]
     [TestCase(typeof(SharedExceptions.AlreadyExists), StatusCodes.Status409Conflict)]
     [TestCase(typeof(EnrollmentExceptions.AlreadyConfirmed), StatusCodes.Status409Conflict)]
     [TestCase(typeof(UserExceptions.EmailAlreadyRegistered), StatusCodes.Status409Conflict)]
