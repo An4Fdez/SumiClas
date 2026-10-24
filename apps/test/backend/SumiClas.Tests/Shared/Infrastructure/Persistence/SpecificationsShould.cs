@@ -5,9 +5,12 @@ using SumiClas.Announcements.Domain;
 using SumiClas.Announcements.Infrastructure;
 using SumiClas.Assignments.Domain;
 using SumiClas.Assignments.Infrastructure;
+using SumiClas.ClassExpenses.Domain;
+using SumiClas.ClassExpenses.Infrastructure;
 using SumiClas.Shared.Infrastructure.Persistence;
 using SumiClas.Tests.Announcements.Domain;
 using SumiClas.Tests.Assignments.Domain;
+using SumiClas.Tests.ClassExpenses.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Domain;
@@ -154,6 +157,32 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_expenses_a_guardian_takes_part_in_without_having_paid()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid guardian = GuidMother.Random();
+        ClassExpense owed = ClassExpenseMother.With(participants:
+        [
+            ExpenseParticipantMother.Unpaid(guardian),
+            ExpenseParticipantMother.Paid(GuidMother.Random()),
+        ]);
+        await SaveAsync(database, owed);
+        await SaveAsync(database, ClassExpenseMother.With(participants: [ExpenseParticipantMother.Paid(guardian)]));
+        await SaveAsync(database, ClassExpenseMother.With(participants:
+        [
+            ExpenseParticipantMother.Paid(guardian),
+            ExpenseParticipantMother.Unpaid(GuidMother.Random()),
+        ]));
+        await SaveAsync(database, ClassExpenseMother.With());
+
+        IReadOnlyCollection<ClassExpense> found = await SearchAsync(
+            database,
+            new ClassExpenseSpecification(participantId: guardian, participantHasPaid: false));
+
+        found.Select(expense => expense.Id).Should().Equal(owed.Id);
+    }
+
+    [Test]
     public async Task select_the_users_that_hold_a_role_in_a_class_through_the_child_roles()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
@@ -240,6 +269,21 @@ public class SpecificationsShould
         await using SumiClasDbContext context = database.NewContext();
         context.Assignments.Add(assignment);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task SaveAsync(TestDatabase database, ClassExpense expense)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        context.ClassExpenses.Add(expense);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task<IReadOnlyCollection<ClassExpense>> SearchAsync(
+        TestDatabase database,
+        ClassExpenseSpecification specification)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        return await new ClassExpenseRepository(context).SearchAsync(specification);
     }
 
     private static async Task<IReadOnlyCollection<Assignment>> SearchAsync(
