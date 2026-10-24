@@ -7,10 +7,13 @@ using SumiClas.Assignments.Domain;
 using SumiClas.Assignments.Infrastructure;
 using SumiClas.ClassExpenses.Domain;
 using SumiClas.ClassExpenses.Infrastructure;
+using SumiClas.LostItems.Domain;
+using SumiClas.LostItems.Infrastructure;
 using SumiClas.Shared.Infrastructure.Persistence;
 using SumiClas.Tests.Announcements.Domain;
 using SumiClas.Tests.Assignments.Domain;
 using SumiClas.Tests.ClassExpenses.Domain;
+using SumiClas.Tests.LostItems.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Domain;
@@ -183,6 +186,23 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_lost_items_created_from_an_instant_on_when_filtering_by_created_from()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        LostItem atTheEdge = LostItemMother.With(createdAt: UnitTestCase.Now);
+        LostItem after = LostItemMother.With(createdAt: UnitTestCase.Now.AddSeconds(ONE_SECOND));
+        await SaveAsync(database, atTheEdge);
+        await SaveAsync(database, after);
+        await SaveAsync(database, LostItemMother.With(createdAt: UnitTestCase.Now.AddSeconds(-ONE_SECOND)));
+
+        IReadOnlyCollection<LostItem> found = await SearchAsync(
+            database,
+            new LostItemSpecification(createdFrom: UnitTestCase.Now));
+
+        found.Select(item => item.Id).Should().BeEquivalentTo([atTheEdge.Id, after.Id]);
+    }
+
+    [Test]
     public async Task select_the_users_that_hold_a_role_in_a_class_through_the_child_roles()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
@@ -276,6 +296,21 @@ public class SpecificationsShould
         await using SumiClasDbContext context = database.NewContext();
         context.ClassExpenses.Add(expense);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task SaveAsync(TestDatabase database, LostItem lostItem)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        context.LostItems.Add(lostItem);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task<IReadOnlyCollection<LostItem>> SearchAsync(
+        TestDatabase database,
+        LostItemSpecification specification)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        return await new LostItemRepository(context).SearchAsync(specification);
     }
 
     private static async Task<IReadOnlyCollection<ClassExpense>> SearchAsync(

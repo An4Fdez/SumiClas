@@ -16,6 +16,7 @@ public sealed class LostItemSpecification : Specification<LostItem>
         bool? photoPrivacyConfirmed = null,
         Guid? authorId = null,
         DateTimeOffset? createdAt = null,
+        DateTimeOffset? createdFrom = null,
         KeysetPage<DateTimeOffset>? page = null)
     {
         if (id is { } itemId) AddCriteria(item => item.Id == itemId);
@@ -29,6 +30,7 @@ public sealed class LostItemSpecification : Specification<LostItem>
         if (photoPrivacyConfirmed is { } privacyConfirmed) AddCriteria(item => item.PhotoPrivacyConfirmed == privacyConfirmed);
         if (authorId is { } author) AddCriteria(item => item.AuthorId == author);
         if (createdAt is { } created) AddCriteria(item => item.CreatedAt == created);
+        if (createdFrom is { } from) AddCriteria(item => item.CreatedAt >= from);
         if (page is not null) AddKeysetPage(item => item.CreatedAt, item => item.Id, page, descending: true);
     }
 }
