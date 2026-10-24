@@ -35,6 +35,24 @@ public sealed class EventDate : ValueObject
         return new EventDate(month, day, null);
     }
 
+    /// <summary>
+    /// The first date on or after <paramref name="from"/> on which the event happens, or null when a one-time event is
+    /// already over. A recurring Feb 29 falls on Feb 28 in the years that are not leap years.
+    /// </summary>
+    public DateOnly? NextOccurrenceFrom(DateOnly from)
+    {
+        if (Year is { } year)
+        {
+            DateOnly date = new(year, Month, Day);
+            return date >= from ? date : null;
+        }
+
+        DateOnly thisYear = OccurrenceIn(from.Year);
+        return thisYear >= from ? thisYear : OccurrenceIn(from.Year + 1);
+    }
+
+    private DateOnly OccurrenceIn(int year) => new(year, Month, Math.Min(Day, DateTime.DaysInMonth(year, Month)));
+
     private static void Validate(int month, int day)
     {
         if (month < 1 || month > 12)
