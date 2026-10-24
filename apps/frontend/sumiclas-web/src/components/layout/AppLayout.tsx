@@ -1,6 +1,7 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Moon, Sun } from 'lucide-react';
 import { Logo } from './Logo';
+import { RoutedOutlet } from './RoutedOutlet';
 import { ChildSelector } from '@/components/app/ChildSelector';
 import { AppTabBar } from '@/components/app/AppTabBar';
 import { ChildProvider } from '@/context/ChildProvider';
@@ -53,7 +54,7 @@ function AppContent() {
     );
   }
 
-  return <Outlet />;
+  return <RoutedOutlet />;
 }
 
 export function AppLayout() {

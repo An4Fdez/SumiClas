@@ -15,6 +15,7 @@ import { ProvinceRepositoryProvider } from '@/context/ProvinceRepositoryProvider
 import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
 import { UserRepositoryProvider } from '@/context/UserRepositoryProvider';
 import { AuthProvider } from '@/context/AuthProvider';
+import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { removeLegacySessionKeys } from '@/lib/auth';
 import './index.css';
 
@@ -22,34 +23,36 @@ removeLegacySessionKeys();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ApiClientProvider>
-      <SessionRepositoryProvider>
-        <UserRepositoryProvider>
-          <StudentRepositoryProvider>
-            <ProvinceRepositoryProvider>
-              <LocalityRepositoryProvider>
-                <OnboardingRepositoriesProvider>
-                  <AnnouncementRepositoryProvider>
-                    <LostItemRepositoryProvider>
-                      <CalendarEventRepositoryProvider>
-                        <HomeworkRepositoriesProvider>
-                          <ClassExpenseRepositoryProvider>
-                            <BrowserRouter>
-                              <AuthProvider>
-                                <App />
-                              </AuthProvider>
-                            </BrowserRouter>
-                          </ClassExpenseRepositoryProvider>
-                        </HomeworkRepositoriesProvider>
-                      </CalendarEventRepositoryProvider>
-                    </LostItemRepositoryProvider>
-                  </AnnouncementRepositoryProvider>
-                </OnboardingRepositoriesProvider>
-              </LocalityRepositoryProvider>
-            </ProvinceRepositoryProvider>
-          </StudentRepositoryProvider>
-        </UserRepositoryProvider>
-      </SessionRepositoryProvider>
-    </ApiClientProvider>
+    <ErrorBoundary fullScreen>
+      <ApiClientProvider>
+        <SessionRepositoryProvider>
+          <UserRepositoryProvider>
+            <StudentRepositoryProvider>
+              <ProvinceRepositoryProvider>
+                <LocalityRepositoryProvider>
+                  <OnboardingRepositoriesProvider>
+                    <AnnouncementRepositoryProvider>
+                      <LostItemRepositoryProvider>
+                        <CalendarEventRepositoryProvider>
+                          <HomeworkRepositoriesProvider>
+                            <ClassExpenseRepositoryProvider>
+                              <BrowserRouter>
+                                <AuthProvider>
+                                  <App />
+                                </AuthProvider>
+                              </BrowserRouter>
+                            </ClassExpenseRepositoryProvider>
+                          </HomeworkRepositoriesProvider>
+                        </CalendarEventRepositoryProvider>
+                      </LostItemRepositoryProvider>
+                    </AnnouncementRepositoryProvider>
+                  </OnboardingRepositoriesProvider>
+                </LocalityRepositoryProvider>
+              </ProvinceRepositoryProvider>
+            </StudentRepositoryProvider>
+          </UserRepositoryProvider>
+        </SessionRepositoryProvider>
+      </ApiClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
