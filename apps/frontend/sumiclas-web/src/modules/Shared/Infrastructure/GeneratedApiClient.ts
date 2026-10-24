@@ -152,6 +152,12 @@ export interface IGeneratedApiClient {
     classExpenseUnpaidMark(classExpenseId: string, guardianId: string): Promise<void>;
 
     /**
+     * @param days (optional) 
+     * @return OK
+     */
+    dashboardSummaryFinderByClass(classId: string, days: number | undefined): Promise<DashboardSummaryResponse>;
+
+    /**
      * @return Created
      */
     enrollmentCreate(body: EnrollmentCreateRequest): Promise<void>;
@@ -1999,6 +2005,77 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
+     * @param days (optional) 
+     * @return OK
+     */
+    dashboardSummaryFinderByClass(classId: string, days: number | undefined): Promise<DashboardSummaryResponse> {
+        let url_ = this.baseUrl + "/dashboard/summary?";
+        if (classId === undefined || classId === null)
+            throw new globalThis.Error("The parameter 'classId' must be defined and cannot be null.");
+        else
+            url_ += "classId=" + encodeURIComponent("" + classId) + "&";
+        if (days === null)
+            throw new globalThis.Error("The parameter 'days' cannot be null.");
+        else if (days !== undefined)
+            url_ += "days=" + encodeURIComponent("" + days) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processDashboardSummaryFinderByClass(_response));
+        });
+    }
+
+    protected processDashboardSummaryFinderByClass(response: Response): Promise<DashboardSummaryResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DashboardSummaryResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DashboardSummaryResponse>(null as any);
+    }
+
+    /**
      * @return Created
      */
     enrollmentCreate(body: EnrollmentCreateRequest): Promise<void> {
@@ -3558,6 +3635,13 @@ export interface AnnouncementResponse {
     [key: string]: any;
 }
 
+export interface AnnouncementUnreadSummaryResponse {
+    unread: number;
+    unreadUrgent: number;
+
+    [key: string]: any;
+}
+
 export interface AssignmentCommentAddRequest {
     text: string;
 
@@ -3582,6 +3666,13 @@ export interface AssignmentCreateRequest {
     title: string;
     description: string | undefined;
     dueDate: Date;
+
+    [key: string]: any;
+}
+
+export interface AssignmentPendingSummaryResponse {
+    pending: number;
+    nextDueDate: Date | undefined;
 
     [key: string]: any;
 }
@@ -3657,6 +3748,15 @@ export interface CalendarEventSummaryResponse {
     [key: string]: any;
 }
 
+export interface CalendarEventUpcomingResponse {
+    title: string;
+    type: string;
+    date: Date;
+    daysUntil: number;
+
+    [key: string]: any;
+}
+
 export interface ChildResponse {
     studentId: string;
     firstName: string;
@@ -3689,6 +3789,13 @@ export interface ClassExpenseCreateRequest {
     [key: string]: any;
 }
 
+export interface ClassExpensePendingSummaryResponse {
+    pending: boolean;
+    item: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface ClassExpenseResponse {
     id: string;
     classId: string;
@@ -3714,6 +3821,17 @@ export interface ClassResponse {
     id: string;
     schoolYearId: string;
     name: string;
+
+    [key: string]: any;
+}
+
+export interface DashboardSummaryResponse {
+    days: number;
+    announcements: AnnouncementUnreadSummaryResponse;
+    assignments: AssignmentPendingSummaryResponse;
+    expenses: ClassExpensePendingSummaryResponse;
+    lostItems: LostItemRecentSummaryResponse;
+    upcomingEvents: CalendarEventUpcomingResponse[];
 
     [key: string]: any;
 }
@@ -3774,6 +3892,12 @@ export interface LostItemCreateRequest {
     description: string;
     photoUrl: string | undefined;
     photoPrivacyConfirmed: boolean;
+
+    [key: string]: any;
+}
+
+export interface LostItemRecentSummaryResponse {
+    count: number;
 
     [key: string]: any;
 }
