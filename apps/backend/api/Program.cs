@@ -5,6 +5,11 @@ using SumiClas.Api.Endpoints;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// log4net is the only provider (console and rolling file, see log4net.config); the Logging section of appsettings
+// still filters by category before a message reaches it.
+builder.Logging.ClearProviders();
+builder.Logging.AddLog4Net();
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
