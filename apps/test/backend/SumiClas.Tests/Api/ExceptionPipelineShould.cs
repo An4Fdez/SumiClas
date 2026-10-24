@@ -16,7 +16,7 @@ using System.Text.Json;
 /// the declarations of the endpoint even though the middleware clears the endpoint of the request.
 /// </summary>
 [TestFixture]
-public class DomainExceptionPipelineShould
+public class ExceptionPipelineShould
 {
     [Test]
     public async Task answer_a_declared_domain_exception_with_the_declared_status_code_and_message()
@@ -65,6 +65,34 @@ public class DomainExceptionPipelineShould
         HttpResponseMessage response = await client.GetAsync("/unexpected");
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        JsonElement body = await BodyOf(response);
+        body.GetProperty("code").GetString().Should().Be(ApiErrorCodes.UnexpectedError);
+        body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
+    }
+
+    [Test]
+    public async Task answer_the_status_of_a_bad_http_request_with_its_code()
+    {
+        await using WebApplication app = await StartAsync();
+        using HttpClient client = ClientOf(app);
+
+        HttpResponseMessage response = await client.GetAsync("/malformed");
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnsupportedMediaType);
+        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.BadRequest);
+    }
+
+    [Test]
+    public async Task answer_503_with_retry_after_when_the_database_fails_under_another_exception()
+    {
+        await using WebApplication app = await StartAsync();
+        using HttpClient client = ClientOf(app);
+
+        HttpResponseMessage response = await client.GetAsync("/database");
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.Headers.RetryAfter!.Delta.Should().Be(TimeSpan.FromSeconds(ApiExceptionHandler.RetryAfterSeconds));
+        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.ServiceUnavailable);
     }
 
     [Test]
@@ -98,7 +126,10 @@ public class DomainExceptionPipelineShould
         app.MapGet("/undeclared", IResult () => throw new SampleExceptions.Forbidden())
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
         app.MapGet("/none", IResult () => throw new SampleExceptions.NotFound());
-        app.MapGet("/unexpected", IResult () => throw new InvalidOperationException());
+        app.MapGet("/unexpected", IResult () => throw InfrastructureExceptionMother.Unexpected());
+        app.MapGet("/malformed", IResult ()
+            => throw new BadHttpRequestException("x", StatusCodes.Status415UnsupportedMediaType));
+        app.MapGet("/database", IResult () => throw InfrastructureExceptionMother.WrappedTransientDatabase());
         await app.StartAsync();
         return app;
     }

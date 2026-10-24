@@ -15,7 +15,7 @@ public sealed class CapturingLoggerProvider : ILoggerProvider
     {
     }
 
-    public sealed record LogEntry(LogLevel Level, Exception? Exception);
+    public sealed record LogEntry(LogLevel Level, Exception? Exception, string Message);
 
     private sealed class CapturingLogger(ConcurrentQueue<LogEntry> entries) : ILogger
     {
@@ -29,6 +29,7 @@ public sealed class CapturingLoggerProvider : ILoggerProvider
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter) => entries.Enqueue(new LogEntry(logLevel, exception));
+            Func<TState, Exception?, string> formatter)
+            => entries.Enqueue(new LogEntry(logLevel, exception, formatter(state, exception)));
     }
 }

@@ -8,7 +8,7 @@ public static class ExceptionHandlingServiceCollectionExtensions
     public static IServiceCollection AddSumiClasExceptionHandling(this IServiceCollection services)
     {
         services.AddProblemDetails();
-        services.AddExceptionHandler<DomainExceptionHandler>();
+        services.AddExceptionHandler<ApiExceptionHandler>();
         return services;
     }
 }

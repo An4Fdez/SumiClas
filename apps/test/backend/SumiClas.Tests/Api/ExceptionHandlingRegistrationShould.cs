@@ -11,7 +11,7 @@ using SumiClas.Api.Http;
 public class ExceptionHandlingRegistrationShould
 {
     [Test]
-    public void register_the_domain_exception_handler_and_the_problem_details_service()
+    public void register_the_api_exception_handler_and_the_problem_details_service()
     {
         using ServiceProvider services = new ServiceCollection()
             .AddLogging()
@@ -19,7 +19,7 @@ public class ExceptionHandlingRegistrationShould
             .BuildServiceProvider();
 
         services.GetServices<IExceptionHandler>()
-            .Should().ContainSingle().Which.Should().BeOfType<DomainExceptionHandler>();
+            .Should().ContainSingle().Which.Should().BeOfType<ApiExceptionHandler>();
         services.GetService<IProblemDetailsService>().Should().NotBeNull();
     }
 }

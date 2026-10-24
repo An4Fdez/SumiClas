@@ -6,11 +6,7 @@ namespace SumiClas.Api.Http;
 public static class DomainProblem
 {
     public static IResult Create(DomainException exception, int statusCode)
-        => Results.Problem(
-            title: exception.Code,
-            detail: exception.Message,
-            statusCode: statusCode,
-            extensions: new Dictionary<string, object?> { ["code"] = exception.Code });
+        => ApiProblem.Create(exception.Code, exception.Message, statusCode);
 
     public static IResult Unauthenticated()
         => Create(new AuthenticationExceptions.Unauthenticated(), StatusCodes.Status401Unauthorized);

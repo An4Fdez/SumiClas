@@ -11,7 +11,7 @@ public static class DomainExceptionEndpointExtensions
     /// <summary>
     /// Declares the HTTP status the endpoint answers when <typeparamref name="TException"/> comes out of its use case,
     /// and documents that response (once per status) in OpenAPI. An exception that is not declared by the endpoint
-    /// that throws it is answered as a 500 by <see cref="DomainExceptionHandler"/>.
+    /// that throws it is answered as a 500 by <see cref="ApiExceptionHandler"/>.
     /// </summary>
     public static RouteHandlerBuilder Maps<TException>(this RouteHandlerBuilder builder, int statusCode)
         where TException : DomainException

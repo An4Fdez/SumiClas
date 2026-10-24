@@ -3,14 +3,15 @@ namespace SumiClas.Tests.Api;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SumiClas.Api.Http;
 using System.Text.Json;
 
 [TestFixture]
-public class DomainExceptionHandlerShould : ApiUnitTestCase
+public class ApiExceptionHandlerShould : ApiUnitTestCase
 {
-    private readonly DomainExceptionHandler _handler = new(NullLogger<DomainExceptionHandler>.Instance);
+    private readonly ApiExceptionHandler _handler = new(NullLogger<ApiExceptionHandler>.Instance);
 
     [Test]
     public async Task answer_with_the_status_the_endpoint_declared_over_the_convention_and_the_code_and_message()
@@ -113,18 +114,112 @@ public class DomainExceptionHandlerShould : ApiUnitTestCase
     }
 
     [Test]
-    public async Task leave_any_other_exception_alone()
+    public async Task answer_500_with_the_unexpected_code_and_no_internal_detail()
     {
         DefaultHttpContext http = HttpContextMother.WithProblemDetails();
-        http.SetEndpoint(EndpointMother.Declaring<SampleExceptions.NotFound>(StatusCodes.Status404NotFound));
 
         bool handled = await this._handler.TryHandleAsync(
             http,
-            new InvalidOperationException(),
+            InfrastructureExceptionMother.Unexpected(),
             CancellationToken.None);
 
-        handled.Should().BeFalse();
-        http.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
-        http.Response.Body.Length.Should().Be(0);
+        handled.Should().BeTrue();
+        http.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        JsonElement body = await ReadBodyAsync(http);
+        body.GetProperty("code").GetString().Should().Be(ApiErrorCodes.UnexpectedError);
+        body.GetProperty("traceId").GetString().Should().NotBeNullOrWhiteSpace();
+        body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
     }
+
+    [Test]
+    public async Task log_the_unexpected_error_with_the_trace_id_the_response_carries()
+    {
+        CapturingLoggerProvider logs = new();
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+        Exception exception = InfrastructureExceptionMother.Unexpected();
+
+        await HandlerLoggingTo(logs).TryHandleAsync(http, exception, CancellationToken.None);
+
+        string traceId = (await ReadBodyAsync(http)).GetProperty("traceId").GetString()!;
+        logs.Entries.Should().ContainSingle(entry => entry.Level == LogLevel.Error)
+            .Which.Should().Match<CapturingLoggerProvider.LogEntry>(
+                entry => ReferenceEquals(entry.Exception, exception) && entry.Message.Contains(traceId));
+    }
+
+    [Test]
+    public async Task answer_503_with_retry_after_when_the_database_is_not_available()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+
+        bool handled = await this._handler.TryHandleAsync(
+            http,
+            InfrastructureExceptionMother.TransientDatabase(),
+            CancellationToken.None);
+
+        handled.Should().BeTrue();
+        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+        http.Response.Headers.RetryAfter.ToString().Should().Be(ApiExceptionHandler.RetryAfterSeconds.ToString());
+        (await ReadBodyAsync(http)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.ServiceUnavailable);
+    }
+
+    [Test]
+    public async Task answer_503_when_a_database_command_timed_out()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+
+        await this._handler.TryHandleAsync(
+            http,
+            InfrastructureExceptionMother.DatabaseTimeout(),
+            CancellationToken.None);
+
+        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    [Test]
+    public async Task find_the_transient_database_failure_wrapped_inside_another_exception()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+
+        await this._handler.TryHandleAsync(
+            http,
+            InfrastructureExceptionMother.WrappedTransientDatabase(),
+            CancellationToken.None);
+
+        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    [Test]
+    public async Task answer_500_for_a_database_failure_that_is_not_transient()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+
+        await this._handler.TryHandleAsync(
+            http,
+            InfrastructureExceptionMother.NonTransientDatabase(),
+            CancellationToken.None);
+
+        http.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        http.Response.Headers.RetryAfter.Should().BeEmpty();
+        (await ReadBodyAsync(http)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.UnexpectedError);
+    }
+
+    [Test]
+    public async Task keep_the_status_of_a_bad_http_request_without_its_internal_message()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+        BadHttpRequestException exception = new(
+            InfrastructureExceptionMother.INTERNAL_DETAIL,
+            StatusCodes.Status415UnsupportedMediaType);
+
+        bool handled = await this._handler.TryHandleAsync(http, exception, CancellationToken.None);
+
+        handled.Should().BeTrue();
+        http.Response.StatusCode.Should().Be(StatusCodes.Status415UnsupportedMediaType);
+        JsonElement body = await ReadBodyAsync(http);
+        body.GetProperty("code").GetString().Should().Be(ApiErrorCodes.BadRequest);
+        body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
+    }
+
+    private static ApiExceptionHandler HandlerLoggingTo(CapturingLoggerProvider logs)
+        => new(new LoggerFactory([logs]).CreateLogger<ApiExceptionHandler>());
 }
