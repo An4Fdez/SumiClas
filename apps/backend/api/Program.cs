@@ -24,6 +24,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddSumiClasValidation();
 builder.Services.AddSumiClasInfrastructure(builder.Configuration);
 builder.Services.AddSumiClasApplication();
+builder.Services.AddSumiClasAiOptions(builder.Configuration);
 builder.Services.AddSumiClasApiSecurity(builder.Configuration);
 builder.Services.AddSumiClasRateLimiting(builder.Configuration);
 builder.Services.AddSumiClasExceptionHandling();
