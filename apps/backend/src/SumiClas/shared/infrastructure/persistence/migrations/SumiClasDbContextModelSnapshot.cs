@@ -516,6 +516,38 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("SumiClas.WeeklySummaries.Domain.WeeklySummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InputHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly>("WeekStart")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassId", "WeekStart")
+                        .IsUnique();
+
+                    b.ToTable("WeeklySummaries", (string)null);
+                });
+
             modelBuilder.Entity("SumiClas.Announcements.Domain.Announcement", b =>
                 {
                     b.OwnsMany("SumiClas.Announcements.Domain.AnnouncementReadReceipt", "ReadReceipts", b1 =>

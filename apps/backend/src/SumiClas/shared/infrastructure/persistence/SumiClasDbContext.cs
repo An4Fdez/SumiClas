@@ -16,6 +16,7 @@ using SumiClas.SchoolYears.Domain;
 using SumiClas.Students.Domain;
 using SumiClas.Subjects.Domain;
 using SumiClas.Users.Domain;
+using SumiClas.WeeklySummaries.Domain;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SumiClas.Shared.Infrastructure.Persistence;
@@ -42,6 +43,7 @@ public sealed class SumiClasDbContext : DbContext, IUnitOfWork
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<ClassExpense> ClassExpenses => Set<ClassExpense>();
     public DbSet<LostItem> LostItems => Set<LostItem>();
+    public DbSet<WeeklySummary> WeeklySummaries => Set<WeeklySummary>();
 
     public bool HasActiveTransaction => Database.CurrentTransaction is not null;
 
