@@ -1,3 +1,4 @@
+using SumiClas.WeeklySummaries.Application;
 using SumiClas.WeeklySummaries.Infrastructure;
 
 namespace SumiClas.Api.Configuration;
@@ -20,6 +21,22 @@ public static class AiServiceCollectionExtensions
                 o => o.MaxRetries is >= 0 and <= AiOptions.MaxRetriesAllowed,
                 $"Ai:MaxRetries debe estar entre 0 y {AiOptions.MaxRetriesAllowed}.")
             .ValidateOnStart();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the writer of the weekly summary over its own <see cref="HttpClient"/>. Each attempt has its own timeout
+    /// (<c>Ai:TimeoutSeconds</c>), so the client's general one is turned off. It is registered even without a key: the
+    /// writer only refuses to work when it is asked to, and whoever uses it checks <c>AiOptions.IsEnabled</c> first.
+    /// </summary>
+    public static IServiceCollection AddSumiClasWeeklySummaryWriter(this IServiceCollection services)
+    {
+        services.AddHttpClient<IWeeklySummaryWriter, AnthropicWeeklySummaryWriter>(client =>
+        {
+            client.BaseAddress = new Uri(AnthropicWeeklySummaryWriter.BaseAddress);
+            client.Timeout = Timeout.InfiniteTimeSpan;
+        });
 
         return services;
     }
