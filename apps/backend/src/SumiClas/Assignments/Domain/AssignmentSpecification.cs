@@ -5,6 +5,8 @@ namespace SumiClas.Assignments.Domain;
 public sealed class AssignmentSpecification : Specification<Assignment>
 {
     /// <param name="commentedByUserId">Matches assignments that have a comment from this user.</param>
+    /// <param name="dueFrom">Matches assignments due on this day or later.</param>
+    /// <param name="notDoneByUserId">Matches assignments this user has not marked as done.</param>
     public AssignmentSpecification(
         Guid? id = null,
         Guid? classId = null,
@@ -16,6 +18,8 @@ public sealed class AssignmentSpecification : Specification<Assignment>
         bool? isProposal = null,
         DateTimeOffset? createdAt = null,
         Guid? commentedByUserId = null,
+        DateOnly? dueFrom = null,
+        Guid? notDoneByUserId = null,
         KeysetPage<DateOnly>? page = null)
     {
         if (id is { } assignmentId) AddCriteria(assignment => assignment.Id == assignmentId);
@@ -28,6 +32,8 @@ public sealed class AssignmentSpecification : Specification<Assignment>
         if (isProposal is { } proposal) AddCriteria(assignment => assignment.IsProposal == proposal);
         if (createdAt is { } created) AddCriteria(assignment => assignment.CreatedAt == created);
         if (commentedByUserId is { } commenter) AddCriteria(assignment => assignment.Comments.Any(comment => comment.AuthorId == commenter));
+        if (dueFrom is { } from) AddCriteria(assignment => assignment.DueDate >= from);
+        if (notDoneByUserId is { } user) AddCriteria(assignment => assignment.Completions.All(completion => completion.UserId != user));
         if (page is not null) AddKeysetPage(assignment => assignment.DueDate, assignment => assignment.Id, page, descending: false);
     }
 }

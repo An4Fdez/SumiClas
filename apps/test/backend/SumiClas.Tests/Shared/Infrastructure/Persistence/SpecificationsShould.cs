@@ -3,8 +3,11 @@ namespace SumiClas.Tests.Shared.Infrastructure.Persistence;
 using AwesomeAssertions;
 using SumiClas.Announcements.Domain;
 using SumiClas.Announcements.Infrastructure;
+using SumiClas.Assignments.Domain;
+using SumiClas.Assignments.Infrastructure;
 using SumiClas.Shared.Infrastructure.Persistence;
 using SumiClas.Tests.Announcements.Domain;
+using SumiClas.Tests.Assignments.Domain;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.Users.Domain;
 using SumiClas.Users.Domain;
@@ -18,6 +21,9 @@ using SumiClas.Users.Infrastructure;
 public class SpecificationsShould
 {
     private const int ONE_SECOND = 1;
+    private const int ONE_DAY = 1;
+
+    private static readonly DateOnly Today = DateOnly.FromDateTime(UnitTestCase.Now.UtcDateTime);
 
     [Test]
     public async Task select_only_the_announcements_of_a_class_when_filtering_by_scope_and_class()
@@ -113,6 +119,41 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_assignments_due_on_a_day_or_later_when_filtering_by_due_from()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Assignment onTheDay = AssignmentMother.With(dueDate: Today);
+        Assignment after = AssignmentMother.With(dueDate: Today.AddDays(ONE_DAY));
+        await SaveAsync(database, onTheDay);
+        await SaveAsync(database, after);
+        await SaveAsync(database, AssignmentMother.With(dueDate: Today.AddDays(-ONE_DAY)));
+
+        IReadOnlyCollection<Assignment> found = await SearchAsync(
+            database,
+            new AssignmentSpecification(dueFrom: Today));
+
+        found.Select(assignment => assignment.Id).Should().BeEquivalentTo([onTheDay.Id, after.Id]);
+    }
+
+    [Test]
+    public async Task select_only_the_assignments_a_user_has_not_marked_as_done_when_filtering_by_not_done()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid user = GuidMother.Random();
+        Assignment notDone = AssignmentMother.With();
+        Assignment doneByOthers = AssignmentMother.DoneBy(GuidMother.Random(), GuidMother.Random());
+        await SaveAsync(database, notDone);
+        await SaveAsync(database, doneByOthers);
+        await SaveAsync(database, AssignmentMother.DoneBy(GuidMother.Random(), user));
+
+        IReadOnlyCollection<Assignment> found = await SearchAsync(
+            database,
+            new AssignmentSpecification(notDoneByUserId: user));
+
+        found.Select(assignment => assignment.Id).Should().BeEquivalentTo([notDone.Id, doneByOthers.Id]);
+    }
+
+    [Test]
     public async Task select_the_users_that_hold_a_role_in_a_class_through_the_child_roles()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
@@ -192,6 +233,21 @@ public class SpecificationsShould
         await using SumiClasDbContext context = database.NewContext();
         context.Announcements.Add(announcement);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task SaveAsync(TestDatabase database, Assignment assignment)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        context.Assignments.Add(assignment);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task<IReadOnlyCollection<Assignment>> SearchAsync(
+        TestDatabase database,
+        AssignmentSpecification specification)
+    {
+        await using SumiClasDbContext context = database.NewContext();
+        return await new AssignmentRepository(context).SearchAsync(specification);
     }
 
     private static async Task<IReadOnlyCollection<Announcement>> SearchAsync(

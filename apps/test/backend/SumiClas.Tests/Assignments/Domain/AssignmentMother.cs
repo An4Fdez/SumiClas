@@ -7,7 +7,10 @@ using SumiClas.Tests.Shared;
 
 public static class AssignmentMother
 {
-    public static readonly DateOnly SomeDay = DateOnly.FromDateTime(UnitTestCase.Now.UtcDateTime).AddDays(7);
+    private const int DAYS_AHEAD_OF_SOME_DAY = 7;
+
+    public static readonly DateOnly SomeDay =
+        DateOnly.FromDateTime(UnitTestCase.Now.UtcDateTime).AddDays(DAYS_AHEAD_OF_SOME_DAY);
 
     public static Assignment With(
         Guid? id = null,
@@ -30,11 +33,11 @@ public static class AssignmentMother
             UnitTestCase.Now,
             comments ?? []);
 
-    public static Assignment DoneBy(Guid assignmentId, Guid userId, Guid? classId = null)
+    public static Assignment DoneBy(Guid assignmentId, Guid userId, Guid? classId = null, DateOnly? dueDate = null)
     {
         Mock<IClock> clock = new();
         clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
-        Assignment assignment = With(id: assignmentId, classId: classId);
+        Assignment assignment = With(id: assignmentId, classId: classId, dueDate: dueDate);
         assignment.MarkAsDoneBy(userId, clock.Object);
         return assignment;
     }
