@@ -10,7 +10,7 @@ export function toApiDateOnly(date: Date): Date {
 }
 
 const DATE_TIME_KEYS = new Set(['createdAt', 'expiresAt']);
-const DATE_ONLY_KEYS = new Set(['dueDate', 'date', 'startDate', 'endDate']);
+const DATE_ONLY_KEYS = new Set(['dueDate', 'nextDueDate', 'date', 'startDate', 'endDate']);
 const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 const ISO_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 

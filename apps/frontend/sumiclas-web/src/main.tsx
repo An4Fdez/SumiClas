@@ -7,6 +7,7 @@ import { ApiClientProvider } from '@/context/ApiClientProvider';
 import { SessionRepositoryProvider } from '@/context/SessionRepositoryProvider';
 import { CalendarEventRepositoryProvider } from '@/context/CalendarEventRepositoryProvider';
 import { ClassExpenseRepositoryProvider } from '@/context/ClassExpenseRepositoryProvider';
+import { DashboardRepositoryProvider } from '@/context/DashboardRepositoryProvider';
 import { HomeworkRepositoriesProvider } from '@/context/HomeworkRepositoriesProvider';
 import { LocalityRepositoryProvider } from '@/context/LocalityRepositoryProvider';
 import { LostItemRepositoryProvider } from '@/context/LostItemRepositoryProvider';
@@ -36,11 +37,13 @@ createRoot(document.getElementById('root')!).render(
                         <CalendarEventRepositoryProvider>
                           <HomeworkRepositoriesProvider>
                             <ClassExpenseRepositoryProvider>
-                              <BrowserRouter>
-                                <AuthProvider>
-                                  <App />
-                                </AuthProvider>
-                              </BrowserRouter>
+                              <DashboardRepositoryProvider>
+                                <BrowserRouter>
+                                  <AuthProvider>
+                                    <App />
+                                  </AuthProvider>
+                                </BrowserRouter>
+                              </DashboardRepositoryProvider>
                             </ClassExpenseRepositoryProvider>
                           </HomeworkRepositoriesProvider>
                         </CalendarEventRepositoryProvider>

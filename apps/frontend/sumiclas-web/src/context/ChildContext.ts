@@ -1,5 +1,4 @@
 import { createContext } from 'react';
-import type { DashboardSummary } from '@/data/appMock';
 import type { ClassRole } from '@/lib/roles';
 import type { Child } from '@/modules/students/domain/Child';
 
@@ -21,7 +20,6 @@ export type ChildContextValue = {
   currentChildId: string;
   setCurrentChildId: (id: string) => void;
   currentChild: ChildView | undefined;
-  currentSummary: DashboardSummary | undefined;
   currentRole: ClassRole | null;
   currentUserId: string | undefined;
 };

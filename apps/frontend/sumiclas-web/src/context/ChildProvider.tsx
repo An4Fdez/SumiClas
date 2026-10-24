@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { DashboardSummary } from '@/data/appMock';
 import { useStudentRepository } from '@/hooks/useStudentRepository';
 import { useUserRepository } from '@/hooks/useUserRepository';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
@@ -12,15 +11,6 @@ type LoadState =
   | { status: 'loading' }
   | { status: 'ready'; students: Child[]; profile: Profile }
   | { status: 'error'; message: string; httpStatus: number | undefined };
-
-/** The API has no dashboard summary yet (T4), so every counter starts empty. */
-const EMPTY_SUMMARY: DashboardSummary = {
-  announcements: { new: 0, urgent: false },
-  calendar: { next: null, daysUntil: null },
-  homework: { pending: 0, nextDueDate: null },
-  expenses: { pending: false },
-  lostAndFound: { hasUpdates: false },
-};
 
 function toView(child: Child): ChildView {
   return {
@@ -81,7 +71,6 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     currentChildId: currentChild?.id ?? '',
     setCurrentChildId: setSelectedChildId,
     currentChild,
-    currentSummary: currentChild ? EMPTY_SUMMARY : undefined,
     currentRole,
     currentUserId: state.status === 'ready' ? state.profile.id : undefined,
   };

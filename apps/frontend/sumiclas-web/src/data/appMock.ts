@@ -1,11 +1,3 @@
-export type DashboardSummary = {
-  announcements: { new: number; urgent: boolean };
-  calendar: { next: string | null; daysUntil: number | null };
-  homework: { pending: number; nextDueDate: string | null };
-  expenses: { pending: boolean; item?: string };
-  lostAndFound: { hasUpdates: boolean; count?: number };
-};
-
 export type AISummary = {
   date: string;
   points: string[];
