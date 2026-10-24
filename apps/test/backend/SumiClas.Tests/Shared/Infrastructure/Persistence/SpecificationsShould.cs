@@ -17,6 +17,8 @@ using SumiClas.Users.Infrastructure;
 [TestFixture]
 public class SpecificationsShould
 {
+    private const int ONE_SECOND = 1;
+
     [Test]
     public async Task select_only_the_announcements_of_a_class_when_filtering_by_scope_and_class()
     {
@@ -67,6 +69,47 @@ public class SpecificationsShould
             new AnnouncementSpecification(readByUserId: reader));
 
         found.Select(announcement => announcement.Id).Should().Equal(read.Id);
+    }
+
+    [Test]
+    public async Task select_only_the_announcements_with_no_read_receipt_of_a_user_when_filtering_by_unread()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid schoolId = GuidMother.Random();
+        Guid reader = GuidMother.Random();
+        Announcement unread = AnnouncementMother.SchoolWide(schoolId, "Unread", UnitTestCase.Now);
+        Announcement readByOthers = AnnouncementMother.ReadBy(schoolId, GuidMother.Random(), UnitTestCase.Now);
+        await SaveAsync(database, unread);
+        await SaveAsync(database, readByOthers);
+        await SaveAsync(database, AnnouncementMother.ReadBy(schoolId, reader, UnitTestCase.Now));
+
+        IReadOnlyCollection<Announcement> found = await SearchAsync(
+            database,
+            new AnnouncementSpecification(unreadByUserId: reader));
+
+        found.Select(announcement => announcement.Id).Should().BeEquivalentTo([unread.Id, readByOthers.Id]);
+    }
+
+    [Test]
+    public async Task select_only_the_announcements_created_at_a_moment_or_later_when_filtering_by_created_from()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid schoolId = GuidMother.Random();
+        Announcement atTheEdge = AnnouncementMother.SchoolWide(schoolId, "At the edge", UnitTestCase.Now);
+        Announcement after = AnnouncementMother.SchoolWide(schoolId, "After", UnitTestCase.Now.AddSeconds(ONE_SECOND));
+        await SaveAsync(database, atTheEdge);
+        await SaveAsync(database, after);
+        Announcement before = AnnouncementMother.SchoolWide(
+            schoolId,
+            "Before",
+            UnitTestCase.Now.AddSeconds(-ONE_SECOND));
+        await SaveAsync(database, before);
+
+        IReadOnlyCollection<Announcement> found = await SearchAsync(
+            database,
+            new AnnouncementSpecification(createdFrom: UnitTestCase.Now));
+
+        found.Select(announcement => announcement.Id).Should().BeEquivalentTo([atTheEdge.Id, after.Id]);
     }
 
     [Test]

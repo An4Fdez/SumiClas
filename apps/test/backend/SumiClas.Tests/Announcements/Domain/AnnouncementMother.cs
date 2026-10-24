@@ -15,7 +15,8 @@ public static class AnnouncementMother
         Guid? schoolId = null,
         string? title = null,
         Guid? authorId = null,
-        Guid? relatedEventId = null)
+        Guid? relatedEventId = null,
+        Priority? priority = null)
         => new(
             id ?? GuidMother.Random(),
             scope ?? AnnouncementScope.School,
@@ -23,18 +24,31 @@ public static class AnnouncementMother
             schoolId ?? ((scope ?? AnnouncementScope.School) == AnnouncementScope.School ? GuidMother.Random() : null),
             title ?? StringMother.Random("Notice"),
             StringMother.Random("Body"),
-            Priority.Normal,
+            priority ?? Priority.Normal,
             authorId ?? GuidMother.Random(),
             relatedEventId,
             createdAt);
 
     public static Announcement WithId(Guid id) => With(UnitTestCase.Now, id: id);
 
-    public static Announcement ReadBy(Guid schoolId, Guid readerId, DateTimeOffset createdAt)
+    public static Announcement ReadBy(
+        Guid schoolId,
+        Guid readerId,
+        DateTimeOffset createdAt,
+        Priority? priority = null)
     {
         Mock<IClock> clock = new();
         clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
-        Announcement announcement = With(createdAt, schoolId: schoolId);
+        Announcement announcement = With(createdAt, schoolId: schoolId, priority: priority);
+        announcement.MarkAsReadBy(readerId, clock.Object);
+        return announcement;
+    }
+
+    public static Announcement ClassReadBy(Guid classId, Guid readerId, DateTimeOffset createdAt)
+    {
+        Mock<IClock> clock = new();
+        clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
+        Announcement announcement = ForClass(classId, StringMother.Random("read"), createdAt);
         announcement.MarkAsReadBy(readerId, clock.Object);
         return announcement;
     }
