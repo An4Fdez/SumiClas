@@ -4,6 +4,8 @@ using AwesomeAssertions;
 using AwesomeAssertions.Specialized;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Moq;
+using Moq.Protected;
 using SumiClas.Api.Configuration;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.WeeklySummaries.Domain;
@@ -11,6 +13,7 @@ using SumiClas.WeeklySummaries.Domain;
 using SumiClas.WeeklySummaries.Infrastructure;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 [TestFixture]
@@ -28,23 +31,30 @@ public class AnthropicWeeklySummaryWriterShould
     private const int LONGER_THAN_THE_CAP_SECONDS = 60;
     private const string THINKING_OFF = "disabled";
     private const string USER_ROLE = "user";
+    private const string SEND_METHOD = "SendAsync";
 
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(PATIENCE_SECONDS);
 
-    private FakeHttpMessageHandler _handler = null!;
+    private Mock<HttpMessageHandler> _handler = null!;
+    private Queue<Func<CancellationToken, Task<HttpResponseMessage>>> _replies = null!;
+    private List<RecordedRequest> _requests = null!;
+    private TaskCompletionSource _firstRequest = null!;
     private List<TimeSpan> _pauses = null!;
 
     [SetUp]
     public void create_the_network_and_the_clock_of_the_test()
     {
-        this._handler = new FakeHttpMessageHandler();
+        this._handler = new Mock<HttpMessageHandler>();
+        this._replies = new Queue<Func<CancellationToken, Task<HttpResponseMessage>>>();
+        this._requests = [];
+        this._firstRequest = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         this._pauses = [];
     }
 
     [TearDown]
     public void release_the_network_of_the_test()
     {
-        this._handler.Dispose();
+        this._handler.Object.Dispose();
     }
 
     [Test]
@@ -53,11 +63,11 @@ public class AnthropicWeeklySummaryWriterShould
         AiOptions options = AiOptionsMother.Enabled();
         WeeklySummaryInput input = AnInput();
         WeeklySummaryPrompt prompt = WeeklySummaryPromptBuilder.Build(input);
-        this._handler.Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
 
         await Writer(options).WriteAsync(input);
 
-        RecordedRequest request = this._handler.Requests.Should().ContainSingle().Which;
+        RecordedRequest request = this._requests.Should().ContainSingle().Which;
         request.Method.Should().Be(HttpMethod.Post);
         request.Uri.Should().Be(
             new Uri(AnthropicWeeklySummaryWriter.BaseAddress + AnthropicWeeklySummaryWriter.MessagesPath));
@@ -79,7 +89,7 @@ public class AnthropicWeeklySummaryWriterShould
     public async Task return_the_text_of_the_answer_without_the_blanks_around()
     {
         string text = StringMother.Random("text");
-        this._handler.Reply(HttpStatusCode.OK, AnthropicResponseMother.Message($"  {text}\n"));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message($"  {text}\n"));
 
         string summary = await Writer().WriteAsync(AnInput());
 
@@ -97,7 +107,7 @@ public class AnthropicWeeklySummaryWriterShould
             new { type = "text", text = first },
             new { type = "text", text = second },
         ];
-        this._handler.Reply(HttpStatusCode.OK, AnthropicResponseMother.Blocks(blocks));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Blocks(blocks));
 
         string summary = await Writer().WriteAsync(AnInput());
 
@@ -110,7 +120,7 @@ public class AnthropicWeeklySummaryWriterShould
         Func<Task> act = () => Writer(AiOptionsMother.WithoutKey()).WriteAsync(AnInput());
 
         await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>().WithMessage("*Ai:ApiKey*");
-        this._handler.Requests.Should().BeEmpty();
+        this.ShouldNotHaveCalledTheService();
     }
 
     [TestCase(HttpStatusCode.RequestTimeout)]
@@ -118,26 +128,25 @@ public class AnthropicWeeklySummaryWriterShould
     public async Task try_again_when_the_service_fails_for_now(HttpStatusCode status)
     {
         string text = StringMother.Random("text");
-        this._handler
-            .Reply(status, AnthropicResponseMother.Error("overloaded_error"))
-            .Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(text));
+        this.ShouldReply(status, AnthropicResponseMother.Error("overloaded_error"));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(text));
 
         string summary = await Writer(AiOptionsMother.Enabled(maxRetries: ONE_RETRY)).WriteAsync(AnInput());
 
         summary.Should().Be(text);
-        this._handler.Requests.Should().HaveCount(ONE_RETRY + 1);
+        this._requests.Should().HaveCount(ONE_RETRY + 1);
     }
 
     [TestCase(HttpStatusCode.Forbidden)]
     public async Task fail_at_once_when_the_service_rejects_the_request(HttpStatusCode status)
     {
-        this._handler.Reply(status, AnthropicResponseMother.Error("authentication_error"));
+        this.ShouldReply(status, AnthropicResponseMother.Error("authentication_error"));
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: TWO_RETRIES)).WriteAsync(AnInput());
 
         await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>()
             .WithMessage($"*{(int)status}*(authentication_error)*");
-        this._handler.Requests.Should().ContainSingle();
+        this._requests.Should().ContainSingle();
         this._pauses.Should().BeEmpty();
     }
 
@@ -146,24 +155,24 @@ public class AnthropicWeeklySummaryWriterShould
     {
         for (int attempt = 0; attempt < ATTEMPTS_WITH_TWO_RETRIES; attempt++)
         {
-            this._handler.Reply(HttpStatusCode.InternalServerError, string.Empty);
+            this.ShouldReply(HttpStatusCode.InternalServerError, string.Empty);
         }
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: TWO_RETRIES)).WriteAsync(AnInput());
 
         await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>().WithMessage("*500*");
-        this._handler.Requests.Should().HaveCount(ATTEMPTS_WITH_TWO_RETRIES);
+        this._requests.Should().HaveCount(ATTEMPTS_WITH_TWO_RETRIES);
     }
 
     [Test]
     public async Task not_try_again_when_it_is_allowed_no_retries()
     {
-        this._handler.Reply(HttpStatusCode.InternalServerError, string.Empty);
+        this.ShouldReply(HttpStatusCode.InternalServerError, string.Empty);
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: NO_RETRIES)).WriteAsync(AnInput());
 
         await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>();
-        this._handler.Requests.Should().ContainSingle();
+        this._requests.Should().ContainSingle();
         this._pauses.Should().BeEmpty();
     }
 
@@ -171,33 +180,35 @@ public class AnthropicWeeklySummaryWriterShould
     public async Task try_again_after_a_network_failure_and_keep_it_as_the_cause_when_it_gives_up()
     {
         HttpRequestException failure = new(StringMother.Random("network"));
-        this._handler.Fail(failure).Fail(failure);
+        this.ShouldFail(failure);
+        this.ShouldFail(failure);
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: ONE_RETRY)).WriteAsync(AnInput());
 
         ExceptionAssertions<WeeklySummaryWriterException> thrown =
             await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>();
         thrown.Which.InnerException.Should().BeSameAs(failure);
-        this._handler.Requests.Should().HaveCount(ONE_RETRY + 1);
+        this._requests.Should().HaveCount(ONE_RETRY + 1);
     }
 
     [Test]
     public async Task try_again_after_a_timeout()
     {
         string text = StringMother.Random("text");
-        this._handler.Hang().Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(text));
+        this.ShouldHang();
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(text));
 
         string summary = await Writer(AiOptionsMother.Enabled(timeoutSeconds: ONE_SECOND, maxRetries: ONE_RETRY))
             .WriteAsync(AnInput()).WaitAsync(Patience);
 
         summary.Should().Be(text);
-        this._handler.Requests.Should().HaveCount(ONE_RETRY + 1);
+        this._requests.Should().HaveCount(ONE_RETRY + 1);
     }
 
     [Test]
     public async Task say_how_long_it_waited_when_the_service_never_answers()
     {
-        this._handler.Hang();
+        this.ShouldHang();
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(timeoutSeconds: ONE_SECOND, maxRetries: NO_RETRIES))
             .WriteAsync(AnInput()).WaitAsync(Patience);
@@ -209,16 +220,16 @@ public class AnthropicWeeklySummaryWriterShould
     public async Task stop_without_trying_again_when_the_caller_cancels()
     {
         using CancellationTokenSource cancellation = new();
-        this._handler.Hang();
+        this.ShouldHang();
         Task<string> writing = Writer(AiOptionsMother.Enabled(maxRetries: TWO_RETRIES))
             .WriteAsync(AnInput(), cancellation.Token);
-        await this._handler.FirstRequest.WaitAsync(Patience);
+        await this._firstRequest.Task.WaitAsync(Patience);
 
         await cancellation.CancelAsync();
 
         Func<Task> act = () => writing.WaitAsync(Patience);
         await act.Should().ThrowAsync<OperationCanceledException>();
-        this._handler.Requests.Should().ContainSingle();
+        this._requests.Should().ContainSingle();
         this._pauses.Should().BeEmpty();
     }
 
@@ -227,7 +238,7 @@ public class AnthropicWeeklySummaryWriterShould
     {
         for (int attempt = 0; attempt < ATTEMPTS_WITH_TWO_RETRIES; attempt++)
         {
-            this._handler.Reply(HttpStatusCode.InternalServerError, string.Empty);
+            this.ShouldReply(HttpStatusCode.InternalServerError, string.Empty);
         }
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: TWO_RETRIES)).WriteAsync(AnInput());
@@ -241,10 +252,9 @@ public class AnthropicWeeklySummaryWriterShould
     [Test]
     public async Task really_wait_between_attempts_when_nobody_replaces_the_pause()
     {
-        this._handler
-            .Reply(HttpStatusCode.InternalServerError, string.Empty)
-            .Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
-        using HttpClient client = new(this._handler)
+        this.ShouldReply(HttpStatusCode.InternalServerError, string.Empty);
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
+        using HttpClient client = new(this._handler.Object)
         {
             BaseAddress = new Uri(AnthropicWeeklySummaryWriter.BaseAddress),
         };
@@ -260,9 +270,8 @@ public class AnthropicWeeklySummaryWriterShould
     [Test]
     public async Task wait_what_the_service_asks_for_when_it_is_asked_to_slow_down()
     {
-        this._handler
-            .Reply(HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(THREE_SECONDS))
-            .Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
+        this.ShouldReply(HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(THREE_SECONDS));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
 
         await Writer(AiOptionsMother.Enabled(maxRetries: ONE_RETRY)).WriteAsync(AnInput());
 
@@ -272,9 +281,9 @@ public class AnthropicWeeklySummaryWriterShould
     [Test]
     public async Task not_wait_longer_than_the_cap_even_if_the_service_asks_for_it()
     {
-        this._handler
-            .Reply(HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(LONGER_THAN_THE_CAP_SECONDS))
-            .Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
+        this.ShouldReply(
+            HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(LONGER_THAN_THE_CAP_SECONDS));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
 
         await Writer(AiOptionsMother.Enabled(maxRetries: ONE_RETRY)).WriteAsync(AnInput());
 
@@ -284,9 +293,8 @@ public class AnthropicWeeklySummaryWriterShould
     [Test]
     public async Task not_wait_a_negative_time_if_the_service_asks_for_it()
     {
-        this._handler
-            .Reply(HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(-THREE_SECONDS))
-            .Reply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
+        this.ShouldReply(HttpStatusCode.TooManyRequests, string.Empty, TimeSpan.FromSeconds(-THREE_SECONDS));
+        this.ShouldReply(HttpStatusCode.OK, AnthropicResponseMother.Message(StringMother.Random("text")));
 
         await Writer(AiOptionsMother.Enabled(maxRetries: ONE_RETRY)).WriteAsync(AnInput());
 
@@ -296,23 +304,23 @@ public class AnthropicWeeklySummaryWriterShould
     [TestCaseSource(nameof(UnusableAnswers))]
     public async Task fail_at_once_when_the_answer_is_not_a_summary(string body, string reason)
     {
-        this._handler.Reply(HttpStatusCode.OK, body);
+        this.ShouldReply(HttpStatusCode.OK, body);
 
         Func<Task> act = () => Writer(AiOptionsMother.Enabled(maxRetries: TWO_RETRIES)).WriteAsync(AnInput());
 
         await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>().WithMessage($"*{reason}*");
-        this._handler.Requests.Should().ContainSingle();
+        this._requests.Should().ContainSingle();
     }
 
     [TestCaseSource(nameof(FailuresOfTheService))]
     public async Task never_put_the_key_nor_the_data_of_the_class_in_a_failure(
-        Action<FakeHttpMessageHandler, string, string> fail)
+        Action<AnthropicWeeklySummaryWriterShould, string, string> fail)
     {
         AiOptions options = AiOptionsMother.Enabled(timeoutSeconds: ONE_SECOND, maxRetries: NO_RETRIES);
         string secretTitle = StringMother.Random("title");
         WeeklySummaryInput input = WeeklySummaryInputMother.With(
             announcements: [WeeklySummaryInputMother.Announcement(secretTitle)]);
-        fail(this._handler, options.ApiKey, secretTitle);
+        fail(this, options.ApiKey, secretTitle);
 
         Func<Task> act = () => Writer(options).WriteAsync(input).WaitAsync(Patience);
 
@@ -351,21 +359,27 @@ public class AnthropicWeeklySummaryWriterShould
 
     private static IEnumerable<TestCaseData> FailuresOfTheService()
     {
-        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
-            handler.Reply(
+        yield return new TestCaseData(Failure((fixture, key, title) =>
+            fixture.ShouldReply(
                 HttpStatusCode.Unauthorized,
                 AnthropicResponseMother.Error("authentication_error", $"{key} {title}"))))
             .SetName("a_rejected_request");
-        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
-            handler.Fail(new HttpRequestException($"{key} {title}")))).SetName("an_unreachable_service");
-        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, _, _) =>
-            handler.Hang())).SetName("no_answer_in_time");
-        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
-            handler.Reply(
+        yield return new TestCaseData(Failure((fixture, key, title) =>
+            fixture.ShouldFail(new HttpRequestException($"{key} {title}")))).SetName("an_unreachable_service");
+        yield return new TestCaseData(Failure((fixture, _, _) =>
+            fixture.ShouldHang())).SetName("no_answer_in_time");
+        yield return new TestCaseData(Failure((fixture, key, title) =>
+            fixture.ShouldReply(
                 HttpStatusCode.OK,
                 AnthropicResponseMother.Message($"{key} {title}", "refusal")))).SetName("a_refusal");
-        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
-            handler.Reply(HttpStatusCode.OK, $"{key} {title}"))).SetName("something_that_is_not_a_message");
+        yield return new TestCaseData(Failure((fixture, key, title) =>
+            fixture.ShouldReply(HttpStatusCode.OK, $"{key} {title}"))).SetName("something_that_is_not_a_message");
+    }
+
+    private static Action<AnthropicWeeklySummaryWriterShould, string, string> Failure(
+        Action<AnthropicWeeklySummaryWriterShould, string, string> fail)
+    {
+        return fail;
     }
 
     private static WeeklySummaryInput AnInput()
@@ -373,11 +387,64 @@ public class AnthropicWeeklySummaryWriterShould
 
     private AnthropicWeeklySummaryWriter Writer(AiOptions? options = null)
         => new(
-            new HttpClient(this._handler) { BaseAddress = new Uri(AnthropicWeeklySummaryWriter.BaseAddress) },
+            new HttpClient(this._handler.Object) { BaseAddress = new Uri(AnthropicWeeklySummaryWriter.BaseAddress) },
             Options.Create(options ?? AiOptionsMother.Enabled()),
             (pause, _) =>
             {
                 this._pauses.Add(pause);
                 return Task.CompletedTask;
             });
+
+    private void ShouldReply(HttpStatusCode status, string body, TimeSpan? retryAfter = null)
+        => this.ShouldAnswer(_ =>
+        {
+            HttpResponseMessage response = new(status) { Content = new StringContent(body) };
+            response.Headers.RetryAfter = retryAfter is null ? null : new RetryConditionHeaderValue(retryAfter.Value);
+            return Task.FromResult(response);
+        });
+
+    private void ShouldFail(Exception exception)
+        => this.ShouldAnswer(_ => Task.FromException<HttpResponseMessage>(exception));
+
+    private void ShouldHang()
+        => this.ShouldAnswer(async ct =>
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            throw new InvalidOperationException("A hanging request cannot be answered.");
+        });
+
+    private void ShouldNotHaveCalledTheService()
+        => this._handler.Protected().Verify(
+            SEND_METHOD,
+            Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+
+    private void ShouldAnswer(Func<CancellationToken, Task<HttpResponseMessage>> reply)
+    {
+        this._replies.Enqueue(reply);
+        this._handler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                SEND_METHOD,
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Returns((HttpRequestMessage request, CancellationToken ct) => this.Answer(request, ct));
+    }
+
+    private async Task<HttpResponseMessage> Answer(HttpRequestMessage request, CancellationToken ct)
+    {
+        Dictionary<string, string> headers = request.Headers.ToDictionary(
+            header => header.Key,
+            header => string.Join(",", header.Value));
+        string body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(ct);
+        this._requests.Add(new RecordedRequest(request.Method, request.RequestUri, headers, body));
+        this._firstRequest.TrySetResult();
+
+        if (!this._replies.TryDequeue(out Func<CancellationToken, Task<HttpResponseMessage>>? reply))
+        {
+            throw new InvalidOperationException("The writer sent more requests than the replies prepared.");
+        }
+
+        return await reply(ct);
+    }
 }

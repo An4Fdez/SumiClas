@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Moq;
 using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Shared.Domain;
@@ -98,17 +99,16 @@ public class ExceptionPipelineShould
     [Test]
     public async Task log_as_an_error_an_exception_that_is_not_a_domain_exception()
     {
-        CapturingLoggerProvider logs = new();
-        await using WebApplication app = await StartAsync(logs);
+        Mock<ILogger> logger = LoggerMock.Enabled<ILogger>();
+        await using WebApplication app = await StartAsync(LoggerMock.ProviderOf(logger.Object));
         using HttpClient client = ClientOf(app);
 
         await client.GetAsync("/unexpected");
 
-        logs.Entries.Should().Contain(entry =>
-            entry.Level == LogLevel.Error && entry.Exception is InvalidOperationException);
+        logger.ShouldHaveLoggedAnErrorCausedBy<ILogger, InvalidOperationException>();
     }
 
-    private static async Task<WebApplication> StartAsync(CapturingLoggerProvider? logs = null)
+    private static async Task<WebApplication> StartAsync(ILoggerProvider? logs = null)
     {
         WebApplicationBuilder builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls("http://127.0.0.1:0");

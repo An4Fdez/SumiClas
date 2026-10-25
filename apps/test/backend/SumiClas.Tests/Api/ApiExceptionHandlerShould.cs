@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using SumiClas.Api.Http;
 using System.Text.Json;
 
@@ -134,16 +135,14 @@ public class ApiExceptionHandlerShould : ApiUnitTestCase
     [Test]
     public async Task log_the_unexpected_error_with_the_trace_id_the_response_carries()
     {
-        CapturingLoggerProvider logs = new();
+        Mock<ILogger<ApiExceptionHandler>> logger = LoggerMock.Enabled<ILogger<ApiExceptionHandler>>();
         DefaultHttpContext http = HttpContextMother.WithProblemDetails();
         Exception exception = InfrastructureExceptionMother.Unexpected();
 
-        await HandlerLoggingTo(logs).TryHandleAsync(http, exception, CancellationToken.None);
+        await new ApiExceptionHandler(logger.Object).TryHandleAsync(http, exception, CancellationToken.None);
 
         string traceId = (await ReadBodyAsync(http)).GetProperty("traceId").GetString()!;
-        logs.Entries.Should().ContainSingle(entry => entry.Level == LogLevel.Error)
-            .Which.Should().Match<CapturingLoggerProvider.LogEntry>(
-                entry => ReferenceEquals(entry.Exception, exception) && entry.Message.Contains(traceId));
+        logger.ShouldHaveLoggedTheOnlyError(exception, traceId);
     }
 
     [Test]
@@ -223,18 +222,13 @@ public class ApiExceptionHandlerShould : ApiUnitTestCase
     [Test]
     public async Task log_the_failure_of_the_writer_with_its_cause_and_the_trace_id_the_response_carries()
     {
-        CapturingLoggerProvider logs = new();
+        Mock<ILogger<ApiExceptionHandler>> logger = LoggerMock.Enabled<ILogger<ApiExceptionHandler>>();
         DefaultHttpContext http = HttpContextMother.WithProblemDetails();
         Exception exception = InfrastructureExceptionMother.WriterFailure();
 
-        await HandlerLoggingTo(logs).TryHandleAsync(http, exception, CancellationToken.None);
+        await new ApiExceptionHandler(logger.Object).TryHandleAsync(http, exception, CancellationToken.None);
 
         string traceId = (await ReadBodyAsync(http)).GetProperty("traceId").GetString()!;
-        logs.Entries.Should().ContainSingle(entry => entry.Level == LogLevel.Error)
-            .Which.Should().Match<CapturingLoggerProvider.LogEntry>(
-                entry => ReferenceEquals(entry.Exception, exception) && entry.Message.Contains(traceId));
+        logger.ShouldHaveLoggedTheOnlyError(exception, traceId);
     }
-
-    private static ApiExceptionHandler HandlerLoggingTo(CapturingLoggerProvider logs)
-        => new(new LoggerFactory([logs]).CreateLogger<ApiExceptionHandler>());
 }
