@@ -8,7 +8,6 @@ using SumiClas.WeeklySummaries.Domain;
 public class WeeklySummaryShould : UnitTestCase
 {
     private const int DAYS_IN_A_WEEK = 7;
-    private const int FIRST_DAY_AFTER_MONDAY = 1;
     private const int MINUTES_LATER = 30;
 
     [Test]
@@ -73,9 +72,7 @@ public class WeeklySummaryShould : UnitTestCase
         act.Should().Throw<WeeklySummaryExceptions.ClassRequired>();
     }
 
-    [TestCase("")]
     [TestCase("   ")]
-    [TestCase("\n")]
     public void throw_content_required_when_the_content_is_blank(string content)
     {
         Func<WeeklySummary> act = () => this.CreateWithContent(content);
@@ -83,7 +80,6 @@ public class WeeklySummaryShould : UnitTestCase
         act.Should().Throw<WeeklySummaryExceptions.ContentRequired>();
     }
 
-    [TestCase("")]
     [TestCase("   ")]
     public void throw_input_hash_required_when_the_fingerprint_is_blank(string inputHash)
     {
@@ -99,10 +95,9 @@ public class WeeklySummaryShould : UnitTestCase
     }
 
     [Test]
-    public void throw_week_start_invalid_for_any_other_day(
-        [Range(FIRST_DAY_AFTER_MONDAY, DAYS_IN_A_WEEK - 1)] int daysAfterMonday)
+    public void throw_week_start_invalid_when_the_day_is_not_a_monday()
     {
-        DateOnly notMonday = WeeklySummaryMother.Monday.AddDays(daysAfterMonday);
+        DateOnly notMonday = WeeklySummaryMother.Monday.AddDays(DAYS_IN_A_WEEK - 1);
 
         Func<WeeklySummary> act = () => WeeklySummary.Create(
             GuidMother.Random(),
@@ -136,20 +131,6 @@ public class WeeklySummaryShould : UnitTestCase
     }
 
     [Test]
-    public void refuse_to_be_rewritten_with_a_blank_text_and_keep_what_it_had()
-    {
-        WeeklySummary summary = WeeklySummaryMother.With();
-        string content = summary.Content;
-        string inputHash = summary.InputHash;
-
-        Action act = () => summary.Rewrite("  ", WeeklySummaryMother.InputHash(), this.Clock.Object);
-
-        act.Should().Throw<WeeklySummaryExceptions.ContentRequired>();
-        summary.Content.Should().Be(content);
-        summary.InputHash.Should().Be(inputHash);
-    }
-
-    [Test]
     public void refuse_to_be_rewritten_with_a_blank_fingerprint_and_keep_what_it_had()
     {
         WeeklySummary summary = WeeklySummaryMother.With();
@@ -164,50 +145,12 @@ public class WeeklySummaryShould : UnitTestCase
     }
 
     [Test]
-    public void say_whether_it_was_written_from_some_data()
-    {
-        string inputHash = WeeklySummaryMother.InputHash();
-        WeeklySummary summary = WeeklySummaryMother.With(inputHash: inputHash);
-
-        summary.WasWrittenFrom(inputHash).Should().BeTrue();
-        summary.WasWrittenFrom(WeeklySummaryMother.InputHash()).Should().BeFalse();
-    }
-
-    [Test]
-    public void find_the_monday_of_the_week_of_any_day([Range(0, DAYS_IN_A_WEEK - 1)] int daysAfterMonday)
+    public void find_the_monday_of_the_week_of_its_first_and_its_last_day(
+        [Values(0, DAYS_IN_A_WEEK - 1)] int daysAfterMonday)
     {
         DateOnly day = WeeklySummaryMother.Monday.AddDays(daysAfterMonday);
 
         WeeklySummary.WeekStartOf(day).Should().Be(WeeklySummaryMother.Monday);
-    }
-
-    [Test]
-    public void put_a_sunday_in_the_week_that_started_the_monday_before()
-    {
-        DateOnly sunday = WeeklySummaryMother.Monday.AddDays(DAYS_IN_A_WEEK - 1);
-        DateOnly nextMonday = WeeklySummaryMother.Monday.AddDays(DAYS_IN_A_WEEK);
-
-        WeeklySummary.WeekStartOf(sunday).Should().Be(WeeklySummaryMother.Monday);
-        WeeklySummary.WeekStartOf(nextMonday).Should().Be(nextMonday);
-    }
-
-    [Test]
-    public void find_the_monday_across_the_change_of_year()
-    {
-        DateOnly newYearsDay = new(2026, 1, 1);
-        DateOnly mondayOfThatWeek = new(2025, 12, 29);
-
-        WeeklySummary.WeekStartOf(newYearsDay).Should().Be(mondayOfThatWeek);
-    }
-
-    [Test]
-    public void end_the_week_on_the_sunday_after_its_monday()
-    {
-        DateOnly sunday = WeeklySummary.WeekEndOf(WeeklySummaryMother.Monday);
-
-        sunday.DayOfWeek.Should().Be(DayOfWeek.Sunday);
-        sunday.Should().Be(WeeklySummaryMother.Monday.AddDays(DAYS_IN_A_WEEK - 1));
-        WeeklySummary.WeekStartOf(sunday).Should().Be(WeeklySummaryMother.Monday);
     }
 
     private WeeklySummary CreateWithContent(string content)

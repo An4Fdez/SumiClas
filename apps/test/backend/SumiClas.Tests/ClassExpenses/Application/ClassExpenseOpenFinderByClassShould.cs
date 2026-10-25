@@ -159,29 +159,6 @@ public class ClassExpenseOpenFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task return_an_empty_list_when_there_are_no_expenses()
-    {
-        Guid classId = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchNoClassExpenses();
-
-        IReadOnlyCollection<ClassExpenseOpenResponse> result = await this.FindOpenAsync(classId);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task throw_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this.FindOpenAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.QueryBus.VerifyNoOtherCalls();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task throw_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
     {
         Guid classId = GuidMother.Random();

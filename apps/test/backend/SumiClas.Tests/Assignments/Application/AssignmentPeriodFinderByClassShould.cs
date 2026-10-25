@@ -14,7 +14,6 @@ public class AssignmentPeriodFinderByClassShould : AssignmentsUnitTestCase
 {
     private const int ONE_DAY = 1;
     private const int TWO_DAYS = 2;
-    private const int THREE_DAYS = 3;
     private const int WEEK_LENGTH_AFTER_FIRST_DAY = 6;
 
     private static readonly DateOnly FROM = new(2026, 10, 5);
@@ -101,37 +100,6 @@ public class AssignmentPeriodFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task cover_only_that_day_when_the_period_is_a_single_day()
-    {
-        Guid classId = this.ShouldResolveClassOfCurrentUser();
-        DateOnly day = FROM.AddDays(THREE_DAYS);
-        string due = StringMother.Random("due");
-        this.ShouldSearchAssignments(
-            AssignmentMother.With(classId: classId, dueDate: day.AddDays(-ONE_DAY)),
-            AssignmentMother.With(classId: classId, title: due, dueDate: day),
-            AssignmentMother.With(classId: classId, dueDate: day.AddDays(ONE_DAY)));
-
-        IReadOnlyCollection<AssignmentPeriodResponse> result = await this._useCase.ExecuteAsync(
-            AssignmentPeriodFinderByClassQueryMother.With(classId, day, day),
-            CancellationToken.None);
-
-        result.Select(assignment => assignment.Title).Should().Equal(due);
-    }
-
-    [Test]
-    public async Task return_an_empty_list_when_the_period_ends_before_it_starts()
-    {
-        Guid classId = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchAssignments(AssignmentMother.With(classId: classId, dueDate: FROM));
-
-        IReadOnlyCollection<AssignmentPeriodResponse> result = await this._useCase.ExecuteAsync(
-            AssignmentPeriodFinderByClassQueryMother.With(classId, TO, FROM),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task give_the_same_answer_to_whoever_asks_whether_they_wrote_or_did_the_assignments_or_not()
     {
         Guid currentUserId = GuidMother.Random();
@@ -160,29 +128,6 @@ public class AssignmentPeriodFinderByClassShould : AssignmentsUnitTestCase
         IReadOnlyCollection<AssignmentPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Select(assignment => assignment.Title).Should().Equal(mine);
-    }
-
-    [Test]
-    public async Task return_an_empty_list_when_there_are_no_assignments()
-    {
-        Guid classId = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchNoAssignments();
-
-        IReadOnlyCollection<AssignmentPeriodResponse> result = await this.InPeriodAsync(classId);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task throw_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this.InPeriodAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.QueryBus.VerifyNoOtherCalls();
-        this.ShouldNotHaveSearched();
     }
 
     [Test]

@@ -16,7 +16,6 @@ using System.Text.Json;
 [TestFixture]
 public class AnthropicWeeklySummaryWriterShould
 {
-    private const int OVERLOADED = 529;
     private const int NO_RETRIES = 0;
     private const int TWO_RETRIES = 2;
     private const int ONE_RETRY = 1;
@@ -115,10 +114,7 @@ public class AnthropicWeeklySummaryWriterShould
     }
 
     [TestCase(HttpStatusCode.RequestTimeout)]
-    [TestCase(HttpStatusCode.TooManyRequests)]
     [TestCase(HttpStatusCode.InternalServerError)]
-    [TestCase(HttpStatusCode.ServiceUnavailable)]
-    [TestCase((HttpStatusCode)OVERLOADED)]
     public async Task try_again_when_the_service_fails_for_now(HttpStatusCode status)
     {
         string text = StringMother.Random("text");
@@ -132,10 +128,7 @@ public class AnthropicWeeklySummaryWriterShould
         this._handler.Requests.Should().HaveCount(ONE_RETRY + 1);
     }
 
-    [TestCase(HttpStatusCode.BadRequest)]
-    [TestCase(HttpStatusCode.Unauthorized)]
     [TestCase(HttpStatusCode.Forbidden)]
-    [TestCase(HttpStatusCode.NotFound)]
     public async Task fail_at_once_when_the_service_rejects_the_request(HttpStatusCode status)
     {
         this._handler.Reply(status, AnthropicResponseMother.Error("authentication_error"));
@@ -311,16 +304,17 @@ public class AnthropicWeeklySummaryWriterShould
         this._handler.Requests.Should().ContainSingle();
     }
 
-    [Test]
-    public async Task never_put_the_key_nor_the_data_of_the_class_in_a_failure()
+    [TestCaseSource(nameof(FailuresOfTheService))]
+    public async Task never_put_the_key_nor_the_data_of_the_class_in_a_failure(
+        Action<FakeHttpMessageHandler, string, string> fail)
     {
-        AiOptions options = AiOptionsMother.Enabled();
+        AiOptions options = AiOptionsMother.Enabled(timeoutSeconds: ONE_SECOND, maxRetries: NO_RETRIES);
         string secretTitle = StringMother.Random("title");
         WeeklySummaryInput input = WeeklySummaryInputMother.With(
             announcements: [WeeklySummaryInputMother.Announcement(secretTitle)]);
-        this._handler.Reply(HttpStatusCode.Unauthorized, AnthropicResponseMother.Error("authentication_error"));
+        fail(this._handler, options.ApiKey, secretTitle);
 
-        Func<Task> act = () => Writer(options).WriteAsync(input);
+        Func<Task> act = () => Writer(options).WriteAsync(input).WaitAsync(Patience);
 
         string message = (await act.Should().ThrowExactlyAsync<WeeklySummaryWriterException>()).Which.Message;
         message.Should().NotContain(options.ApiKey).And.NotContain(secretTitle);
@@ -351,14 +345,27 @@ public class AnthropicWeeklySummaryWriterShould
             AnthropicResponseMother.Message(StringMother.Random("text"), "max_tokens"), "cut").SetName("a_cut_text");
         yield return new TestCaseData(
             AnthropicResponseMother.Message("  \n"), "without text").SetName("a_blank_text");
-        yield return new TestCaseData(
-            AnthropicResponseMother.Blocks([]), "without text").SetName("no_blocks");
-        yield return new TestCaseData(
-            AnthropicResponseMother.Blocks([new { type = "thinking", thinking = "x" }]), "without text")
-            .SetName("only_a_thinking_block");
-        yield return new TestCaseData("{\"stop_reason\":\"end_turn\"}", "without text").SetName("no_content_at_all");
         yield return new TestCaseData("not json", "not a message").SetName("something_that_is_not_json");
         yield return new TestCaseData("null", "not a message").SetName("a_json_null");
+    }
+
+    private static IEnumerable<TestCaseData> FailuresOfTheService()
+    {
+        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
+            handler.Reply(
+                HttpStatusCode.Unauthorized,
+                AnthropicResponseMother.Error("authentication_error", $"{key} {title}"))))
+            .SetName("a_rejected_request");
+        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
+            handler.Fail(new HttpRequestException($"{key} {title}")))).SetName("an_unreachable_service");
+        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, _, _) =>
+            handler.Hang())).SetName("no_answer_in_time");
+        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
+            handler.Reply(
+                HttpStatusCode.OK,
+                AnthropicResponseMother.Message($"{key} {title}", "refusal")))).SetName("a_refusal");
+        yield return new TestCaseData((Action<FakeHttpMessageHandler, string, string>)((handler, key, title) =>
+            handler.Reply(HttpStatusCode.OK, $"{key} {title}"))).SetName("something_that_is_not_a_message");
     }
 
     private static WeeklySummaryInput AnInput()

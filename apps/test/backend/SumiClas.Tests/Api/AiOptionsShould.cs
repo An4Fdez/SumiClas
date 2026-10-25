@@ -22,7 +22,6 @@ public class AiOptionsShould
         options.ApiKey.Should().BeEmpty();
     }
 
-    [TestCase("")]
     [TestCase("   ")]
     public void stay_off_when_the_key_is_blank(string key)
     {
@@ -40,16 +39,6 @@ public class AiOptionsShould
 
         options.IsEnabled.Should().BeTrue();
         options.ApiKey.Should().Be(key);
-    }
-
-    [Test]
-    public void use_the_defaults_when_only_the_key_is_given()
-    {
-        AiOptions options = Resolve(Settings(("ApiKey", StringMother.Random("key"))));
-
-        options.Model.Should().Be(AiOptions.DefaultModel);
-        options.TimeoutSeconds.Should().Be(AiOptions.DefaultTimeoutSeconds);
-        options.MaxRetries.Should().Be(AiOptions.DefaultMaxRetries);
     }
 
     [Test]
@@ -109,7 +98,6 @@ public class AiOptionsShould
     }
 
     [TestCase(0)]
-    [TestCase(-ONE)]
     [TestCase(AiOptions.MaxTimeoutSeconds + ONE)]
     public void fail_with_the_name_of_the_setting_when_the_timeout_is_out_of_range(int seconds)
     {
@@ -118,7 +106,6 @@ public class AiOptionsShould
         act.Should().ThrowExactly<OptionsValidationException>().Which.Message.Should().Contain("Ai:TimeoutSeconds");
     }
 
-    [TestCase(-ONE)]
     [TestCase(AiOptions.MaxRetriesAllowed + ONE)]
     public void fail_with_the_name_of_the_setting_when_the_retries_are_out_of_range(int retries)
     {

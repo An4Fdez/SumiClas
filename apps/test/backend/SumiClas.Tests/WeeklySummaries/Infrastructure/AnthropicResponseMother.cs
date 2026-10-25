@@ -13,6 +13,6 @@ public static class AnthropicResponseMother
     public static string Blocks(object[] content, string stopReason = END_TURN)
         => JsonSerializer.Serialize(new { type = "message", role = "assistant", content, stop_reason = stopReason });
 
-    public static string Error(string errorType)
-        => JsonSerializer.Serialize(new { type = "error", error = new { type = errorType, message = "ignored" } });
+    public static string Error(string errorType, string message = "ignored")
+        => JsonSerializer.Serialize(new { type = "error", error = new { type = errorType, message } });
 }

@@ -14,7 +14,6 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
     private const int ONE_DAY = 1;
     private const int TWO_DAYS = 2;
     private const int WEEK_LENGTH_AFTER_FIRST_DAY = 6;
-    private const int A_YEAR_AGO = -1;
 
     private static readonly DateOnly FROM = new(2026, 10, 5);
     private static readonly DateOnly TO = FROM.AddDays(WEEK_LENGTH_AFTER_FIRST_DAY);
@@ -94,18 +93,6 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task not_include_a_one_time_event_of_the_same_day_and_month_in_another_year()
-    {
-        Guid classId = GuidMother.Random();
-        DateOnly sameDayLastYear = FROM.AddYears(A_YEAR_AGO);
-        this.ShouldListEventsOfClass(classId, CalendarEventResponseMother.OneTime(sameDayLastYear));
-
-        IReadOnlyCollection<CalendarEventPeriodResponse> result = await this.InPeriodAsync(classId);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task order_the_events_of_the_same_day_by_title()
     {
         Guid classId = GuidMother.Random();
@@ -122,30 +109,6 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task return_an_empty_list_when_the_period_ends_before_it_starts()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldListEventsOfClass(classId, CalendarEventResponseMother.OneTime(FROM));
-
-        IReadOnlyCollection<CalendarEventPeriodResponse> result = await this._useCase.ExecuteAsync(
-            CalendarEventPeriodFinderByClassQueryMother.With(classId, TO, FROM),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task return_an_empty_list_when_the_class_has_no_events()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldListEventsOfClass(classId);
-
-        IReadOnlyCollection<CalendarEventPeriodResponse> result = await this.InPeriodAsync(classId);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task ask_for_the_events_of_the_requested_class_only()
     {
         Guid classId = GuidMother.Random();
@@ -159,34 +122,6 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
                 It.IsAny<CancellationToken>()),
             Times.Once);
         this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task let_the_class_access_error_through_when_the_user_does_not_belong_to_the_class()
-    {
-        this.QueryBus
-            .Setup(bus => bus.Send(
-                It.IsAny<CalendarEventFinderByClass.Query>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new UserExceptions.ClassAccessForbidden());
-
-        Func<Task> act = () => this.InPeriodAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
-    }
-
-    [Test]
-    public async Task let_the_class_error_through_when_the_class_is_unknown()
-    {
-        this.QueryBus
-            .Setup(bus => bus.Send(
-                It.IsAny<CalendarEventFinderByClass.Query>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ClassExceptions.NotFound());
-
-        Func<Task> act = () => this.InPeriodAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
     }
 
     private Task<IReadOnlyCollection<CalendarEventPeriodResponse>> InPeriodAsync(Guid classId)

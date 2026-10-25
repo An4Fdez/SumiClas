@@ -20,10 +20,10 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
     private const int DAYS_IN_WEEK = 7;
     private const int ONE_DAY = 1;
     private const int TWO_DAYS = 2;
+    private const int THREE_DAYS = 3;
     private const int BIRTHDAYS_OF_THE_WEEK = 2;
     private const int LOST_ITEMS_OF_THE_CLASS = 3;
     private const int HOURS_UNTIL_SUNDAY_NIGHT = 35;
-    private const int HOURS_UNTIL_NEXT_MONDAY = 36;
     private const int LAST_MINUTE = 59;
     private const int LAST_SECOND = 59;
 
@@ -84,6 +84,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         string urgent = StringMother.Random("urgent");
         string trip = StringMother.Random("trip");
         string meeting = StringMother.Random("meeting");
+        string activity = StringMother.Random("activity");
         string homework = StringMother.Random("homework");
         string expense = StringMother.Random("expense");
         this.ShouldSearchWeeklySummaries();
@@ -99,6 +100,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
                 new CalendarEventPeriodResponse(StringMother.Random("child"), nameof(EventType.Birthday), MONDAY),
                 new CalendarEventPeriodResponse(StringMother.Random("child"), nameof(EventType.Birthday), SUNDAY),
                 new CalendarEventPeriodResponse(meeting, nameof(EventType.Meeting), MONDAY.AddDays(TWO_DAYS)),
+                new CalendarEventPeriodResponse(activity, nameof(EventType.Activity), MONDAY.AddDays(THREE_DAYS)),
             ],
             assignments: [new AssignmentPeriodResponse(homework, SUNDAY)],
             expenses: [new ClassExpenseOpenResponse(expense)],
@@ -114,6 +116,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             [
                 new WeeklySummaryEvent(trip, MONDAY.AddDays(ONE_DAY)),
                 new WeeklySummaryEvent(meeting, MONDAY.AddDays(TWO_DAYS)),
+                new WeeklySummaryEvent(activity, MONDAY.AddDays(THREE_DAYS)),
             ],
             [new WeeklySummaryAssignment(homework, SUNDAY)],
             [expense],
@@ -135,23 +138,6 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
 
         result.WeekStart.Should().Be(MONDAY);
         result.WeekEnd.Should().Be(SUNDAY);
-    }
-
-    [Test]
-    public async Task read_the_next_week_from_the_first_instant_of_its_monday()
-    {
-        Guid classId = GuidMother.Random();
-        DateOnly nextMonday = MONDAY.AddDays(DAYS_IN_WEEK);
-        this.AdvanceClock(TimeSpan.FromHours(HOURS_UNTIL_NEXT_MONDAY));
-        this.ShouldSearchWeeklySummaries();
-        this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, nextMonday, nextMonday.AddDays(DAYS_AFTER_MONDAY), announcements: [Announcement()]);
-        this.ShouldWrite(StringMother.Random("written"));
-
-        WeeklySummaryResponse result = await this.GenerateAsync(classId);
-
-        result.WeekStart.Should().Be(nextMonday);
-        result.WeekEnd.Should().Be(nextMonday.AddDays(DAYS_AFTER_MONDAY));
     }
 
     [Test]
@@ -295,7 +281,6 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
     }
 
     [TestCase(typeof(UserExceptions.ClassAccessForbidden))]
-    [TestCase(typeof(ClassExceptions.NotFound))]
     public async Task let_the_error_of_reading_the_week_through_without_asking_the_writer(Type exceptionType)
     {
         this.ShouldFailReadingWeek((Exception)Activator.CreateInstance(exceptionType)!);

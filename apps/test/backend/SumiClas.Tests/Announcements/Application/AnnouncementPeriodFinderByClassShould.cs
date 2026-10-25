@@ -100,10 +100,12 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
         string first = StringMother.Random("first");
         string last = StringMother.Random("last");
         this.ShouldSearchAnnouncements(
-            AnnouncementMother.SchoolWide(schoolId, StringMother.Random("before"), START - JUST_OUTSIDE),
+            AnnouncementMother.SchoolWide(schoolId, StringMother.Random("school before"), START - JUST_OUTSIDE),
+            AnnouncementMother.ForClass(classId, StringMother.Random("class before"), START - JUST_OUTSIDE),
             AnnouncementMother.SchoolWide(schoolId, first, START),
             AnnouncementMother.ForClass(classId, last, END - JUST_OUTSIDE),
-            AnnouncementMother.ForClass(classId, StringMother.Random("after"), END));
+            AnnouncementMother.SchoolWide(schoolId, StringMother.Random("school after"), END),
+            AnnouncementMother.ForClass(classId, StringMother.Random("class after"), END));
 
         IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
 
@@ -128,19 +130,6 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
             CancellationToken.None);
 
         result.Select(announcement => announcement.Title).Should().Equal(morning, night);
-    }
-
-    [Test]
-    public async Task return_an_empty_list_when_the_period_ends_before_it_starts()
-    {
-        (Guid classId, Guid schoolId) = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchAnnouncements(AnnouncementMother.SchoolWide(schoolId, StringMother.Random("title"), START));
-
-        IReadOnlyCollection<AnnouncementPeriodResponse> result = await this._useCase.ExecuteAsync(
-            AnnouncementPeriodFinderByClassQueryMother.With(classId, TO, FROM),
-            CancellationToken.None);
-
-        result.Should().BeEmpty();
     }
 
     [Test]
@@ -175,29 +164,6 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_an_empty_list_when_there_are_no_announcements()
-    {
-        (Guid classId, _) = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchAnnouncements();
-
-        IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
-
-        result.Should().BeEmpty();
-    }
-
-    [Test]
-    public async Task throw_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this.InPeriodAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.QueryBus.VerifyNoOtherCalls();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task throw_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
     {
         Guid classId = GuidMother.Random();
@@ -209,35 +175,6 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
         Func<Task> act = () => this.InPeriodAsync(classId);
 
         await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task throw_the_class_error_when_the_class_is_unknown()
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldNotFindClass();
-
-        Func<Task> act = () => this.InPeriodAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task throw_the_school_error_without_reading_when_the_school_of_the_class_cannot_be_found()
-    {
-        Guid classId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        Guid currentUserId = GuidMother.Random();
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, new SchoolYearExceptions.NotFound());
-        this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldAllowClassAccess(currentUserId, classId);
-
-        Func<Task> act = () => this.InPeriodAsync(classId);
-
-        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

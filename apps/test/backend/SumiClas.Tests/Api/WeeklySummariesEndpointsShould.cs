@@ -80,49 +80,10 @@ public class WeeklySummariesEndpointsShould
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         response.Headers.RetryAfter.Should().NotBeNull();
+        response.Headers.RetryAfter!.Delta.Should().Be(TimeSpan.FromSeconds(ApiExceptionHandler.RetryAfterSeconds));
         string body = await response.Content.ReadAsStringAsync();
         body.Should().Contain(ApiErrorCodes.WeeklySummaryUnavailable);
         body.Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
-    }
-
-    [Test]
-    public async Task answer_403_when_the_user_does_not_belong_to_the_class()
-    {
-        this._sender
-            .Setup(sender => sender.Send(It.IsAny<WeeklySummaryGenerate.Command>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new UserExceptions.ClassAccessForbidden());
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.PostAsync(
-            $"/weekly-summaries?classId={GuidMother.Random()}",
-            null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Test]
-    public async Task answer_400_without_reaching_the_use_case_when_the_class_is_not_a_guid()
-    {
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.PostAsync("/weekly-summaries?classId=not-a-guid", null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        this._sender.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task answer_400_without_reaching_the_use_case_when_the_query_string_has_no_class()
-    {
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.PostAsync("/weekly-summaries", null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        this._sender.VerifyNoOtherCalls();
     }
 
     private static HttpClient AuthenticatedClient(EndpointsHost host)

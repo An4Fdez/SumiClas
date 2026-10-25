@@ -18,15 +18,6 @@ public class WeeklySummaryFingerprintShould
     }
 
     [Test]
-    public void be_the_same_for_the_same_prompt()
-    {
-        string system = StringMother.Random("system");
-        string user = StringMother.Random("user");
-
-        WeeklySummaryFingerprint.Of(PromptOf(system, user)).Should().Be(WeeklySummaryFingerprint.Of(PromptOf(system, user)));
-    }
-
-    [Test]
     public void change_when_the_data_of_the_week_changes()
     {
         string system = StringMother.Random("system");

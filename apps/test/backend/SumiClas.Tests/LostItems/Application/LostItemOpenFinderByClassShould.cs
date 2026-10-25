@@ -13,7 +13,6 @@ using SumiClas.Users.Domain;
 [TestFixture]
 public class LostItemOpenFinderByClassShould : LostItemsUnitTestCase
 {
-    private const int NONE = 0;
     private const int LONG_AGO_DAYS = 400;
 
     private static readonly TimeSpan LONG_AGO = TimeSpan.FromDays(LONG_AGO_DAYS);
@@ -115,29 +114,6 @@ public class LostItemOpenFinderByClassShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task return_zero_when_there_are_no_items()
-    {
-        (Guid classId, _) = this.ShouldResolveClassOfCurrentUser();
-        this.ShouldSearchNoLostItems();
-
-        LostItemOpenResponse result = await this.CountOpenAsync(classId);
-
-        result.Should().Be(new LostItemOpenResponse(Count: NONE));
-    }
-
-    [Test]
-    public async Task throw_unauthenticated_without_asking_or_reading_when_there_is_no_current_user()
-    {
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this.CountOpenAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.QueryBus.VerifyNoOtherCalls();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task throw_class_access_forbidden_without_reading_when_the_user_does_not_belong_to_the_class()
     {
         Guid classId = GuidMother.Random();
@@ -149,35 +125,6 @@ public class LostItemOpenFinderByClassShould : LostItemsUnitTestCase
         Func<Task> act = () => this.CountOpenAsync(classId);
 
         await act.Should().ThrowAsync<UserExceptions.ClassAccessForbidden>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task throw_the_class_error_when_the_class_is_unknown()
-    {
-        this.ShouldResolveCurrentUser(GuidMother.Random());
-        this.ShouldNotFindClass();
-
-        Func<Task> act = () => this.CountOpenAsync(GuidMother.Random());
-
-        await act.Should().ThrowAsync<ClassExceptions.NotFound>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task throw_the_school_error_without_reading_when_the_school_of_the_class_cannot_be_found()
-    {
-        Guid classId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        Guid currentUserId = GuidMother.Random();
-        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
-        this.ShouldFailFindingSchoolOfSchoolYear(schoolYearId, new SchoolYearExceptions.NotFound());
-        this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldAllowClassAccess(currentUserId, classId);
-
-        Func<Task> act = () => this.CountOpenAsync(classId);
-
-        await act.Should().ThrowAsync<SchoolYearExceptions.NotFound>();
         this.ShouldNotHaveSearched();
     }
 

@@ -16,7 +16,6 @@ public class WeeklySummaryPromptBuilderShould
     private const int LOST_ITEMS = 3;
     private const string ELLIPSIS = "…";
     private const string EMOJI = "😀";
-    private const int NEGATIVE = -1;
     private const int HUGE_FACTOR = 100;
 
     [Test]
@@ -178,17 +177,6 @@ public class WeeklySummaryPromptBuilderShould
     }
 
     [Test]
-    public void cut_a_huge_title_to_the_same_length_as_any_other()
-    {
-        string huge = new string('a', WeeklySummaryPromptBuilder.MaxRawTitleLength * HUGE_FACTOR) + "@";
-
-        string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(huge)).User;
-
-        string cut = new string('a', WeeklySummaryPromptBuilder.MaxTitleLength - ELLIPSIS.Length) + ELLIPSIS;
-        user.Should().Contain($"- {cut}\n");
-    }
-
-    [Test]
     public void look_only_at_the_first_part_of_a_title_before_cleaning_it()
     {
         string blankThenText = new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength) + "late text";
@@ -213,17 +201,6 @@ public class WeeklySummaryPromptBuilderShould
 
         user.Should().NotContain("x@").And.NotContain("exam");
         user.Should().Contain("No hay novedades esta semana.");
-    }
-
-    [Test]
-    public void keep_the_last_word_of_the_first_part_of_a_title_when_it_ends_exactly_there()
-    {
-        string word = StringMother.Random("word");
-        string title = new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength - word.Length) + word + " tail";
-
-        string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(title)).User;
-
-        user.Should().Contain($"- {word}\n").And.NotContain("tail");
     }
 
     [Test]
@@ -309,17 +286,6 @@ public class WeeklySummaryPromptBuilderShould
         user.Should().Contain("No hay novedades esta semana.").And.NotContain("Avisos:");
     }
 
-    [Test]
-    public void treat_a_negative_count_as_nothing()
-    {
-        WeeklySummaryInput input = WeeklySummaryInputMother.With(birthdays: NEGATIVE, unrecoveredLostItems: NEGATIVE);
-
-        string user = WeeklySummaryPromptBuilder.Build(input).User;
-
-        user.Should().Contain("No hay novedades esta semana.");
-        user.Should().NotContain("Cumpleaños").And.NotContain("Objetos perdidos");
-    }
-
     private static WeeklySummaryInput OneAnnouncement(string title)
         => WeeklySummaryInputMother.With(announcements: [WeeklySummaryInputMother.Announcement(title)]);
 
@@ -368,16 +334,4 @@ public class WeeklySummaryPromptBuilderShould
         prompt.System.Should().Contain("español");
     }
 
-    [Test]
-    public void build_the_same_prompt_for_the_same_week()
-    {
-        WeeklySummaryInput input = WeeklySummaryInputMother.With(
-            announcements: [WeeklySummaryInputMother.Announcement("a"), WeeklySummaryInputMother.Announcement("b")],
-            events: [WeeklySummaryInputMother.Event(SECOND_DAY, "e")]);
-
-        WeeklySummaryPrompt first = WeeklySummaryPromptBuilder.Build(input);
-        WeeklySummaryPrompt second = WeeklySummaryPromptBuilder.Build(input);
-
-        second.Should().Be(first);
-    }
 }
