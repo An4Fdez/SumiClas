@@ -28,7 +28,8 @@ public static class AiServiceCollectionExtensions
     /// <summary>
     /// Registers the writer of the weekly summary over its own <see cref="HttpClient"/>. Each attempt has its own timeout
     /// (<c>Ai:TimeoutSeconds</c>), so the client's general one is turned off. It is registered even without a key: the
-    /// writer only refuses to work when it is asked to, and whoever uses it checks <c>AiOptions.IsEnabled</c> first.
+    /// writer only refuses to work when it is asked to, with a <see cref="WeeklySummaryWriterException"/> that the API
+    /// answers as a 503, so a week that needs no text (no news, or one already written) is answered without a key.
     /// </summary>
     public static IServiceCollection AddSumiClasWeeklySummaryWriter(this IServiceCollection services)
     {

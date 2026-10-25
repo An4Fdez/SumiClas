@@ -88,7 +88,7 @@ No se han realizado aún entrevistas formales — lo que sigue son las necesidad
 * RNF3 (Rendimiento/UX): landing con carga rápida (idealmente estática/SSG), diseño mobile-first ya que el uso mayoritario será desde el móvil de los padres.
 * RNF4 (Accesibilidad): contraste mínimo AA en ambos modos de color, tamaño de fuente legible sin zoom, navegación completa por teclado.
 * RNF5 (Escalabilidad): modelo de datos preparado para múltiples colegios y cursos escolares desde el diseño inicial, aunque la Beta se despliegue en uno solo.
-* RNF6 (Disponibilidad): hosting en PaaS con soporte de contenedores (Render/Fly.io), sin necesidad de alta disponibilidad crítica para una Beta.
+* RNF6 (Disponibilidad): hosting en PaaS con soporte de contenedores (Render/Fly.io; actualización 2026-10-24: se desplegará en Azure), sin necesidad de alta disponibilidad crítica para una Beta.
 * RNF7 (Mantenibilidad): migraciones versionadas con EF Core desde el primer commit, para trazabilidad del modelo de datos.
 * RNF8 (Coste): uso de LLM acotado a un resumen semanal por clase (contexto pequeño, sin RAG complejo) para mantener el coste de IA controlado durante la Beta.
 

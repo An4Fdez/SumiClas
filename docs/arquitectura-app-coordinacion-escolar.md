@@ -94,7 +94,7 @@ Esto resuelve directamente el problema original: los avisos "de verdad important
 - **Autenticación:** email + contraseña o magic link; JWT para sesiones. Sin OAuth social necesario para una Beta cerrada por colegio.
 - **Notificaciones push:** Web Push API (nativa de las PWA) — evita depender de servicios de terceros para la Beta. **Fuera del MVP**: ver la nota de alcance del §4.
 - **IA (resumen semanal / búsqueda):** llamada a un LLM (API de Anthropic/OpenAI) con un prompt que recibe el contenido de la semana ya estructurado desde la base de datos (no hace falta RAG complejo: el volumen de datos por clase es pequeño y se puede pasar directo en el contexto).
-- **Hosting:** proveedor con buen soporte para contenedores .NET vía Docker — Render o Fly.io son las opciones más directas; Railway también funciona pero tiene algo menos de documentación específica para .NET.
+- **Hosting:** proveedor con buen soporte para contenedores .NET vía Docker — Render o Fly.io son las opciones más directas; Railway también funciona pero tiene algo menos de documentación específica para .NET. **Actualización (2026-10-24): el usuario ha decidido desplegar en Azure**; estas opciones quedan descartadas.
 
 ## 6. Consideraciones para la memoria del TFM
 
