@@ -27,7 +27,18 @@ apps/
     frontend/    → tests del frontend, Vitest + React Testing Library (vacío por ahora)
 docs/           → documentación de producto/arquitectura
 SumiClas.slnx   → solución que agrupa los proyectos anteriores
+.claude/skills/ → skills del proyecto (ver "Skills del proyecto")
 ```
+
+## Skills del proyecto
+
+Los `AGENTS.md` solo llevan lo que hay que leer siempre. El detalle de cada tema (patrones, convenciones, decisiones acordadas y huecos conocidos) está repartido en **skills**, una carpeta por tema con su `SKILL.md` en `.claude/skills/<nombre>/`. Cada una empieza por una descripción que dice cuándo usarla.
+
+- **Antes de escribir o cambiar código** de `apps/backend/**` o `apps/frontend/**`, abre el `AGENTS.md` de esa carpeta, busca en su tabla «Si vas a… → Lee la skill» las que apliquen a la tarea y léelas enteras. Casi siempre son varias.
+- Las skills se leen por su ruta (`.claude/skills/<nombre>/SKILL.md`), así que sirven con cualquier agente aunque no las cargue por su cuenta.
+- Si una skill y el código no coinciden, coméntalo antes de asumir cuál de los dos manda; si cambias algo que una skill describe, **actualiza esa skill** en el mismo cambio.
+- Backend (`apps/backend/AGENTS.md`): `backend-architecture`, `backend-domain`, `backend-use-cases`, `backend-cross-module`, `backend-endpoints`, `backend-errors`, `backend-read-queries`, `backend-specifications`, `backend-persistence`, `backend-auth`, `backend-authorization`, `backend-territorial-catalog`, `backend-weekly-summary`, `backend-testing` y `backend-status-notes`.
+- Frontend (`apps/frontend/AGENTS.md`): `frontend-architecture`, `frontend-api-integration`, `frontend-auth-session`, `frontend-ui-patterns` y `frontend-screens`.
 
 ## Instalación y arranque
 
@@ -55,8 +66,8 @@ pnpm install   # solo la primera vez / tras cambios en dependencias
 pnpm dev
 ```
 - `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue real (producción) será en Azure (decisión del 2026-10-24) pero todavía no está montado (ver "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend usa esta base de datos en desarrollo (cadena de conexión `ConnectionStrings:SumiClasDb` en `appsettings.Development.json` y migraciones EF Core aplicadas al arrancar).
-- **Clave de firma del JWT (obligatoria para arrancar la API)**: la API no arranca sin `Jwt:SigningKey` (≥ 32 caracteres) y no va en ningún `appsettings*.json`. En local, una sola vez: `dotnet user-secrets set "Jwt:SigningKey" "<≥32 chars>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Jwt__SigningKey`. Ver "Autenticación de la API" en `apps/backend/AGENTS.md`.
-- **Clave de la IA del resumen semanal (opcional)**: sin `Ai:ApiKey` la función queda apagada (la tarjeta del dashboard muestra un error con «Generar resumen» cuando la semana tiene novedades) y el resto de la app funciona igual. No va en ningún `appsettings*.json` ni en ningún archivo del repositorio. En local, una sola vez y en tu propia terminal: `dotnet user-secrets set "Ai:ApiKey" "<clave de Anthropic>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Ai__ApiKey` (en Azure, ajuste de la aplicación o referencia a Key Vault). Ver "Resumen semanal con IA" en `apps/backend/AGENTS.md`.
+- **Clave de firma del JWT (obligatoria para arrancar la API)**: la API no arranca sin `Jwt:SigningKey` (≥ 32 caracteres) y no va en ningún `appsettings*.json`. En local, una sola vez: `dotnet user-secrets set "Jwt:SigningKey" "<≥32 chars>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Jwt__SigningKey`. Ver la skill `backend-auth`.
+- **Clave de la IA del resumen semanal (opcional)**: sin `Ai:ApiKey` la función queda apagada (la tarjeta del dashboard muestra un error con «Generar resumen» cuando la semana tiene novedades) y el resto de la app funciona igual. No va en ningún `appsettings*.json` ni en ningún archivo del repositorio. En local, una sola vez y en tu propia terminal: `dotnet user-secrets set "Ai:ApiKey" "<clave de Anthropic>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Ai__ApiKey` (en Azure, ajuste de la aplicación o referencia a Key Vault). Ver la skill `backend-weekly-summary`.
 - Frontend (Vite): `https://localhost:4004`.
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
 - El proxy de Vite reenvía `/api/` a `https://localhost:7064` por defecto (el perfil `https` de `launchSettings.json`); se puede cambiar con la variable `API_PROXY_TARGET` (ver `vite.config.ts`). Web y API comparten así origen y no hay CORS.

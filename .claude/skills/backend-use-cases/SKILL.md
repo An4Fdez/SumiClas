@@ -1,0 +1,33 @@
+---
+name: backend-use-cases
+description: "Patrón de caso de uso del backend: clase estática con Command o Query, acción que implementa IUseCase y Handler fino de MediatR, repositorio inyectado, UnitOfWorkBehavior y registro por convención. Úsala al crear o modificar un caso de uso de escritura o de lectura."
+---
+
+# Casos de uso del backend (CQRS con MediatR)
+
+Aplica a `apps/backend/**`. Las reglas obligatorias, la tabla de skills y lo pendiente de decidir están en `apps/backend/AGENTS.md`; las convenciones comunes de idioma, commits y ramas, en el `AGENTS.md` de la raíz.
+
+## CQRS con MediatR
+
+Los casos de uso de cada módulo se implementan como **Commands/Queries + Handlers de MediatR**, viviendo en la carpeta `Application` de ese módulo (p. ej. `Announcements/Application/CreateAnnouncement/CreateAnnouncementCommand.cs` + `CreateAnnouncementCommandHandler.cs`). Los endpoints en `api/Endpoints/` no contienen lógica: reciben la request HTTP, la traducen a un Command/Query y llaman a `IMediator.Send(...)`.
+
+## Estructura de un caso de uso (patrón acordado)
+
+Cada caso de uso vive en `<Módulo>/Application/<NombreCasoUso>.cs` (directamente en `Application/`, sin subcarpeta por caso de uso, para que la estructura no crezca) como **una clase estática** con el nombre del caso de uso, que anida tres tipos (`Command`/`Query`, `<Acción>` y `Handler`) (excepción deliberada a "un archivo por clase", decisión explícita del usuario):
+
+- **`Command`** (o `Query`): `record` que implementa `IRequest` (un comando no devuelve nada) o `IRequest<T>` / `IQuery<T>` (una consulta devuelve su valor) de MediatR. El `Command` declara además el marcador `ICommand`.
+- **`<Acción>`** (clase anidada que implementa `IUseCase`; se llama como la acción: `Create`, `Finder`, `Mark`, `Register`...): contiene la lógica (llama al Domain y al repositorio; nunca toca el `IUnitOfWork`). Expone `ExecuteAsync(Command, CancellationToken)`. No depende de MediatR, así que se puede testear sin él.
+- **`Handler`**: adaptador fino de MediatR; solo delega en `<Acción>.ExecuteAsync`.
+- **Repositorio inyectado**: el parámetro del repositorio se llama siempre `repository` (un caso de uso solo usa el repositorio de su propio módulo, así que hay uno solo y el tipo ya dice de qué entidad es).
+
+**Nombre del caso de uso: `<Entidad><Acción>` en inglés, entidad primero** (`SchoolYearCreate`, `SchoolFinderById`, `SchoolFinderByLocality`; nunca `RegisterSchool` ni `CreateSchoolYear`). Los DTO de request del endpoint siguen el mismo patrón (`SchoolYearCreateRequest`), y los ficheros de test también (`SchoolYearCreateShould.cs`).
+
+El namespace es `SumiClas.<Módulo>.Application` (no hay subcarpeta ni namespace por caso de uso).
+
+Ejemplo real: `SchoolYears/Application/SchoolYearCreate.cs` (`SchoolYearCreate.Command`, `SchoolYearCreate.Create`, `SchoolYearCreate.Handler`; `IUseCase` en `shared/application/`).
+
+**Persistencia:** los repositorios heredan de `BaseRepository<TEntity>` (`shared/infrastructure/persistence/`, solo para raíces de agregado; recibe el `SumiClasDbContext`), que ya trae `GetByIdAsync`, `SearchAsync` (ver "Consultas con Specification" (skill `backend-specifications`)), `AddAsync` y `Remove` (síncrono, como en EF Core). Un repositorio concreto (`Schools/Infrastructure/SchoolRepository.cs`) solo declara la herencia y añade sus consultas propias; la interfaz (`ISchoolRepository`) sigue en el Domain del módulo y solo expone lo que sus casos de uso necesitan. Los repositorios solo añaden/leen; **el guardado es transparente al caso de uso**: `UnitOfWorkBehavior<TRequest, TResponse>` (`shared/application/`, pipeline behavior de MediatR) gestiona una **transacción de BBDD por comando raíz**: el primer `Command` la abre y, si no lanza, **despacha los eventos de dominio** (ver "Eventos de dominio" (skill `backend-cross-module`)) y hace `Commit` solo si todos los manejadores también tienen éxito (cualquier excepción → `Rollback`). Los módulos **no se mandan comandos entre sí** (se reaccionan con eventos); el comportamiento de unirse a la transacción activa y hacer solo `SaveChanges` (flush) se mantiene por si un `Command` se enviara anidado dentro de otro El `DbContext` es scoped (uno por petición) y el endpoint envía un único `Command`, así que comando raíz = petición HTTP; si un endpoint enviara varios, cada uno tendría su propia transacción Solo envuelve requests que implementen el marcador `ICommand` (los `Command` lo declaran junto a `IRequest`; las `Query` no). `IUnitOfWork` lo implementa `SumiClasDbContext`.
+
+## Registro de servicios por convención
+
+> **Registro en DI (hecho):** `Configuration/ApplicationServiceCollectionExtensions.AddSumiClasApplication()` registra MediatR (handlers del ensamblado) y `UnitOfWorkBehavior` como behavior abierto; `AddSumiClasInfrastructure()` registra `IUnitOfWork` → `SumiClasDbContext`. Ambos se invocan desde `Program.cs`. **Registro por convención (`Configuration/ConventionServiceCollectionExtensions.cs`), no hay que añadir nada a mano por agregado ni caso de uso:** (1) toda clase concreta llamada `*Repository` se registra (`AddScoped`) contra cada interfaz que implemente y termine en `Repository` (`SchoolRepository` → `ISchoolRepository`); (2) toda clase concreta que implementa `IUseCase` se registra como `AddScoped`, sea cual sea su nombre (un test de convención, `Shared/UseCaseConventionTests`, vigila que el `Handler` solo reciba clases que la implementen). **Respeta ese sufijo en los repositorios y haz que cada caso de uso implemente `IUseCase`**: un nombre distinto (`SchoolRepo`) o olvidar la interfaz no da error al compilar, y el fallo aparece al resolver la dependencia (en Development lo detecta `ValidateOnBuild` al arrancar). MediatR 12.5.0 (última con licencia Apache; las 13+ son comerciales). Los endpoints de creación (p. ej. `POST /school-years`, `api/Endpoints/SchoolYearsEndpoints.cs`: **el cliente aporta el `Id`** en el body y el endpoint responde 201 sin cuerpo; sin `HasApiVersion` explícito, porque por defecto es la 1.0 (`AssumeDefaultVersionWhenUnspecified`); las excepciones de dominio se convierten en `ProblemDetails` con el estado que declara cada endpoint, ver "Excepciones de dominio y estado HTTP" (skill `backend-errors`)). Probado de extremo a extremo contra Postgres (201, 400 por validación de dominio). Sin tests automáticos. Un `id` repetido (p. ej. un reintento del cliente) o cualquier otra violación de clave única devuelve 409 (`Shared.AlreadyExists`) por el mecanismo central descrito en "Índices únicos" (skill `backend-persistence`); los casos de uso no comprueban duplicados de `id`.
