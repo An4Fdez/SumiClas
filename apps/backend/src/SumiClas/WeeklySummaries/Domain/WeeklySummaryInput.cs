@@ -1,4 +1,4 @@
-namespace SumiClas.WeeklySummaries.Application;
+namespace SumiClas.WeeklySummaries.Domain;
 
 /// <summary>
 /// Everything the writer may know about a class and a week. It has no field for a person (no student, guardian, author,

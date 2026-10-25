@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Npgsql;
 using SumiClas.Shared.Domain;
-using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 using System.Diagnostics;
 
 namespace SumiClas.Api.Http;

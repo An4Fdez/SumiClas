@@ -7,6 +7,7 @@ using SumiClas.Api.Http;
 using SumiClas.Tests.Shared;
 using SumiClas.Users.Domain;
 using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;

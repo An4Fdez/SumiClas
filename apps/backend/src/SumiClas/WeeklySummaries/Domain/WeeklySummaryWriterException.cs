@@ -1,4 +1,4 @@
-namespace SumiClas.WeeklySummaries.Application;
+namespace SumiClas.WeeklySummaries.Domain;
 
 /// <summary>
 /// The writer could not produce the summary: the service is not configured, it kept failing, it timed out or it answered

@@ -1,4 +1,4 @@
-namespace SumiClas.WeeklySummaries.Application;
+namespace SumiClas.WeeklySummaries.Domain;
 
 /// <summary>
 /// Writes the summary of a class week. The text is plain: one sentence per line, no bullets and no numbering. An

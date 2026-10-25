@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace SumiClas.WeeklySummaries.Application;
+namespace SumiClas.WeeklySummaries.Domain;
 
 /// <summary>
 /// Turns the week of a class into the prompt for the model. It is pure and it is where the privacy rules of the summary

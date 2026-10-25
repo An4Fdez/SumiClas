@@ -1,4 +1,4 @@
-namespace SumiClas.WeeklySummaries.Application;
+namespace SumiClas.WeeklySummaries.Domain;
 
 /// <param name="System">What the model is told once: who it is, how to write and what never to do.</param>
 /// <param name="User">The data of the week, between <c>&lt;datos&gt;</c> tags.</param>

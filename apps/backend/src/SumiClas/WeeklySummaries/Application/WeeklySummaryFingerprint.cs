@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using SumiClas.WeeklySummaries.Domain;
 
 namespace SumiClas.WeeklySummaries.Application;
 

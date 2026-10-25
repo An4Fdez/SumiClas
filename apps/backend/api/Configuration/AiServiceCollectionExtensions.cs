@@ -1,4 +1,4 @@
-using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 using SumiClas.WeeklySummaries.Infrastructure;
 
 namespace SumiClas.Api.Configuration;

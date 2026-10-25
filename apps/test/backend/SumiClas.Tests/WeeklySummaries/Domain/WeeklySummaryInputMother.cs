@@ -1,7 +1,7 @@
-namespace SumiClas.Tests.WeeklySummaries.Application;
+namespace SumiClas.Tests.WeeklySummaries.Domain;
 
 using SumiClas.Tests.Shared;
-using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 
 public static class WeeklySummaryInputMother
 {

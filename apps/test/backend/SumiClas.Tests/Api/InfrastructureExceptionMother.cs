@@ -1,7 +1,7 @@
 namespace SumiClas.Tests.Api;
 
 using Npgsql;
-using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 
 public static class InfrastructureExceptionMother
 {

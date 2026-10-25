@@ -1,7 +1,7 @@
-namespace SumiClas.Tests.WeeklySummaries.Application;
+namespace SumiClas.Tests.WeeklySummaries.Domain;
 
 using AwesomeAssertions;
-using SumiClas.WeeklySummaries.Application;
+using SumiClas.WeeklySummaries.Domain;
 
 [TestFixture]
 public class WeeklySummaryInputShould
