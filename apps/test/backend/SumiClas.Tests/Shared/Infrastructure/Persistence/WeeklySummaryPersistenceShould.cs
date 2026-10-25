@@ -30,7 +30,7 @@ public class WeeklySummaryPersistenceShould
 
         IReadOnlyCollection<WeeklySummary> found = await SearchAsync(
             database,
-            new WeeklySummarySpecification(id: saved.Id));
+            WeeklySummarySpecificationMother.WithId(saved.Id));
 
         found.Should().ContainSingle().Which.Should().BeEquivalentTo(saved);
     }
@@ -91,7 +91,9 @@ public class WeeklySummaryPersistenceShould
         DateTimeOffset rewrittenAt = UnitTestCase.Now.AddHours(ONE_HOUR);
         await RewriteAsync(database, saved.Id, content, inputHash, rewrittenAt);
 
-        IReadOnlyCollection<WeeklySummary> all = await SearchAsync(database, new WeeklySummarySpecification());
+        IReadOnlyCollection<WeeklySummary> all = await SearchAsync(
+            database,
+            WeeklySummarySpecificationMother.Unfiltered());
 
         WeeklySummary rewritten = all.Should().ContainSingle().Which;
         rewritten.Id.Should().Be(saved.Id);
@@ -102,12 +104,12 @@ public class WeeklySummaryPersistenceShould
 
     private static IEnumerable<TestCaseData> Filters()
     {
-        yield return Filter("id", wanted => new WeeklySummarySpecification(id: wanted.Id));
-        yield return Filter("class", wanted => new WeeklySummarySpecification(classId: wanted.ClassId));
-        yield return Filter("week", wanted => new WeeklySummarySpecification(weekStart: wanted.WeekStart));
-        yield return Filter("content", wanted => new WeeklySummarySpecification(content: wanted.Content));
-        yield return Filter("input_hash", wanted => new WeeklySummarySpecification(inputHash: wanted.InputHash));
-        yield return Filter("generated_at", wanted => new WeeklySummarySpecification(generatedAt: wanted.GeneratedAt));
+        yield return Filter("id", wanted => WeeklySummarySpecificationMother.WithId(wanted.Id));
+        yield return Filter("class", wanted => WeeklySummarySpecificationMother.OfClass(wanted.ClassId));
+        yield return Filter("week", wanted => WeeklySummarySpecificationMother.OfWeek(wanted.WeekStart));
+        yield return Filter("content", wanted => WeeklySummarySpecificationMother.WithContent(wanted.Content));
+        yield return Filter("input_hash", wanted => WeeklySummarySpecificationMother.WithInputHash(wanted.InputHash));
+        yield return Filter("generated_at", wanted => WeeklySummarySpecificationMother.GeneratedAt(wanted.GeneratedAt));
     }
 
     private static TestCaseData Filter(string name, Func<WeeklySummary, WeeklySummarySpecification> filterOf)
@@ -131,7 +133,7 @@ public class WeeklySummaryPersistenceShould
         clock.Setup(source => source.UtcNow).Returns(at);
         await using SumiClasDbContext context = database.NewContext();
         WeeklySummary summary = (await new WeeklySummaryRepository(context)
-            .SearchAsync(new WeeklySummarySpecification(id: id))).Single();
+            .SearchAsync(WeeklySummarySpecificationMother.WithId(id))).Single();
         summary.Rewrite(content, inputHash, clock.Object);
         await context.SaveChangesAsync();
     }

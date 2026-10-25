@@ -117,6 +117,6 @@ public class KeysetPaginationShould
         await using SumiClasDbContext context = database.NewContext();
         AnnouncementRepository repository = new(context);
         return await repository.SearchAsync(
-            new AnnouncementSpecification(page: new KeysetPage<DateTimeOffset>(PAGE_SIZE, boundary)));
+            AnnouncementSpecificationMother.OfPage(new KeysetPage<DateTimeOffset>(PAGE_SIZE, boundary)));
     }
 }

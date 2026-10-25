@@ -43,7 +43,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(scope: AnnouncementScope.Class, classId: classId));
+            AnnouncementSpecificationMother.ForClass(classId));
 
         found.Select(announcement => announcement.Id).Should().Equal(ofTheClass.Id);
     }
@@ -60,7 +60,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(scope: AnnouncementScope.School, schoolId: schoolId));
+            AnnouncementSpecificationMother.ForSchool(schoolId));
 
         found.Select(announcement => announcement.Id).Should().Equal(ofTheSchool.Id);
     }
@@ -78,7 +78,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(readByUserId: reader));
+            AnnouncementSpecificationMother.ReadBy(reader));
 
         found.Select(announcement => announcement.Id).Should().Equal(read.Id);
     }
@@ -97,7 +97,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(unreadByUserId: reader));
+            AnnouncementSpecificationMother.UnreadBy(reader));
 
         found.Select(announcement => announcement.Id).Should().BeEquivalentTo([unread.Id, readByOthers.Id]);
     }
@@ -119,7 +119,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(createdFrom: UnitTestCase.Now));
+            AnnouncementSpecificationMother.CreatedFrom(UnitTestCase.Now));
 
         found.Select(announcement => announcement.Id).Should().BeEquivalentTo([atTheEdge.Id, after.Id]);
     }
@@ -141,7 +141,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Announcement> found = await SearchAsync(
             database,
-            new AnnouncementSpecification(createdBefore: UnitTestCase.Now));
+            AnnouncementSpecificationMother.CreatedBefore(UnitTestCase.Now));
 
         found.Select(announcement => announcement.Id).Should().Equal(justBefore.Id);
     }
@@ -158,7 +158,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Assignment> found = await SearchAsync(
             database,
-            new AssignmentSpecification(dueFrom: Today));
+            AssignmentSpecificationMother.DueFrom(Today));
 
         found.Select(assignment => assignment.Id).Should().BeEquivalentTo([onTheDay.Id, after.Id]);
     }
@@ -175,7 +175,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Assignment> found = await SearchAsync(
             database,
-            new AssignmentSpecification(dueTo: Today));
+            AssignmentSpecificationMother.DueTo(Today));
 
         found.Select(assignment => assignment.Id).Should().BeEquivalentTo([onTheDay.Id, before.Id]);
     }
@@ -193,7 +193,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<Assignment> found = await SearchAsync(
             database,
-            new AssignmentSpecification(notDoneByUserId: user));
+            AssignmentSpecificationMother.NotDoneBy(user));
 
         found.Select(assignment => assignment.Id).Should().BeEquivalentTo([notDone.Id, doneByOthers.Id]);
     }
@@ -219,7 +219,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<ClassExpense> found = await SearchAsync(
             database,
-            new ClassExpenseSpecification(participantId: guardian, participantHasPaid: false));
+            ClassExpenseSpecificationMother.OwedBy(guardian));
 
         found.Select(expense => expense.Id).Should().Equal(owed.Id);
     }
@@ -236,7 +236,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<LostItem> found = await SearchAsync(
             database,
-            new LostItemSpecification(createdFrom: UnitTestCase.Now));
+            LostItemSpecificationMother.CreatedFrom(UnitTestCase.Now));
 
         found.Select(item => item.Id).Should().BeEquivalentTo([atTheEdge.Id, after.Id]);
     }
@@ -250,7 +250,7 @@ public class SpecificationsShould
         User participant = UserMother.Participant(classId);
         await SaveAsync(database, representative, participant, UserMother.Participant(GuidMother.Random()));
 
-        IReadOnlyCollection<User> found = await SearchAsync(database, new UserSpecification(classId: classId));
+        IReadOnlyCollection<User> found = await SearchAsync(database, UserSpecificationMother.InClass(classId));
 
         found.Select(user => user.Id).Should().BeEquivalentTo([representative.Id, participant.Id]);
     }
@@ -269,7 +269,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<User> found = await SearchAsync(
             database,
-            new UserSpecification(classId: classId, classRole: ClassRoleType.ClassRepresentative));
+            UserSpecificationMother.RepresentativesOfClass(classId));
 
         found.Select(user => user.Id).Should().Equal(representative.Id);
     }
@@ -289,7 +289,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<User> found = await SearchAsync(
             database,
-            new UserSpecification(classId: attendedClass, classRole: ClassRoleType.ClassRepresentative));
+            UserSpecificationMother.RepresentativesOfClass(attendedClass));
 
         found.Should().BeEmpty("the user represents one class and only attends the other.");
     }
@@ -311,7 +311,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<User> found = await SearchAsync(
             database,
-            new UserSpecification(classIds: [firstClass, secondClass], classRole: ClassRoleType.ClassRepresentative));
+            UserSpecificationMother.RepresentativesOfAny([firstClass, secondClass]));
 
         found.Select(user => user.Id).Should().BeEquivalentTo([ofFirst.Id, ofSecond.Id]);
     }
@@ -326,7 +326,7 @@ public class SpecificationsShould
 
         IReadOnlyCollection<User> found = await SearchAsync(
             database,
-            new UserSpecification(ids: [first.Id, second.Id]));
+            UserSpecificationMother.WithIds([first.Id, second.Id]));
 
         found.Select(user => user.Id).Should().BeEquivalentTo([first.Id, second.Id]);
     }
