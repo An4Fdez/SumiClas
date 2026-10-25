@@ -17,7 +17,7 @@ src/
     landing/        → secciones de la página pública (Home)
     onboarding/       → pasos del flujo de alta (colegio/clase/alumno)
   context/         → Contextos de React (ej. ChildContext.ts + ChildProvider.tsx: split definición/provider)
-  data/           → datos mock + tipos (se sustituye módulo a módulo por modules/<module>/, ver la skill `frontend-api-integration`)
+  data/           → solo `featureMeta.ts`, el icono y el color de cada función de la página pública (landing). Los datos mock de las pantallas ya se sustituyeron por `modules/<module>/` (ver la skill `frontend-api-integration`); no añadas datos de pantalla aquí
   hooks/           → hooks reutilizables (useTheme, useChildContext...)
   lib/            → utilidades sin estado (date.ts, auth.ts, roles.ts, colorClasses.ts)
   pages/           → componentes de página, uno por ruta de React Router (Announcements.tsx, Calendar.tsx, Homework.tsx, Expenses.tsx, LostAndFound.tsx...)

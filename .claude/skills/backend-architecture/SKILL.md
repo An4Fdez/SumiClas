@@ -15,14 +15,14 @@ Cada módulo es **autocontenido**: trae su propio `Domain/`, `Application/` e `I
 
 La regla para decidir si dos **agregados** (cada uno con su propia raíz) van en el mismo módulo o en módulos separados es de **acoplamiento/bounded context**, no "un módulo = un agregado" a rajatabla: los del núcleo estructural (`School`, `SchoolYear`, `Class`, `Enrollment`, `Student`, `User`) están débilmente acoplados entre sí → cada uno en su propio módulo. `Subject` (catálogo de asignaturas) también tiene ciclo de vida propio e independiente de `Assignment` → módulo separado, aunque ambos pertenezcan a la feature "Deberes".
 
-**Nombre de la carpeta de módulo = plural de la raíz del agregado** (`: AggregateRoot`) que contiene, siempre — no el nombre de la pantalla/feature del frontend si difiere: `School`→`Schools`, `SchoolYear`→`SchoolYears`, `CalendarEvent`→`CalendarEvents`, `Assignment`→`Assignments`. Cuando un módulo tiene una única raíz (todos los casos hasta ahora), el nombre de la carpeta es literal y sin ambigüedad; no lo sustituyas por un nombre de feature más "bonito" (`Calendar`, `Homework`) aunque coincida con el nombre de la pantalla del frontend.
+**Nombre de la carpeta de módulo = plural de la raíz del agregado** (`: AggregateRoot`) que contiene, siempre — no el nombre de la pantalla/feature del frontend si difiere: `School`→`Schools`, `SchoolYear`→`SchoolYears`, `CalendarEvent`→`CalendarEvents`, `Assignment`→`Assignments`. Cuando un módulo tiene una única raíz (todos salvo `Dashboard`, que no tiene ninguna), el nombre de la carpeta es literal y sin ambigüedad; no lo sustituyas por un nombre de feature más "bonito" (`Calendar`, `Homework`) aunque coincida con el nombre de la pantalla del frontend.
 
-Estado real hoy (`Domain/` completo en los 12 módulos + mapeos/DbContext de EF Core, el resto pendiente):
+Mapa de módulos (cada uno con su `Domain/` y, donde hace falta, `Application/` e `Infrastructure/`; los casos de uso hechos y sus huecos están en la skill `backend-status-notes`):
 ```
 SumiClas/
   shared/domain/       → Entity, AggregateRoot, DomainEventBase, ValueObject, DomainException, SharedExceptions, AuthenticationExceptions, PaginationExceptions, IClock
   shared/infrastructure/ → SystemClock
-  shared/infrastructure/persistence/mappings/ → un IEntityTypeConfiguration<T> por agregado (los 12), ver sección "Base de datos" (skill `backend-persistence`)
+  shared/infrastructure/persistence/mappings/ → un IEntityTypeConfiguration<T> por agregado (más un mapeo por tabla hija), ver sección "Base de datos" (skill `backend-persistence`)
   shared/infrastructure/persistence/ → SumiClasDbContext, SumiClasDbContextFactory (solo diseño/dotnet ef)
   shared/infrastructure/persistence/migrations/ → migración inicial `InitialCreate` ya generada y aplicada (ver sección "Base de datos" (skill `backend-persistence`))
   Sessions/ → sesión: agregado `Session` con sus refresh tokens rotatorios (entidad hija) y access token JWT (Domain + Application + Infrastructure; ver "Sesión con JWT y refresh token (módulo `Sessions`)" (skill `backend-auth`))
@@ -46,6 +46,9 @@ SumiClas/
   LostItems/Domain/      → LostItem (raíz)
     · ClassId (no StudentId): igual que ClassExpense, no es recurrente — se publica una vez y se resuelve, no hay que "seguir" al alumno entre cursos.
     · PhotoPrivacyConfirmed protege en Domain la regla de privacidad de la sección 7.3 (opt-in por foto): si hay PhotoUrl, tiene que venir confirmado, si no Create falla.
+  WeeklySummaries/       → WeeklySummary (raíz): el resumen semanal con IA de una clase (Domain + Application + Infrastructure; ver "Resumen semanal con IA" (skill `backend-weekly-summary`))
+  Dashboard/Application/ → módulo de composición: solo `Application` (`DashboardSummaryFinderByClass`), sin raíz de agregado, `Domain` ni `Infrastructure`; reúne por `IQueryBus` los resúmenes de Announcements, Assignments, ClassExpenses, LostItems y CalendarEvents
+    · Es la excepción a «nombre de módulo = plural de su raíz» y a «un módulo = una raíz de agregado»: no posee datos, solo compone lo que posee cada módulo, y por eso no tiene repositorio ni tabla.
 ```
 
 Nota: las pantallas del frontend se llaman "Calendario"/`Calendar` y "Deberes"/`Homework`, pero los módulos del backend son `CalendarEvents` y `Assignments` (nombre de su agregado raíz, no de la pantalla) — no son el mismo nombre y es intencional.
@@ -54,7 +57,7 @@ Nota: las pantallas del frontend se llaman "Calendario"/`Calendar` y "Deberes"/`
 ## Reglas de dependencia entre capas y módulos
 
 - **Dentro de un módulo**: `Domain` no depende de nada externo (ni de `Application`, ni de `Infrastructure`, ni de paquetes de infraestructura como EF Core); `Application` depende solo de su propio `Domain`; `Infrastructure` depende solo del `Domain` de su módulo (y de `shared/domain`) e implementa los contratos (puertos) que viven en ese `Domain`, nunca en `Application`. Los tipos de mensaje de otros módulos (p. ej. `UserResponse`, `UserFinderById.Query`) siguen pudiendo usarse en `Application`.
-- **Un módulo = una raíz de agregado**, y un caso de uso solo usa el repositorio de su propio módulo. Lo que pertenece a otro módulo se alcanza con `IQueryBus` (solo mensajes) o con eventos de dominio; nunca inyectando su repositorio ni importando su `Domain`/`Infrastructure`.
+- **Un módulo = una raíz de agregado** (salvo `Dashboard`, que no posee datos y solo compone), y un caso de uso solo usa el repositorio de su propio módulo. Lo que pertenece a otro módulo se alcanza con `IQueryBus` (solo mensajes) o con eventos de dominio; nunca inyectando su repositorio ni importando su `Domain`/`Infrastructure`.
 - **Entre módulos distintos**: nunca acceso directo al `Domain` o `Infrastructure` de otro módulo. La comunicación entre las capas `Application` de módulos distintos se hace enviando una `Query`/`Command` a través de un **QueryBus implementado con MediatR** (`IMediator`/`ISender.Send(...)`): el `Handler` correspondiente, registrado en la `Application` del módulo dueño, la resuelve. Los módulos no se acoplan por referencia directa a la implementación del otro (solo al tipo del mensaje Query/Command) — nunca se inyecta directamente una interfaz/servicio del módulo dueño en la `Application` del módulo consumidor, y nunca se importan sus clases internas directamente.
 - La capa `api` puede depender de `Application` de cualquier módulo (para invocar casos de uso vía MediatR) pero nunca debe contener lógica de negocio ni acceder directamente a `Domain`/`Infrastructure`.
 

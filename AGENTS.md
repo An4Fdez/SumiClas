@@ -1,9 +1,10 @@
 # AGENTS.md — SumiClas (raíz del monorepo)
 
-Este archivo aplica a todo el repositorio. Existen (o existirán) archivos `AGENTS.md` más específicos en:
+Este archivo aplica a todo el repositorio. Existen archivos `AGENTS.md` más específicos en:
 - `apps/backend/AGENTS.md`
 - `apps/frontend/AGENTS.md`
-- `apps/test/AGENTS.md` (pendiente: `apps/test` está vacía por ahora; contendrá `apps/test/backend` y `apps/test/frontend`)
+
+Los tests no tienen `AGENTS.md` propio: cómo se escriben y ejecutan los del backend (`apps/test/backend`) está en la skill `backend-testing`, y los del frontend (`apps/test/frontend`) todavía no existen.
 
 Si un archivo más específico entra en conflicto con este, gana el más específico para esa carpeta.
 
@@ -20,11 +21,12 @@ apps/
   backend/
     api/        → SumiClas.Api (ASP.NET Core Web API, net10.0)
     src/        → SumiClas (librería de dominio/aplicación/infraestructura, net10.0), carpetas en inglés (shared/domain/application/infrastructure)
+    tools/      → herramientas puntuales (el importador del catálogo de colegios, pendiente de borrar; ver la skill `backend-territorial-catalog`)
   frontend/
-    sumiclas-web/  → Vite + React + TypeScript + Tailwind (sin backend real conectado aún)
+    sumiclas-web/  → Vite + React + TypeScript + Tailwind (habla con la API real por el cliente NSwag generado)
   test/
-    backend/     → tests del backend (vacío por ahora)
-    frontend/    → tests del frontend, Vitest + React Testing Library (vacío por ahora)
+    backend/     → tests del backend (proyecto SumiClas.Tests: NUnit, Moq, AwesomeAssertions y Testcontainers; ver la skill `backend-testing`)
+    frontend/    → tests del frontend, Vitest + React Testing Library (la carpeta aún no existe: todavía no hay tests del frontend)
 docs/           → documentación de producto/arquitectura
 SumiClas.slnx   → solución que agrupa los proyectos anteriores
 .claude/skills/ → skills del proyecto (ver "Skills del proyecto")
@@ -90,7 +92,7 @@ pnpm dev
 **Antes de dar por terminada una tarea:**
 - Si tocaste el frontend (`apps/frontend/sumiclas-web`): ejecuta `pnpm typecheck` y `pnpm lint` (o `npm run typecheck` / `npm run lint`, equivalentes mientras exista el lockfile de npm) y que pasen sin errores.
 - Si tocaste el backend (`apps/backend/**`): ejecuta `dotnet build` sobre la solución o el proyecto afectado y que compile sin errores.
-- Cuando exista contenido en `apps/test/backend` o `apps/test/frontend`, añadir aquí la ejecución de esos tests como paso obligatorio antes de terminar (según la zona tocada).
+- Si tocaste el backend, ejecuta además sus tests: `dotnet test apps/test/backend/SumiClas.Tests` y que pasen todos (los que necesitan PostgreSQL arrancan un contenedor con Docker; detalle en la skill `backend-testing`). Cuando existan tests del frontend en `apps/test/frontend`, su ejecución se añadirá aquí como paso obligatorio.
 
 **No toques sin permiso explícito:**
 - La estructura de la solución: `SumiClas.slnx`, los `.csproj` (`SumiClas.Api.csproj`, `SumiClas.csproj`) y el `.esproj` del frontend. Si una tarea requiere añadir un proyecto nuevo o cambiar referencias, confírmalo antes con el usuario.
