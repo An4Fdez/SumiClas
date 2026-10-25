@@ -30,7 +30,7 @@ public static class CalendarEventUpcomingFinderByClass
             DateOnly last = today.AddDays(days);
 
             return events
-                .Select(calendarEvent => (Event: calendarEvent, Date: DateOf(calendarEvent).NextOccurrenceFrom(today)))
+                .Select(calendarEvent => (Event: calendarEvent, Date: calendarEvent.ToEventDate().NextOccurrenceFrom(today)))
                 .Where(candidate => candidate.Date is { } date && date <= last)
                 .Select(candidate => new CalendarEventUpcomingResponse(
                     candidate.Event.Title,
@@ -41,11 +41,6 @@ public static class CalendarEventUpcomingFinderByClass
                 .ThenBy(upcoming => upcoming.Title, StringComparer.Ordinal)
                 .ToList();
         }
-
-        private static EventDate DateOf(CalendarEventResponse calendarEvent)
-            => calendarEvent.Year is { } year
-                ? EventDate.OnDate(new DateOnly(year, calendarEvent.Month, calendarEvent.Day))
-                : EventDate.RecurringAnnual(calendarEvent.Month, calendarEvent.Day);
     }
 
     public sealed class Handler(Finder finder)

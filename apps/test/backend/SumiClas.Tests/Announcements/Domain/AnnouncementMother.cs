@@ -35,11 +35,12 @@ public static class AnnouncementMother
         Guid schoolId,
         Guid readerId,
         DateTimeOffset createdAt,
-        Priority? priority = null)
+        Priority? priority = null,
+        string? title = null)
     {
         Mock<IClock> clock = new();
         clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
-        Announcement announcement = With(createdAt, schoolId: schoolId, priority: priority);
+        Announcement announcement = With(createdAt, schoolId: schoolId, title: title, priority: priority);
         announcement.MarkAsReadBy(readerId, clock.Object);
         return announcement;
     }

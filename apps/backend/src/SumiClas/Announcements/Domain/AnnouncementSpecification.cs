@@ -5,6 +5,7 @@ namespace SumiClas.Announcements.Domain;
 public sealed class AnnouncementSpecification : Specification<Announcement>
 {
     /// <param name="createdFrom">Matches announcements created at this moment or later.</param>
+    /// <param name="createdBefore">Matches announcements created strictly before this moment.</param>
     /// <param name="readByUserId">Matches announcements that have a read receipt from this user.</param>
     /// <param name="unreadByUserId">Matches announcements that have no read receipt from this user.</param>
     public AnnouncementSpecification(
@@ -19,6 +20,7 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         Guid? relatedEventId = null,
         DateTimeOffset? createdAt = null,
         DateTimeOffset? createdFrom = null,
+        DateTimeOffset? createdBefore = null,
         Guid? readByUserId = null,
         Guid? unreadByUserId = null,
         KeysetPage<DateTimeOffset>? page = null)
@@ -34,6 +36,7 @@ public sealed class AnnouncementSpecification : Specification<Announcement>
         if (relatedEventId is { } relatedEvent) AddCriteria(announcement => announcement.RelatedEventId == relatedEvent);
         if (createdAt is { } created) AddCriteria(announcement => announcement.CreatedAt == created);
         if (createdFrom is { } from) AddCriteria(announcement => announcement.CreatedAt >= from);
+        if (createdBefore is { } before) AddCriteria(announcement => announcement.CreatedAt < before);
         if (readByUserId is { } reader) AddCriteria(announcement => announcement.ReadReceipts.Any(receipt => receipt.UserId == reader));
         if (unreadByUserId is { } unreader) AddCriteria(announcement => announcement.ReadReceipts.All(receipt => receipt.UserId != unreader));
         if (page is not null) AddKeysetPage(announcement => announcement.CreatedAt, announcement => announcement.Id, page, descending: true);

@@ -125,6 +125,28 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_announcements_created_strictly_before_a_moment_when_filtering_by_created_before()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid schoolId = GuidMother.Random();
+        Announcement justBefore = AnnouncementMother.SchoolWide(
+            schoolId,
+            "Just before",
+            UnitTestCase.Now.AddSeconds(-ONE_SECOND));
+        await SaveAsync(database, justBefore);
+        await SaveAsync(database, AnnouncementMother.SchoolWide(schoolId, "At the edge", UnitTestCase.Now));
+        await SaveAsync(
+            database,
+            AnnouncementMother.SchoolWide(schoolId, "After", UnitTestCase.Now.AddSeconds(ONE_SECOND)));
+
+        IReadOnlyCollection<Announcement> found = await SearchAsync(
+            database,
+            new AnnouncementSpecification(createdBefore: UnitTestCase.Now));
+
+        found.Select(announcement => announcement.Id).Should().Equal(justBefore.Id);
+    }
+
+    [Test]
     public async Task select_only_the_assignments_due_on_a_day_or_later_when_filtering_by_due_from()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
