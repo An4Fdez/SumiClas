@@ -130,7 +130,8 @@ public class WeeklySummaryPersistenceShould
         Mock<IClock> clock = new();
         clock.Setup(source => source.UtcNow).Returns(at);
         await using SumiClasDbContext context = database.NewContext();
-        WeeklySummary summary = await context.WeeklySummaries.SingleAsync(candidate => candidate.Id == id);
+        WeeklySummary summary = (await new WeeklySummaryRepository(context)
+            .SearchAsync(new WeeklySummarySpecification(id: id))).Single();
         summary.Rewrite(content, inputHash, clock.Object);
         await context.SaveChangesAsync();
     }

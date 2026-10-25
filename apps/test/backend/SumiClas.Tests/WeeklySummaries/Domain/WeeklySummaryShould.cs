@@ -200,6 +200,16 @@ public class WeeklySummaryShould : UnitTestCase
         WeeklySummary.WeekStartOf(newYearsDay).Should().Be(mondayOfThatWeek);
     }
 
+    [Test]
+    public void end_the_week_on_the_sunday_after_its_monday()
+    {
+        DateOnly sunday = WeeklySummary.WeekEndOf(WeeklySummaryMother.Monday);
+
+        sunday.DayOfWeek.Should().Be(DayOfWeek.Sunday);
+        sunday.Should().Be(WeeklySummaryMother.Monday.AddDays(DAYS_IN_A_WEEK - 1));
+        WeeklySummary.WeekStartOf(sunday).Should().Be(WeeklySummaryMother.Monday);
+    }
+
     private WeeklySummary CreateWithContent(string content)
         => WeeklySummary.Create(
             GuidMother.Random(),

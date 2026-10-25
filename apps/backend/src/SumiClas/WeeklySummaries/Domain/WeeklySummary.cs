@@ -88,6 +88,9 @@ public sealed class WeeklySummary : AggregateRoot
         return day.AddDays(-daysSinceMonday);
     }
 
+    /// <summary>The Sunday of the week that starts on <paramref name="weekStart"/>.</summary>
+    public static DateOnly WeekEndOf(DateOnly weekStart) => weekStart.AddDays(DaysInWeek - 1);
+
     private static void ValidateWrittenText(string content, string inputHash)
     {
         if (string.IsNullOrWhiteSpace(content))
