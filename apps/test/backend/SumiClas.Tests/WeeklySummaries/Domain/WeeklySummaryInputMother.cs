@@ -17,10 +17,11 @@ public static class WeeklySummaryInputMother
         IReadOnlyCollection<WeeklySummaryAssignment>? assignments = null,
         IReadOnlyCollection<string>? pendingExpenses = null,
         int birthdays = 0,
-        int unrecoveredLostItems = 0)
+        int unrecoveredLostItems = 0,
+        DateOnly? weekStart = null)
         => new(
-            WeekStart,
-            WeekStart.AddDays(DAYS_IN_A_WEEK - 1),
+            weekStart ?? WeekStart,
+            (weekStart ?? WeekStart).AddDays(DAYS_IN_A_WEEK - 1),
             announcements ?? [],
             events ?? [],
             assignments ?? [],
@@ -34,8 +35,14 @@ public static class WeeklySummaryInputMother
         => new(title ?? StringMother.Random("announcement"), urgent);
 
     public static WeeklySummaryEvent Event(int daysFromStart, string? title = null)
-        => new(title ?? StringMother.Random("event"), Day(daysFromStart));
+        => Event(Day(daysFromStart), title);
+
+    public static WeeklySummaryEvent Event(DateOnly date, string? title = null)
+        => new(title ?? StringMother.Random("event"), date);
 
     public static WeeklySummaryAssignment Assignment(int daysFromStart, string? title = null)
-        => new(title ?? StringMother.Random("assignment"), Day(daysFromStart));
+        => Assignment(Day(daysFromStart), title);
+
+    public static WeeklySummaryAssignment Assignment(DateOnly dueDate, string? title = null)
+        => new(title ?? StringMother.Random("assignment"), dueDate);
 }

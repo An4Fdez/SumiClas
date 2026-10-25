@@ -1,12 +1,12 @@
 namespace SumiClas.Tests.WeeklySummaries.Application;
 
 using AwesomeAssertions;
-using SumiClas.Announcements.Application;
-using SumiClas.Assignments.Application;
-using SumiClas.CalendarEvents.Application;
 using SumiClas.CalendarEvents.Domain;
 using SumiClas.Classes.Domain;
-using SumiClas.ClassExpenses.Application;
+using SumiClas.Tests.Announcements.Application;
+using SumiClas.Tests.Assignments.Application;
+using SumiClas.Tests.CalendarEvents.Application;
+using SumiClas.Tests.ClassExpenses.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.Tests.WeeklySummaries.Domain;
 using SumiClas.Users.Domain;
@@ -48,12 +48,12 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         string written = StringMother.Random("written");
         this.ShouldSearchWeeklySummaries();
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldWrite(written);
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
 
-        result.Should().Be(new WeeklySummaryResponse(MONDAY, SUNDAY, written, Now));
+        result.Should().Be(WeeklySummaryResponseMother.Written(MONDAY, SUNDAY, written, Now));
     }
 
     [Test]
@@ -63,7 +63,12 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         string written = StringMother.Random("written");
         this.ShouldSearchWeeklySummaries();
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()], lostItems: LOST_ITEMS_OF_THE_CLASS);
+        this.ShouldReadWeek(
+            classId,
+            MONDAY,
+            SUNDAY,
+            announcements: [AnnouncementPeriodResponseMother.With()],
+            lostItems: LOST_ITEMS_OF_THE_CLASS);
         this.ShouldWrite(written);
 
         await this.GenerateAsync(classId);
@@ -93,35 +98,39 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             classId,
             MONDAY,
             SUNDAY,
-            announcements: [new AnnouncementPeriodResponse(urgent, Urgent: true)],
+            announcements: [AnnouncementPeriodResponseMother.With(urgent, urgent: true)],
             events:
             [
-                new CalendarEventPeriodResponse(trip, nameof(EventType.Trip), MONDAY.AddDays(ONE_DAY)),
-                new CalendarEventPeriodResponse(StringMother.Random("child"), nameof(EventType.Birthday), MONDAY),
-                new CalendarEventPeriodResponse(StringMother.Random("child"), nameof(EventType.Birthday), SUNDAY),
-                new CalendarEventPeriodResponse(meeting, nameof(EventType.Meeting), MONDAY.AddDays(TWO_DAYS)),
-                new CalendarEventPeriodResponse(activity, nameof(EventType.Activity), MONDAY.AddDays(THREE_DAYS)),
+                CalendarEventPeriodResponseMother.With(nameof(EventType.Trip), MONDAY.AddDays(ONE_DAY), trip),
+                CalendarEventPeriodResponseMother.With(nameof(EventType.Birthday), MONDAY),
+                CalendarEventPeriodResponseMother.With(nameof(EventType.Birthday), SUNDAY),
+                CalendarEventPeriodResponseMother.With(nameof(EventType.Meeting), MONDAY.AddDays(TWO_DAYS), meeting),
+                CalendarEventPeriodResponseMother.With(
+                    nameof(EventType.Activity),
+                    MONDAY.AddDays(THREE_DAYS),
+                    activity),
             ],
-            assignments: [new AssignmentPeriodResponse(homework, SUNDAY)],
-            expenses: [new ClassExpenseOpenResponse(expense)],
+            assignments: [AssignmentPeriodResponseMother.With(SUNDAY, homework)],
+            expenses: [ClassExpenseOpenResponseMother.With(expense)],
             lostItems: LOST_ITEMS_OF_THE_CLASS);
         this.ShouldWrite(StringMother.Random("written"));
 
         await this.GenerateAsync(classId);
 
-        this.WrittenFrom.Should().ContainSingle().Which.Should().BeEquivalentTo(new WeeklySummaryInput(
-            MONDAY,
-            SUNDAY,
-            [new WeeklySummaryAnnouncement(urgent, Urgent: true)],
-            [
-                new WeeklySummaryEvent(trip, MONDAY.AddDays(ONE_DAY)),
-                new WeeklySummaryEvent(meeting, MONDAY.AddDays(TWO_DAYS)),
-                new WeeklySummaryEvent(activity, MONDAY.AddDays(THREE_DAYS)),
-            ],
-            [new WeeklySummaryAssignment(homework, SUNDAY)],
-            [expense],
-            BIRTHDAYS_OF_THE_WEEK,
-            LOST_ITEMS_OF_THE_CLASS));
+        this.WrittenFrom.Should().ContainSingle().Which.Should().BeEquivalentTo(
+            WeeklySummaryInputMother.With(
+                announcements: [WeeklySummaryInputMother.Announcement(urgent, urgent: true)],
+                events:
+                [
+                    WeeklySummaryInputMother.Event(MONDAY.AddDays(ONE_DAY), trip),
+                    WeeklySummaryInputMother.Event(MONDAY.AddDays(TWO_DAYS), meeting),
+                    WeeklySummaryInputMother.Event(MONDAY.AddDays(THREE_DAYS), activity),
+                ],
+                assignments: [WeeklySummaryInputMother.Assignment(SUNDAY, homework)],
+                pendingExpenses: [expense],
+                birthdays: BIRTHDAYS_OF_THE_WEEK,
+                unrecoveredLostItems: LOST_ITEMS_OF_THE_CLASS,
+                weekStart: MONDAY));
     }
 
     [Test]
@@ -131,7 +140,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         this.AdvanceClock(new TimeSpan(HOURS_UNTIL_SUNDAY_NIGHT, LAST_MINUTE, LAST_SECOND));
         this.ShouldSearchWeeklySummaries();
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldWrite(StringMother.Random("written"));
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
@@ -150,12 +159,12 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             generatedAt: Now - TimeSpan.FromDays(ONE_DAY));
         this.ShouldSearchWeeklySummaries(stored);
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldWrite(written);
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
 
-        result.Should().Be(new WeeklySummaryResponse(MONDAY, SUNDAY, written, Now));
+        result.Should().Be(WeeklySummaryResponseMother.Written(MONDAY, SUNDAY, written, Now));
         stored.Content.Should().Be(written);
         stored.InputHash.Should().Be(FingerprintOf(this.WrittenFrom.Single()));
         stored.GeneratedAt.Should().Be(Now);
@@ -167,15 +176,9 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         string announcement = StringMother.Random("announcement");
-        WeeklySummaryInput week = new(
-            MONDAY,
-            SUNDAY,
-            [new WeeklySummaryAnnouncement(announcement, Urgent: false)],
-            [],
-            [],
-            [],
-            Birthdays: 0,
-            UnrecoveredLostItems: 0);
+        WeeklySummaryInput week = WeeklySummaryInputMother.With(
+            announcements: [WeeklySummaryInputMother.Announcement(announcement)],
+            weekStart: MONDAY);
         DateTimeOffset writtenAt = Now - TimeSpan.FromDays(ONE_DAY);
         WeeklySummary stored = WeeklySummaryMother.With(
             classId: classId,
@@ -183,11 +186,15 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             generatedAt: writtenAt);
         this.ShouldSearchWeeklySummaries(stored);
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [new AnnouncementPeriodResponse(announcement, Urgent: false)]);
+        this.ShouldReadWeek(
+            classId,
+            MONDAY,
+            SUNDAY,
+            announcements: [AnnouncementPeriodResponseMother.With(announcement)]);
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
 
-        result.Should().Be(new WeeklySummaryResponse(MONDAY, SUNDAY, stored.Content, writtenAt));
+        result.Should().Be(WeeklySummaryResponseMother.Written(MONDAY, SUNDAY, stored.Content, writtenAt));
         this.ShouldNotHaveWritten();
         this.Added.Should().BeEmpty();
     }
@@ -202,7 +209,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
 
-        result.Should().Be(new WeeklySummaryResponse(MONDAY, SUNDAY, Content: null, GeneratedAt: null));
+        result.Should().Be(WeeklySummaryResponseMother.WithoutNews(MONDAY, SUNDAY));
         this.ShouldNotHaveWritten();
         this.Added.Should().BeEmpty();
     }
@@ -237,7 +244,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         string anotherWeekContent = ofAnotherWeek.Content;
         this.ShouldSearchWeeklySummaries(ofAnotherClass, ofAnotherWeek);
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldWrite(written);
 
         await this.GenerateAsync(classId);
@@ -253,7 +260,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         Guid classId = GuidMother.Random();
         this.ShouldSearchWeeklySummaries();
         this.ShouldCaptureAddedWeeklySummaries();
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldFailWriting(new WeeklySummaryWriterException("The AI service is down."));
 
         Func<Task> act = () => this.GenerateAsync(classId);
@@ -270,7 +277,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         string content = stored.Content;
         string inputHash = stored.InputHash;
         this.ShouldSearchWeeklySummaries(stored);
-        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [Announcement()]);
+        this.ShouldReadWeek(classId, MONDAY, SUNDAY, announcements: [AnnouncementPeriodResponseMother.With()]);
         this.ShouldFailWriting(new WeeklySummaryWriterException("The AI service is down."));
 
         Func<Task> act = () => this.GenerateAsync(classId);
@@ -294,9 +301,6 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
         this.ShouldNotHaveSearched();
         this.Added.Should().BeEmpty();
     }
-
-    private static AnnouncementPeriodResponse Announcement()
-        => new(StringMother.Random("announcement"), Urgent: false);
 
     private static string FingerprintOf(WeeklySummaryInput input)
         => WeeklySummaryFingerprint.Of(WeeklySummaryPromptBuilder.Build(input));

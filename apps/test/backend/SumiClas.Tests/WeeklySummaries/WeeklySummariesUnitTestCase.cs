@@ -7,6 +7,7 @@ using SumiClas.CalendarEvents.Application;
 using SumiClas.ClassExpenses.Application;
 using SumiClas.LostItems.Application;
 using SumiClas.Shared.Domain;
+using SumiClas.Tests.LostItems.Application;
 using SumiClas.Tests.Shared;
 using SumiClas.WeeklySummaries.Application;
 using SumiClas.WeeklySummaries.Domain;
@@ -100,7 +101,7 @@ public abstract class WeeklySummariesUnitTestCase : UnitTestCase
             .Setup(bus => bus.Send(
                 It.Is<LostItemOpenFinderByClass.Query>(query => query.ClassId == classId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LostItemOpenResponse(lostItems));
+            .ReturnsAsync(LostItemOpenResponseMother.With(lostItems));
     }
 
     protected void ShouldFailReadingWeek(Exception exception)

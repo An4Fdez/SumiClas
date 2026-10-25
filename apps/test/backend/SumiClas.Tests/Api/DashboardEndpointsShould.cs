@@ -33,13 +33,7 @@ public class DashboardEndpointsShould
     public async Task answer_the_summary_of_the_class_and_period_of_the_query_string()
     {
         Guid classId = GuidMother.Random();
-        DashboardSummaryResponse summary = new(
-            REQUESTED_DAYS,
-            DashboardCountersMother.Announcements(),
-            DashboardCountersMother.Assignments(),
-            DashboardCountersMother.Expenses(),
-            DashboardCountersMother.LostItems(),
-            DashboardCountersMother.UpcomingEvents());
+        DashboardSummaryResponse summary = DashboardSummaryResponseMother.With(REQUESTED_DAYS);
         this._sender
             .Setup(sender => sender.Send(
                 new DashboardSummaryFinderByClass.Query(classId, REQUESTED_DAYS),
@@ -63,13 +57,7 @@ public class DashboardEndpointsShould
             .Setup(sender => sender.Send(
                 It.IsAny<DashboardSummaryFinderByClass.Query>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DashboardSummaryResponse(
-                SummaryPeriod.DefaultDays,
-                DashboardCountersMother.Announcements(),
-                DashboardCountersMother.Assignments(),
-                DashboardCountersMother.Expenses(),
-                DashboardCountersMother.LostItems(),
-                DashboardCountersMother.UpcomingEvents()));
+            .ReturnsAsync(DashboardSummaryResponseMother.With(SummaryPeriod.DefaultDays));
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
