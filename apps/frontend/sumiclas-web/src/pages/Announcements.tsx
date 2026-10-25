@@ -28,7 +28,7 @@ export default function Announcements() {
   const classId = currentChild?.classId;
   const repository = useAnnouncementRepository();
   const ids = useWizardIds();
-  const { state, reload, loadMore, loadingMore, loadMoreError, markRead } = useClassAnnouncements(classId);
+  const { state, reload, loadMore, loadingMore, loadMoreError, markRead, readError } = useClassAnnouncements(classId);
   const { state: calendarState } = useClassCalendarEvents(classId);
   const relatedEventOptions = useMemo(() => {
     if (calendarState.status !== 'ready') return undefined;
@@ -177,6 +177,12 @@ export default function Announcements() {
           </button>
         </div>
       </div>
+
+      {readError && (
+        <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-400">
+          {readError}
+        </p>
+      )}
 
       {!classId ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">

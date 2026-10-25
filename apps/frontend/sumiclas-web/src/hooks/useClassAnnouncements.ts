@@ -21,11 +21,13 @@ export function useClassAnnouncements(classId: string | undefined) {
   const [reloadKey, setReloadKey] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [readError, setReadError] = useState<string | null>(null);
   const currentClassId = useRef(classId);
   currentClassId.current = classId;
 
   useEffect(() => {
     setLoadMoreError(null);
+    setReadError(null);
     if (!classId) {
       setState({ status: 'idle' });
       return;
@@ -72,11 +74,17 @@ export function useClassAnnouncements(classId: string | undefined) {
 
   const markRead = useCallback(
     (id: string) => {
+      const requestedFor = currentClassId.current;
+      setReadError(null);
       setState((prev) => withRead(prev, id, true));
-      repository.markAsRead(id).catch(() => setState((prev) => withRead(prev, id, false)));
+      repository.markAsRead(id).catch((error: unknown) => {
+        if (currentClassId.current !== requestedFor) return;
+        setState((prev) => withRead(prev, id, false));
+        setReadError(getApiErrorMessage(error));
+      });
     },
     [repository],
   );
 
-  return { state, reload, loadMore, loadingMore, loadMoreError, markRead };
+  return { state, reload, loadMore, loadingMore, loadMoreError, markRead, readError };
 }
