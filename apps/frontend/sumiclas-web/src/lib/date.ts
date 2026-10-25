@@ -1,15 +1,22 @@
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const DAYS_PER_WEEK = 7;
+const MS_PER_MINUTE = 60_000;
+const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE;
+const MS_PER_DAY = HOURS_PER_DAY * MS_PER_HOUR;
+
 const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
 
 export function formatRelativeDate(dateISO: string | Date): string {
   const date = new Date(dateISO);
   const diffMs = date.getTime() - Date.now();
-  const diffMin = Math.round(diffMs / 60_000);
-  const diffH = Math.round(diffMs / 3_600_000);
-  const diffD = Math.round(diffMs / 86_400_000);
+  const diffMin = Math.round(diffMs / MS_PER_MINUTE);
+  const diffH = Math.round(diffMs / MS_PER_HOUR);
+  const diffD = Math.round(diffMs / MS_PER_DAY);
 
-  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
-  if (Math.abs(diffH) < 24) return rtf.format(diffH, 'hour');
-  if (Math.abs(diffD) < 7) return rtf.format(diffD, 'day');
+  if (Math.abs(diffMin) < MINUTES_PER_HOUR) return rtf.format(diffMin, 'minute');
+  if (Math.abs(diffH) < HOURS_PER_DAY) return rtf.format(diffH, 'hour');
+  if (Math.abs(diffD) < DAYS_PER_WEEK) return rtf.format(diffD, 'day');
 
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
@@ -59,12 +66,16 @@ export function nextOccurrence(event: EventDay, from: Date): Date | undefined {
   return thisYear >= start ? thisYear : occurrenceInYear(event, start.getFullYear() + 1);
 }
 
+function daysSinceMonday(date: Date): number {
+  return (date.getDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK;
+}
+
 /** Matrix of weeks (Mon-Sun) covering the given month (month: 0-11), padded with adjacent days. */
 export function generateMonthMatrix(year: number, month: number): CalendarDay[][] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startOffset = (firstDay.getDay() + 6) % 7;
-  const endOffset = (7 - ((lastDay.getDay() + 6) % 7) - 1 + 7) % 7;
+  const startOffset = daysSinceMonday(firstDay);
+  const endOffset = (DAYS_PER_WEEK - daysSinceMonday(lastDay) - 1) % DAYS_PER_WEEK;
   const totalDays = startOffset + lastDay.getDate() + endOffset;
 
   const today = new Date();
@@ -81,8 +92,8 @@ export function generateMonthMatrix(year: number, month: number): CalendarDay[][
   }
 
   const weeks: CalendarDay[][] = [];
-  for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
+  for (let i = 0; i < days.length; i += DAYS_PER_WEEK) {
+    weeks.push(days.slice(i, i + DAYS_PER_WEEK));
   }
   return weeks;
 }
@@ -95,13 +106,13 @@ export function formatMonthYear(year: number, month: number): string {
 
 /** Week (Mon-Sun) containing the given date. */
 export function generateWeek(date: Date): CalendarDay[] {
-  const startOffset = (date.getDay() + 6) % 7;
+  const startOffset = daysSinceMonday(date);
   const start = new Date(date);
   start.setDate(date.getDate() - startOffset);
 
   const today = new Date();
   const days: CalendarDay[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < DAYS_PER_WEEK; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
     days.push({ date: d, inCurrentMonth: d.getMonth() === date.getMonth(), isToday: isSameCalendarDay(d, today) });
@@ -149,7 +160,7 @@ function daysFromToday(date: Date): number {
   today.setHours(0, 0, 0, 0);
   const day = new Date(date);
   day.setHours(0, 0, 0, 0);
-  return Math.round((day.getTime() - today.getTime()) / 86_400_000);
+  return Math.round((day.getTime() - today.getTime()) / MS_PER_DAY);
 }
 
 /** Short label of a day-granular date (due dates have no time): Hoy, Mañana, Ayer or "5 oct". */

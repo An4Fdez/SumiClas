@@ -46,7 +46,7 @@ public static class CalendarEventExceptions
             + "Usa la opción de añadir el cumpleaños del alumno.");
 
     public sealed class InvalidMonth()
-        : DomainException("CalendarEvent.InvalidMonth", "El mes debe estar entre 1 y 12.");
+        : DomainException("CalendarEvent.InvalidMonth", $"El mes debe estar entre {EventDate.FirstMonth} y {EventDate.LastMonth}.");
 
     public sealed class InvalidDay()
         : DomainException("CalendarEvent.InvalidDay", "El día no es válido para ese mes.");

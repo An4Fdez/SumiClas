@@ -1,3 +1,5 @@
+const CENTS_PER_EURO = 100;
+
 const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
 
 /** The backend column is decimal(10,2): 99,999,999.99 € in cents. */
@@ -15,11 +17,11 @@ export function parseEuroAmount(input: string): AmountParse {
   if (!/^\d+(\.\d*)?$/.test(text)) return { error: 'Escribe un importe válido, por ejemplo 5 o 5,50.' };
   const [whole, fraction = ''] = text.split('.');
   if (fraction.length > 2) return { error: 'El importe no puede tener más de 2 decimales.' };
-  const cents = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  const cents = Number(whole) * CENTS_PER_EURO +Number(fraction.padEnd(2, '0'));
   if (!Number.isSafeInteger(cents) || cents <= 0) return { error: 'El importe debe ser mayor que cero.' };
   return { cents };
 }
 
 export function centsToEuros(cents: number): number {
-  return cents / 100;
+  return cents / CENTS_PER_EURO;
 }

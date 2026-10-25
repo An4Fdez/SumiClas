@@ -10,6 +10,11 @@ namespace SumiClas.CalendarEvents.Domain;
 /// </summary>
 public sealed class EventDate : ValueObject
 {
+    public const int FirstMonth = 1;
+    public const int LastMonth = 12;
+
+    private const int LeapReferenceYear = 2000;
+
     public int Month { get; }
     public int Day { get; }
     public int? Year { get; }
@@ -55,13 +60,13 @@ public sealed class EventDate : ValueObject
 
     private static void Validate(int month, int day)
     {
-        if (month < 1 || month > 12)
+        if (month < FirstMonth || month > LastMonth)
         {
             throw new CalendarEventExceptions.InvalidMonth();
         }
 
-        // 2000 is a leap year, so Feb 29 is always accepted as a valid recurring day.
-        if (day < 1 || day > DateTime.DaysInMonth(2000, month))
+        // The reference year is a leap year, so Feb 29 is always accepted as a valid recurring day.
+        if (day < 1 || day > DateTime.DaysInMonth(LeapReferenceYear, month))
         {
             throw new CalendarEventExceptions.InvalidDay();
         }

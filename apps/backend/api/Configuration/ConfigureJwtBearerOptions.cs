@@ -10,6 +10,8 @@ namespace SumiClas.Api.Configuration;
 /// <summary>Configures the bearer scheme from the validated <see cref="JwtOptions"/>, so the key is only read once it has been checked.</summary>
 public sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions) : IConfigureNamedOptions<JwtBearerOptions>
 {
+    public const int ClockSkewSeconds = 30;
+
     private const string AccessTokenType = "at+jwt";
 
     public void Configure(string? name, JwtBearerOptions options)
@@ -32,7 +34,7 @@ public sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions) :
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
             RequireSignedTokens = true,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30),
+            ClockSkew = TimeSpan.FromSeconds(ClockSkewSeconds),
             ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
             ValidTypes = [AccessTokenType],
         };

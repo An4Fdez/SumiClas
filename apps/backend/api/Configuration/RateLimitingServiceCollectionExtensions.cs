@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using SumiClas.Api.Http;
 
 namespace SumiClas.Api.Configuration;
 
@@ -11,6 +12,11 @@ public static class RateLimitingServiceCollectionExtensions
 
     /// <summary>Policy applied only to /auth/refresh and /auth/logout, which share their own counter per client IP, separate from <see cref="AuthPolicy"/>.</summary>
     public const string AuthRefreshPolicy = "auth-refresh";
+
+    private const int AuthDefaultPermitLimit = 10;
+    private const int AuthRefreshDefaultPermitLimit = 30;
+    private const int DefaultWindowSeconds = 60;
+    private const string UnknownClient = "unknown";
 
     /// <summary>
     /// Fixed window per client IP. <c>RateLimiting:Auth:PermitLimit</c> requests per <c>RateLimiting:Auth:WindowSeconds</c>
@@ -23,8 +29,8 @@ public static class RateLimitingServiceCollectionExtensions
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            AddFixedWindowByIp(options, AuthPolicy, configuration, "RateLimiting:Auth", defaultPermitLimit: 10);
-            AddFixedWindowByIp(options, AuthRefreshPolicy, configuration, "RateLimiting:AuthRefresh", defaultPermitLimit: 30);
+            AddFixedWindowByIp(options, AuthPolicy, configuration, "RateLimiting:Auth", defaultPermitLimit: AuthDefaultPermitLimit);
+            AddFixedWindowByIp(options, AuthRefreshPolicy, configuration, "RateLimiting:AuthRefresh", defaultPermitLimit: AuthRefreshDefaultPermitLimit);
             options.OnRejected = async (context, ct) =>
             {
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
@@ -34,10 +40,10 @@ public static class RateLimitingServiceCollectionExtensions
                 }
 
                 await Results.Problem(
-                    title: "Authentication.TooManyRequests",
+                    title: ApiErrorCodes.AuthenticationTooManyRequests,
                     detail: "Demasiados intentos. Espera un momento antes de volver a intentarlo.",
                     statusCode: StatusCodes.Status429TooManyRequests,
-                    extensions: new Dictionary<string, object?> { ["code"] = "Authentication.TooManyRequests" })
+                    extensions: new Dictionary<string, object?> { ["code"] = ApiErrorCodes.AuthenticationTooManyRequests })
                     .ExecuteAsync(context.HttpContext);
             };
         });
@@ -49,10 +55,10 @@ public static class RateLimitingServiceCollectionExtensions
         RateLimiterOptions options, string policyName, IConfiguration configuration, string section, int defaultPermitLimit)
     {
         int permitLimit = configuration.GetValue($"{section}:PermitLimit", defaultPermitLimit);
-        TimeSpan window = TimeSpan.FromSeconds(configuration.GetValue($"{section}:WindowSeconds", 60));
+        TimeSpan window = TimeSpan.FromSeconds(configuration.GetValue($"{section}:WindowSeconds", DefaultWindowSeconds));
 
         options.AddPolicy(policyName, httpContext => RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = permitLimit,
