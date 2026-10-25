@@ -11,11 +11,12 @@ public static class ClassExpenseMother
         Guid? relatedEventId = null,
         Guid? authorId = null,
         DateTimeOffset? createdAt = null,
-        IReadOnlyCollection<ExpenseParticipant>? participants = null)
+        IReadOnlyCollection<ExpenseParticipant>? participants = null,
+        string? item = null)
         => new(
             id ?? GuidMother.Random(),
             classId ?? GuidMother.Random(),
-            StringMother.Random("Expense"),
+            item ?? StringMother.Random("Expense"),
             Random.Shared.Next(1, 1000),
             relatedEventId,
             authorId ?? GuidMother.Random(),

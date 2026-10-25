@@ -20,12 +20,13 @@ public static class AssignmentMother
         Guid? authorId = null,
         bool isProposal = false,
         string? description = null,
-        IReadOnlyCollection<AssignmentComment>? comments = null)
+        IReadOnlyCollection<AssignmentComment>? comments = null,
+        string? title = null)
         => new(
             id ?? GuidMother.Random(),
             classId ?? GuidMother.Random(),
             subjectId ?? GuidMother.Random(),
-            StringMother.Random("Homework"),
+            title ?? StringMother.Random("Homework"),
             description,
             dueDate ?? SomeDay,
             authorId ?? GuidMother.Random(),
@@ -33,11 +34,16 @@ public static class AssignmentMother
             UnitTestCase.Now,
             comments ?? []);
 
-    public static Assignment DoneBy(Guid assignmentId, Guid userId, Guid? classId = null, DateOnly? dueDate = null)
+    public static Assignment DoneBy(
+        Guid assignmentId,
+        Guid userId,
+        Guid? classId = null,
+        DateOnly? dueDate = null,
+        string? title = null)
     {
         Mock<IClock> clock = new();
         clock.Setup(source => source.UtcNow).Returns(UnitTestCase.Now);
-        Assignment assignment = With(id: assignmentId, classId: classId, dueDate: dueDate);
+        Assignment assignment = With(id: assignmentId, classId: classId, dueDate: dueDate, title: title);
         assignment.MarkAsDoneBy(userId, clock.Object);
         return assignment;
     }

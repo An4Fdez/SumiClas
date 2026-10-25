@@ -164,6 +164,23 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_assignments_due_on_a_day_or_earlier_when_filtering_by_due_to()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Assignment onTheDay = AssignmentMother.With(dueDate: Today);
+        Assignment before = AssignmentMother.With(dueDate: Today.AddDays(-ONE_DAY));
+        await SaveAsync(database, onTheDay);
+        await SaveAsync(database, before);
+        await SaveAsync(database, AssignmentMother.With(dueDate: Today.AddDays(ONE_DAY)));
+
+        IReadOnlyCollection<Assignment> found = await SearchAsync(
+            database,
+            new AssignmentSpecification(dueTo: Today));
+
+        found.Select(assignment => assignment.Id).Should().BeEquivalentTo([onTheDay.Id, before.Id]);
+    }
+
+    [Test]
     public async Task select_only_the_assignments_a_user_has_not_marked_as_done_when_filtering_by_not_done()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
