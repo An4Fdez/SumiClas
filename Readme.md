@@ -91,7 +91,7 @@ dotnet user-secrets set "Jwt:SigningKey" "una-clave-de-al-menos-32-caracteres" -
 # 3. Backend: https://localhost:7064 (aplica las migraciones al arrancar)
 dotnet run --project apps/backend/api/SumiClas.Api.csproj
 
-# 4. Frontend, en otra terminal: https://localhost:4004
+# 4. Frontend, en otra terminal: http://localhost:4004
 cd apps/frontend/sumiclas-web
 pnpm install
 pnpm dev
@@ -135,7 +135,7 @@ El esquema de PostgreSQL lo gestionan las **migraciones de Entity Framework Core
 
 La base de datos de desarrollo lleva datos de prueba inventados para recorrer la web completa: dos colegios (CEIP Aravaca, en Madrid, y CEIP Aníbal González, en Sevilla), tres clases (3ºA y 4ºB en Aravaca, 2ºA en Sevilla), 17 familias con 19 hijos, y avisos, eventos del calendario, cumpleaños, objetos perdidos, deberes y gastos con pagos hechos y pendientes.
 
-Se entra en `https://localhost:4004` con cualquiera de estas cuentas. **La contraseña de todas es `Demo1234`**.
+Se entra en `http://localhost:4004` con cualquiera de estas cuentas. **La contraseña de todas es `Demo1234`**.
 
 | Correo | Qué caso muestra |
 | --- | --- |
