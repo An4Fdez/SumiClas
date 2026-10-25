@@ -73,6 +73,7 @@ pnpm dev
 - Frontend (Vite): `https://localhost:4004`.
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
 - El proxy de Vite reenvía `/api/` a `https://localhost:7064` por defecto (el perfil `https` de `launchSettings.json`); se puede cambiar con la variable `API_PROXY_TARGET` (ver `vite.config.ts`). Web y API comparten así origen y no hay CORS.
+- **Datos de demostración**: `scripts/demo-data/` (Node, sin dependencias, fuera de `SumiClas.slnx`) carga por la API real unas familias, clases y contenido inventados, en español, para presentar la web (`node scripts/demo-data/seed.mjs load|reset|verify`). Las cuentas y la contraseña (`Demo1234`) son falsas y están en el `Readme.md` a propósito; el script se niega a hablar con una API que no sea local. No lo uses nunca contra un entorno real. Las fechas son relativas al día de la carga, y `reset` borra solo lo creado por la demo.
 
 ## Convenciones comunes
 
