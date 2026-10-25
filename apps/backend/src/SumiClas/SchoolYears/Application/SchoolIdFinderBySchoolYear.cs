@@ -14,7 +14,7 @@ public static class SchoolIdFinderBySchoolYear
     {
         public async Task<Guid> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            SchoolYear schoolYear = await finder.FindByIdAsync(query.SchoolYearId, ct);
+            SchoolYear schoolYear = await finder.FindAsync(query.SchoolYearId, ct);
             return schoolYear.SchoolId;
         }
     }

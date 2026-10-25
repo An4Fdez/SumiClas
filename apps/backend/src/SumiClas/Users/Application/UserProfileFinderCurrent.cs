@@ -16,7 +16,7 @@ public static class UserProfileFinderCurrent
         {
             Guid current = userProvider.GetCurrentUserId();
 
-            User user = await finder.FindByIdAsync(current, ct);
+            User user = await finder.FindAsync(current, ct);
             return new UserProfileResponse(
                 user.Id,
                 user.FullName,

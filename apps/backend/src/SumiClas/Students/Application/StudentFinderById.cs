@@ -16,7 +16,7 @@ public static class StudentFinderById
     {
         public async Task<StudentResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            Student student = await finder.FindByIdAsync(query.StudentId, ct);
+            Student student = await finder.FindAsync(query.StudentId, ct);
             return new StudentResponse(student.Id);
         }
     }

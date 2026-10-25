@@ -13,7 +13,7 @@ public static class SchoolYearEnsureIsActive
     {
         public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            SchoolYear schoolYear = await finder.FindByIdAsync(query.SchoolYearId, ct);
+            SchoolYear schoolYear = await finder.FindAsync(query.SchoolYearId, ct);
             schoolYear.EnsureIsActive();
             return Unit.Value;
         }

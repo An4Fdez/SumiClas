@@ -13,7 +13,7 @@ public static class SchoolFinderById
     {
         public async Task<SchoolResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            School school = await finder.FindByIdAsync(query.SchoolId, ct);
+            School school = await finder.FindAsync(query.SchoolId, ct);
 
             IReadOnlyCollection<SchoolResponse> responses = await SchoolResponseFactory.CreateAsync(queryBus, [school], ct);
             return responses.Single();

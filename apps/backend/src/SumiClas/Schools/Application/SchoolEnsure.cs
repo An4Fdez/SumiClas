@@ -17,7 +17,7 @@ public static class SchoolEnsure
     {
         public async Task<Unit> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            await finder.FindByIdAsync(query.SchoolId, ct);
+            await finder.FindAsync(query.SchoolId, ct);
             return Unit.Value;
         }
     }

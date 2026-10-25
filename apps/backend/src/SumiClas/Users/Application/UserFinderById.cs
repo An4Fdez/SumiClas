@@ -13,7 +13,7 @@ public static class UserFinderById
     {
         public async Task<UserResponse> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            User user = await finder.FindByIdAsync(query.UserId, ct);
+            User user = await finder.FindAsync(query.UserId, ct);
             return new UserResponse(user.Id, user.FullName);
         }
     }
