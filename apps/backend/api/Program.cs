@@ -10,8 +10,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddLog4Net();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddApiVersioning(versionOptions =>
 {
@@ -30,15 +28,11 @@ builder.Services.AddSumiClasApiSecurity(builder.Configuration);
 builder.Services.AddSumiClasRateLimiting(builder.Configuration);
 builder.Services.AddSumiClasExceptionHandling();
 
-
 WebApplication app = builder.Build();
 app.ApplySumiClasMigrations();
 
 // First in the pipeline, so it also catches what comes out of the rest of the middleware and of the endpoints.
 app.UseExceptionHandler();
-
-// Configure the HTTP request pipeline.
-// HTTPS only: nothing listens on plain HTTP, so there is no HTTP-to-HTTPS redirection to configure.
 
 if (app.Environment.IsDevelopment())
 {
@@ -55,9 +49,7 @@ app.UseSwaggerUI(swaggerUiOptions =>
             swaggerUiOptions.SwaggerEndpoint($"/openapi/{apiVersion.GroupName}.json",
                 apiVersion.GroupName.ToUpperInvariant());
         }
-
     }
-
 });
 
 app.UseRateLimiter();

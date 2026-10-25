@@ -11,7 +11,8 @@ public class WeeklySummaryFingerprintShould
     [Test]
     public void be_a_lowercase_sha256_in_hexadecimal_as_long_as_the_summaries_store()
     {
-        string fingerprint = WeeklySummaryFingerprint.Of(PromptOf(StringMother.Random("system"), StringMother.Random("user")));
+        string fingerprint = WeeklySummaryFingerprint.Of(
+            PromptOf(StringMother.Random("system"), StringMother.Random("user")));
 
         fingerprint.Should().HaveLength(WeeklySummary.InputHashLength);
         fingerprint.Should().MatchRegex("^[0-9a-f]+$");
@@ -38,7 +39,8 @@ public class WeeklySummaryFingerprintShould
     [Test]
     public void tell_apart_where_the_instructions_end_and_the_data_start()
     {
-        WeeklySummaryFingerprint.Of(PromptOf("ab", "c")).Should().NotBe(WeeklySummaryFingerprint.Of(PromptOf("a", "bc")));
+        WeeklySummaryFingerprint.Of(PromptOf("ab", "c"))
+            .Should().NotBe(WeeklySummaryFingerprint.Of(PromptOf("a", "bc")));
     }
 
     [Test]

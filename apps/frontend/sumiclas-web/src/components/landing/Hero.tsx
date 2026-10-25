@@ -13,7 +13,6 @@ export function Hero() {
 
   return (
     <section id="top" className="relative overflow-hidden pt-28 pb-20 sm:pt-32 lg:pt-40 lg:pb-28">
-      {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 grid-pattern opacity-60 dark:opacity-30" />
         <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-brand-300/40 blur-3xl animate-blob-1 dark:bg-brand-600/20" />
@@ -22,7 +21,6 @@ export function Hero() {
       </div>
 
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8">
-        {/* Left — copy */}
         <div className="text-center lg:text-left">
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-mint-200 bg-mint-50 px-3 py-1 text-sm font-semibold text-mint-700 dark:border-mint-700/40 dark:bg-mint-900/30 dark:text-mint-300">
@@ -55,7 +53,6 @@ export function Hero() {
             </p>
           </Reveal>
 
-          {/* CTA */}
           <Reveal delay={240}>
             <div id="search-school" className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900">
@@ -84,7 +81,6 @@ export function Hero() {
           </Reveal>
         </div>
 
-        {/* Right — phone mockup */}
         <Reveal delay={200} className="relative mx-auto w-full max-w-sm lg:max-w-md">
           <PhoneMockup />
         </Reveal>
@@ -96,10 +92,8 @@ export function Hero() {
 function PhoneMockup() {
   return (
     <div className="relative">
-      {/* glow */}
       <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-brand-400/30 via-mint-400/30 to-rose-400/30 blur-2xl" />
 
-      {/* Floating notification cards */}
       <div className="absolute -left-10 top-16 z-20 hidden animate-float rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-800 sm:block">
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300">
@@ -124,11 +118,9 @@ function PhoneMockup() {
         </div>
       </div>
 
-      {/* Phone frame */}
       <div className="relative mx-auto w-[280px] rounded-[2.5rem] border-[6px] border-slate-900 bg-slate-900 shadow-2xl dark:border-slate-800 sm:w-[320px]">
         <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900 dark:bg-slate-800" />
         <div className="overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-          {/* Screen header */}
           <div className="px-4 pb-3 pt-9">
             <div className="flex items-center justify-between">
               <p className="font-display text-sm font-bold text-slate-900 dark:text-white">Avisos</p>
@@ -136,7 +128,6 @@ function PhoneMockup() {
             </div>
           </div>
 
-          {/* AI summary mini-card */}
           <div className="mx-4 mb-3 rounded-xl bg-gradient-to-br from-brand-500 via-mint-500 to-rose-500 p-[1px]">
             <div className="rounded-[11px] bg-white/95 p-3 backdrop-blur dark:bg-slate-900/90">
               <div className="flex items-center gap-1.5">
@@ -149,7 +140,6 @@ function PhoneMockup() {
             </div>
           </div>
 
-          {/* Notice cards */}
           <div className="space-y-2 px-4 pb-5">
             <NoticeCard color="rose" icon={<Bell className="h-3.5 w-3.5" />} title="Mañana no hay clase" meta="Toda la clase · Tutora" priority />
             <NoticeCard color="violet" icon={<Calendar className="h-3.5 w-3.5" />} title="Excursión al museo — jueves" meta="Toda la clase · Delegada" />

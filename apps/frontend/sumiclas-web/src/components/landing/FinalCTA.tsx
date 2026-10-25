@@ -24,12 +24,10 @@ const faqs = [
 export function FinalCTA() {
   return (
     <>
-      {/* Final CTA */}
       <section className="relative overflow-hidden py-20 sm:py-28">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-600 to-mint-600 px-6 py-14 text-center shadow-2xl sm:px-12">
-              {/* decorative blobs */}
               <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
               <div className="pointer-events-none absolute -bottom-12 -right-8 h-48 w-48 rounded-full bg-rose-400/20 blur-2xl" />
 
@@ -60,7 +58,6 @@ export function FinalCTA() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section id="faq" className="relative py-20 sm:py-24">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <Reveal>

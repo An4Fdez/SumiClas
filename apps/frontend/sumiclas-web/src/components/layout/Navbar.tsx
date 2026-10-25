@@ -17,11 +17,8 @@ export function Navbar() {
   const { theme, toggle } = useTheme();
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
-  // Navbar/Layout is not unmounted when navigating between public routes (Login, Register,
-  // Onboarding share the same <Layout/>), so without this the session/name would stay
-  // "frozen" with the value they had when first mounted.
-  // useLocation() forces a re-render on every route change to always re-read
-  // localStorage with the freshest data.
+  // Layout stays mounted across the public routes, so subscribing to the location makes every navigation
+  // re-read the guardian info from localStorage.
   useLocation();
   const isLoggedIn = status === 'authenticated';
   const guardian = isLoggedIn ? getGuardianInfo() : null;
@@ -34,7 +31,6 @@ export function Navbar() {
           <Logo />
         </Link>
 
-        {/* Desktop links */}
         <ul className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <li key={l.href}>
@@ -65,7 +61,6 @@ export function Navbar() {
             {isLoggedIn ? guardianName : 'Iniciar sesión'}
           </Link>
 
-          {/* Mobile toggle */}
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label="Menú"
@@ -76,7 +71,6 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
       {open && (
         <div className="border-t border-slate-200 bg-white/95 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 md:hidden">
           <ul className="space-y-1 px-4 py-4">

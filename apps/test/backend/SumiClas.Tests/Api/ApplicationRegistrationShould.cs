@@ -85,7 +85,8 @@ public class ApplicationRegistrationShould
     private static bool IsWrappedInTheUnitOfWork(IServiceScope scope, Type request)
     {
         Type? typed = request.GetInterfaces()
-            .SingleOrDefault(contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IRequest<>));
+            .SingleOrDefault(
+                contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IRequest<>));
         Type response = typed is null ? typeof(Unit) : typed.GetGenericArguments()[0];
         Type behavior = typeof(IPipelineBehavior<,>).MakeGenericType(request, response);
 

@@ -10,7 +10,6 @@ export function SummarySection() {
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left copy */}
           <div>
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700 dark:border-brand-700/40 dark:bg-brand-900/30 dark:text-brand-300">
@@ -43,7 +42,6 @@ export function SummarySection() {
             </Reveal>
           </div>
 
-          {/* Right — summary card mock */}
           <Reveal delay={160}>
             <div className="relative mx-auto max-w-md">
               <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-brand-400/30 via-mint-400/30 to-rose-400/30 blur-2xl" />

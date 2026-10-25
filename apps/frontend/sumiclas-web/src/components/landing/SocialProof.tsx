@@ -41,7 +41,6 @@ export function SocialProof() {
   return (
     <section id="testimonials" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Aggregate */}
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <div className="flex items-center justify-center gap-2">
@@ -59,7 +58,6 @@ export function SocialProof() {
           </div>
         </Reveal>
 
-        {/* Review cards */}
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {reviews.map((r, i) => (
             <Reveal key={r.name} delay={(i % 4) * 90}>

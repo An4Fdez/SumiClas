@@ -130,7 +130,7 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_announcements_of_the_school_and_of_the_class_but_not_those_of_other_classes_or_schools()
+    public async Task return_the_announcements_of_the_school_and_the_class_but_not_those_of_other_classes_or_schools()
     {
         Guid classId = GuidMother.Random();
         Guid schoolYearId = GuidMother.Random();

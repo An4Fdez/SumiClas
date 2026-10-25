@@ -24,7 +24,6 @@ export function Problem() {
     <section className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 lg:items-center">
-          {/* Left — WhatsApp chaos mock */}
           <Reveal className="order-2 lg:order-1">
             <div className="relative mx-auto max-w-md">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900">
@@ -54,7 +53,6 @@ export function Problem() {
             </div>
           </Reveal>
 
-          {/* Right — copy */}
           <div className="order-1 lg:order-2">
             <Reveal>
               <p className="font-display text-sm font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400">

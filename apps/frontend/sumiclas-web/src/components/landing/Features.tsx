@@ -89,7 +89,6 @@ const colorClasses: Record<Color, { bg: string; text: string; ring: string; glow
 export function Features() {
   return (
     <section id="features" className="relative py-20 sm:py-28">
-      {/* soft bg */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
