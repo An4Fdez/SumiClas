@@ -17,13 +17,13 @@ public static class ClassExpenseFinderByClass
     {
         public async Task<PagedResponse<ClassExpenseResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
+            Guid current = userProvider.GetCurrentUserId();
+
             PageRequest pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
             KeysetPage<DateTimeOffset> page = Pagination.ByCreatedAt(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-
-            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 

@@ -15,9 +15,9 @@ public static class SubjectFinderByClass
     {
         public async Task<IReadOnlyCollection<SubjectResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-
             Guid current = userProvider.GetCurrentUserId();
+
+            await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 

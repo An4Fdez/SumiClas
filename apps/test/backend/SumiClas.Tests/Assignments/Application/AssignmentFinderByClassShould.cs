@@ -387,6 +387,18 @@ public class AssignmentFinderByClassShould : AssignmentsUnitTestCase
     }
 
     [Test]
+    public async Task throw_unauthenticated_before_validating_the_limit_when_there_is_no_current_user()
+    {
+        this.ShouldHaveNoCurrentUser();
+
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            AssignmentFinderByClassQueryMother.WithLimit(GuidMother.Random(), Pagination.MaxLimit + 1));
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
+        this.ShouldNotHaveSearched();
+    }
+
+    [Test]
     public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
     {
         Guid classId = GuidMother.Random();

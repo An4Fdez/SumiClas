@@ -17,13 +17,13 @@ public static class AssignmentFinderByClass
     {
         public async Task<PagedResponse<AssignmentResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
+            Guid current = userProvider.GetCurrentUserId();
+
             PageRequest pageRequest = Pagination.Resolve(query.Limit, query.Cursor);
 
             KeysetPage<DateOnly> page = Pagination.ByDate(pageRequest);
 
             await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-
-            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 
