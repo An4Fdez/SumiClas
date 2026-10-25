@@ -24,9 +24,9 @@ public static class CalendarEventFinderByClass
     {
         public async Task<IReadOnlyCollection<CalendarEventResponse>> ExecuteAsync(Query query, CancellationToken ct = default)
         {
-            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
-
             Guid current = userProvider.GetCurrentUserId();
+
+            ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(query.ClassId), ct);
 
             await queryBus.Send(new UserClassAccessEnsure.Query(current, query.ClassId), ct);
 

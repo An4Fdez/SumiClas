@@ -16,10 +16,10 @@ public static class SchoolYearArchive
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            Guid current = userProvider.GetCurrentUserId();
+
             SchoolYear schoolYear = await repository.GetByIdAsync(command.SchoolYearId, ct)
                 ?? throw new SchoolYearExceptions.NotFound();
-
-            Guid current = userProvider.GetCurrentUserId();
 
             IReadOnlyCollection<ClassResponse> classes = await queryBus.Send(new ClassFinderBySchoolYear.Query(command.SchoolYearId), ct);
             Guid[] classIds = classes.Select(schoolClass => schoolClass.Id).ToArray();

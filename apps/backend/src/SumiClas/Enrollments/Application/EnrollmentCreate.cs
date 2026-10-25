@@ -17,9 +17,9 @@ public static class EnrollmentCreate
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
-            Enrollment enrollment = Enrollment.Create(command.Id, command.StudentId, command.ClassId, clock);
-
             Guid current = userProvider.GetCurrentUserId();
+
+            Enrollment enrollment = Enrollment.Create(command.Id, command.StudentId, command.ClassId, clock);
 
             await queryBus.Send(new StudentGuardianEnsure.Query(command.StudentId, current), ct);
 

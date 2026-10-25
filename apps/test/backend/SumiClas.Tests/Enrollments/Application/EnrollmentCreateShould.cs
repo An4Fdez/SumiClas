@@ -272,4 +272,17 @@ public class EnrollmentCreateShould : EnrollmentsUnitTestCase
         this.Added.Should().BeEmpty();
         this.QueryBus.VerifyNoOtherCalls();
     }
+
+    [Test]
+    public async Task throw_unauthenticated_before_validating_the_ids_when_there_is_no_current_user()
+    {
+        this.ShouldCaptureAddedEnrollments();
+        this.ShouldHaveNoCurrentUser();
+
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            EnrollmentCreateCommandMother.With(Guid.Empty, GuidMother.Random(), GuidMother.Random()));
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
+        this.Added.Should().BeEmpty();
+    }
 }

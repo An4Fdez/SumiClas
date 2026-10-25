@@ -206,4 +206,16 @@ public class EnrollmentConfirmShould : EnrollmentsUnitTestCase
         await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
         enrollment.Status.Should().Be(EnrollmentStatus.Suggested);
     }
+
+    [Test]
+    public async Task throw_unauthenticated_before_looking_for_the_enrollment_when_there_is_no_current_user()
+    {
+        this.ShouldFetchEnrollments(EnrollmentMother.Suggested(GuidMother.Random(), GuidMother.Random()));
+        this.ShouldHaveNoCurrentUser();
+
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            EnrollmentConfirmCommandMother.WithEnrollmentId(GuidMother.Random()));
+
+        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
+    }
 }

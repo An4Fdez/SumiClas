@@ -17,13 +17,13 @@ public static class EnrollmentConfirm
     {
         public async Task ExecuteAsync(Command command, CancellationToken ct = default)
         {
+            Guid current = userProvider.GetCurrentUserId();
+
             Enrollment? enrollment = await repository.GetByIdAsync(command.EnrollmentId, ct);
             if (enrollment is null)
             {
                 throw new EnrollmentExceptions.NotFound();
             }
-
-            Guid current = userProvider.GetCurrentUserId();
 
             await queryBus.Send(new StudentGuardianEnsure.Query(enrollment.StudentId, current), ct);
 
