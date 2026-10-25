@@ -15,6 +15,7 @@ import { OnboardingRepositoriesProvider } from '@/context/OnboardingRepositories
 import { ProvinceRepositoryProvider } from '@/context/ProvinceRepositoryProvider';
 import { StudentRepositoryProvider } from '@/context/StudentRepositoryProvider';
 import { UserRepositoryProvider } from '@/context/UserRepositoryProvider';
+import { WeeklySummaryRepositoryProvider } from '@/context/WeeklySummaryRepositoryProvider';
 import { AuthProvider } from '@/context/AuthProvider';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { removeLegacySessionKeys } from '@/lib/auth';
@@ -38,11 +39,13 @@ createRoot(document.getElementById('root')!).render(
                           <HomeworkRepositoriesProvider>
                             <ClassExpenseRepositoryProvider>
                               <DashboardRepositoryProvider>
-                                <BrowserRouter>
-                                  <AuthProvider>
-                                    <App />
-                                  </AuthProvider>
-                                </BrowserRouter>
+                                <WeeklySummaryRepositoryProvider>
+                                  <BrowserRouter>
+                                    <AuthProvider>
+                                      <App />
+                                    </AuthProvider>
+                                  </BrowserRouter>
+                                </WeeklySummaryRepositoryProvider>
                               </DashboardRepositoryProvider>
                             </ClassExpenseRepositoryProvider>
                           </HomeworkRepositoriesProvider>

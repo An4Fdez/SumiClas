@@ -5,8 +5,8 @@ import { Reveal } from '@/components/layout/Reveal';
 import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
 import { useChildContext } from '@/hooks/useChildContext';
 import { useClassDashboardSummary } from '@/hooks/useClassDashboardSummary';
+import { useClassWeeklySummary } from '@/hooks/useClassWeeklySummary';
 import { badgeColorClasses, type PaletteColor } from '@/lib/colorClasses';
-import { aiSummaryByChild } from '@/data/appMock';
 import { formatDueDate } from '@/lib/date';
 import { roleMeta, type ClassRole } from '@/lib/roles';
 import type { DashboardSummary } from '@/modules/dashboard/domain/DashboardSummary';
@@ -23,10 +23,10 @@ type OnboardingState = {
 export default function Dashboard() {
   const location = useLocation();
   const onboardingState = (location.state ?? {}) as OnboardingState;
-  const { currentChild, currentChildId } = useChildContext();
+  const { currentChild } = useChildContext();
   const [period, setPeriod] = useState<SummaryPeriod>(DEFAULT_SUMMARY_PERIOD);
   const { state, reload } = useClassDashboardSummary(currentChild?.classId, period);
-  const aiSummary = aiSummaryByChild[currentChildId];
+  const { state: weeklySummary, generate: generateWeeklySummary } = useClassWeeklySummary(currentChild?.classId);
 
   return (
     <div>
@@ -74,9 +74,9 @@ export default function Dashboard() {
         <PeriodSelector value={period} onChange={setPeriod} />
       </Reveal>
 
-      {aiSummary && (
+      {weeklySummary.status !== 'idle' && (
         <Reveal delay={40} className="mt-6">
-          <WeeklySummaryCard date={aiSummary.date} points={aiSummary.points} />
+          <WeeklySummaryCard state={weeklySummary} onGenerate={generateWeeklySummary} />
         </Reveal>
       )}
 
