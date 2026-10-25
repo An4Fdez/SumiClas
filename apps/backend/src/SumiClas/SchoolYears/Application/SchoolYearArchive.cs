@@ -4,8 +4,7 @@ using SumiClas.SchoolYears.Domain;
 using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Users.Application;
-using SumiClas.Users.Domain;
-
+    
 namespace SumiClas.SchoolYears.Application;
 
 public static class SchoolYearArchive
@@ -23,17 +22,10 @@ public static class SchoolYearArchive
             Guid current = userProvider.GetCurrentUserId();
 
             IReadOnlyCollection<ClassResponse> classes = await queryBus.Send(new ClassFinderBySchoolYear.Query(command.SchoolYearId), ct);
-            foreach (ClassResponse schoolClass in classes)
-            {
-                bool isRepresentative = await queryBus.Send(new UserIsClassRepresentative.Query(current, schoolClass.Id), ct);
-                if (isRepresentative)
-                {
-                    schoolYear.Archive(clock);
-                    return;
-                }
-            }
+            Guid[] classIds = classes.Select(schoolClass => schoolClass.Id).ToArray();
+            await queryBus.Send(new UserAnyClassRepresentativeEnsure.Query(current, classIds), ct);
 
-            throw new UserExceptions.ClassRepresentativeForbidden();
+            schoolYear.Archive(clock);
         }
     }
 

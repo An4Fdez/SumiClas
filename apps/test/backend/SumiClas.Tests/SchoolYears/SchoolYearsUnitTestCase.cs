@@ -78,17 +78,19 @@ public abstract class SchoolYearsUnitTestCase : UnitTestCase
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(classIds.Select(classId => ClassResponseMother.With(classId, schoolYearId)).ToList());
 
-    protected void ShouldAllowClassRepresentative(Guid userId, Guid classId)
+    protected void ShouldAllowAnyClassRepresentative(Guid userId, params Guid[] classIds)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<UserIsClassRepresentative.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.Is<UserAnyClassRepresentativeEnsure.Query>(query =>
+                    query.UserId == userId && query.ClassIds.ToHashSet().SetEquals(classIds)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(Unit.Value);
 
-    protected void ShouldDenyClassRepresentative(Guid userId, Guid classId)
+    protected void ShouldDenyAnyClassRepresentative(Guid userId, params Guid[] classIds)
         => this.QueryBus
             .Setup(bus => bus.Send(
-                It.Is<UserIsClassRepresentative.Query>(query => query.UserId == userId && query.ClassId == classId),
+                It.Is<UserAnyClassRepresentativeEnsure.Query>(query =>
+                    query.UserId == userId && query.ClassIds.ToHashSet().SetEquals(classIds)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+            .ThrowsAsync(new UserExceptions.ClassRepresentativeForbidden());
 }

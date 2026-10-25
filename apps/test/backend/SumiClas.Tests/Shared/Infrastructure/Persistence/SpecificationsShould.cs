@@ -295,6 +295,28 @@ public class SpecificationsShould
     }
 
     [Test]
+    public async Task select_only_the_representatives_of_any_of_the_classes_in_the_list()
+    {
+        await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();
+        Guid firstClass = GuidMother.Random();
+        Guid secondClass = GuidMother.Random();
+        User ofFirst = UserMother.Representative(firstClass);
+        User ofSecond = UserMother.Representative(secondClass);
+        await SaveAsync(
+            database,
+            ofFirst,
+            ofSecond,
+            UserMother.Participant(firstClass),
+            UserMother.Representative(GuidMother.Random()));
+
+        IReadOnlyCollection<User> found = await SearchAsync(
+            database,
+            new UserSpecification(classIds: [firstClass, secondClass], classRole: ClassRoleType.ClassRepresentative));
+
+        found.Select(user => user.Id).Should().BeEquivalentTo([ofFirst.Id, ofSecond.Id]);
+    }
+
+    [Test]
     public async Task select_only_the_users_whose_ids_are_in_the_list()
     {
         await using TestDatabase database = await PostgresServer.CreateMigratedDatabaseAsync();

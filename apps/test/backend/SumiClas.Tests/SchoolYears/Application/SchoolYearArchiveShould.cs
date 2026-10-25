@@ -32,8 +32,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id, otherClassId, delegateClassId);
-        this.ShouldDenyClassRepresentative(currentUserId, otherClassId);
-        this.ShouldAllowClassRepresentative(currentUserId, delegateClassId);
+        this.ShouldAllowAnyClassRepresentative(currentUserId, otherClassId, delegateClassId);
 
         await this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
@@ -51,7 +50,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id, classId);
-        this.ShouldAllowClassRepresentative(currentUserId, classId);
+        this.ShouldAllowAnyClassRepresentative(currentUserId, classId);
 
         await this._useCase.ExecuteAsync(SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
@@ -70,7 +69,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id, classId);
-        this.ShouldAllowClassRepresentative(currentUserId, classId);
+        this.ShouldAllowAnyClassRepresentative(currentUserId, classId);
         await this._useCase.ExecuteAsync(SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
@@ -91,8 +90,7 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
         this.ShouldFetchSchoolYears(schoolYear);
         this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id, firstClassId, secondClassId);
-        this.ShouldDenyClassRepresentative(currentUserId, firstClassId);
-        this.ShouldDenyClassRepresentative(currentUserId, secondClassId);
+        this.ShouldDenyAnyClassRepresentative(currentUserId, firstClassId, secondClassId);
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
@@ -107,8 +105,10 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     {
         SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
         this.ShouldFetchSchoolYears(schoolYear);
-        this.ShouldResolveCurrentUser(GuidMother.Random());
+        Guid currentUserId = GuidMother.Random();
+        this.ShouldResolveCurrentUser(currentUserId);
         this.ShouldFindClassesOfSchoolYear(schoolYear.Id);
+        this.ShouldDenyAnyClassRepresentative(currentUserId);
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
