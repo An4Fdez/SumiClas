@@ -42,8 +42,8 @@ public class AssignmentPeriodFinderByClassShould : AssignmentsUnitTestCase
         IReadOnlyCollection<AssignmentPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Should().Equal(
-            new AssignmentPeriodResponse(sooner, FROM.AddDays(ONE_DAY)),
-            new AssignmentPeriodResponse(later, FROM.AddDays(TWO_DAYS)));
+            AssignmentPeriodResponseMother.With(FROM.AddDays(ONE_DAY), sooner),
+            AssignmentPeriodResponseMother.With(FROM.AddDays(TWO_DAYS), later));
     }
 
     [Test]

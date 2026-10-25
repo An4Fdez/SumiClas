@@ -44,7 +44,8 @@ public class ClassExpenseOpenFinderByClassShould : ClassExpensesUnitTestCase
 
         IReadOnlyCollection<ClassExpenseOpenResponse> result = await this.FindOpenAsync(classId);
 
-        result.Should().Equal(new ClassExpenseOpenResponse(oldest), new ClassExpenseOpenResponse(newest));
+        result.Should().Equal(
+            ClassExpenseOpenResponseMother.With(oldest), ClassExpenseOpenResponseMother.With(newest));
     }
 
     [Test]
@@ -63,7 +64,7 @@ public class ClassExpenseOpenFinderByClassShould : ClassExpensesUnitTestCase
 
         IReadOnlyCollection<ClassExpenseOpenResponse> result = await this.FindOpenAsync(classId);
 
-        result.Should().Equal(new ClassExpenseOpenResponse(partlyPaid));
+        result.Should().Equal(ClassExpenseOpenResponseMother.With(partlyPaid));
     }
 
     [Test]

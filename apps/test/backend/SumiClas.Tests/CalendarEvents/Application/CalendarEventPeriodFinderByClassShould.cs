@@ -41,8 +41,8 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
         IReadOnlyCollection<CalendarEventPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Should().Equal(
-            new CalendarEventPeriodResponse(soonerTitle, nameof(EventType.Meeting), sooner),
-            new CalendarEventPeriodResponse(laterTitle, nameof(EventType.Meeting), later));
+            CalendarEventPeriodResponseMother.With(nameof(EventType.Meeting), sooner, soonerTitle),
+            CalendarEventPeriodResponseMother.With(nameof(EventType.Meeting), later, laterTitle));
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class CalendarEventPeriodFinderByClassShould : CalendarEventsUnitTestCase
 
         IReadOnlyCollection<CalendarEventPeriodResponse> result = await this.InPeriodAsync(classId);
 
-        result.Should().Equal(new CalendarEventPeriodResponse(title, nameof(EventType.Birthday), day));
+        result.Should().Equal(CalendarEventPeriodResponseMother.With(nameof(EventType.Birthday), day, title));
     }
 
     [Test]

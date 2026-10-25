@@ -17,7 +17,6 @@ public class LostItemRecentSummaryFinderByClassShould : LostItemsUnitTestCase
     private const int ONE_DAY = 1;
     private const int TWO_DAYS = 2;
     private const int ONE_SECOND = 1;
-    private const int NONE = 0;
 
     private static readonly TimeSpan YESTERDAY = TimeSpan.FromDays(ONE_DAY);
     private static readonly TimeSpan TWO_DAYS_AGO = TimeSpan.FromDays(TWO_DAYS);
@@ -180,7 +179,7 @@ public class LostItemRecentSummaryFinderByClassShould : LostItemsUnitTestCase
 
         LostItemRecentSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new LostItemRecentSummaryResponse(Count: NONE));
+        result.Should().Be(LostItemRecentSummaryResponseMother.None());
     }
 
     [Test]

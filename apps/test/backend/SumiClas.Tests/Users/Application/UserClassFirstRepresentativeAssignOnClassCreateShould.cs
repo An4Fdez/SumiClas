@@ -28,7 +28,7 @@ public class UserClassFirstRepresentativeAssignOnClassCreateShould : UsersUnitTe
         await this._handler.Handle(this.ClassCreatedBy(creator.Id, classId));
 
         creator.ClassRoles.Should().ContainSingle()
-            .Which.Should().Be(new ClassRoleAssignment(classId, ClassRoleType.ClassRepresentative));
+            .Which.Should().Be(ClassRoleAssignmentMother.Representative(classId));
     }
 
     [Test]

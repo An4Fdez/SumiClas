@@ -37,7 +37,7 @@ public class ClassExpensePendingSummaryFinderByClassShould : ClassExpensesUnitTe
 
         ClassExpensePendingSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new ClassExpensePendingSummaryResponse(Pending: true, Item: owed.Item));
+        result.Should().Be(ClassExpensePendingSummaryResponseMother.Owing(owed.Item));
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class ClassExpensePendingSummaryFinderByClassShould : ClassExpensesUnitTe
 
         ClassExpensePendingSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new ClassExpensePendingSummaryResponse(Pending: false, Item: null));
+        result.Should().Be(ClassExpensePendingSummaryResponseMother.NotOwing());
     }
 
     [Test]

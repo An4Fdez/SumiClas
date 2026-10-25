@@ -46,8 +46,8 @@ public class CalendarEventUpcomingFinderByClassShould : CalendarEventsUnitTestCa
         IReadOnlyCollection<CalendarEventUpcomingResponse> result = await this.UpcomingAsync(classId);
 
         result.Should().Equal(
-            new CalendarEventUpcomingResponse(soonerTitle, nameof(EventType.Meeting), sooner, TWO_DAYS),
-            new CalendarEventUpcomingResponse(laterTitle, nameof(EventType.Meeting), later, THREE_DAYS));
+            CalendarEventUpcomingResponseMother.With(nameof(EventType.Meeting), sooner, TWO_DAYS, soonerTitle),
+            CalendarEventUpcomingResponseMother.With(nameof(EventType.Meeting), later, THREE_DAYS, laterTitle));
     }
 
     [Test]
@@ -59,7 +59,8 @@ public class CalendarEventUpcomingFinderByClassShould : CalendarEventsUnitTestCa
 
         IReadOnlyCollection<CalendarEventUpcomingResponse> result = await this.UpcomingAsync(classId);
 
-        result.Should().Equal(new CalendarEventUpcomingResponse(title, nameof(EventType.Meeting), TODAY, DaysUntil: 0));
+        result.Should().Equal(
+            CalendarEventUpcomingResponseMother.With(nameof(EventType.Meeting), TODAY, daysUntil: 0, title));
     }
 
     [Test]
@@ -84,11 +85,11 @@ public class CalendarEventUpcomingFinderByClassShould : CalendarEventsUnitTestCa
 
         IReadOnlyCollection<CalendarEventUpcomingResponse> result = await this.UpcomingAsync(classId);
 
-        result.Should().Equal(new CalendarEventUpcomingResponse(
-            title,
+        result.Should().Equal(CalendarEventUpcomingResponseMother.With(
             nameof(EventType.Birthday),
             LAST_DAY_OF_DEFAULT,
-            SummaryPeriod.DefaultDays));
+            SummaryPeriod.DefaultDays,
+            title));
     }
 
     [Test]
@@ -197,7 +198,7 @@ public class CalendarEventUpcomingFinderByClassShould : CalendarEventsUnitTestCa
         IReadOnlyCollection<CalendarEventUpcomingResponse> result = await this.UpcomingAsync(classId);
 
         result.Should().Equal(
-            new CalendarEventUpcomingResponse(title, nameof(EventType.Meeting), day, TWO_DAYS - ONE_DAY));
+            CalendarEventUpcomingResponseMother.With(nameof(EventType.Meeting), day, TWO_DAYS - ONE_DAY, title));
     }
 
     [TestCase(SummaryPeriod.MinDays - ONE_DAY)]

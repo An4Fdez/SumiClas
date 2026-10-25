@@ -14,7 +14,6 @@ public class AssignmentPendingSummaryFinderByClassShould : AssignmentsUnitTestCa
 {
     private const int ONE_DAY = 1;
     private const int A_WEEK = 7;
-    private const int NONE = 0;
 
     private static readonly DateOnly TODAY = DateOnly.FromDateTime(Now.UtcDateTime);
     private static readonly DateOnly YESTERDAY = TODAY.AddDays(-ONE_DAY);
@@ -109,7 +108,7 @@ public class AssignmentPendingSummaryFinderByClassShould : AssignmentsUnitTestCa
 
         AssignmentPendingSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new AssignmentPendingSummaryResponse(Pending: NONE, NextDueDate: null));
+        result.Should().Be(AssignmentPendingSummaryResponseMother.None());
     }
 
     [Test]
@@ -149,7 +148,7 @@ public class AssignmentPendingSummaryFinderByClassShould : AssignmentsUnitTestCa
 
         AssignmentPendingSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new AssignmentPendingSummaryResponse(Pending: NONE, NextDueDate: null));
+        result.Should().Be(AssignmentPendingSummaryResponseMother.None());
     }
 
     [Test]

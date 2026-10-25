@@ -17,7 +17,6 @@ public class AnnouncementUnreadSummaryFinderByClassShould : AnnouncementsUnitTes
     private const int ONE_DAY = 1;
     private const int TWO_DAYS = 2;
     private const int ONE_SECOND = 1;
-    private const int NONE = 0;
 
     private static readonly TimeSpan YESTERDAY = TimeSpan.FromDays(ONE_DAY);
     private static readonly TimeSpan TWO_DAYS_AGO = TimeSpan.FromDays(TWO_DAYS);
@@ -210,7 +209,7 @@ public class AnnouncementUnreadSummaryFinderByClassShould : AnnouncementsUnitTes
 
         AnnouncementUnreadSummaryResponse result = await this.SummarizeAsync(classId);
 
-        result.Should().Be(new AnnouncementUnreadSummaryResponse(Unread: NONE, UnreadUrgent: NONE));
+        result.Should().Be(AnnouncementUnreadSummaryResponseMother.None());
     }
 
     [Test]

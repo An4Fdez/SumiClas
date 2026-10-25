@@ -41,7 +41,7 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
             DashboardSummaryFinderByClassQueryMother.WithDays(classId, REQUESTED_DAYS),
             CancellationToken.None);
 
-        result.Should().Be(new DashboardSummaryResponse(
+        result.Should().Be(DashboardSummaryResponseMother.With(
             REQUESTED_DAYS,
             announcements,
             assignments,

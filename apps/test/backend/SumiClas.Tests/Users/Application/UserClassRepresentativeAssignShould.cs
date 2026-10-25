@@ -112,7 +112,7 @@ public class UserClassRepresentativeAssignShould : UsersUnitTestCase
             UserClassRepresentativeAssignCommandMother.With(target.Id, classId));
 
         target.ClassRoles.Should().ContainSingle()
-            .Which.Should().Be(new ClassRoleAssignment(classId, ClassRoleType.ClassRepresentative));
+            .Which.Should().Be(ClassRoleAssignmentMother.Representative(classId));
     }
 
     [Test]

@@ -82,9 +82,9 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         item.AuthorRole.Should().Be("ClassRepresentative");
         item.CreatedAt.Should().Be(expense.CreatedAt);
         item.Participants.Should().Equal(
-            new ExpenseParticipantResponse(alphaId, alphaName, false),
-            new ExpenseParticipantResponse(betaId, betaName, true),
-            new ExpenseParticipantResponse(gammaId, gammaName, true));
+            ExpenseParticipantResponseMother.With(alphaId, alphaName, hasPaid: false),
+            ExpenseParticipantResponseMother.With(betaId, betaName, hasPaid: true),
+            ExpenseParticipantResponseMother.With(gammaId, gammaName, hasPaid: true));
         result.NextCursor.Should().BeNull();
         this.ShouldHaveAskedForClass(classId);
     }
@@ -116,7 +116,8 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
         ClassExpenseResponse first = result.Items.First();
         first.AuthorName.Should().BeEmpty();
         first.AuthorRole.Should().BeNull();
-        first.Participants.Should().Equal(new ExpenseParticipantResponse(guardianId, string.Empty, false));
+        first.Participants.Should().Equal(
+            ExpenseParticipantResponseMother.With(guardianId, string.Empty, hasPaid: false));
     }
 
     [Test]

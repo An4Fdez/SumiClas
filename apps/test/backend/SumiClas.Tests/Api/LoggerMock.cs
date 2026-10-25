@@ -38,7 +38,7 @@ public static class LoggerMock
             target => target.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((state, _) => state.ToString()!.Contains(messagePart)),
+                It.Is<It.IsAnyType>((state, _) => (Convert.ToString(state) ?? string.Empty).Contains(messagePart)),
                 It.Is<Exception?>(cause => ReferenceEquals(cause, exception)),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

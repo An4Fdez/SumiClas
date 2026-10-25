@@ -49,8 +49,8 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
         IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Should().Equal(
-            new AnnouncementPeriodResponse(schoolTitle, Urgent: false),
-            new AnnouncementPeriodResponse(classTitle, Urgent: false));
+            AnnouncementPeriodResponseMother.With(schoolTitle),
+            AnnouncementPeriodResponseMother.With(classTitle));
     }
 
     [Test]
@@ -70,9 +70,9 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
         IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Should().Equal(
-            new AnnouncementPeriodResponse(urgentTitle, Urgent: true),
-            new AnnouncementPeriodResponse(normalTitle, Urgent: false),
-            new AnnouncementPeriodResponse(lowTitle, Urgent: false));
+            AnnouncementPeriodResponseMother.With(urgentTitle, urgent: true),
+            AnnouncementPeriodResponseMother.With(normalTitle),
+            AnnouncementPeriodResponseMother.With(lowTitle));
     }
 
     [Test]
