@@ -220,6 +220,40 @@ public class ApiExceptionHandlerShould : ApiUnitTestCase
         body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
     }
 
+    [Test]
+    public async Task answer_503_with_retry_after_and_the_summary_code_when_the_writer_of_the_summary_fails()
+    {
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+
+        bool handled = await this._handler.TryHandleAsync(
+            http,
+            InfrastructureExceptionMother.WriterFailure(),
+            CancellationToken.None);
+
+        handled.Should().BeTrue();
+        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+        http.Response.Headers.RetryAfter.ToString().Should().Be(ApiExceptionHandler.RetryAfterSeconds.ToString());
+        JsonElement body = await ReadBodyAsync(http);
+        body.GetProperty("code").GetString().Should().Be(ApiErrorCodes.WeeklySummaryUnavailable);
+        body.GetProperty("traceId").GetString().Should().NotBeNullOrWhiteSpace();
+        body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
+    }
+
+    [Test]
+    public async Task log_the_failure_of_the_writer_with_its_cause_and_the_trace_id_the_response_carries()
+    {
+        CapturingLoggerProvider logs = new();
+        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
+        Exception exception = InfrastructureExceptionMother.WriterFailure();
+
+        await HandlerLoggingTo(logs).TryHandleAsync(http, exception, CancellationToken.None);
+
+        string traceId = (await ReadBodyAsync(http)).GetProperty("traceId").GetString()!;
+        logs.Entries.Should().ContainSingle(entry => entry.Level == LogLevel.Error)
+            .Which.Should().Match<CapturingLoggerProvider.LogEntry>(
+                entry => ReferenceEquals(entry.Exception, exception) && entry.Message.Contains(traceId));
+    }
+
     private static ApiExceptionHandler HandlerLoggingTo(CapturingLoggerProvider logs)
         => new(new LoggerFactory([logs]).CreateLogger<ApiExceptionHandler>());
 }

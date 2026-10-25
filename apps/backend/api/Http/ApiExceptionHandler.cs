@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Npgsql;
 using SumiClas.Shared.Domain;
+using SumiClas.WeeklySummaries.Application;
 using System.Diagnostics;
 
 namespace SumiClas.Api.Http;
@@ -15,6 +16,9 @@ namespace SumiClas.Api.Http;
 /// or, when it declared none, the one <see cref="DomainExceptionConvention"/> gives.</item>
 /// <item>A <see cref="BadHttpRequestException"/> (malformed JSON, unsupported content type...) keeps its own 4xx.</item>
 /// <item>A transient database failure is a 503 with <c>Retry-After</c>.</item>
+/// <item>A failure of the writer of the weekly summary (<see cref="WeeklySummaryWriterException"/>: the AI service is
+/// not configured, kept failing or answered something unusable) is a 503 with <c>Retry-After</c> and its own code, and
+/// the cause is logged: it carries neither the key nor the data of the class, but it says what went wrong.</item>
 /// <item>Anything else is a 500 logged as an error.</item>
 /// </list>
 /// </summary>
@@ -24,6 +28,7 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
 
     private const string BadRequestMessage = "La petición no es válida.";
     private const string ServiceUnavailableMessage = "El servicio no está disponible ahora mismo. Inténtalo de nuevo en unos segundos.";
+    private const string WeeklySummaryUnavailableMessage = "No hemos podido escribir el resumen de la semana ahora mismo. Inténtalo de nuevo en unos segundos.";
     private const string UnexpectedErrorMessage = "Ha ocurrido un error inesperado. Inténtalo de nuevo más tarde.";
 
     public async ValueTask<bool> TryHandleAsync(HttpContext http, Exception exception, CancellationToken ct)
@@ -40,6 +45,17 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
         {
             logger.LogInformation(badRequest, "Malformed request {TraceId} answered with {Status}.", traceId, badRequest.StatusCode);
             await ApiProblem.Create(ApiErrorCodes.BadRequest, BadRequestMessage, badRequest.StatusCode).ExecuteAsync(http);
+            return true;
+        }
+
+        if (exception is WeeklySummaryWriterException)
+        {
+            logger.LogError(exception, "The weekly summary could not be written {TraceId}.", traceId);
+            http.Response.Headers.RetryAfter = RetryAfterSeconds.ToString();
+            await ApiProblem.Create(
+                ApiErrorCodes.WeeklySummaryUnavailable,
+                WeeklySummaryUnavailableMessage,
+                StatusCodes.Status503ServiceUnavailable).ExecuteAsync(http);
             return true;
         }
 

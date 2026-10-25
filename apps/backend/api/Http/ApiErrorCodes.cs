@@ -9,4 +9,5 @@ public static class ApiErrorCodes
     public const string UnexpectedError = "Shared.UnexpectedError";
     public const string ServiceUnavailable = "Shared.ServiceUnavailable";
     public const string BadRequest = "Shared.BadRequest";
+    public const string WeeklySummaryUnavailable = "WeeklySummary.Unavailable";
 }
