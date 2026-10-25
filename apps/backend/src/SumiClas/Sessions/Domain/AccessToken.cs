@@ -17,6 +17,13 @@ public sealed class AccessToken : ValueObject
 
     public static AccessToken Create(string value, DateTimeOffset expiresAt)
     {
+        Validate(value, expiresAt);
+
+        return new AccessToken(value, expiresAt);
+    }
+
+    private static void Validate(string value, DateTimeOffset expiresAt)
+    {
         if (string.IsNullOrWhiteSpace(value))
         {
             throw new AccessTokenExceptions.ValueRequired();
@@ -26,8 +33,6 @@ public sealed class AccessToken : ValueObject
         {
             throw new AccessTokenExceptions.ExpiryRequired();
         }
-
-        return new AccessToken(value, expiresAt);
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

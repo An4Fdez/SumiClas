@@ -50,6 +50,14 @@ public class AccessTokenShould
     }
 
     [Test]
+    public void report_the_value_before_the_expiry_when_both_are_invalid()
+    {
+        Action act = () => AccessToken.Create(string.Empty, default);
+
+        act.Should().Throw<AccessTokenExceptions.ValueRequired>();
+    }
+
+    [Test]
     public void be_equal_only_when_value_and_expiry_are_equal()
     {
         string value = StringMother.Random("jwt");

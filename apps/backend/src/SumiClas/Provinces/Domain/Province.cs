@@ -15,6 +15,13 @@ public sealed class Province : AggregateRoot
 
     public static Province Create(Guid id, string name)
     {
+        Validate(id, name);
+
+        return new Province(id, name.Trim(), TextNormalizer.Normalize(name));
+    }
+
+    private static void Validate(Guid id, string name)
+    {
         if (id == Guid.Empty)
         {
             throw new ProvinceExceptions.IdRequired();
@@ -23,7 +30,5 @@ public sealed class Province : AggregateRoot
         {
             throw new ProvinceExceptions.NameRequired();
         }
-
-        return new Province(id, name.Trim(), TextNormalizer.Normalize(name));
     }
 }

@@ -17,6 +17,13 @@ public sealed class Locality : AggregateRoot
 
     public static Locality Create(Guid id, Guid provinceId, string name)
     {
+        Validate(id, provinceId, name);
+
+        return new Locality(id, provinceId, name.Trim(), TextNormalizer.Normalize(name));
+    }
+
+    private static void Validate(Guid id, Guid provinceId, string name)
+    {
         if (id == Guid.Empty)
         {
             throw new LocalityExceptions.IdRequired();
@@ -29,7 +36,5 @@ public sealed class Locality : AggregateRoot
         {
             throw new LocalityExceptions.NameRequired();
         }
-
-        return new Locality(id, provinceId, name.Trim(), TextNormalizer.Normalize(name));
     }
 }
