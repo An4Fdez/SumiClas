@@ -23,6 +23,7 @@ Los `AGENTS.md` han crecido hasta 139 KB (backend), 47 KB (frontend) y 11 KB (ra
 - Ningún `AGENTS.md` ni skill apunta a una sección que ya no existe.
 
 ## Progreso y evidencia
+- Commit: `2fbea05`.
 - Lectura completa de los tres `AGENTS.md` y reparto por rangos de líneas con scripts que mueven el texto tal cual (no se reescribió ni resumió nada); cobertura comprobada línea a línea contra la versión de HEAD.
 - **Backend (139 KB → 8,4 KB de `AGENTS.md`)**, en 15 skills: `backend-architecture` (módulos, capas, mapa de módulos, nomenclatura), `backend-domain` (agregados, excepciones de dominio, validaciones, `IClock`, ids), `backend-use-cases` (CQRS, transacción, registro por convención), `backend-cross-module` (`IQueryBus`, eventos, `IUserProvider`), `backend-endpoints` (capa `api`, OpenAPI, versionado, validación de longitud), `backend-errors` (excepciones y estado HTTP, `ApiExceptionHandler`, logging), `backend-read-queries` (GET y paginación por cursor), `backend-specifications` (especificaciones y repositorios), `backend-persistence` (EF Core, migraciones, mapeos), `backend-auth`, `backend-authorization`, `backend-territorial-catalog`, `backend-weekly-summary`, `backend-testing` y `backend-status-notes` (endpoints hechos, huecos conocidos por caso de uso, cobertura y pendientes: referencia, no reglas).
 - **Frontend (47 KB → 4,4 KB de `AGENTS.md`)**, en 5 skills: `frontend-architecture`, `frontend-api-integration`, `frontend-auth-session`, `frontend-ui-patterns` y `frontend-screens` (notas por pantalla).
