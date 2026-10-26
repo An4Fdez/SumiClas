@@ -15,5 +15,7 @@ export type Assignment = {
   isProposal: boolean;
   done: boolean;
   createdAt: Date;
+  updatedAt?: Date;
+  isAuthor: boolean;
   comments: AssignmentComment[];
 };

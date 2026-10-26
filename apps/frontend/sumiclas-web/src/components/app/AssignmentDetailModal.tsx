@@ -6,6 +6,7 @@ import { formatFullDay, formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
 import { subjectColor } from '@/lib/subjectColor';
 import type { Assignment } from '@/modules/assignments/domain/Assignment';
+import { AuthorActions } from './AuthorActions';
 
 export function AssignmentDetailModal({
   assignment,
@@ -13,12 +14,16 @@ export function AssignmentDetailModal({
   onToggleDone,
   onAddComment,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   assignment: Assignment;
   done: boolean;
   onToggleDone: () => void;
   onAddComment: (text: string) => Promise<void>;
   onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const c = badgeColorClasses[subjectColor(assignment.subjectId)];
   const comments = assignment.comments;
@@ -82,6 +87,7 @@ export function AssignmentDetailModal({
           <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{assignment.title}</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {[assignment.authorName, roleLabel(assignment.authorRole)].filter(Boolean).join(' · ')} · Entrega: {formatFullDay(assignment.dueDate)}
+            {assignment.updatedAt && ` · editado ${formatRelativeDate(assignment.updatedAt)}`}
           </p>
 
           {assignment.description && (
@@ -120,6 +126,15 @@ export function AssignmentDetailModal({
               </div>
             )}
           </div>
+
+          {assignment.isAuthor && (
+            <AuthorActions
+              deleteTitle="¿Eliminar esta tarea?"
+              deleteMessage="Se borrará para todas las familias, con sus comentarios y las marcas de hecho. No se puede deshacer."
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          )}
         </div>
 
         {error && (

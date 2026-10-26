@@ -70,6 +70,16 @@ export interface IGeneratedApiClient {
     assignmentFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfAssignmentResponse>;
 
     /**
+     * @return No Content
+     */
+    assignmentUpdate(assignmentId: string, body: AssignmentUpdateRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    assignmentDelete(assignmentId: string): Promise<void>;
+
+    /**
      * @return Created
      */
     assignmentCommentAdd(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void>;
@@ -120,6 +130,16 @@ export interface IGeneratedApiClient {
     calendarEventBirthdayCreate(body: CalendarEventBirthdayCreateRequest): Promise<void>;
 
     /**
+     * @return No Content
+     */
+    calendarEventUpdate(calendarEventId: string, body: CalendarEventUpdateRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    calendarEventDelete(calendarEventId: string): Promise<void>;
+
+    /**
      * @return Created
      */
     classCreate(body: ClassCreateRequest): Promise<void>;
@@ -150,6 +170,16 @@ export interface IGeneratedApiClient {
      * @return OK
      */
     classExpenseFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfClassExpenseResponse>;
+
+    /**
+     * @return No Content
+     */
+    classExpenseUpdate(classExpenseId: string, body: ClassExpenseUpdateRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    classExpenseDelete(classExpenseId: string): Promise<void>;
 
     /**
      * @return No Content
@@ -194,6 +224,16 @@ export interface IGeneratedApiClient {
      * @return OK
      */
     lostItemFinderByClass(classId: string, limit: number | undefined, cursor: string | undefined): Promise<PagedResponseOfLostItemResponse>;
+
+    /**
+     * @return No Content
+     */
+    lostItemUpdate(lostItemId: string, body: LostItemUpdateRequest): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    lostItemDelete(lostItemId: string): Promise<void>;
 
     /**
      * @return No Content
@@ -939,6 +979,146 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
+     * @return No Content
+     */
+    assignmentUpdate(assignmentId: string, body: AssignmentUpdateRequest): Promise<void> {
+        let url_ = this.baseUrl + "/assignments/{assignmentId}";
+        if (assignmentId === undefined || assignmentId === null)
+            throw new globalThis.Error("The parameter 'assignmentId' must be defined.");
+        url_ = url_.replace("{assignmentId}", encodeURIComponent("" + assignmentId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentUpdate(_response));
+        });
+    }
+
+    protected processAssignmentUpdate(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    assignmentDelete(assignmentId: string): Promise<void> {
+        let url_ = this.baseUrl + "/assignments/{assignmentId}";
+        if (assignmentId === undefined || assignmentId === null)
+            throw new globalThis.Error("The parameter 'assignmentId' must be defined.");
+        url_ = url_.replace("{assignmentId}", encodeURIComponent("" + assignmentId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAssignmentDelete(_response));
+        });
+    }
+
+    protected processAssignmentDelete(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
      * @return Created
      */
     assignmentCommentAdd(assignmentId: string, body: AssignmentCommentAddRequest): Promise<void> {
@@ -1601,6 +1781,146 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
+     * @return No Content
+     */
+    calendarEventUpdate(calendarEventId: string, body: CalendarEventUpdateRequest): Promise<void> {
+        let url_ = this.baseUrl + "/calendar-events/{calendarEventId}";
+        if (calendarEventId === undefined || calendarEventId === null)
+            throw new globalThis.Error("The parameter 'calendarEventId' must be defined.");
+        url_ = url_.replace("{calendarEventId}", encodeURIComponent("" + calendarEventId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventUpdate(_response));
+        });
+    }
+
+    protected processCalendarEventUpdate(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    calendarEventDelete(calendarEventId: string): Promise<void> {
+        let url_ = this.baseUrl + "/calendar-events/{calendarEventId}";
+        if (calendarEventId === undefined || calendarEventId === null)
+            throw new globalThis.Error("The parameter 'calendarEventId' must be defined.");
+        url_ = url_.replace("{calendarEventId}", encodeURIComponent("" + calendarEventId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processCalendarEventDelete(_response));
+        });
+    }
+
+    protected processCalendarEventDelete(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
      * @return Created
      */
     classCreate(body: ClassCreateRequest): Promise<void> {
@@ -2015,6 +2335,146 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             });
         }
         return Promise.resolve<PagedResponseOfClassExpenseResponse>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    classExpenseUpdate(classExpenseId: string, body: ClassExpenseUpdateRequest): Promise<void> {
+        let url_ = this.baseUrl + "/class-expenses/{classExpenseId}";
+        if (classExpenseId === undefined || classExpenseId === null)
+            throw new globalThis.Error("The parameter 'classExpenseId' must be defined.");
+        url_ = url_.replace("{classExpenseId}", encodeURIComponent("" + classExpenseId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpenseUpdate(_response));
+        });
+    }
+
+    protected processClassExpenseUpdate(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    classExpenseDelete(classExpenseId: string): Promise<void> {
+        let url_ = this.baseUrl + "/class-expenses/{classExpenseId}";
+        if (classExpenseId === undefined || classExpenseId === null)
+            throw new globalThis.Error("The parameter 'classExpenseId' must be defined.");
+        url_ = url_.replace("{classExpenseId}", encodeURIComponent("" + classExpenseId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processClassExpenseDelete(_response));
+        });
+    }
+
+    protected processClassExpenseDelete(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -2580,6 +3040,146 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
             });
         }
         return Promise.resolve<PagedResponseOfLostItemResponse>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    lostItemUpdate(lostItemId: string, body: LostItemUpdateRequest): Promise<void> {
+        let url_ = this.baseUrl + "/lost-items/{lostItemId}";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemUpdate(_response));
+        });
+    }
+
+    protected processLostItemUpdate(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    lostItemDelete(lostItemId: string): Promise<void> {
+        let url_ = this.baseUrl + "/lost-items/{lostItemId}";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemDelete(_response));
+        });
+    }
+
+    protected processLostItemDelete(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -3936,6 +4536,17 @@ export interface AssignmentResponse {
     createdAt: Date;
     comments: AssignmentCommentResponse[];
     done: boolean;
+    updatedAt: Date | undefined;
+    isAuthor: boolean;
+
+    [key: string]: any;
+}
+
+export interface AssignmentUpdateRequest {
+    subjectId: string;
+    title: string;
+    description: string | undefined;
+    dueDate: Date;
 
     [key: string]: any;
 }
@@ -3981,6 +4592,8 @@ export interface CalendarEventResponse {
     authorName: string;
     authorRole: string | undefined;
     createdAt: Date;
+    updatedAt: Date | undefined;
+    isAuthor: boolean;
 
     [key: string]: any;
 }
@@ -3997,6 +4610,17 @@ export interface CalendarEventUpcomingResponse {
     type: string;
     date: Date;
     daysUntil: number;
+
+    [key: string]: any;
+}
+
+export interface CalendarEventUpdateRequest {
+    type: string;
+    title: string;
+    date: Date;
+    time: string | undefined;
+    location: string | undefined;
+    cost: string | undefined;
 
     [key: string]: any;
 }
@@ -4051,6 +4675,16 @@ export interface ClassExpenseResponse {
     authorRole: string | undefined;
     createdAt: Date;
     participants: ExpenseParticipantResponse[];
+    updatedAt: Date | undefined;
+    isAuthor: boolean;
+
+    [key: string]: any;
+}
+
+export interface ClassExpenseUpdateRequest {
+    item: string;
+    totalAmount: number;
+    relatedEventId: string | undefined;
 
     [key: string]: any;
 }
@@ -4158,6 +4792,14 @@ export interface LostItemResponse {
     authorName: string;
     authorRole: string | undefined;
     createdAt: Date;
+    updatedAt: Date | undefined;
+    isAuthor: boolean;
+
+    [key: string]: any;
+}
+
+export interface LostItemUpdateRequest {
+    description: string;
 
     [key: string]: any;
 }

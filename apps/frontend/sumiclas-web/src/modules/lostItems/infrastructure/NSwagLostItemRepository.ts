@@ -37,6 +37,8 @@ export class NSwagLostItemRepository implements ILostItemRepository {
       authorName: item.authorName,
       authorRole: toRole(item.authorRole),
       createdAt: item.createdAt,
+      updatedAt: item.updatedAt ?? undefined,
+      isAuthor: item.isAuthor,
     }));
     return { items, nextCursor: response.nextCursor ?? undefined };
   }
@@ -51,6 +53,14 @@ export class NSwagLostItemRepository implements ILostItemRepository {
       photoUrl: item.photoUrl,
       photoPrivacyConfirmed: item.photoPrivacyConfirmed,
     });
+  }
+
+  async updateDescription(id: string, description: string): Promise<void> {
+    await this.client.lostItemUpdate(id, { description });
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.client.lostItemDelete(id);
   }
 
   async markAsRecovered(id: string): Promise<void> {

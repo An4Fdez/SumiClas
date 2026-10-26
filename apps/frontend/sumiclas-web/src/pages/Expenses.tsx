@@ -37,12 +37,18 @@ export default function Expenses() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
   const [openExpenseId, setOpenExpenseId] = useState<string | null>(null);
   const [formForClass, setFormForClass] = useState<string | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const formOpen = !!classId && formForClass === classId;
   const members = useClassMembers(formOpen ? classId : undefined);
-  const eventOptions = useUpcomingEventOptions(formOpen ? classId : undefined);
-
   const loaded = useMemo(() => (state.status === 'ready' ? state.items : []), [state]);
+  const editingExpense = loaded.find((e) => e.id === editingExpenseId) ?? null;
+  const eventOptions = useUpcomingEventOptions(formOpen || editingExpense ? classId : undefined);
+  const editEventOptions = useMemo(() => {
+    const current = editingExpense?.relatedEvent;
+    if (!current || eventOptions?.some((ev) => ev.id === current.id)) return eventOptions;
+    return [current, ...(eventOptions ?? [])];
+  }, [editingExpense, eventOptions]);
   const hasMore = state.status === 'ready' && !!state.nextCursor;
   const openExpense = loaded.find((e) => e.id === openExpenseId) ?? null;
 
@@ -81,6 +87,23 @@ export default function Expenses() {
     const status = getApiErrorStatus(error);
     if (status !== undefined && status < 500 && !TRANSIENT_CLIENT_ERRORS.includes(status)) ids.consume(key);
     return status;
+  };
+
+  const handleUpdateExpense = async (data: NewExpense) => {
+    if (!editingExpense) return;
+    await repository.update(editingExpense.id, {
+      item: data.item,
+      totalAmount: data.totalAmount,
+      relatedEventId: data.eventId ?? undefined,
+    });
+    setEditingExpenseId(null);
+    reload();
+  };
+
+  const handleDeleteExpense = async (expense: ClassExpense) => {
+    await repository.remove(expense.id);
+    setOpenExpenseId(null);
+    reload();
   };
 
   const handleCreateExpense = async (data: NewExpense) => {
@@ -238,6 +261,21 @@ export default function Expenses() {
           participants={participantsForExpense(openExpense)}
           onTogglePaid={() => handleTogglePaid(openExpense)}
           onClose={() => setOpenExpenseId(null)}
+          onEdit={() => {
+            setEditingExpenseId(openExpense.id);
+            setOpenExpenseId(null);
+          }}
+          onDelete={() => handleDeleteExpense(openExpense)}
+        />
+      )}
+
+      {editingExpense && currentChild && (
+        <ExpenseForm
+          className={currentChild.className}
+          events={editEventOptions}
+          expense={editingExpense}
+          onSubmit={handleUpdateExpense}
+          onClose={() => setEditingExpenseId(null)}
         />
       )}
 

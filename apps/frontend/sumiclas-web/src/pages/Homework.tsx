@@ -47,6 +47,7 @@ export default function Homework() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
   const [openAssignmentId, setOpenAssignmentId] = useState<string | null>(null);
   const [formForClass, setFormForClass] = useState<string | null>(null);
+  const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
 
   const loaded = useMemo(() => (state.status === 'ready' ? state.items : []), [state]);
   const hasMore = state.status === 'ready' && !!state.nextCursor;
@@ -55,6 +56,7 @@ export default function Homework() {
     [subjectsList.state],
   );
   const openAssignment = loaded.find((a) => a.id === openAssignmentId) ?? null;
+  const editingAssignment = loaded.find((a) => a.id === editingAssignmentId) ?? null;
   const formOpen = !!classId && formForClass === classId;
 
   const visibleAssignments = useMemo(
@@ -141,6 +143,25 @@ export default function Homework() {
     const created: Subject = { id, classId, label: name };
     subjectsList.add(created);
     return created;
+  };
+
+  const handleUpdateAssignment = async (data: AssignmentFormData) => {
+    if (!editingAssignment) return;
+    const [year, month, day] = data.dueDate.split('-').map(Number);
+    await assignmentRepository.update(editingAssignment.id, {
+      subjectId: data.subjectId,
+      title: data.title,
+      description: data.description || undefined,
+      dueDate: new Date(year, month - 1, day),
+    });
+    setEditingAssignmentId(null);
+    reload();
+  };
+
+  const handleDeleteAssignment = async (assignment: Assignment) => {
+    await assignmentRepository.remove(assignment.id);
+    setOpenAssignmentId(null);
+    reload();
   };
 
   const handleAddComment = async (assignmentId: string, text: string) => {
@@ -313,6 +334,23 @@ export default function Homework() {
           onToggleDone={() => setDone(openAssignment.id, !openAssignment.done)}
           onAddComment={(text) => handleAddComment(openAssignment.id, text)}
           onClose={() => setOpenAssignmentId(null)}
+          onEdit={() => {
+            setEditingAssignmentId(openAssignment.id);
+            setOpenAssignmentId(null);
+          }}
+          onDelete={() => handleDeleteAssignment(openAssignment)}
+        />
+      )}
+
+      {editingAssignment && currentChild && (
+        <AssignmentForm
+          canPublishOfficial={canPublishOfficial}
+          className={currentChild.className}
+          subjects={subjects}
+          onCreateSubject={handleCreateSubject}
+          assignment={editingAssignment}
+          onSubmit={handleUpdateAssignment}
+          onClose={() => setEditingAssignmentId(null)}
         />
       )}
 

@@ -5,6 +5,7 @@ import { formatRelativeDate } from '@/lib/date';
 import { formatEuros } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
 import type { ClassExpense } from '@/modules/classExpenses/domain/ClassExpense';
+import { AuthorActions } from './AuthorActions';
 
 export type ParticipantStatus = {
   id: string;
@@ -19,12 +20,16 @@ export function ExpenseDetailModal({
   participants,
   onTogglePaid,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   expense: ClassExpense;
   amountPerFamily: number;
   participants: ParticipantStatus[];
   onTogglePaid: () => void;
   onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const mouseDownOnBackdrop = useRef(false);
   const me = participants.find((p) => p.isMe);
@@ -55,7 +60,12 @@ export function ExpenseDetailModal({
           </button>
         </div>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {[expense.authorName, roleLabel(expense.authorRole), formatRelativeDate(expense.createdAt)]
+          {[
+            expense.authorName,
+            roleLabel(expense.authorRole),
+            formatRelativeDate(expense.createdAt),
+            expense.updatedAt && `editado ${formatRelativeDate(expense.updatedAt)}`,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </p>
@@ -112,6 +122,15 @@ export function ExpenseDetailModal({
             ))}
           </div>
         </div>
+
+        {expense.isAuthor && (
+          <AuthorActions
+            deleteTitle="¿Eliminar este gasto?"
+            deleteMessage="Se borrará para todas las familias, con los pagos ya marcados. No se puede deshacer."
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        )}
       </div>
     </div>
   );

@@ -13,5 +13,7 @@ export type ClassExpense = {
   authorName: string;
   authorRole?: ClassRole;
   createdAt: Date;
+  updatedAt?: Date;
+  isAuthor: boolean;
   participants: ExpenseParticipant[];
 };

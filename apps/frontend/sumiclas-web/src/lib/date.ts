@@ -181,3 +181,11 @@ export function formatDayHeading(date: Date): string {
   if (diff < 0) return `Atrasado · ${formatFullDay(date)}`;
   return formatFullDay(date);
 }
+
+const DATE_INPUT_DIGITS = 2;
+
+/** The value a date input and the date picker use: YYYY-MM-DD, in local time. */
+export function toDateInputValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(DATE_INPUT_DIGITS, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}

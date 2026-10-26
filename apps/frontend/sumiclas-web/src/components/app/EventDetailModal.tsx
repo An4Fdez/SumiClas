@@ -3,17 +3,23 @@ import { Coins, MapPin, X } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatFullDay, monthNames, occurrenceInYear } from '@/lib/date';
 import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
 import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
+import { AuthorActions } from './AuthorActions';
 
 export function EventDetailModal({
   event,
   className,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   event: CalendarEvent;
   className?: string;
   onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const meta = eventTypeMeta[event.type];
   const Icon = meta.icon;
@@ -59,7 +65,14 @@ export function EventDetailModal({
 
         <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{event.title}</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {[event.authorName, roleLabel(event.authorRole), scopeLabel].filter(Boolean).join(' · ')}
+          {[
+            event.authorName,
+            roleLabel(event.authorRole),
+            scopeLabel,
+            event.updatedAt && `editado ${formatRelativeDate(event.updatedAt)}`,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
 
         <div className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
@@ -80,6 +93,15 @@ export function EventDetailModal({
             </p>
           )}
         </div>
+
+        {event.isAuthor && (
+          <AuthorActions
+            deleteTitle={event.type === 'birthday' ? '¿Eliminar este cumpleaños?' : '¿Eliminar este evento?'}
+            deleteMessage="Se borrará para todas las familias y no se puede deshacer."
+            onEdit={event.type === 'birthday' ? undefined : onEdit}
+            onDelete={onDelete}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react';
 import { Plus, X } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { toDateInputValue } from '@/lib/date';
+import type { Assignment } from '@/modules/assignments/domain/Assignment';
 import type { Subject } from '@/modules/subjects/domain/Subject';
 import { DatePicker } from './DatePicker';
 
@@ -19,6 +21,7 @@ export function AssignmentForm({
   className,
   subjects,
   onCreateSubject,
+  assignment,
   onSubmit,
   onClose,
 }: {
@@ -26,17 +29,19 @@ export function AssignmentForm({
   className: string;
   subjects: Subject[];
   onCreateSubject: (name: string) => Promise<Subject>;
+  assignment?: Assignment;
   onSubmit: (data: AssignmentFormData) => Promise<void>;
   onClose: () => void;
 }) {
-  const [pickedSubjectId, setPickedSubjectId] = useState('');
-  const [creatingSubject, setCreatingSubject] = useState(canPublishOfficial && subjects.length === 0);
+  const editing = assignment !== undefined;
+  const [pickedSubjectId, setPickedSubjectId] = useState(assignment?.subjectId ?? '');
+  const [creatingSubject, setCreatingSubject] = useState(!editing && canPublishOfficial && subjects.length === 0);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [subjectBusy, setSubjectBusy] = useState(false);
   const [subjectError, setSubjectError] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState(assignment?.title ?? '');
+  const [description, setDescription] = useState(assignment?.description ?? '');
+  const [dueDate, setDueDate] = useState(assignment ? toDateInputValue(assignment.dueDate) : '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
@@ -100,7 +105,7 @@ export function AssignmentForm({
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">
-            {canPublishOfficial ? 'Nueva tarea' : 'Proponer tarea'}
+            {editing ? 'Editar tarea' : canPublishOfficial ? 'Nueva tarea' : 'Proponer tarea'}
           </h2>
           <button
             type="button"
@@ -123,9 +128,11 @@ export function AssignmentForm({
         ) : (
           <>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {canPublishOfficial
-                ? `Se publicará como tarea oficial para ${className}.`
-                : `Se mostrará como propuesta de familia para ${className}.`}
+              {editing
+                ? 'Al guardar, la tarea volverá a quedar pendiente para todas las familias.'
+                : canPublishOfficial
+                  ? `Se publicará como tarea oficial para ${className}.`
+                  : `Se mostrará como propuesta de familia para ${className}.`}
             </p>
 
             <fieldset className="mt-5">
@@ -240,7 +247,15 @@ export function AssignmentForm({
               disabled={!canSubmit}
               className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Enviando…' : canPublishOfficial ? 'Publicar tarea' : 'Enviar propuesta'}
+              {submitting
+                ? editing
+                  ? 'Guardando…'
+                  : 'Enviando…'
+                : editing
+                  ? 'Guardar cambios'
+                  : canPublishOfficial
+                    ? 'Publicar tarea'
+                    : 'Enviar propuesta'}
             </button>
           </>
         )}

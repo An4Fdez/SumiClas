@@ -20,4 +20,6 @@ export type CalendarEvent = {
   authorName: string;
   authorRole?: ClassRole;
   createdAt: Date;
+  updatedAt?: Date;
+  isAuthor: boolean;
 };

@@ -2,6 +2,7 @@ import { parseClassRole } from '@/lib/roles';
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { PageRequest } from '@/modules/Shared/domain/PageRequest';
 import type { ClassExpense } from '../domain/ClassExpense';
+import type { ClassExpenseChanges } from '../domain/ClassExpenseChanges';
 import type { ClassExpensePage } from '../domain/ClassExpensePage';
 import type { IClassExpenseRepository } from '../domain/IClassExpenseRepository';
 import type { NewClassExpense } from '../domain/NewClassExpense';
@@ -21,6 +22,8 @@ export class NSwagClassExpenseRepository implements IClassExpenseRepository {
       authorName: expense.authorName,
       authorRole: parseClassRole(expense.authorRole),
       createdAt: expense.createdAt,
+      updatedAt: expense.updatedAt ?? undefined,
+      isAuthor: expense.isAuthor,
       participants: (expense.participants ?? []).map((participant) => ({
         guardianId: participant.guardianId,
         fullName: participant.fullName,
@@ -39,6 +42,18 @@ export class NSwagClassExpenseRepository implements IClassExpenseRepository {
       participantIds: expense.participantIds,
       relatedEventId: expense.relatedEventId,
     });
+  }
+
+  async update(expenseId: string, changes: ClassExpenseChanges): Promise<void> {
+    await this.client.classExpenseUpdate(expenseId, {
+      item: changes.item,
+      totalAmount: changes.totalAmount,
+      relatedEventId: changes.relatedEventId,
+    });
+  }
+
+  async remove(expenseId: string): Promise<void> {
+    await this.client.classExpenseDelete(expenseId);
   }
 
   async markAsPaid(expenseId: string, guardianId: string): Promise<void> {

@@ -5,6 +5,7 @@ import { formatRelativeDate } from '@/lib/date';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
+import { AuthorActions } from './AuthorActions';
 
 export function ItemDetailModal({
   item,
@@ -13,6 +14,8 @@ export function ItemDetailModal({
   canToggleRecovered,
   onToggleRecovered,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   item: LostItem;
   className?: string;
@@ -20,6 +23,8 @@ export function ItemDetailModal({
   canToggleRecovered: boolean;
   onToggleRecovered: () => void;
   onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const meta = itemStatusMeta[item.status];
   const c = badgeColorClasses[meta.color];
@@ -65,7 +70,14 @@ export function ItemDetailModal({
           {item.description}
         </p>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {[item.authorName, roleLabel(item.authorRole), formatRelativeDate(item.createdAt)].filter(Boolean).join(' · ')}
+          {[
+            item.authorName,
+            roleLabel(item.authorRole),
+            formatRelativeDate(item.createdAt),
+            item.updatedAt && `editado ${formatRelativeDate(item.updatedAt)}`,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
 
         {!canToggleRecovered && recovered && (
@@ -88,6 +100,15 @@ export function ItemDetailModal({
             <Check className="h-4 w-4" />
             {recovered ? 'Recuperado' : 'Marcar como recuperado'}
           </button>
+        )}
+
+        {item.isAuthor && (
+          <AuthorActions
+            deleteTitle="¿Eliminar esta entrada?"
+            deleteMessage="Se borrará para todas las familias y no se puede deshacer."
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         )}
       </div>
     </div>

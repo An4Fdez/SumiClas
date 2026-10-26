@@ -11,6 +11,7 @@ import { useLostItemRepository } from '@/hooks/useLostItemRepository';
 import { useWizardIds } from '@/hooks/useWizardIds';
 import { getApiErrorStatus, UserFacingError } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
+import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 type ScopeFilter = 'all' | 'school' | 'class';
 
@@ -32,10 +33,12 @@ export default function LostAndFound() {
   const [statusFilter, setStatusFilter] = useState<ItemStatusFilter>('active');
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const loadedItems = useMemo(() => (state.status === 'ready' ? state.items : []), [state]);
   const hasMore = state.status === 'ready' && !!state.nextCursor;
   const openItem = loadedItems.find((i) => i.id === openItemId) ?? null;
+  const editingItem = loadedItems.find((i) => i.id === editingItemId) ?? null;
 
   const visibleItems = useMemo(
     () =>
@@ -80,6 +83,19 @@ export default function LostAndFound() {
     }
     ids.consume('lostItem');
     setFormOpen(false);
+    reload();
+  };
+
+  const handleUpdateItem = async (data: NewItem) => {
+    if (!editingItem) return;
+    await repository.updateDescription(editingItem.id, data.description);
+    setEditingItemId(null);
+    reload();
+  };
+
+  const handleDeleteItem = async (item: LostItem) => {
+    await repository.remove(item.id);
+    setOpenItemId(null);
     reload();
   };
 
@@ -209,6 +225,20 @@ export default function LostAndFound() {
           canToggleRecovered={openItem.authorId === currentUserId}
           onToggleRecovered={() => setRecovered(openItem.id, !openItem.recovered)}
           onClose={() => setOpenItemId(null)}
+          onEdit={() => {
+            setEditingItemId(openItem.id);
+            setOpenItemId(null);
+          }}
+          onDelete={() => handleDeleteItem(openItem)}
+        />
+      )}
+
+      {editingItem && currentChild && (
+        <ItemForm
+          className={currentChild.className}
+          item={editingItem}
+          onSubmit={handleUpdateItem}
+          onClose={() => setEditingItemId(null)}
         />
       )}
 

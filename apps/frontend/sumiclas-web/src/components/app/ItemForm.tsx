@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import type { ItemStatus } from '@/modules/lostItems/domain/ItemStatus';
+import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 export type NewItem = {
   status: ItemStatus;
@@ -16,15 +17,18 @@ const inputClasses =
 
 export function ItemForm({
   className,
+  item,
   onSubmit,
   onClose,
 }: {
   className: string;
+  item?: LostItem;
   onSubmit: (data: NewItem) => Promise<void>;
   onClose: () => void;
 }) {
-  const [status, setStatus] = useState<ItemStatus>('lost');
-  const [description, setDescription] = useState('');
+  const editing = item !== undefined;
+  const [status, setStatus] = useState<ItemStatus>(item?.status ?? 'lost');
+  const [description, setDescription] = useState(item?.description ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
@@ -61,7 +65,7 @@ export function ItemForm({
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">
-            Nueva entrada
+            {editing ? 'Editar entrada' : 'Nueva entrada'}
           </h2>
           <button
             type="button"
@@ -72,9 +76,13 @@ export function ItemForm({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Se publicará para {className}.</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {editing
+            ? `Solo se puede cambiar la descripción. Tipo: ${itemStatusMeta[status].label}.`
+            : `Se publicará para ${className}.`}
+        </p>
 
-        <fieldset className="mt-5">
+        <fieldset className="mt-5" hidden={editing}>
           <legend className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tipo</legend>
           <div className="mt-1.5 flex gap-2">
             {allStatuses.map((s) => (
@@ -117,7 +125,7 @@ export function ItemForm({
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Publicando…' : 'Publicar'}
+          {submitting ? (editing ? 'Guardando…' : 'Publicando…') : editing ? 'Guardar cambios' : 'Publicar'}
         </button>
       </form>
     </div>

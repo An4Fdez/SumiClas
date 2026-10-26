@@ -2,8 +2,9 @@ import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import type { ChildView } from '@/context/ChildContext';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { monthNames } from '@/lib/date';
+import { monthNames, toDateInputValue } from '@/lib/date';
 import { eventTypeMeta } from '@/lib/eventTypeMeta';
+import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 import type { EventType } from '@/modules/calendarEvents/domain/EventType';
 import type { OneOffEventType } from '@/modules/calendarEvents/domain/OneOffEventType';
 import { SelectDropdown } from './SelectDropdown';
@@ -41,6 +42,7 @@ export function EventForm({
   className,
   availableChildren,
   initialChildId,
+  event,
   onSubmit,
   onClose,
 }: {
@@ -48,15 +50,17 @@ export function EventForm({
   className: string;
   availableChildren: ChildView[];
   initialChildId: string;
+  event?: CalendarEvent;
   onSubmit: (data: NewEvent) => Promise<void>;
   onClose: () => void;
 }) {
-  const [type, setType] = useState<EventType>(canPublishOfficial ? 'trip' : 'birthday');
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [location, setLocation] = useState('');
-  const [cost, setCost] = useState('');
+  const editing = event !== undefined;
+  const [type, setType] = useState<EventType>(event?.type ?? (canPublishOfficial ? 'trip' : 'birthday'));
+  const [title, setTitle] = useState(event?.title ?? '');
+  const [date, setDate] = useState(event?.year === undefined ? '' : toDateInputValue(new Date(event.year, event.month - 1, event.day)));
+  const [time, setTime] = useState(event?.time ?? '');
+  const [location, setLocation] = useState(event?.location ?? '');
+  const [cost, setCost] = useState(event?.cost ?? '');
   const [childId, setChildId] = useState(initialChildId);
   const today = new Date();
   const [birthdayDay, setBirthdayDay] = useState(today.getDate());
@@ -116,7 +120,7 @@ export function EventForm({
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">
-            {isBirthday ? 'Añadir cumpleaños' : 'Nuevo evento'}
+            {editing ? 'Editar evento' : isBirthday ? 'Añadir cumpleaños' : 'Nuevo evento'}
           </h2>
           <button
             type="button"
@@ -128,16 +132,18 @@ export function EventForm({
           </button>
         </div>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {isBirthday
-            ? `Se mostrará cada año en el calendario de ${className}, sin guardar el año de nacimiento.`
-            : `Se publicará para ${className}.`}
+          {editing
+            ? `Los cambios los verán todas las familias de ${className}.`
+            : isBirthday
+              ? `Se mostrará cada año en el calendario de ${className}, sin guardar el año de nacimiento.`
+              : `Se publicará para ${className}.`}
         </p>
 
-        {canPublishOfficial && (
+        {(canPublishOfficial || editing) && (
           <fieldset className="mt-5">
             <legend className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tipo</legend>
             <div className="mt-1.5 flex flex-wrap gap-2">
-              {allTypes.map((t) => (
+              {allTypes.filter((t) => !editing || t !== 'birthday').map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -263,7 +269,15 @@ export function EventForm({
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Publicando…' : isBirthday ? 'Añadir cumpleaños' : 'Publicar evento'}
+          {submitting
+            ? editing
+              ? 'Guardando…'
+              : 'Publicando…'
+            : editing
+              ? 'Guardar cambios'
+              : isBirthday
+                ? 'Añadir cumpleaños'
+                : 'Publicar evento'}
         </button>
       </form>
     </div>

@@ -2,6 +2,7 @@ import type { ClassRole } from '@/lib/roles';
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import { toApiDateOnly } from '@/modules/Shared/Infrastructure/apiDate';
 import type { CalendarEvent } from '../domain/CalendarEvent';
+import type { CalendarEventChanges } from '../domain/CalendarEventChanges';
 import type { EventType } from '../domain/EventType';
 import type { ICalendarEventRepository } from '../domain/ICalendarEventRepository';
 import type { NewBirthday } from '../domain/NewBirthday';
@@ -50,6 +51,8 @@ export class NSwagCalendarEventRepository implements ICalendarEventRepository {
       authorName: event.authorName,
       authorRole: toRole(event.authorRole),
       createdAt: event.createdAt,
+      updatedAt: event.updatedAt ?? undefined,
+      isAuthor: event.isAuthor,
     }));
   }
 
@@ -65,6 +68,21 @@ export class NSwagCalendarEventRepository implements ICalendarEventRepository {
       location: event.location,
       cost: event.cost,
     });
+  }
+
+  async update(id: string, changes: CalendarEventChanges): Promise<void> {
+    await this.client.calendarEventUpdate(id, {
+      type: capitalize(changes.type),
+      title: changes.title,
+      date: toApiDateOnly(changes.date),
+      time: changes.time,
+      location: changes.location,
+      cost: changes.cost,
+    });
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.client.calendarEventDelete(id);
   }
 
   async createBirthday(birthday: NewBirthday): Promise<void> {

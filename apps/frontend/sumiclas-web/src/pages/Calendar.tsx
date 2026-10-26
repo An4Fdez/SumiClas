@@ -56,6 +56,7 @@ export default function Calendar() {
   const [openDayModal, setOpenDayModal] = useState<Date | null>(null);
   const [openEvent, setOpenEvent] = useState<CalendarEvent | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const events = useMemo(() => (state.status === 'ready' ? state.events : []), [state]);
 
@@ -117,6 +118,27 @@ export default function Calendar() {
 
   const canPublishOfficial = currentRole === 'classRepresentative';
   const canCreate = !!classId;
+
+  const handleUpdateEvent = async (data: NewEvent) => {
+    if (!editingEvent || data.type === 'birthday') return;
+    const [year, month, day] = data.date.split('-').map(Number);
+    await repository.update(editingEvent.id, {
+      type: data.type,
+      title: data.title,
+      date: new Date(year, month - 1, day),
+      time: data.time || undefined,
+      location: data.location || undefined,
+      cost: data.cost || undefined,
+    });
+    setEditingEvent(null);
+    reload();
+  };
+
+  const handleDeleteEvent = async (calendarEvent: CalendarEvent) => {
+    await repository.remove(calendarEvent.id);
+    setOpenEvent(null);
+    reload();
+  };
 
   const handleCreateEvent = async (data: NewEvent) => {
     if (!currentChild || !classId) return;
@@ -348,6 +370,23 @@ export default function Calendar() {
           event={openEvent}
           className={classNameForEvent(openEvent)}
           onClose={() => setOpenEvent(null)}
+          onEdit={() => {
+            setEditingEvent(openEvent);
+            setOpenEvent(null);
+          }}
+          onDelete={() => handleDeleteEvent(openEvent)}
+        />
+      )}
+
+      {editingEvent && currentChild && (
+        <EventForm
+          canPublishOfficial={canPublishOfficial}
+          className={currentChild.className}
+          availableChildren={children}
+          initialChildId={currentChild.id}
+          event={editingEvent}
+          onSubmit={handleUpdateEvent}
+          onClose={() => setEditingEvent(null)}
         />
       )}
 
