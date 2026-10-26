@@ -39,6 +39,34 @@
   background: #94a3b8;
 }
 
+/* Browsers paint autofilled fields with their own background and text color; a huge transition delay keeps the
+   field transparent, so it looks like typed text (slate-700 in light mode, slate-200 in dark mode). */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #334155;
+  caret-color: #334155;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-text-fill-color: #e2e8f0;
+  caret-color: #e2e8f0;
+}
+
+input:autofill {
+  background-color: transparent;
+  color: #334155;
+}
+
+.dark input:autofill {
+  color: #e2e8f0;
+}
+
 /* Reveal-on-scroll base state */
 .reveal {
   opacity: 0;
