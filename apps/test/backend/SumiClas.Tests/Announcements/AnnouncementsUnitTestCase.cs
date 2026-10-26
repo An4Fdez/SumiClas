@@ -74,6 +74,12 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
             repository => repository.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
 
+    protected void ShouldHaveRemoved(Announcement announcement)
+        => this.Repository.Verify(repository => repository.Remove(announcement), Times.Once);
+
+    protected void ShouldNotHaveRemoved()
+        => this.Repository.Verify(repository => repository.Remove(It.IsAny<Announcement>()), Times.Never);
+
     protected void ShouldFindUser(Guid userId)
         => this.QueryBus
             .Setup(bus => bus.Send(
@@ -127,6 +133,13 @@ public abstract class AnnouncementsUnitTestCase : UnitTestCase
                 It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Unit.Value);
+
+    protected void ShouldHaveEnsuredSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
     protected void ShouldFailEnsuringSchoolYearIsActive(Guid schoolYearId, Exception exception)
         => this.QueryBus

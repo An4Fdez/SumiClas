@@ -79,6 +79,43 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
+    public async Task flag_as_authored_only_the_announcements_the_current_user_published_with_their_update_time()
+    {
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        Announcement mine = AnnouncementMother.With(
+            Now,
+            scope: AnnouncementScope.Class,
+            classId: classId,
+            authorId: currentUserId,
+            updatedAt: Now);
+        Announcement theirs = AnnouncementMother.With(
+            Now,
+            scope: AnnouncementScope.Class,
+            classId: classId);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldHaveClassMembers();
+        this.ShouldFindCalendarEvents();
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldSearchAnnouncements(mine, theirs);
+
+        PagedResponse<AnnouncementResponse> result = await this._useCase.ExecuteAsync(
+            AnnouncementFinderByClassQueryMother.WithClassId(classId),
+            CancellationToken.None);
+
+        AnnouncementResponse mineItem = result.Items.Single(item => item.Id == mine.Id);
+        mineItem.IsAuthor.Should().BeTrue();
+        mineItem.UpdatedAt.Should().Be(Now);
+        AnnouncementResponse theirsItem = result.Items.Single(item => item.Id == theirs.Id);
+        theirsItem.IsAuthor.Should().BeFalse();
+        theirsItem.UpdatedAt.Should().BeNull();
+    }
+
+    [Test]
     public async Task return_an_empty_name_no_role_and_no_event_when_the_author_and_the_event_are_not_found()
     {
         Guid classId = GuidMother.Random();

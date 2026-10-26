@@ -41,6 +41,8 @@ public sealed class AnnouncementConfiguration : IEntityTypeConfiguration<Announc
         builder.Property(a => a.CreatedAt)
             .IsRequired();
 
+        builder.Property(a => a.UpdatedAt);
+
         builder.OwnsMany(a => a.ReadReceipts, receipt => new AnnouncementReadReceiptConfiguration().Configure(receipt));
         builder.Navigation(a => a.ReadReceipts)
             .UsePropertyAccessMode(PropertyAccessMode.Field);

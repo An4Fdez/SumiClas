@@ -25,6 +25,9 @@ public sealed class Announcement : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>When the author last modified it; null if it was never modified.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public Announcement(
         Guid id,
         AnnouncementScope scope,
@@ -35,7 +38,8 @@ public sealed class Announcement : AggregateRoot
         Priority priority,
         Guid authorId,
         Guid? relatedEventId,
-        DateTimeOffset createdAt) : base(id)
+        DateTimeOffset createdAt,
+        DateTimeOffset? updatedAt) : base(id)
     {
         Scope = scope;
         ClassId = classId;
@@ -46,6 +50,7 @@ public sealed class Announcement : AggregateRoot
         AuthorId = authorId;
         RelatedEventId = relatedEventId;
         CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 
     public static Announcement Create(
@@ -72,7 +77,24 @@ public sealed class Announcement : AggregateRoot
             priority,
             authorId,
             relatedEventId,
-            clock.UtcNow);
+            clock.UtcNow,
+            null);
+    }
+
+    /// <summary>
+    /// Changes what the author may change. The announcement becomes unread again for everybody, so the receipts are
+    /// dropped: whoever had read the old text has not read this one.
+    /// </summary>
+    public void Update(string title, string body, Priority priority, Guid? relatedEventId, IClock clock)
+    {
+        ValidateContent(title, body);
+
+        Title = title.Trim();
+        Body = body.Trim();
+        Priority = priority;
+        RelatedEventId = relatedEventId;
+        UpdatedAt = clock.UtcNow;
+        _readReceipts.Clear();
     }
 
     private static void Validate(Guid id, AnnouncementScope scope, Guid? classId, Guid? schoolId, string title, string body, Guid authorId)
@@ -89,6 +111,15 @@ public sealed class Announcement : AggregateRoot
         {
             throw new AnnouncementExceptions.SchoolRequiredForSchoolScope();
         }
+        ValidateContent(title, body);
+        if (authorId == Guid.Empty)
+        {
+            throw new AnnouncementExceptions.AuthorRequired();
+        }
+    }
+
+    private static void ValidateContent(string title, string body)
+    {
         if (string.IsNullOrWhiteSpace(title))
         {
             throw new AnnouncementExceptions.TitleRequired();
@@ -96,10 +127,6 @@ public sealed class Announcement : AggregateRoot
         if (string.IsNullOrWhiteSpace(body))
         {
             throw new AnnouncementExceptions.BodyRequired();
-        }
-        if (authorId == Guid.Empty)
-        {
-            throw new AnnouncementExceptions.AuthorRequired();
         }
     }
 

@@ -39,6 +39,11 @@ public static class AnnouncementExceptions
     public sealed class AuthorRequired()
         : DomainException("Announcement.AuthorRequired", "El aviso debe tener un autor.");
 
+    public sealed class ChangeForbidden()
+        : DomainException(
+            "Announcement.ChangeForbidden",
+            "Solo el autor del aviso puede modificarlo o eliminarlo.");
+
     public sealed class ReadReceiptUserRequired()
         : DomainException(
             "Announcement.ReadReceiptUserRequired",

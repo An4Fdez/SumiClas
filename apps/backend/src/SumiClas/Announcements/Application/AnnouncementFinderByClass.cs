@@ -59,8 +59,10 @@ public static class AnnouncementFinderByClass
                     authors.GetValueOrDefault(announcement.AuthorId)?.FullName ?? string.Empty,
                     authors.GetValueOrDefault(announcement.AuthorId)?.ClassRole,
                     announcement.CreatedAt,
+                    announcement.UpdatedAt,
                     announcement.RelatedEventId is { } relatedEventId ? events.GetValueOrDefault(relatedEventId) : null,
-                    announcement.ReadReceipts.Any(receipt => receipt.UserId == current)))
+                    announcement.ReadReceipts.Any(receipt => receipt.UserId == current),
+                    announcement.AuthorId == current))
                 .ToList();
 
             return new PagedResponse<AnnouncementResponse>(items, nextCursor);
