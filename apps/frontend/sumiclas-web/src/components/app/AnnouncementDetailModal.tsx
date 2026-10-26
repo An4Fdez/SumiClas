@@ -1,23 +1,44 @@
-import { useRef, type MouseEvent } from 'react';
-import { AlertCircle, ArrowUpRight, X } from 'lucide-react';
+import { useRef, useState, type MouseEvent } from 'react';
+import { AlertCircle, ArrowUpRight, Pencil, Trash2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
 import type { Announcement } from '@/modules/announcements/domain/Announcement';
+import { RepresentativeConfirm } from './RepresentativeConfirm';
 
 export function AnnouncementDetailModal({
   announcement,
   className,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   announcement: Announcement;
   className?: string;
   onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const scopeColor = announcement.scope === 'school' ? badgeColorClasses.brand : badgeColorClasses.violet;
   const scopeLabel = announcement.scope === 'school' ? 'Colegio' : className ?? 'Clase';
   const mouseDownOnBackdrop = useRef(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await onDelete();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -57,7 +78,12 @@ export function AnnouncementDetailModal({
 
         <h2 className="mt-3 font-display text-xl font-extrabold text-slate-900 dark:text-white">{announcement.title}</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {[announcement.authorName, roleLabel(announcement.authorRole), formatRelativeDate(announcement.createdAt)]
+          {[
+            announcement.authorName,
+            roleLabel(announcement.authorRole),
+            formatRelativeDate(announcement.createdAt),
+            announcement.updatedAt && `editado ${formatRelativeDate(announcement.updatedAt)}`,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </p>
@@ -74,6 +100,44 @@ export function AnnouncementDetailModal({
             <ArrowUpRight className="h-4 w-4" />
             Ver evento: {announcement.relatedEvent.title}
           </Link>
+        )}
+
+        {announcement.isAuthor && (
+          <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-700">
+            {confirmingDelete ? (
+              <RepresentativeConfirm
+                title="¿Eliminar este aviso?"
+                message="Se borrará para todas las familias y no se puede deshacer."
+                confirmLabel={deleting ? 'Eliminando…' : 'Sí, eliminar'}
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmingDelete(false)}
+              />
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </button>
+              </div>
+            )}
+            {error && (
+              <p role="alert" className="mt-3 text-sm font-semibold text-rose-600 dark:text-rose-400">
+                {error}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

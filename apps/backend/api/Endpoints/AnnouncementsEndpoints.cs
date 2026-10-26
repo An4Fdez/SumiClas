@@ -15,6 +15,12 @@ public sealed record AnnouncementCreateRequest(
     string Priority,
     Guid? RelatedEventId);
 
+public sealed record AnnouncementUpdateRequest(
+    [StringLength(200)] string Title,
+    string Body,
+    string Priority,
+    Guid? RelatedEventId);
+
 public sealed class AnnouncementsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -39,6 +45,32 @@ public sealed class AnnouncementsEndpoints : IEndpoints
             .WithName("AnnouncementCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem();
+
+        announcements.MapPut("/{announcementId:guid}", async (Guid announcementId, AnnouncementUpdateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(
+                new AnnouncementUpdate.Command(
+                    announcementId,
+                    request.Title,
+                    request.Body,
+                    request.Priority,
+                    request.RelatedEventId),
+                ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AnnouncementUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        announcements.MapDelete("/{announcementId:guid}", async (Guid announcementId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AnnouncementDelete.Command(announcementId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AnnouncementDelete")
+            .Produces(StatusCodes.Status204NoContent);
 
         announcements.MapPut("/{announcementId:guid}/read", async (Guid announcementId, ISender sender, CancellationToken ct) =>
         {

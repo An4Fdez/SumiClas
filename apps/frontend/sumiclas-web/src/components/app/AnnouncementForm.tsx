@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { X } from 'lucide-react';
 import { getApiErrorMessage } from '@/lib/apiError';
+import type { Announcement } from '@/modules/announcements/domain/Announcement';
 import type { Priority } from '@/modules/announcements/domain/Priority';
 import type { RelatedEvent } from '@/modules/announcements/domain/RelatedEvent';
 import { SelectDropdown } from './SelectDropdown';
@@ -14,18 +15,21 @@ const priorityOptions: { value: Priority; label: string }[] = [
 export function AnnouncementForm({
   className,
   events,
+  announcement,
   onSubmit,
   onClose,
 }: {
   className: string;
   events?: RelatedEvent[];
+  announcement?: Announcement;
   onSubmit: (data: { title: string; body: string; priority: Priority; eventId: string | null }) => Promise<void>;
   onClose: () => void;
 }) {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [priority, setPriority] = useState<Priority>('normal');
-  const [eventId, setEventId] = useState('');
+  const editing = announcement !== undefined;
+  const [title, setTitle] = useState(announcement?.title ?? '');
+  const [body, setBody] = useState(announcement?.body ?? '');
+  const [priority, setPriority] = useState<Priority>(announcement?.priority ?? 'normal');
+  const [eventId, setEventId] = useState(announcement?.relatedEvent?.id ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mouseDownOnBackdrop = useRef(false);
@@ -61,7 +65,9 @@ export function AnnouncementForm({
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">Nuevo aviso</h2>
+          <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">
+            {editing ? 'Editar aviso' : 'Nuevo aviso'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -71,7 +77,11 @@ export function AnnouncementForm({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Se publicará para {className}.</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {editing
+            ? 'Al guardar, el aviso volverá a aparecer como no leído para las familias.'
+            : `Se publicará para ${className}.`}
+        </p>
 
         <label className="mt-5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
           Título
@@ -149,7 +159,7 @@ export function AnnouncementForm({
           disabled={!canSubmit}
           className="mt-6 w-full rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/25 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Publicando…' : 'Publicar aviso'}
+          {submitting ? (editing ? 'Guardando…' : 'Publicando…') : editing ? 'Guardar cambios' : 'Publicar aviso'}
         </button>
       </form>
     </div>

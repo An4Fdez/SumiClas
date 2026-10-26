@@ -14,6 +14,8 @@ export type Announcement = {
   authorName: string;
   authorRole?: ClassRole;
   createdAt: Date;
+  updatedAt?: Date;
   relatedEvent?: RelatedEvent;
   read: boolean;
+  isAuthor: boolean;
 };

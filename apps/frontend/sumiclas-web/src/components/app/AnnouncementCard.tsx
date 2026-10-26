@@ -52,7 +52,10 @@ export function AnnouncementCard({
           <span>
             {[announcement.authorName, roleLabel(announcement.authorRole)].filter(Boolean).join(' · ')}
           </span>
-          <span>{formatRelativeDate(announcement.createdAt)}</span>
+          <span>
+            {formatRelativeDate(announcement.createdAt)}
+            {announcement.updatedAt && ' · editado'}
+          </span>
         </div>
 
         {announcement.relatedEvent && (

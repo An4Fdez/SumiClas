@@ -2,6 +2,7 @@ import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
 import type { ClassRole } from '@/lib/roles';
 import type { IAnnouncementRepository } from '../domain/IAnnouncementRepository';
 import type { Announcement } from '../domain/Announcement';
+import type { AnnouncementChanges } from '../domain/AnnouncementChanges';
 import type { AnnouncementPage } from '../domain/AnnouncementPage';
 import type { NewAnnouncement } from '../domain/NewAnnouncement';
 import type { PageRequest } from '@/modules/Shared/domain/PageRequest';
@@ -37,8 +38,10 @@ export class NSwagAnnouncementRepository implements IAnnouncementRepository {
       authorName: item.authorName,
       authorRole: toRole(item.authorRole),
       createdAt: item.createdAt,
+      updatedAt: item.updatedAt ?? undefined,
       relatedEvent: item.relatedEvent ? { id: item.relatedEvent.id, title: item.relatedEvent.title } : undefined,
       read: item.read,
+      isAuthor: item.isAuthor,
     }));
     return { items, nextCursor: response.nextCursor ?? undefined };
   }
@@ -53,6 +56,19 @@ export class NSwagAnnouncementRepository implements IAnnouncementRepository {
       priority: capitalize(announcement.priority),
       relatedEventId: announcement.relatedEventId,
     });
+  }
+
+  async update(id: string, changes: AnnouncementChanges): Promise<void> {
+    await this.client.announcementUpdate(id, {
+      title: changes.title,
+      body: changes.body,
+      priority: capitalize(changes.priority),
+      relatedEventId: changes.relatedEventId,
+    });
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.client.announcementDelete(id);
   }
 
   async markAsRead(id: string): Promise<void> {

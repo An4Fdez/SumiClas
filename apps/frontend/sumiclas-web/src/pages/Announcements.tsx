@@ -42,6 +42,13 @@ export default function Announcements() {
   const [readFilter, setReadFilter] = useState<ReadFilter>('unread');
   const [openAnnouncement, setOpenAnnouncement] = useState<Announcement | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+
+  const editEventOptions = useMemo(() => {
+    const current = editingAnnouncement?.relatedEvent;
+    if (!current || relatedEventOptions?.some((ev) => ev.id === current.id)) return relatedEventOptions;
+    return [current, ...(relatedEventOptions ?? [])];
+  }, [editingAnnouncement, relatedEventOptions]);
 
   const announcements = useMemo(
     () =>
@@ -96,6 +103,29 @@ export default function Announcements() {
     }
     ids.consume('announcement');
     setFormOpen(false);
+    reload();
+  };
+
+  const handleUpdateAnnouncement = async (data: {
+    title: string;
+    body: string;
+    priority: Priority;
+    eventId: string | null;
+  }) => {
+    if (!editingAnnouncement) return;
+    await repository.update(editingAnnouncement.id, {
+      title: data.title,
+      body: data.body,
+      priority: data.priority,
+      relatedEventId: data.eventId ?? undefined,
+    });
+    setEditingAnnouncement(null);
+    reload();
+  };
+
+  const handleDeleteAnnouncement = async (announcement: Announcement) => {
+    await repository.remove(announcement.id);
+    setOpenAnnouncement(null);
     reload();
   };
 
@@ -250,6 +280,21 @@ export default function Announcements() {
           announcement={openAnnouncement}
           className={openAnnouncement.classId ? currentChild?.className : undefined}
           onClose={() => setOpenAnnouncement(null)}
+          onEdit={() => {
+            setEditingAnnouncement(openAnnouncement);
+            setOpenAnnouncement(null);
+          }}
+          onDelete={() => handleDeleteAnnouncement(openAnnouncement)}
+        />
+      )}
+
+      {editingAnnouncement && currentChild && (
+        <AnnouncementForm
+          className={currentChild.className}
+          events={editEventOptions}
+          announcement={editingAnnouncement}
+          onSubmit={handleUpdateAnnouncement}
+          onClose={() => setEditingAnnouncement(null)}
         />
       )}
 
