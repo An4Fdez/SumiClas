@@ -117,6 +117,9 @@ public sealed class ClassExpense : AggregateRoot
         UpdatedAt = clock.UtcNow;
     }
 
+    /// <summary>True when at least one participant has already paid; such an expense cannot be deleted.</summary>
+    public bool HasPayments => _participants.Any(participant => participant.HasPaid);
+
     public void MarkAsPaid(Guid guardianId) => SetPaidStatus(guardianId, true);
 
     public void MarkAsUnpaid(Guid guardianId) => SetPaidStatus(guardianId, false);

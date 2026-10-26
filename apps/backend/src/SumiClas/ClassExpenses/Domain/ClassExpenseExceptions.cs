@@ -43,4 +43,9 @@ public static class ClassExpenseExceptions
 
     public sealed class NotAParticipant()
         : DomainException("ClassExpense.NotAParticipant", "Este usuario no participa en el gasto.");
+
+    public sealed class HasPayments()
+        : DomainException(
+            "ClassExpense.HasPayments",
+            "No se puede eliminar el gasto porque alguna familia ya ha pagado.");
 }

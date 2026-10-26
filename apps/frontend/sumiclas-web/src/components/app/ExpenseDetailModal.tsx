@@ -33,6 +33,13 @@ export function ExpenseDetailModal({
 }) {
   const mouseDownOnBackdrop = useRef(false);
   const me = participants.find((p) => p.isMe);
+  const paidCount = participants.filter((p) => p.paid).length;
+  const deleteBlockedReason =
+    paidCount === 0
+      ? undefined
+      : paidCount === 1
+        ? 'No se puede eliminar este gasto porque una familia ya ha pagado.'
+        : `No se puede eliminar este gasto porque ${paidCount} familias ya han pagado.`;
 
   return (
     <div
@@ -126,7 +133,8 @@ export function ExpenseDetailModal({
         {expense.isAuthor && (
           <AuthorActions
             deleteTitle="¿Eliminar este gasto?"
-            deleteMessage="Se borrará para todas las familias, con los pagos ya marcados. No se puede deshacer."
+            deleteMessage="Se borrará para todas las familias. No se puede deshacer."
+            deleteBlockedReason={deleteBlockedReason}
             onEdit={onEdit}
             onDelete={onDelete}
           />

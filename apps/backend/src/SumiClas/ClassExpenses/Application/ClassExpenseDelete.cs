@@ -8,7 +8,7 @@ namespace SumiClas.ClassExpenses.Application;
 
 public static class ClassExpenseDelete
 {
-    /// <summary>The author deletes the expense for good, with its participants and the payments already marked.</summary>
+    /// <summary>The author deletes the expense for good, with its participants; once somebody has paid it cannot be deleted.</summary>
     public sealed record Command(Guid Id) : IRequest, ICommand;
 
     public sealed class Delete(IClassExpenseRepository repository, IQueryBus queryBus, IUserProvider userProvider) : IUseCase
@@ -23,6 +23,11 @@ public static class ClassExpenseDelete
             if (classExpense.AuthorId != current)
             {
                 throw new ClassExpenseExceptions.ChangeForbidden();
+            }
+
+            if (classExpense.HasPayments)
+            {
+                throw new ClassExpenseExceptions.HasPayments();
             }
 
             ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);

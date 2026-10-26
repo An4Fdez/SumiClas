@@ -101,6 +101,19 @@ public abstract class ClassExpensesUnitTestCase : UnitTestCase
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(exception);
 
+    protected void ShouldHaveRemoved(ClassExpense classExpense)
+        => this.Repository.Verify(repository => repository.Remove(classExpense), Times.Once);
+
+    protected void ShouldNotHaveRemoved()
+        => this.Repository.Verify(repository => repository.Remove(It.IsAny<ClassExpense>()), Times.Never);
+
+    protected void ShouldHaveEnsuredSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(
+                It.Is<SchoolYearEnsureIsActive.Query>(query => query.SchoolYearId == schoolYearId),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
     protected void ShouldAllowClassAccess(Guid userId, Guid classId)
         => this.QueryBus
             .Setup(bus => bus.Send(

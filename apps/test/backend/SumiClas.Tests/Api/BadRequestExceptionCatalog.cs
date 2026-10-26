@@ -12,6 +12,7 @@ public static class BadRequestExceptionCatalog
         "Assignment.SubjectNotInClass",
         "Authentication.PasswordTooWeak",
         "CalendarEvent.UseCreateBirthdayForBirthdays",
+        "ClassExpense.HasPayments",
         "ClassExpense.NotAParticipant",
         "ClassExpense.ParticipantNotInClass",
         "ClassExpense.TotalAmountMustBePositive",
