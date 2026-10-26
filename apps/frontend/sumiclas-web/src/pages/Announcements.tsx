@@ -39,7 +39,7 @@ export default function Announcements() {
   }, [calendarState]);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [onlyUrgent, setOnlyUrgent] = useState(false);
-  const [readFilter, setReadFilter] = useState<ReadFilter>(null);
+  const [readFilter, setReadFilter] = useState<ReadFilter>('unread');
   const [openAnnouncement, setOpenAnnouncement] = useState<Announcement | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -55,6 +55,14 @@ export default function Announcements() {
         }),
     [state, scopeFilter, onlyUrgent, readFilter],
   );
+
+  const hasMorePages = state.status === 'ready' && !!state.nextCursor;
+  const emptyMessage =
+    readFilter === 'unread'
+      ? hasMorePages
+        ? 'No hay avisos sin leer entre los cargados. Pulsa «Cargar más» para seguir buscando.'
+        : 'Estás al día: no tienes avisos sin leer. Quita el filtro «No leídos» para ver todos.'
+      : 'No hay avisos por ahora.';
 
   const canCreate = currentRole === 'classRepresentative' && !!classId;
 
@@ -203,7 +211,7 @@ export default function Announcements() {
         </div>
       ) : announcements.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
-          No hay avisos por ahora.
+          {emptyMessage}
         </div>
       ) : (
         <div className="mt-6 space-y-3">
