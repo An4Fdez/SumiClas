@@ -24,6 +24,9 @@ public sealed class Assignment : AggregateRoot
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>When the author last modified it; null if it was never modified.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public Assignment(
         Guid id,
         Guid classId,
@@ -34,7 +37,8 @@ public sealed class Assignment : AggregateRoot
         Guid authorId,
         bool isProposal,
         DateTimeOffset createdAt,
-        IEnumerable<AssignmentComment> comments) : base(id)
+        IEnumerable<AssignmentComment> comments,
+        DateTimeOffset? updatedAt = null) : base(id)
     {
         ClassId = classId;
         SubjectId = subjectId;
@@ -45,6 +49,7 @@ public sealed class Assignment : AggregateRoot
         IsProposal = isProposal;
         CreatedAt = createdAt;
         _comments.AddRange(comments);
+        UpdatedAt = updatedAt;
     }
 
     private Assignment()
@@ -88,6 +93,15 @@ public sealed class Assignment : AggregateRoot
         {
             throw new AssignmentExceptions.ClassRequired();
         }
+        ValidateContent(subjectId, title);
+        if (authorId == Guid.Empty)
+        {
+            throw new AssignmentExceptions.AuthorRequired();
+        }
+    }
+
+    private static void ValidateContent(Guid subjectId, string title)
+    {
         if (subjectId == Guid.Empty)
         {
             throw new AssignmentExceptions.SubjectRequired();
@@ -96,10 +110,22 @@ public sealed class Assignment : AggregateRoot
         {
             throw new AssignmentExceptions.TitleRequired();
         }
-        if (authorId == Guid.Empty)
-        {
-            throw new AssignmentExceptions.AuthorRequired();
-        }
+    }
+
+    /// <summary>
+    /// Changes what the author may change. The comments stay, but the homework is pending again for the whole class,
+    /// so the done marks are dropped: whoever did the old homework has not done this one.
+    /// </summary>
+    public void Update(Guid subjectId, string title, string? description, DateOnly dueDate, IClock clock)
+    {
+        ValidateContent(subjectId, title);
+
+        SubjectId = subjectId;
+        Title = title.Trim();
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        DueDate = dueDate;
+        UpdatedAt = clock.UtcNow;
+        _completions.Clear();
     }
 
     public void AddComment(Guid authorId, string text, IClock clock)

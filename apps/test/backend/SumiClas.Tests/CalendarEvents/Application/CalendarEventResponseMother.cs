@@ -23,7 +23,9 @@ public static class CalendarEventResponseMother
             GuidMother.Random(),
             StringMother.Random("author"),
             null,
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null,
+            false);
 
     public static CalendarEventResponse Birthday(int month, int day, string? title = null)
         => new(
@@ -42,5 +44,7 @@ public static class CalendarEventResponseMother
             GuidMother.Random(),
             StringMother.Random("author"),
             null,
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null,
+            false);
 }

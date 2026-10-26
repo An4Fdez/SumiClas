@@ -32,6 +32,9 @@ public sealed class LostItem : AggregateRoot
     public Guid AuthorId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>When the author last modified it; null if it was never modified.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public LostItem(
         Guid id,
         ItemScope scope,
@@ -43,7 +46,8 @@ public sealed class LostItem : AggregateRoot
         string? photoUrl,
         bool photoPrivacyConfirmed,
         Guid authorId,
-        DateTimeOffset createdAt) : base(id)
+        DateTimeOffset createdAt,
+        DateTimeOffset? updatedAt = null) : base(id)
     {
         Scope = scope;
         ClassId = classId;
@@ -55,6 +59,7 @@ public sealed class LostItem : AggregateRoot
         PhotoPrivacyConfirmed = photoPrivacyConfirmed;
         AuthorId = authorId;
         CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 
     public static LostItem Create(
@@ -119,6 +124,18 @@ public sealed class LostItem : AggregateRoot
         {
             throw new LostItemExceptions.AuthorRequired();
         }
+    }
+
+    /// <summary>Changes the description. The status, the photo and whether it was recovered stay as they were.</summary>
+    public void Update(string description, IClock clock)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new LostItemExceptions.DescriptionRequired();
+        }
+
+        Description = description.Trim();
+        UpdatedAt = clock.UtcNow;
     }
 
     public void MarkAsRecovered() => Recovered = true;

@@ -12,4 +12,6 @@ public sealed record LostItemResponse(
     Guid AuthorId,
     string AuthorName,
     string? AuthorRole,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? UpdatedAt,
+    bool IsAuthor);

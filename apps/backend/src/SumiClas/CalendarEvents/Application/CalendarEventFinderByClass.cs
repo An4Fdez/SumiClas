@@ -70,7 +70,9 @@ public static class CalendarEventFinderByClass
                     calendarEvent.AuthorId,
                     authors.GetValueOrDefault(calendarEvent.AuthorId)?.FullName ?? string.Empty,
                     authors.GetValueOrDefault(calendarEvent.AuthorId)?.ClassRole,
-                    calendarEvent.CreatedAt))
+                    calendarEvent.CreatedAt,
+                    calendarEvent.UpdatedAt,
+                    calendarEvent.AuthorId == current))
                 .ToList();
 
             return response;

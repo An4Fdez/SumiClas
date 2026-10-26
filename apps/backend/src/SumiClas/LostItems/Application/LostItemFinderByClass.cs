@@ -53,7 +53,9 @@ public static class LostItemFinderByClass
                     lostItem.AuthorId,
                     authors.GetValueOrDefault(lostItem.AuthorId)?.FullName ?? string.Empty,
                     authors.GetValueOrDefault(lostItem.AuthorId)?.ClassRole,
-                    lostItem.CreatedAt))
+                    lostItem.CreatedAt,
+                    lostItem.UpdatedAt,
+                    lostItem.AuthorId == current))
                 .ToList();
 
             return new PagedResponse<LostItemResponse>(items, nextCursor);

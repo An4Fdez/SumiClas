@@ -41,6 +41,8 @@ public sealed class LostItemConfiguration : IEntityTypeConfiguration<LostItem>
         builder.Property(i => i.AuthorId)
             .IsRequired();
 
+        builder.Property(i => i.UpdatedAt);
+
         builder.Property(i => i.CreatedAt)
             .IsRequired();
 

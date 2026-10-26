@@ -28,6 +28,8 @@ public sealed class ClassExpenseConfiguration : IEntityTypeConfiguration<ClassEx
         builder.Property(e => e.AuthorId)
             .IsRequired();
 
+        builder.Property(e => e.UpdatedAt);
+
         builder.Property(e => e.CreatedAt)
             .IsRequired();
 

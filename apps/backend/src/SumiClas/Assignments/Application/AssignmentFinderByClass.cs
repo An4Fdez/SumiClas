@@ -68,7 +68,9 @@ public static class AssignmentFinderByClass
                             comment.Text,
                             comment.CreatedAt))
                         .ToList(),
-                    assignment.IsDoneBy(current)))
+                    assignment.IsDoneBy(current),
+                    assignment.UpdatedAt,
+                    assignment.AuthorId == current))
                 .ToList();
 
             return new PagedResponse<AssignmentResponse>(items, nextCursor);

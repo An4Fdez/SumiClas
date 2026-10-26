@@ -26,6 +26,11 @@ public static class AssignmentExceptions
     public sealed class AuthorRequired()
         : DomainException("Assignment.AuthorRequired", "Los deberes deben tener un autor.");
 
+    public sealed class ChangeForbidden()
+        : DomainException(
+            "Assignment.ChangeForbidden",
+            "Solo el autor de los deberes puede modificarlos o eliminarlos.");
+
     public sealed class CompletionUserRequired()
         : DomainException(
             "Assignment.CompletionUserRequired",

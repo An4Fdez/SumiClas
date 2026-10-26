@@ -15,6 +15,8 @@ public sealed record LostItemCreateRequest(
     [StringLength(2048)] string? PhotoUrl,
     bool PhotoPrivacyConfirmed);
 
+public sealed record LostItemUpdateRequest(string Description);
+
 public sealed class LostItemsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -39,6 +41,25 @@ public sealed class LostItemsEndpoints : IEndpoints
             .WithName("LostItemCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem();
+
+        lostItems.MapPut("/{lostItemId:guid}", async (Guid lostItemId, LostItemUpdateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LostItemUpdate.Command(lostItemId, request.Description), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("LostItemUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        lostItems.MapDelete("/{lostItemId:guid}", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LostItemDelete.Command(lostItemId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("LostItemDelete")
+            .Produces(StatusCodes.Status204NoContent);
 
         lostItems.MapPut("/{lostItemId:guid}/recovered", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
         {

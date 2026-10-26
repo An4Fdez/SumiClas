@@ -14,6 +14,11 @@ public static class LostItemExceptions
             "LostItem.MarkForbidden",
             "Solo el autor del objeto perdido puede cambiar su estado.");
 
+    public sealed class ChangeForbidden()
+        : DomainException(
+            "LostItem.ChangeForbidden",
+            "Solo el autor del objeto puede modificarlo o eliminarlo.");
+
     public sealed class InvalidScope()
         : DomainException("LostItem.InvalidScope", "El alcance del objeto no es válido.");
 

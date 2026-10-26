@@ -14,6 +14,12 @@ public sealed record AssignmentCreateRequest(
     string? Description,
     DateOnly DueDate);
 
+public sealed record AssignmentUpdateRequest(
+    Guid SubjectId,
+    [StringLength(200)] string Title,
+    string? Description,
+    DateOnly DueDate);
+
 public sealed record AssignmentCommentAddRequest(string Text);
 
 public sealed class AssignmentsEndpoints : IEndpoints
@@ -39,6 +45,32 @@ public sealed class AssignmentsEndpoints : IEndpoints
             .WithName("AssignmentCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem();
+
+        assignments.MapPut("/{assignmentId:guid}", async (Guid assignmentId, AssignmentUpdateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(
+                new AssignmentUpdate.Command(
+                    assignmentId,
+                    request.SubjectId,
+                    request.Title,
+                    request.Description,
+                    request.DueDate),
+                ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AssignmentUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        assignments.MapDelete("/{assignmentId:guid}", async (Guid assignmentId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AssignmentDelete.Command(assignmentId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("AssignmentDelete")
+            .Produces(StatusCodes.Status204NoContent);
 
         assignments.MapPost("/{assignmentId:guid}/comments", async (Guid assignmentId, AssignmentCommentAddRequest request, ISender sender, CancellationToken ct) =>
         {

@@ -33,6 +33,8 @@ public sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignmen
         builder.Property(a => a.IsProposal)
             .IsRequired();
 
+        builder.Property(a => a.UpdatedAt);
+
         builder.Property(a => a.CreatedAt)
             .IsRequired();
 

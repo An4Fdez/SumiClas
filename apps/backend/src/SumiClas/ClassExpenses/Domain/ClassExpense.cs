@@ -19,6 +19,9 @@ public sealed class ClassExpense : AggregateRoot
     public Guid AuthorId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>When the author last modified it; null if it was never modified.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public ClassExpense(
         Guid id,
         Guid classId,
@@ -27,7 +30,8 @@ public sealed class ClassExpense : AggregateRoot
         Guid? relatedEventId,
         Guid authorId,
         DateTimeOffset createdAt,
-        IEnumerable<ExpenseParticipant> participants) : base(id)
+        IEnumerable<ExpenseParticipant> participants,
+        DateTimeOffset? updatedAt = null) : base(id)
     {
         ClassId = classId;
         Item = item;
@@ -36,6 +40,7 @@ public sealed class ClassExpense : AggregateRoot
         AuthorId = authorId;
         CreatedAt = createdAt;
         _participants.AddRange(participants);
+        UpdatedAt = updatedAt;
     }
 
     private ClassExpense()
@@ -78,14 +83,7 @@ public sealed class ClassExpense : AggregateRoot
         {
             throw new ClassExpenseExceptions.ClassRequired();
         }
-        if (string.IsNullOrWhiteSpace(item))
-        {
-            throw new ClassExpenseExceptions.ItemRequired();
-        }
-        if (totalAmount <= 0)
-        {
-            throw new ClassExpenseExceptions.TotalAmountMustBePositive();
-        }
+        ValidateContent(item, totalAmount);
         if (authorId == Guid.Empty)
         {
             throw new ClassExpenseExceptions.AuthorRequired();
@@ -94,6 +92,29 @@ public sealed class ClassExpense : AggregateRoot
         {
             throw new ClassExpenseExceptions.AtLeastOneParticipantRequired();
         }
+    }
+
+    private static void ValidateContent(string item, decimal totalAmount)
+    {
+        if (string.IsNullOrWhiteSpace(item))
+        {
+            throw new ClassExpenseExceptions.ItemRequired();
+        }
+        if (totalAmount <= 0)
+        {
+            throw new ClassExpenseExceptions.TotalAmountMustBePositive();
+        }
+    }
+
+    /// <summary>Changes what the author may change. The participants and the payments already made stay as they are.</summary>
+    public void Update(string item, decimal totalAmount, Guid? relatedEventId, IClock clock)
+    {
+        ValidateContent(item, totalAmount);
+
+        Item = item.Trim();
+        TotalAmount = totalAmount;
+        RelatedEventId = relatedEventId;
+        UpdatedAt = clock.UtcNow;
     }
 
     public void MarkAsPaid(Guid guardianId) => SetPaidStatus(guardianId, true);

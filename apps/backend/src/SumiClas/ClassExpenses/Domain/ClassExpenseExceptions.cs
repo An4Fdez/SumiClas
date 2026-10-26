@@ -36,6 +36,11 @@ public static class ClassExpenseExceptions
     public sealed class AuthorRequired()
         : DomainException("ClassExpense.AuthorRequired", "El gasto debe tener un autor.");
 
+    public sealed class ChangeForbidden()
+        : DomainException(
+            "ClassExpense.ChangeForbidden",
+            "Solo el autor del gasto puede modificarlo o eliminarlo.");
+
     public sealed class NotAParticipant()
         : DomainException("ClassExpense.NotAParticipant", "Este usuario no participa en el gasto.");
 }

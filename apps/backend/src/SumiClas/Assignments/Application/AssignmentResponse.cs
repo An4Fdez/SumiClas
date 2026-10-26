@@ -24,4 +24,6 @@ public sealed record AssignmentResponse(
     bool IsProposal,
     DateTimeOffset CreatedAt,
     IReadOnlyCollection<AssignmentCommentResponse> Comments,
-    bool Done);
+    bool Done,
+    DateTimeOffset? UpdatedAt,
+    bool IsAuthor);

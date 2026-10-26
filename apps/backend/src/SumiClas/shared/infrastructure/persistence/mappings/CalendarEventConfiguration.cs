@@ -63,6 +63,8 @@ public sealed class CalendarEventConfiguration : IEntityTypeConfiguration<Calend
         builder.Property(e => e.CreatedAt)
             .IsRequired();
 
+        builder.Property(e => e.UpdatedAt);
+
         builder.Ignore(e => e.DomainEvents);
     }
 }

@@ -63,7 +63,9 @@ public static class ClassExpenseFinderByClass
                             users.GetValueOrDefault(participant.GuardianId)?.FullName ?? string.Empty,
                             participant.HasPaid))
                         .OrderBy(participant => participant.FullName)
-                        .ToList()))
+                        .ToList(),
+                    expense.UpdatedAt,
+                    expense.AuthorId == current))
                 .ToList();
 
             return new PagedResponse<ClassExpenseResponse>(items, nextCursor);

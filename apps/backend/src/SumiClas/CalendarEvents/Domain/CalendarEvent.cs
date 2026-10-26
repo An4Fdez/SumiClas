@@ -33,6 +33,9 @@ public sealed class CalendarEvent : AggregateRoot
     public Guid AuthorId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>When the author last modified it; null if it was never modified.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public CalendarEvent(
         Guid id,
         EventScope scope,
@@ -46,7 +49,8 @@ public sealed class CalendarEvent : AggregateRoot
         string? location,
         string? cost,
         Guid authorId,
-        DateTimeOffset createdAt) : base(id)
+        DateTimeOffset createdAt,
+        DateTimeOffset? updatedAt = null) : base(id)
     {
         Scope = scope;
         ClassId = classId;
@@ -60,6 +64,7 @@ public sealed class CalendarEvent : AggregateRoot
         Cost = cost;
         AuthorId = authorId;
         CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 
     private CalendarEvent()
@@ -125,6 +130,37 @@ public sealed class CalendarEvent : AggregateRoot
         if (authorId == Guid.Empty)
         {
             throw new CalendarEventExceptions.AuthorRequired();
+        }
+    }
+
+    /// <summary>Changes what the author may change. A birthday is never changed: it is deleted and created again.</summary>
+    public void Update(EventType type, string title, DateOnly date, TimeOnly? time, string? location, string? cost, IClock clock)
+    {
+        if (Type == EventType.Birthday)
+        {
+            throw new CalendarEventExceptions.BirthdayChangeForbidden();
+        }
+
+        ValidateContent(type, title);
+
+        Type = type;
+        Title = title.Trim();
+        EventDate = EventDate.OnDate(date);
+        Time = time;
+        Location = NormalizeOptional(location);
+        Cost = NormalizeOptional(cost);
+        UpdatedAt = clock.UtcNow;
+    }
+
+    private static void ValidateContent(EventType type, string title)
+    {
+        if (type == EventType.Birthday)
+        {
+            throw new CalendarEventExceptions.UseCreateBirthdayForBirthdays();
+        }
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new CalendarEventExceptions.TitleRequired();
         }
     }
 

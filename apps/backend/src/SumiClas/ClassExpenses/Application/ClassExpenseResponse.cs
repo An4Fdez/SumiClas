@@ -14,4 +14,6 @@ public sealed record ClassExpenseResponse(
     string AuthorName,
     string? AuthorRole,
     DateTimeOffset CreatedAt,
-    IReadOnlyCollection<ExpenseParticipantResponse> Participants);
+    IReadOnlyCollection<ExpenseParticipantResponse> Participants,
+    DateTimeOffset? UpdatedAt,
+    bool IsAuthor);

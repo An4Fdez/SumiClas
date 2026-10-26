@@ -16,6 +16,14 @@ public sealed record CalendarEventCreateRequest(
     [StringLength(200)] string? Location,
     [StringLength(100)] string? Cost);
 
+public sealed record CalendarEventUpdateRequest(
+    string Type,
+    [StringLength(200)] string Title,
+    DateOnly Date,
+    TimeOnly? Time,
+    [StringLength(200)] string? Location,
+    [StringLength(100)] string? Cost);
+
 public sealed record CalendarEventBirthdayCreateRequest(
     Guid Id,
     Guid StudentId,
@@ -66,6 +74,34 @@ public sealed class CalendarEventsEndpoints : IEndpoints
             .WithName("CalendarEventBirthdayCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem();
+
+        calendarEvents.MapPut("/{calendarEventId:guid}", async (Guid calendarEventId, CalendarEventUpdateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(
+                new CalendarEventUpdate.Command(
+                    calendarEventId,
+                    request.Type,
+                    request.Title,
+                    request.Date,
+                    request.Time,
+                    request.Location,
+                    request.Cost),
+                ct);
+
+            return Results.NoContent();
+        })
+            .WithName("CalendarEventUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        calendarEvents.MapDelete("/{calendarEventId:guid}", async (Guid calendarEventId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new CalendarEventDelete.Command(calendarEventId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("CalendarEventDelete")
+            .Produces(StatusCodes.Status204NoContent);
 
         calendarEvents.MapGet("/", async (Guid classId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new CalendarEventFinderByClass.Query(classId), ct)))

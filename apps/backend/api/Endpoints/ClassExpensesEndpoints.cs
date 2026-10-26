@@ -14,6 +14,11 @@ public sealed record ClassExpenseCreateRequest(
     [Required] IReadOnlyCollection<Guid> ParticipantIds,
     Guid? RelatedEventId);
 
+public sealed record ClassExpenseUpdateRequest(
+    [StringLength(200)] string Item,
+    [Range(0.01, 99999999.99)] decimal TotalAmount,
+    Guid? RelatedEventId);
+
 public sealed class ClassExpensesEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -37,6 +42,31 @@ public sealed class ClassExpensesEndpoints : IEndpoints
             .WithName("ClassExpenseCreate")
             .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem();
+
+        classExpenses.MapPut("/{classExpenseId:guid}", async (Guid classExpenseId, ClassExpenseUpdateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(
+                new ClassExpenseUpdate.Command(
+                    classExpenseId,
+                    request.Item,
+                    request.TotalAmount,
+                    request.RelatedEventId),
+                ct);
+
+            return Results.NoContent();
+        })
+            .WithName("ClassExpenseUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        classExpenses.MapDelete("/{classExpenseId:guid}", async (Guid classExpenseId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new ClassExpenseDelete.Command(classExpenseId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("ClassExpenseDelete")
+            .Produces(StatusCodes.Status204NoContent);
 
         classExpenses.MapPut("/{classExpenseId:guid}/participants/{guardianId:guid}/paid", async (Guid classExpenseId, Guid guardianId, ISender sender, CancellationToken ct) =>
         {

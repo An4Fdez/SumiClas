@@ -45,6 +45,16 @@ public static class CalendarEventExceptions
             "Un cumpleaños no se puede crear como un evento normal. "
             + "Usa la opción de añadir el cumpleaños del alumno.");
 
+    public sealed class ChangeForbidden()
+        : DomainException(
+            "CalendarEvent.ChangeForbidden",
+            "Solo el autor del evento puede modificarlo o eliminarlo.");
+
+    public sealed class BirthdayChangeForbidden()
+        : DomainException(
+            "CalendarEvent.BirthdayChangeForbidden",
+            "Un cumpleaños no se puede modificar. Elimínalo y añade el cumpleaños de nuevo.");
+
     public sealed class InvalidMonth()
         : DomainException("CalendarEvent.InvalidMonth", $"El mes debe estar entre {EventDate.FirstMonth} y {EventDate.LastMonth}.");
 
