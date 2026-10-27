@@ -15,7 +15,7 @@ function ProfileCard({ title, children }: { title: string; children: ReactNode }
 
 export default function Profile() {
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto max-w-2xl">
       <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
         <UserRound className="h-6 w-6" />
       </div>
