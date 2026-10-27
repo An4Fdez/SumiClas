@@ -12,6 +12,11 @@ public sealed record StudentRegisterRequest(
     [StringLength(100)] string? SecondSurname,
     string FirstGuardianRole);
 
+public sealed record StudentNameChangeRequest(
+    [StringLength(100)] string FirstName,
+    [StringLength(100)] string FirstSurname,
+    [StringLength(100)] string? SecondSurname);
+
 public sealed record StudentGuardianAddRequest(Guid GuardianId, string Role);
 
 public sealed class StudentsEndpoints : IEndpoints
@@ -35,6 +40,18 @@ public sealed class StudentsEndpoints : IEndpoints
         })
             .WithName("StudentRegister")
             .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem();
+
+        students.MapPut("/{studentId:guid}", async (Guid studentId, StudentNameChangeRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(
+                new StudentNameChange.Command(studentId, request.FirstName, request.FirstSurname, request.SecondSurname),
+                ct);
+
+            return Results.NoContent();
+        })
+            .WithName("StudentNameChange")
+            .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem();
 
         students.MapPost("/{studentId:guid}/guardians", async (Guid studentId, StudentGuardianAddRequest request, ISender sender, CancellationToken ct) =>

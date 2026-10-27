@@ -1,4 +1,5 @@
 using SumiClas.Shared.Domain;
+using SumiClas.Shared.Domain.Events;
 
 namespace SumiClas.Users.Domain;
 
@@ -47,14 +48,37 @@ public sealed class User : AggregateRoot
         {
             throw new UserExceptions.IdRequired();
         }
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            throw new UserExceptions.FullNameRequired();
-        }
+        ValidateFullName(fullName);
         if (string.IsNullOrWhiteSpace(passwordHash))
         {
             throw new UserExceptions.PasswordHashRequired();
         }
+    }
+
+    private static void ValidateFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new UserExceptions.FullNameRequired();
+        }
+    }
+
+    public void Rename(string fullName)
+    {
+        ValidateFullName(fullName);
+
+        FullName = fullName.Trim();
+    }
+
+    /// <summary>
+    /// Replaces the password for another one the user chose. Unlike <see cref="ReplacePasswordHash"/>, which stores a
+    /// stronger hash of the same password, this announces the change so every session of the user can be closed.
+    /// </summary>
+    public void ChangePassword(string newHash, IClock clock)
+    {
+        ReplacePasswordHash(newHash, clock);
+
+        AddDomainEvent(new UserPasswordChangedDomainEvent(Id, clock));
     }
 
     /// <summary>Stores a newer hash of the same password (the hasher asks for it when its parameters have been strengthened).</summary>

@@ -14,6 +14,7 @@ public static class RequestBodyMother
     public const int EMAIL_MAX = 320;
     public const int PHOTO_URL_MAX = 2048;
     public const int STUDENT_NAME_MAX = 100;
+    public const int USER_NAME_MAX = 200;
 
     public static string Expense(
         string? item = null,
@@ -65,6 +66,20 @@ public static class RequestBodyMother
             StringMother.Random("body"),
             "Normal",
             null));
+
+    public static string UserName(string? fullName = null)
+        => Json(new UserNameChangeRequest(fullName ?? StringMother.Random("name")));
+
+    public static string PasswordChange(string? currentPassword = null, string? newPassword = null)
+        => Json(new UserPasswordChangeRequest(
+            currentPassword ?? StringMother.Random("current"),
+            newPassword ?? StringMother.Random("new-password")));
+
+    public static string StudentName(string? firstName = null, string? secondSurname = null)
+        => Json(new StudentNameChangeRequest(
+            firstName ?? StringMother.Random("first"),
+            StringMother.Random("surname"),
+            secondSurname));
 
     public static string OfLength(int length) => new('x', length);
 

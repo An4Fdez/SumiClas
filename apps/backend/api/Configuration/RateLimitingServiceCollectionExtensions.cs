@@ -7,7 +7,7 @@ namespace SumiClas.Api.Configuration;
 
 public static class RateLimitingServiceCollectionExtensions
 {
-    /// <summary>Policy applied only to the anonymous /auth/register and /auth/login endpoints, which share one counter per client IP.</summary>
+    /// <summary>Policy applied to /auth/register, /auth/login and the authenticated PUT /users/me/password (so the current password cannot be brute-forced), which share one counter per client IP.</summary>
     public const string AuthPolicy = "auth";
 
     /// <summary>Policy applied only to /auth/refresh and /auth/logout, which share their own counter per client IP, separate from <see cref="AuthPolicy"/>.</summary>
@@ -20,7 +20,7 @@ public static class RateLimitingServiceCollectionExtensions
 
     /// <summary>
     /// Fixed window per client IP. <c>RateLimiting:Auth:PermitLimit</c> requests per <c>RateLimiting:Auth:WindowSeconds</c>
-    /// (default 10 per 60 s) for register and login, and <c>RateLimiting:AuthRefresh:*</c> (default 30 per 60 s) for refresh and logout;
+    /// (default 10 per 60 s) for register, login and password change, and <c>RateLimiting:AuthRefresh:*</c> (default 30 per 60 s) for refresh and logout;
     /// over the limit the answer is 429 with a Retry-After header.
     /// The partition is the connection's remote IP, so behind a reverse proxy it only works once forwarded headers are configured.
     /// </summary>

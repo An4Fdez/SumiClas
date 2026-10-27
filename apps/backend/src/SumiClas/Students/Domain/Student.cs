@@ -45,6 +45,11 @@ public sealed class Student : AggregateRoot
         }
     }
 
+    public void Rename(StudentName name)
+    {
+        Name = name;
+    }
+
     public void AddGuardian(Guid guardianId, GuardianRole role)
     {
         if (_guardians.Any(g => g.GuardianId == guardianId))

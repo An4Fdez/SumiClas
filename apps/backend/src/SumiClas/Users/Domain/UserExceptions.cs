@@ -18,6 +18,9 @@ public static class UserExceptions
     public sealed class FullNameRequired()
         : DomainException("User.FullNameRequired", "El nombre completo del usuario no puede estar vacío.");
 
+    public sealed class CurrentPasswordInvalid()
+        : DomainException("User.CurrentPasswordInvalid", "La contraseña actual no es correcta.");
+
     public sealed class InvalidEmailFormat()
         : DomainException("User.InvalidEmailFormat", "El formato del correo electrónico no es válido.");
 

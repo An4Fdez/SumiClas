@@ -1,9 +1,17 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
+using SumiClas.Api.Configuration;
 using SumiClas.Api.Http;
 using SumiClas.Students.Application;
 using SumiClas.Users.Application;
 
 namespace SumiClas.Api.Endpoints;
+
+public sealed record UserNameChangeRequest([StringLength(200)] string FullName);
+
+public sealed record UserPasswordChangeRequest(
+    [StringLength(128)] string CurrentPassword,
+    [StringLength(128)] string NewPassword);
 
 public sealed class UsersEndpoints : IEndpoints
 {
@@ -32,6 +40,28 @@ public sealed class UsersEndpoints : IEndpoints
             })
             .WithName("UserClassRepresentativeResign")
             .Produces(StatusCodes.Status204NoContent);
+
+        users.MapPut("/me", async (UserNameChangeRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new UserNameChange.Command(request.FullName), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("UserNameChange")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        users.MapPut("/me/password", async (UserPasswordChangeRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new UserPasswordChange.Command(request.CurrentPassword, request.NewPassword), ct);
+
+            return Results.NoContent();
+        })
+            .RequireRateLimiting(RateLimitingServiceCollectionExtensions.AuthPolicy)
+            .WithName("UserPasswordChange")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         users.MapGet("/me", async (ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new UserProfileFinderCurrent.Query(), ct)))
