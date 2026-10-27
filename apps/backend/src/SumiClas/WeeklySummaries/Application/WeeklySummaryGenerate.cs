@@ -84,7 +84,8 @@ public static class WeeklySummaryGenerate
                 from,
                 to,
                 announcements
-                    .Select(announcement => new WeeklySummaryAnnouncement(announcement.Title, announcement.Urgent))
+                    .Select(announcement => new WeeklySummaryAnnouncement(
+                        announcement.Title, announcement.Urgent, announcement.Body))
                     .ToList(),
                 events
                     .Where(calendarEvent => calendarEvent.Type != BirthdayType)

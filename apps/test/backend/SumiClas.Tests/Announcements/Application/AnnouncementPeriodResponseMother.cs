@@ -5,6 +5,6 @@ using SumiClas.Tests.Shared;
 
 public static class AnnouncementPeriodResponseMother
 {
-    public static AnnouncementPeriodResponse With(string? title = null, bool urgent = false)
-        => new(title ?? StringMother.Random("announcement"), urgent);
+    public static AnnouncementPeriodResponse With(string? title = null, bool urgent = false, string? body = null)
+        => new(title ?? StringMother.Random("announcement"), urgent, body ?? StringMother.Random("body"));
 }

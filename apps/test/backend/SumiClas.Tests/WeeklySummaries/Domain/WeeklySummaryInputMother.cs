@@ -31,8 +31,8 @@ public static class WeeklySummaryInputMother
 
     public static DateOnly Day(int daysFromStart) => WeekStart.AddDays(daysFromStart);
 
-    public static WeeklySummaryAnnouncement Announcement(string? title = null, bool urgent = false)
-        => new(title ?? StringMother.Random("announcement"), urgent);
+    public static WeeklySummaryAnnouncement Announcement(string? title = null, bool urgent = false, string? body = null)
+        => new(title ?? StringMother.Random("announcement"), urgent, body ?? string.Empty);
 
     public static WeeklySummaryEvent Event(int daysFromStart, string? title = null)
         => Event(Day(daysFromStart), title);

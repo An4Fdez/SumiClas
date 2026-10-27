@@ -46,7 +46,8 @@ public static class AnnouncementPeriodFinderByClass
                 .ThenBy(announcement => announcement.Id, Pagination.IdComparer)
                 .Select(announcement => new AnnouncementPeriodResponse(
                     announcement.Title,
-                    announcement.Priority == Priority.High))
+                    announcement.Priority == Priority.High,
+                    announcement.Body))
                 .ToList();
         }
 

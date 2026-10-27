@@ -37,20 +37,20 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
     }
 
     [Test]
-    public async Task return_the_title_and_urgency_of_the_announcements_of_the_school_and_of_the_class_oldest_first()
+    public async Task return_the_title_urgency_and_body_of_the_announcements_of_the_school_and_of_the_class_oldest_first()
     {
         (Guid classId, Guid schoolId) = this.ShouldResolveClassOfCurrentUser();
         string schoolTitle = StringMother.Random("school");
         string classTitle = StringMother.Random("class");
-        this.ShouldSearchAnnouncements(
-            AnnouncementMother.ForClass(classId, classTitle, START.AddDays(TWO_DAYS)),
-            AnnouncementMother.SchoolWide(schoolId, schoolTitle, START.AddDays(ONE_DAY)));
+        Announcement classAnnouncement = AnnouncementMother.ForClass(classId, classTitle, START.AddDays(TWO_DAYS));
+        Announcement schoolAnnouncement = AnnouncementMother.SchoolWide(schoolId, schoolTitle, START.AddDays(ONE_DAY));
+        this.ShouldSearchAnnouncements(classAnnouncement, schoolAnnouncement);
 
         IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
 
         result.Should().Equal(
-            AnnouncementPeriodResponseMother.With(schoolTitle),
-            AnnouncementPeriodResponseMother.With(classTitle));
+            AnnouncementPeriodResponseMother.With(schoolTitle, body: schoolAnnouncement.Body),
+            AnnouncementPeriodResponseMother.With(classTitle, body: classAnnouncement.Body));
     }
 
     [Test]
@@ -69,10 +69,10 @@ public class AnnouncementPeriodFinderByClassShould : AnnouncementsUnitTestCase
 
         IReadOnlyCollection<AnnouncementPeriodResponse> result = await this.InPeriodAsync(classId);
 
-        result.Should().Equal(
-            AnnouncementPeriodResponseMother.With(urgentTitle, urgent: true),
-            AnnouncementPeriodResponseMother.With(normalTitle),
-            AnnouncementPeriodResponseMother.With(lowTitle));
+        result.Select(announcement => (announcement.Title, announcement.Urgent)).Should().Equal(
+            (urgentTitle, true),
+            (normalTitle, false),
+            (lowTitle, false));
     }
 
     [Test]

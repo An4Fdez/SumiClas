@@ -87,6 +87,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         string urgent = StringMother.Random("urgent");
+        string urgentBody = StringMother.Random("urgent body");
         string trip = StringMother.Random("trip");
         string meeting = StringMother.Random("meeting");
         string activity = StringMother.Random("activity");
@@ -98,7 +99,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             classId,
             MONDAY,
             SUNDAY,
-            announcements: [AnnouncementPeriodResponseMother.With(urgent, urgent: true)],
+            announcements: [AnnouncementPeriodResponseMother.With(urgent, urgent: true, body: urgentBody)],
             events:
             [
                 CalendarEventPeriodResponseMother.With(nameof(EventType.Trip), MONDAY.AddDays(ONE_DAY), trip),
@@ -119,7 +120,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
 
         this.WrittenFrom.Should().ContainSingle().Which.Should().BeEquivalentTo(
             WeeklySummaryInputMother.With(
-                announcements: [WeeklySummaryInputMother.Announcement(urgent, urgent: true)],
+                announcements: [WeeklySummaryInputMother.Announcement(urgent, urgent: true, body: urgentBody)],
                 events:
                 [
                     WeeklySummaryInputMother.Event(MONDAY.AddDays(ONE_DAY), trip),
@@ -176,8 +177,9 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
     {
         Guid classId = GuidMother.Random();
         string announcement = StringMother.Random("announcement");
+        string body = StringMother.Random("body");
         WeeklySummaryInput week = WeeklySummaryInputMother.With(
-            announcements: [WeeklySummaryInputMother.Announcement(announcement)],
+            announcements: [WeeklySummaryInputMother.Announcement(announcement, body: body)],
             weekStart: MONDAY);
         DateTimeOffset writtenAt = Now - TimeSpan.FromDays(ONE_DAY);
         WeeklySummary stored = WeeklySummaryMother.With(
@@ -190,7 +192,7 @@ public class WeeklySummaryGenerateShould : WeeklySummariesUnitTestCase
             classId,
             MONDAY,
             SUNDAY,
-            announcements: [AnnouncementPeriodResponseMother.With(announcement)]);
+            announcements: [AnnouncementPeriodResponseMother.With(announcement, body: body)]);
 
         WeeklySummaryResponse result = await this.GenerateAsync(classId);
 
