@@ -17,6 +17,7 @@ import Homework from '@/pages/Homework';
 import Expenses from '@/pages/Expenses';
 import LostAndFound from '@/pages/LostAndFound';
 import More from '@/pages/More';
+import Profile from '@/pages/Profile';
 import MyClassRole from '@/pages/MyClassRole';
 import Notifications from '@/pages/Notifications';
 import Help from '@/pages/Help';
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/lost-and-found" element={<LostAndFound />} />
           <Route path="/more" element={<More />} />
+          <Route path="/more/profile" element={<Profile />} />
           <Route path="/more/class-role" element={<MyClassRole />} />
           <Route path="/more/notifications" element={<Notifications />} />
           <Route path="/more/help" element={<Help />} />

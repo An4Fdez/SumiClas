@@ -1,4 +1,5 @@
 import type { ApiClient } from '@/modules/Shared/Infrastructure/ApiClient';
+import { getSession, setSession } from '@/lib/tokenStore';
 import { parseClassRole, type ClassRole } from '@/lib/roles';
 import type { ClassMember } from '../domain/ClassMember';
 import type { IUserRepository } from '../domain/IUserRepository';
@@ -49,5 +50,15 @@ export class NSwagUserRepository implements IUserRepository {
       email: newUser.email,
       password: newUser.password,
     });
+  }
+
+  async changeName(fullName: string): Promise<void> {
+    await this.client.userNameChange({ fullName });
+    const session = getSession();
+    if (session) setSession({ ...session, fullName });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await this.client.userPasswordChange({ currentPassword, newPassword });
   }
 }

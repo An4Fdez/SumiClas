@@ -7,6 +7,7 @@ type ApiErrorShape = {
 const MESSAGE_BY_CODE: Record<string, string> = {
   'User.EmailAlreadyRegistered': 'Ya existe una cuenta con este correo electrónico.',
   'Authentication.InvalidCredentials': 'Correo o contraseña incorrectos.',
+  'User.CurrentPasswordInvalid': 'La contraseña actual no es correcta.',
   'Authentication.PasswordTooWeak': 'La contraseña no cumple los requisitos: debe tener entre 8 y 128 caracteres.',
   'Authentication.Unauthenticated': 'No hemos podido identificar tu sesión. Inicia sesión de nuevo.',
   'Authentication.RefreshTokenInvalid': 'Tu sesión ha caducado. Inicia sesión de nuevo.',

@@ -1,20 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
 import { SessionLoading } from '@/components/layout/SessionLoading';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { setGuardianInfo } from '@/lib/auth';
+import { setGuardianInfo, toGuardianDisplayName } from '@/lib/auth';
 import { isValidEmail } from '@/lib/validation';
-
-// The login response only has the full name: show the first two words (name and first surname), like Register.
-function displayName(fullName: string) {
-  return fullName.trim().split(/\s+/).slice(0, 2).join(' ');
-}
 
 export default function Login() {
   const navigate = useNavigate();
+  const notice = (useLocation().state as { notice?: string } | null)?.notice;
   const { status, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +33,7 @@ export default function Login() {
     try {
       const session = await login({ email: email.trim(), password });
       // The role is only asked at sign-up and the API does not return it: fall back to the generic one.
-      setGuardianInfo({ name: displayName(session.fullName), role: 'guardian' });
+      setGuardianInfo({ name: toGuardianDisplayName(session.fullName), role: 'guardian' });
       navigate('/home');
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -73,6 +69,15 @@ export default function Login() {
               Accede a avisos, calendario y deberes de tu colegio.
             </p>
           </div>
+
+          {notice && (
+            <p
+              role="status"
+              className="mt-6 rounded-xl border border-mint-200 bg-mint-50 px-3.5 py-2.5 text-sm text-mint-700 dark:border-mint-700/40 dark:bg-mint-900/20 dark:text-mint-300"
+            >
+              {notice}
+            </p>
+          )}
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
             <div>

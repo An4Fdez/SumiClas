@@ -6,6 +6,9 @@ export function isValidEmail(email: string): boolean {
 
 export const MIN_PASSWORD_LENGTH = 8;
 export const RECOMMENDED_PASSWORD_LENGTH = 12;
+export const MAX_PASSWORD_LENGTH = 128;
+export const MAX_FULL_NAME_LENGTH = 200;
+export const MAX_STUDENT_NAME_PART_LENGTH = 100;
 
 async function sha1Hex(value: string): Promise<string> {
   const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(value));

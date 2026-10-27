@@ -22,6 +22,8 @@ export type ChildContextValue = {
   currentChild: ChildView | undefined;
   currentRole: ClassRole | null;
   currentUserId: string | undefined;
+  currentUserName: string | undefined;
+  currentUserEmail: string | undefined;
 };
 
 export const ChildContext = createContext<ChildContextValue | null>(null);

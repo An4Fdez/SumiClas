@@ -25,6 +25,8 @@ export type AuthContextValue = {
   register: (newUser: NewUser) => Promise<void>;
   /** Never throws: the local session is cleared even when the server call fails. */
   logout: () => Promise<void>;
+  /** Ends the local session without calling the API: for when the server already revoked every session. */
+  signOutLocally: () => void;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

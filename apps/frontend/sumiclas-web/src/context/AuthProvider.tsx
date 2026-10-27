@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSessionRepository } from '@/hooks/useSessionRepository';
 import { useUserRepository } from '@/hooks/useUserRepository';
 import { clearGuardianInfo } from '@/lib/auth';
-import { getSession, subscribe } from '@/lib/tokenStore';
+import { clearSession, getSession, subscribe } from '@/lib/tokenStore';
 import { setSessionLostHandler } from '@/modules/Shared/Infrastructure/authHttp';
 import type { NewSession } from '@/modules/sessions/domain/NewSession';
 import type { NewUser } from '@/modules/users/domain/NewUser';
@@ -88,9 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(fromStore);
   }, [sessionRepository]);
 
+  const signOutLocally = useCallback(() => {
+    clearGuardianInfo();
+    clearSession();
+    setState(fromStore);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status: state.status, user: state.user, login, register, logout }),
-    [state, login, register, logout],
+    () => ({ status: state.status, user: state.user, login, register, logout, signOutLocally }),
+    [state, login, register, logout, signOutLocally],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

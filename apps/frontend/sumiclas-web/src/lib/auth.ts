@@ -17,6 +17,15 @@ export function removeLegacySessionKeys() {
   }
 }
 
+export const PASSWORD_CHANGED_NOTICE = 'Contraseña cambiada. Vuelve a iniciar sesión.';
+
+const DISPLAY_NAME_WORDS = 2;
+
+/** The name and first surname of a full name, as the navbar shows the guardian. */
+export function toGuardianDisplayName(fullName: string): string {
+  return fullName.trim().split(/\s+/).slice(0, DISPLAY_NAME_WORDS).join(' ');
+}
+
 export function getGuardianInfo(): GuardianInfo | null {
   try {
     const raw = localStorage.getItem(GUARDIAN_KEY);

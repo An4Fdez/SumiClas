@@ -73,6 +73,8 @@ export function ChildProvider({ children }: { children: ReactNode }) {
     currentChild,
     currentRole,
     currentUserId: state.status === 'ready' ? state.profile.id : undefined,
+    currentUserName: state.status === 'ready' ? state.profile.fullName : undefined,
+    currentUserEmail: state.status === 'ready' ? state.profile.email : undefined,
   };
 
   return <ChildContext.Provider value={value}>{children}</ChildContext.Provider>;

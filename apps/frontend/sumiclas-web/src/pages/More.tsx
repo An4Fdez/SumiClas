@@ -3,7 +3,7 @@ import { UserRound, Smartphone, HelpCircle, ShieldCheck, LogOut, ChevronRight, t
 import { useAuth } from '@/hooks/useAuth';
 
 const items: { icon: LucideIcon; label: string; href: string }[] = [
-  { icon: UserRound, label: 'Mi perfil', href: '#perfil' },
+  { icon: UserRound, label: 'Mi perfil', href: '/more/profile' },
   { icon: Smartphone, label: 'Notificaciones', href: '/more/notifications' },
   { icon: HelpCircle, label: 'Ayuda y soporte', href: '/more/help' },
 ];

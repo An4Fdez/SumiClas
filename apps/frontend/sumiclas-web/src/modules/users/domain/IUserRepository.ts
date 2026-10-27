@@ -8,4 +8,7 @@ export interface IUserRepository {
   assignClassRepresentative(userId: string, classId: string): Promise<void>;
   resignClassRepresentative(classId: string): Promise<void>;
   register(newUser: NewUser): Promise<void>;
+  changeName(fullName: string): Promise<void>;
+  /** The server revokes every session of the user: the caller must end the local one. */
+  changePassword(currentPassword: string, newPassword: string): Promise<void>;
 }
