@@ -13,6 +13,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The refusals that protect families and minors, as the client really sees them: a use case refuses with a domain
@@ -37,7 +38,8 @@ public class SecurityErrorsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.GetAsync($"/announcements?classId={GuidMother.Random()}");
+        using HttpResponseMessage response = await client.GetAsync(
+            $"{ApiPrefix}/announcements?classId={GuidMother.Random()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await CodeOf(response)).Should().Be("User.ClassAccessForbidden");
@@ -51,7 +53,8 @@ public class SecurityErrorsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.GetAsync($"/classes/{GuidMother.Random()}/members");
+        using HttpResponseMessage response = await client.GetAsync(
+            $"{ApiPrefix}/classes/{GuidMother.Random()}/members");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await CodeOf(response)).Should().Be("User.ClassMembersForbidden");
@@ -67,7 +70,7 @@ public class SecurityErrorsShould
 
         using HttpResponseMessage response = await PostAsync(
             client,
-            "/announcements",
+            $"{ApiPrefix}/announcements",
             RequestBodyMother.Announcement("School"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -82,7 +85,8 @@ public class SecurityErrorsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await PostAsync(client, "/students", RequestBodyMother.Student());
+        using HttpResponseMessage response = await PostAsync(
+            client, $"{ApiPrefix}/students", RequestBodyMother.Student());
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await CodeOf(response)).Should().Be("Shared.AlreadyExists");

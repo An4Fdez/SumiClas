@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// What the HTTP binding rejects before a use case runs: the money of an expense, the lengths that protect the password
@@ -38,7 +39,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/class-expenses",
+            $"{ApiPrefix}/class-expenses",
             RequestBodyMother.Expense(totalAmount: total),
             authenticated: true);
 
@@ -52,7 +53,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/class-expenses",
+            $"{ApiPrefix}/class-expenses",
             RequestBodyMother.Expense(item: RequestBodyMother.OfLength(RequestBodyMother.EXPENSE_ITEM_MAX + 1)),
             authenticated: true);
 
@@ -66,7 +67,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/class-expenses",
+            $"{ApiPrefix}/class-expenses",
             RequestBodyMother.Expense(withoutParticipants: true),
             authenticated: true);
 
@@ -82,7 +83,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/class-expenses",
+            $"{ApiPrefix}/class-expenses",
             RequestBodyMother.Expense(totalAmount: total),
             authenticated: true);
 
@@ -90,12 +91,12 @@ public class RequestLimitsShould
         this.ShouldHaveReceived(typeof(ClassExpenseCreate.Command));
     }
 
-    [TestCase("/auth/register")]
-    [TestCase("/auth/login")]
+    [TestCase($"{ApiPrefix}/auth/register")]
+    [TestCase($"{ApiPrefix}/auth/login")]
     public async Task refuse_a_password_longer_than_the_hasher_accepts(string path)
     {
         string password = RequestBodyMother.OfLength(RequestBodyMother.PASSWORD_MAX + 1);
-        string body = path == "/auth/register"
+        string body = path == $"{ApiPrefix}/auth/register"
             ? RequestBodyMother.Registration(password: password)
             : RequestBodyMother.Login(password: password);
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
@@ -112,7 +113,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/auth/login",
+            $"{ApiPrefix}/auth/login",
             RequestBodyMother.Login(password: RequestBodyMother.OfLength(RequestBodyMother.PASSWORD_MAX)),
             authenticated: false);
 
@@ -127,7 +128,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/auth/register",
+            $"{ApiPrefix}/auth/register",
             RequestBodyMother.Registration(email: RequestBodyMother.OfLength(RequestBodyMother.EMAIL_MAX + 1)),
             authenticated: false);
 
@@ -141,7 +142,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/lost-items",
+            $"{ApiPrefix}/lost-items",
             RequestBodyMother.LostItem(photoUrl: RequestBodyMother.OfLength(RequestBodyMother.PHOTO_URL_MAX + 1)),
             authenticated: true);
 
@@ -155,7 +156,7 @@ public class RequestLimitsShould
 
         using HttpResponseMessage response = await PostAsync(
             host,
-            "/students",
+            $"{ApiPrefix}/students",
             RequestBodyMother.Student(firstName: RequestBodyMother.OfLength(RequestBodyMother.STUDENT_NAME_MAX + 1)),
             authenticated: true);
 

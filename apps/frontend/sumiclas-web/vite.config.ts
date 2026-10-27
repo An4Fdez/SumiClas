@@ -15,8 +15,7 @@ export default defineConfig(({mode}) => {
                 "/api": {
                     target: env.API_PROXY_TARGET || "https://localhost:7064",
                     changeOrigin: true,
-                    secure: false,
-                    rewrite: (path: string) => path.replace(/^\/api/, "")
+                    secure: false
                 }
             }
         },

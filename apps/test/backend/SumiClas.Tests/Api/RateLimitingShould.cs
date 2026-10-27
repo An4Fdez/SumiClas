@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The brute-force brake of the authentication endpoints, over the real API with the use cases faked and the limit
@@ -35,11 +36,13 @@ public class RateLimitingShould
 
         for (int attempt = 1; attempt <= RateLimitingSettingsMother.PERMIT_LIMIT; attempt++)
         {
-            using HttpResponseMessage allowed = await PostAsync(client, "/auth/login", RequestBodyMother.Login());
+            using HttpResponseMessage allowed = await PostAsync(
+                client, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
             allowed.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
         }
 
-        using HttpResponseMessage refused = await PostAsync(client, "/auth/login", RequestBodyMother.Login());
+        using HttpResponseMessage refused = await PostAsync(
+            client, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
 
         refused.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
         refused.Headers.RetryAfter.Should().NotBeNull();
@@ -54,11 +57,11 @@ public class RateLimitingShould
             this._sender.Object,
             RateLimitingSettingsMother.WithTheSmallLimits());
         using HttpClient client = host.CreateClient();
-        await ExhaustAsync(client, "/auth/login", RequestBodyMother.Login());
+        await ExhaustAsync(client, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
 
         using HttpResponseMessage response = await PostAsync(
             client,
-            "/auth/register",
+            $"{ApiPrefix}/auth/register",
             RequestBodyMother.Registration());
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
@@ -71,9 +74,9 @@ public class RateLimitingShould
             this._sender.Object,
             RateLimitingSettingsMother.WithTheSmallLimits());
         using HttpClient client = host.CreateClient();
-        await ExhaustAsync(client, "/auth/refresh", null);
+        await ExhaustAsync(client, $"{ApiPrefix}/auth/refresh", null);
 
-        using HttpResponseMessage response = await PostAsync(client, "/auth/logout", null);
+        using HttpResponseMessage response = await PostAsync(client, $"{ApiPrefix}/auth/logout", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
@@ -85,9 +88,9 @@ public class RateLimitingShould
             this._sender.Object,
             RateLimitingSettingsMother.WithTheSmallLimits());
         using HttpClient client = host.CreateClient();
-        await ExhaustAsync(client, "/auth/login", RequestBodyMother.Login());
+        await ExhaustAsync(client, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
 
-        using HttpResponseMessage response = await PostAsync(client, "/auth/refresh", null);
+        using HttpResponseMessage response = await PostAsync(client, $"{ApiPrefix}/auth/refresh", null);
 
         response.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
     }
@@ -99,10 +102,11 @@ public class RateLimitingShould
             this._sender.Object,
             RateLimitingSettingsMother.WithTheSmallLimits());
         using HttpClient attacker = host.CreateClient();
-        await ExhaustAsync(attacker, "/auth/login", RequestBodyMother.Login());
+        await ExhaustAsync(attacker, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
         using HttpClient other = OtherAddressClient(host);
 
-        using HttpResponseMessage response = await PostAsync(other, "/auth/login", RequestBodyMother.Login());
+        using HttpResponseMessage response = await PostAsync(
+            other, $"{ApiPrefix}/auth/login", RequestBodyMother.Login());
 
         response.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
     }
@@ -120,7 +124,7 @@ public class RateLimitingShould
 
         for (int request = 0; request <= RateLimitingSettingsMother.PERMIT_LIMIT * 3; request++)
         {
-            using HttpResponseMessage response = await client.GetAsync("/users/me");
+            using HttpResponseMessage response = await client.GetAsync($"{ApiPrefix}/users/me");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
     }

@@ -4,7 +4,9 @@ import type { Session } from '@/modules/sessions/domain/Session';
 import { reviveApiDates } from './apiDate';
 import { GeneratedApiClient } from './GeneratedApiClient';
 
-export const API_BASE_URL = '/api';
+// The generated client already carries the /api prefix in every path (the API maps its endpoints under /api).
+export const API_BASE_URL = '';
+const AUTH_PATH_PREFIX = '/api/auth/';
 
 const REFRESH_LOCK_NAME = 'sumiclas-refresh';
 const REFRESH_RETRY_DELAY_MS = 300;
@@ -24,12 +26,11 @@ export function setSessionLostHandler(handler: (() => void) | null) {
 
 function requestPath(url: RequestInfo | URL): string {
   const text = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
-  const path = new URL(text, 'http://localhost').pathname;
-  return path.startsWith(`${API_BASE_URL}/`) ? path.slice(API_BASE_URL.length) : path;
+  return new URL(text, 'http://localhost').pathname;
 }
 
 function isAuthEndpoint(url: RequestInfo | URL): boolean {
-  return requestPath(url).startsWith('/auth/');
+  return requestPath(url).startsWith(AUTH_PATH_PREFIX);
 }
 
 function send(url: RequestInfo, init: RequestInit | undefined, token: string | null): Promise<Response> {

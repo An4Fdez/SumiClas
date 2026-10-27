@@ -33,6 +33,7 @@ app.ApplySumiClasMigrations();
 
 // First in the pipeline, so it also catches what comes out of the rest of the middleware and of the endpoints.
 app.UseExceptionHandler();
+app.UseSumiClasSpa();
 
 if (app.Environment.IsDevelopment())
 {

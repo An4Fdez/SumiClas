@@ -76,7 +76,7 @@ resource "azurerm_windows_web_app" "main" {
     http2_enabled       = true
     minimum_tls_version = "1.2"
     ftps_state          = "Disabled"
-    health_check_path   = "/health"
+    health_check_path   = "/healthy"
 
     application_stack {
       current_stack  = "dotnetcore"

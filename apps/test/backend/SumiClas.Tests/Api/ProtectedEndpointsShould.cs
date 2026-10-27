@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The perimeter of the real API: every endpoint outside /auth asks for a session. The endpoints are the ones the API
@@ -64,16 +65,16 @@ public class ProtectedEndpointsShould
             "Bearer",
             host.AccessTokenOf(GuidMother.Random()));
 
-        using HttpResponseMessage response = await client.GetAsync("/users/me");
+        using HttpResponseMessage response = await client.GetAsync($"{ApiPrefix}/users/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         this.ShouldHaveAskedForTheProfileOfTheCurrentUser();
     }
 
-    [TestCase("/auth/register", typeof(UserRegister.Command), false)]
-    [TestCase("/auth/login", typeof(SessionCreate.Command), false)]
-    [TestCase("/auth/refresh", typeof(SessionRotate.Command), true)]
-    [TestCase("/auth/logout", typeof(SessionRevoke.Command), true)]
+    [TestCase($"{ApiPrefix}/auth/register", typeof(UserRegister.Command), false)]
+    [TestCase($"{ApiPrefix}/auth/login", typeof(SessionCreate.Command), false)]
+    [TestCase($"{ApiPrefix}/auth/refresh", typeof(SessionRotate.Command), true)]
+    [TestCase($"{ApiPrefix}/auth/logout", typeof(SessionRevoke.Command), true)]
     public async Task let_the_authentication_endpoints_reach_their_use_case_without_a_session(
         string path,
         Type command,
@@ -97,7 +98,8 @@ public class ProtectedEndpointsShould
         this.ShouldHaveReceived(command);
     }
 
-    private static bool IsAuthentication(string pattern) => pattern.StartsWith("/auth/", StringComparison.Ordinal);
+    private static bool IsAuthentication(string pattern) =>
+        pattern.StartsWith($"{ApiPrefix}/auth/", StringComparison.Ordinal);
 
     private static string WithValues(string pattern)
         => Regex.Replace(pattern, "{[^}]+}", _ => GuidMother.Random().ToString());

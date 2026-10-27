@@ -11,6 +11,7 @@ using SumiClas.WeeklySummaries.Domain;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The HTTP contract of the weekly summary: a POST with the class in the query string that answers the summary of the
@@ -43,7 +44,8 @@ public class WeeklySummariesEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.PostAsync($"/weekly-summaries?classId={classId}", null);
+        using HttpResponseMessage response = await client.PostAsync(
+            $"{ApiPrefix}/weekly-summaries?classId={classId}", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadFromJsonAsync<WeeklySummaryResponse>()).Should().Be(summary);
@@ -60,7 +62,8 @@ public class WeeklySummariesEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.PostAsync($"/weekly-summaries?classId={classId}", null);
+        using HttpResponseMessage response = await client.PostAsync(
+            $"{ApiPrefix}/weekly-summaries?classId={classId}", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadFromJsonAsync<WeeklySummaryResponse>()).Should().Be(summary);
@@ -76,7 +79,7 @@ public class WeeklySummariesEndpointsShould
         using HttpClient client = AuthenticatedClient(host);
 
         using HttpResponseMessage response = await client.PostAsync(
-            $"/weekly-summaries?classId={GuidMother.Random()}",
+            $"{ApiPrefix}/weekly-summaries?classId={GuidMother.Random()}",
             null);
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);

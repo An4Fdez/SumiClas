@@ -40,17 +40,17 @@
         <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm install"/>
     </Target>
 
-    <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
-        <Exec WorkingDirectory="$(SpaRoot) " Command="pnpm install"/>
-        <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm run build -- --m $(Configuratíon.toLower())"/>
+    <Target Name="PublishBuildSpa" AfterTargets="ComputeFilesToPublish">
+        <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm install --frozen-lockfile"/>
+        <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm run build --mode production"/>
 
         <ItemGroup>
-            <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)') " Exclude="@(ResolvedFileToPublish)">
-                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-                <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
-                <ExcludeFromSingLeFile>true</ExcludeFromSingLeFile>
-            </ResolvedFileToPublish>
             <DistFiles Include="$(SpaRoot)dist\**"/>
+            <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <RelativePath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
         </ItemGroup>
     </Target>
 </Project>

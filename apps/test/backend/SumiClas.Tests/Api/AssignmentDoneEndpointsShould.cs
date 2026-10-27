@@ -7,6 +7,7 @@ using SumiClas.Assignments.Application;
 using SumiClas.Tests.Shared;
 using System.Net;
 using System.Net.Http.Headers;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The HTTP contract of the done mark: PUT marks and DELETE unmarks the assignment of the route, both answering 204
@@ -30,7 +31,8 @@ public class AssignmentDoneEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.PutAsync($"/assignments/{assignmentId}/done", null);
+        using HttpResponseMessage response = await client.PutAsync(
+            $"{ApiPrefix}/assignments/{assignmentId}/done", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         this.ShouldHaveSent(new AssignmentDoneMark.Command(assignmentId));
@@ -44,7 +46,7 @@ public class AssignmentDoneEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.DeleteAsync($"/assignments/{assignmentId}/done");
+        using HttpResponseMessage response = await client.DeleteAsync($"{ApiPrefix}/assignments/{assignmentId}/done");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         this.ShouldHaveSent(new AssignmentDoneUnmark.Command(assignmentId));

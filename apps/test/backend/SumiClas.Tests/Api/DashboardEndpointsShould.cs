@@ -10,6 +10,7 @@ using SumiClas.Tests.Shared;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The HTTP contract of the dashboard summary: a GET with the class and, optionally, the period, answering the summary
@@ -43,7 +44,7 @@ public class DashboardEndpointsShould
         using HttpClient client = AuthenticatedClient(host);
 
         using HttpResponseMessage response = await client.GetAsync(
-            $"/dashboard/summary?classId={classId}&days={REQUESTED_DAYS}");
+            $"{ApiPrefix}/dashboard/summary?classId={classId}&days={REQUESTED_DAYS}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadFromJsonAsync<DashboardSummaryResponse>()).Should().BeEquivalentTo(summary);
@@ -61,7 +62,7 @@ public class DashboardEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.GetAsync($"/dashboard/summary?classId={classId}");
+        using HttpResponseMessage response = await client.GetAsync($"{ApiPrefix}/dashboard/summary?classId={classId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         this._sender.Verify(
@@ -83,7 +84,7 @@ public class DashboardEndpointsShould
         using HttpClient client = AuthenticatedClient(host);
 
         using HttpResponseMessage response = await client.GetAsync(
-            $"/dashboard/summary?classId={GuidMother.Random()}&days={SummaryPeriod.MaxDays + 1}");
+            $"{ApiPrefix}/dashboard/summary?classId={GuidMother.Random()}&days={SummaryPeriod.MaxDays + 1}");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).Should().Contain(INVALID_DAYS_CODE);
@@ -95,7 +96,7 @@ public class DashboardEndpointsShould
         await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
         using HttpClient client = AuthenticatedClient(host);
 
-        using HttpResponseMessage response = await client.GetAsync("/dashboard/summary?classId=not-a-guid");
+        using HttpResponseMessage response = await client.GetAsync($"{ApiPrefix}/dashboard/summary?classId=not-a-guid");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         this._sender.VerifyNoOtherCalls();
