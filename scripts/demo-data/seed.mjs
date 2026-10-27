@@ -90,11 +90,19 @@ async function send(method, path, { as, body } = {}) {
   for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt++) {
     const headers = { 'Content-Type': 'application/json' };
     if (as) headers.Authorization = `Bearer ${await tokenOf(as)}`;
-    const response = await fetch(`${API}${API_PREFIX}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    let response;
+    try {
+      response = await fetch(`${API}${API_PREFIX}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    } catch (error) {
+      const cause = error.cause?.code ?? error.cause?.message ?? error.message;
+      throw new Error(
+        `No se pudo conectar con la API en ${API} (${cause}). ¿Está arrancada? Arráncala con «dotnet run --project apps/backend/api/SumiClas.Api.csproj» o desde el IDE, y comprueba que PostgreSQL está levantado («docker compose up -d»).`,
+      );
+    }
     if (response.status === 429) {
       const waitSeconds = Number(response.headers.get('Retry-After')) || DEFAULT_RETRY_AFTER_SECONDS;
       console.log(`  límite de peticiones: espero ${waitSeconds} s`);
