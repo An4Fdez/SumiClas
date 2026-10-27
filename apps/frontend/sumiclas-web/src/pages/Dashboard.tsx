@@ -121,6 +121,7 @@ export default function Dashboard() {
 }
 
 const PERIOD_LABEL = 'Novedades de los últimos';
+const CLAIMS_CARD_REVEAL_DELAY_MS = 300;
 
 function PeriodSelector({ value, onChange }: { value: SummaryPeriod; onChange: (period: SummaryPeriod) => void }) {
   return (
@@ -239,7 +240,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
         </Reveal>
 
         {summary.lostItemClaims.count > 0 && (
-          <Reveal delay={300} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
+          <Reveal delay={CLAIMS_CARD_REVEAL_DELAY_MS} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
             <SectionCard
               to="/lost-and-found"
               color="orange"
