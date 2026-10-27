@@ -27,7 +27,9 @@ apps/
   test/
     backend/     → tests del backend (proyecto SumiClas.Tests: NUnit, Moq, AwesomeAssertions y Testcontainers; ver la skill `backend-testing`)
     frontend/    → tests del frontend, Vitest + React Testing Library (la carpeta aún no existe: todavía no hay tests del frontend)
-docs/           → documentación de producto/arquitectura
+docs/           → documentación de producto/arquitectura (y la presentación en docs/presentacion)
+terraform/      → infraestructura de Azure (PostgreSQL Flexible Server y App Service en Windows) definida con Terraform
+scripts/        → scripts auxiliares (demo-data: cargador de datos de demostración)
 SumiClas.slnx   → solución que agrupa los proyectos anteriores
 .claude/skills/ → skills del proyecto (ver "Skills del proyecto")
 ```
@@ -67,13 +69,13 @@ cd apps/frontend/sumiclas-web
 pnpm install   # solo la primera vez / tras cambios en dependencias
 pnpm dev
 ```
-- `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue real (producción) será en Azure (decisión del 2026-10-24) pero todavía no está montado (ver "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend usa esta base de datos en desarrollo (cadena de conexión `ConnectionStrings:SumiClasDb` en `appsettings.Development.json` y migraciones EF Core aplicadas al arrancar).
+- `docker-compose.yml` levanta solo PostgreSQL (`postgres:17-alpine`, puerto `5432`, credenciales de desarrollo en claro en el propio archivo — no son secretos reales, ver `apps/backend/AGENTS.md`). Esto es infraestructura de **desarrollo local únicamente**; el despliegue real (producción) es en Azure (decisión del 2026-10-24) y se define con Terraform en `terraform/` (ver "Despliegue" en el `Readme.md` y "Pendiente de decidir" en `apps/backend/AGENTS.md`). El backend usa esta base de datos en desarrollo (cadena de conexión `ConnectionStrings:SumiClasDb` en `appsettings.Development.json` y migraciones EF Core aplicadas al arrancar).
 - **Clave de firma del JWT (obligatoria para arrancar la API)**: la API no arranca sin `Jwt:SigningKey` (≥ 32 caracteres) y no va en ningún `appsettings*.json`. En local, una sola vez: `dotnet user-secrets set "Jwt:SigningKey" "<≥32 chars>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Jwt__SigningKey`. Ver la skill `backend-auth`.
-- **Clave de la IA del resumen semanal (opcional)**: sin `Ai:ApiKey` la función queda apagada (la tarjeta del dashboard muestra un error con «Generar resumen» cuando la semana tiene novedades) y el resto de la app funciona igual. No va en ningún `appsettings*.json` ni en ningún archivo del repositorio. En local, una sola vez y en tu propia terminal: `dotnet user-secrets set "Ai:ApiKey" "<clave de Anthropic>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Ai__ApiKey` (en Azure, ajuste de la aplicación o referencia a Key Vault). Ver la skill `backend-weekly-summary`.
+- **Clave de la IA del resumen semanal (opcional)**: sin `Ai:ApiKey` la función queda apagada (la tarjeta del dashboard muestra un error con «Generar resumen» cuando la semana tiene novedades) y el resto de la app funciona igual. No va en ningún `appsettings*.json` ni en ningún archivo del repositorio. En local, una sola vez y en tu propia terminal: `dotnet user-secrets set "Ai:ApiKey" "<clave de Anthropic>" --project apps/backend/api/SumiClas.Api.csproj`. En otros entornos, la variable de entorno `Ai__ApiKey` (en Azure, ajuste de la aplicación escrito a mano en el portal; no se usa Key Vault, decisión del 2026-10-27). Ver la skill `backend-weekly-summary`.
 - Frontend (Vite): `http://localhost:4004` (HTTP; `vite.config.ts` no activa HTTPS, y el proxy llama a la API por HTTPS con `secure: false`).
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
 - El proxy de Vite reenvía `/api/` a `https://localhost:7064` por defecto (el perfil `https` de `launchSettings.json`); se puede cambiar con la variable `API_PROXY_TARGET` (ver `vite.config.ts`). Web y API comparten así origen y no hay CORS.
-- **Datos de demostración**: `scripts/demo-data/` (Node, sin dependencias, fuera de `SumiClas.slnx`) carga por la API real unas familias, clases y contenido inventados, en español, para presentar la web (`node scripts/demo-data/seed.mjs load|reset|verify`). Las cuentas y la contraseña (`Demo1234`) son falsas y están en el `Readme.md` a propósito; el script se niega a hablar con una API que no sea local. No lo uses nunca contra un entorno real. Las fechas son relativas al día de la carga, y `reset` borra solo lo creado por la demo.
+- **Datos de demostración**: `scripts/demo-data/` (Node, sin dependencias, fuera de `SumiClas.slnx`) carga por la API real unas familias, clases y contenido inventados, en español, para presentar la web (`node scripts/demo-data/seed.mjs load|reset|verify`). Las cuentas y la contraseña (`Demo1234`) son falsas y están en el `Readme.md` a propósito; el script se niega a hablar con una API que no sea local y añade él mismo el prefijo `/api` a las rutas (hay que tocarlo si cambia el prefijo). No lo uses nunca contra un entorno real. Las fechas son relativas al día de la carga, y `reset` borra solo lo creado por la demo.
 
 ## Convenciones comunes
 

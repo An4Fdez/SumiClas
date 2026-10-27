@@ -58,6 +58,7 @@ if (flags.help) {
 }
 
 const API = String(flags.api ?? 'https://localhost:7064').replace(/\/$/, '');
+const API_PREFIX = '/api';
 const DAY = String(flags.day ?? new Date().toISOString().slice(0, 10));
 const DB = {
   container: String(flags['db-container'] ?? 'sumiclas-postgres'),
@@ -89,7 +90,7 @@ async function send(method, path, { as, body } = {}) {
   for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt++) {
     const headers = { 'Content-Type': 'application/json' };
     if (as) headers.Authorization = `Bearer ${await tokenOf(as)}`;
-    const response = await fetch(`${API}${path}`, {
+    const response = await fetch(`${API}${API_PREFIX}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
