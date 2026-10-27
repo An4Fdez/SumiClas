@@ -85,6 +85,8 @@ Esto resuelve directamente el problema original: los avisos "de verdad important
 - Buscador conversacional con IA sobre todo el histórico
 - Pagos integrados reales
 - Panel de administración avanzado para múltiples colegios (multi-tenant real)
+- Horario de la clase como una funcionalidad más (anotado el 2026-10-27, sin diseñar)
+- Fotos en los objetos perdidos (anotado el 2026-10-27): hoy solo existe la columna `PhotoUrl` y el servidor nunca guarda la imagen; la subida se quitó el 2026-10-04 porque producía URLs `blob:` locales al navegador. Hace falta un endpoint de subida con almacenamiento (por ejemplo Azure Blob Storage), validación de imagen y tamaño, y revisar la privacidad de menores
 
 ## 5. Stack recomendado (decisión tomada)
 
