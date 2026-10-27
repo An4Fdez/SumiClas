@@ -9,6 +9,9 @@ export const badgeColorClasses: Record<PaletteColor, { bg: string; text: string 
   orange: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-600 dark:text-orange-300' },
 };
 
+/** The stroke colors of the logo, in its order; used as a thin ring around the tiles that carry the brand (child avatar, AI summary). */
+export const LOGO_GRADIENT_CLASS = 'bg-[linear-gradient(135deg,#00f090,#00d8f0,#7878d8,#f03078,#ffa830)]';
+
 export const dotColorClasses: Record<PaletteColor, string> = {
   rose: 'bg-rose-500',
   brand: 'bg-brand-500',

@@ -3,17 +3,10 @@ import { ChevronDown } from 'lucide-react';
 import { useChildContext } from '@/hooks/useChildContext';
 import { badgeColorClasses } from '@/lib/colorClasses';
 import { roleMeta } from '@/lib/roles';
+import { ChildAvatar } from './ChildAvatar';
 
 function placeLabel(schoolName: string, className: string) {
   return [schoolName, className].filter(Boolean).join(', ');
-}
-
-function Avatar({ name }: { name: string }) {
-  return (
-    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-400 via-mint-400 to-rose-400 font-display text-xs font-bold text-white">
-      {name.charAt(0)}
-    </div>
-  );
 }
 
 function RoleBadge({ role }: { role: 'classRepresentative' | 'participant' }) {
@@ -46,7 +39,7 @@ export function ChildSelector() {
   if (children.length <= 1) {
     return (
       <div className="flex min-w-0 items-center gap-2.5">
-        <Avatar name={currentChild.studentName} />
+        <ChildAvatar name={currentChild.studentName} />
         {label}
         {currentRole && <RoleBadge role={currentRole} />}
       </div>
@@ -64,7 +57,7 @@ export function ChildSelector() {
         onClick={() => setOpen((o) => !o)}
         className="flex min-w-0 items-center gap-2.5 rounded-xl px-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
       >
-        <Avatar name={currentChild.studentName} />
+        <ChildAvatar name={currentChild.studentName} />
         {label}
         {currentRole && <RoleBadge role={currentRole} />}
         <ChevronDown
@@ -86,7 +79,7 @@ export function ChildSelector() {
                 c.id === currentChild.id ? 'bg-brand-50/60 dark:bg-brand-900/15' : ''
               }`}
             >
-              <Avatar name={c.studentName} />
+              <ChildAvatar name={c.studentName} />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
                   {c.studentName}

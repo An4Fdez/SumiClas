@@ -1,5 +1,6 @@
 import { Sparkles, Bell, Calendar, BookOpen, CheckCircle2, Gift } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
+import { LOGO_GRADIENT_CLASS } from '@/lib/colorClasses';
 
 export function SummarySection() {
   return (
@@ -47,8 +48,10 @@ export function SummarySection() {
               <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-brand-400/30 via-mint-400/30 to-rose-400/30 blur-2xl" />
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 via-mint-400 to-rose-400 text-white">
-                    <Sparkles className="h-5 w-5" />
+                  <div className={`h-9 w-9 shrink-0 rounded-xl p-0.5 ${LOGO_GRADIENT_CLASS}`}>
+                    <div className="grid h-full w-full place-items-center rounded-[10px] bg-violet-100 text-[#6464d0] dark:bg-violet-950 dark:text-[#9c9cf0]">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
                   </div>
                   <div>
                     <p className="font-display text-sm font-bold text-slate-900 dark:text-white">Resumen de la semana</p>
