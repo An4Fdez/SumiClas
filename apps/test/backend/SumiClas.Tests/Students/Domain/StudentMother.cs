@@ -11,9 +11,9 @@ public static class StudentMother
             StudentNameMother.Random(),
             [GuardianLinkMother.Mother(motherId), .. otherGuardianIds.Select(GuardianLinkMother.Father)]);
 
-    public static Student Named(Guid motherId, string firstName, string firstSurname)
+    public static Student Named(Guid motherId, string firstName, string firstSurname, string? secondSurname = null)
         => new(
             GuidMother.Random(),
-            StudentNameMother.With(firstName, firstSurname, null),
+            StudentNameMother.With(firstName, firstSurname, secondSurname),
             [GuardianLinkMother.Mother(motherId)]);
 }

@@ -5165,6 +5165,8 @@ export interface ChildResponse {
     studentId: string;
     firstName: string;
     surnameInitial: string;
+    firstSurname: string;
+    secondSurname: string | undefined;
     classId: string | undefined;
     className: string | undefined;
     schoolYearId: string | undefined;

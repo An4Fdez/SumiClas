@@ -59,6 +59,8 @@ public static class StudentFinderByCurrentGuardian
                         student.Id,
                         student.Name.FirstName,
                         student.Name.FirstSurname[..1] + ".",
+                        student.Name.FirstSurname,
+                        student.Name.SecondSurname,
                         schoolClass?.Id,
                         schoolClass?.Name,
                         schoolYear?.Id,

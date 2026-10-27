@@ -20,6 +20,8 @@ export class NSwagStudentRepository implements IStudentRepository {
     return students.map((student) => ({
       id: student.studentId,
       firstName: student.firstName,
+      firstSurname: student.firstSurname,
+      secondSurname: student.secondSurname ?? undefined,
       studentName: formatStudentName(student.firstName, student.surnameInitial),
       classId: student.classId ?? undefined,
       className: student.className ?? undefined,

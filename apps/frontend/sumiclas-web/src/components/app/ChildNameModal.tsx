@@ -19,8 +19,8 @@ export function ChildNameModal({
 }) {
   const studentRepository = useStudentRepository();
   const [firstName, setFirstName] = useState(child.firstName);
-  const [firstSurname, setFirstSurname] = useState('');
-  const [secondSurname, setSecondSurname] = useState('');
+  const [firstSurname, setFirstSurname] = useState(child.firstSurname);
+  const [secondSurname, setSecondSurname] = useState(child.secondSurname ?? '');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -84,8 +84,7 @@ export function ChildNameModal({
           </button>
         </div>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Por privacidad, la app no guarda los apellidos a la vista: escríbelos completos para guardarlos. En el resto
-          de pantallas solo se verá el nombre y la inicial del primer apellido.
+          En el resto de pantallas solo se verá el nombre y la inicial del primer apellido.
         </p>
 
         <form onSubmit={handleSubmit} noValidate className="mt-4 space-y-4">
