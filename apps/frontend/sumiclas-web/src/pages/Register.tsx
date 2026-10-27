@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, UserRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, UserRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PasswordToggle } from '@/components/app/PasswordToggle';
 import { Reveal } from '@/components/layout/Reveal';
 import { setGuardianInfo, type GuardianRole } from '@/lib/auth';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError';
@@ -27,6 +28,7 @@ export default function Register() {
   const [role, setRole] = useState<GuardianRole | null>(null);
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [checking, setChecking] = useState(false);
@@ -212,14 +214,7 @@ export default function Register() {
                   placeholder="••••••••"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  className="shrink-0 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <PasswordToggle visible={showPassword} onToggle={() => setShowPassword((v) => !v)} />
               </div>
               {password.length > 0 && (
                 <ul className="mt-1.5 space-y-0.5 text-xs">
@@ -242,13 +237,14 @@ export default function Register() {
                 <Lock className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   id="confirmPassword"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
+                <PasswordToggle visible={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)} />
               </div>
               {errors.confirmPassword && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.confirmPassword}</p>}
             </div>

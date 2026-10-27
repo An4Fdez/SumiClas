@@ -1,12 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRepository } from '@/hooks/useUserRepository';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { PASSWORD_CHANGED_NOTICE } from '@/lib/auth';
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/lib/validation';
-import { TextField } from './TextField';
+import { PasswordField } from './PasswordField';
 
 type FieldErrors = { current?: string; next?: string; confirm?: string };
 
@@ -17,12 +16,9 @@ export function ProfilePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPasswords, setShowPasswords] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  const type = showPasswords ? 'text' : 'password';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,9 +48,8 @@ export function ProfilePasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <TextField
+      <PasswordField
         id="profile-current-password"
-        type={type}
         label="Contraseña actual"
         value={currentPassword}
         onChange={setCurrentPassword}
@@ -62,9 +57,8 @@ export function ProfilePasswordForm() {
         maxLength={MAX_PASSWORD_LENGTH}
         error={errors.current}
       />
-      <TextField
+      <PasswordField
         id="profile-new-password"
-        type={type}
         label="Contraseña nueva"
         value={newPassword}
         onChange={setNewPassword}
@@ -72,20 +66,9 @@ export function ProfilePasswordForm() {
         maxLength={MAX_PASSWORD_LENGTH}
         error={errors.next}
         hint={`Entre ${MIN_PASSWORD_LENGTH} y ${MAX_PASSWORD_LENGTH} caracteres.`}
-        adornment={
-          <button
-            type="button"
-            onClick={() => setShowPasswords((v) => !v)}
-            aria-label={showPasswords ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
-            className="shrink-0 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-          >
-            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        }
       />
-      <TextField
+      <PasswordField
         id="profile-confirm-password"
-        type={type}
         label="Repite la contraseña nueva"
         value={confirmPassword}
         onChange={setConfirmPassword}
