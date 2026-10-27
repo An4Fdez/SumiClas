@@ -7,10 +7,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { getGuardianInfo } from '@/lib/auth';
 
 const links = [
-  { label: 'Cómo funciona', href: '#how-it-works' },
-  { label: 'Funcionalidades', href: '#features' },
-  { label: 'Opiniones', href: '#testimonials' },
-  { label: 'Preguntas', href: '#faq' },
+  { label: 'Cómo funciona', href: '/#how-it-works' },
+  { label: 'Funcionalidades', href: '/#features' },
+  { label: 'Opiniones', href: '/#testimonials' },
+  { label: 'Preguntas', href: '/#faq' },
 ];
 
 export function Navbar() {
@@ -34,12 +34,12 @@ export function Navbar() {
         <ul className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <li key={l.href}>
-              <a
-                href={l.href}
+              <Link
+                to={l.href}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               >
                 {l.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -76,13 +76,13 @@ export function Navbar() {
           <ul className="space-y-1 px-4 py-4">
             {links.map((l) => (
               <li key={l.href}>
-                <a
-                  href={l.href}
+                <Link
+                  to={l.href}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   {l.label}
-                </a>
+                </Link>
               </li>
             ))}
             <li>

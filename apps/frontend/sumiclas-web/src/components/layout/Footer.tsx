@@ -1,29 +1,31 @@
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
 
+const landingSection = (id: string) => `/#${id}`;
+
 const cols = [
   {
     title: 'Producto',
     links: [
-      { label: 'Cómo funciona', href: '#how-it-works' },
-      { label: 'Funcionalidades', href: '#features' },
-      { label: 'Opiniones', href: '#testimonials' },
-      { label: 'Preguntas frecuentes', href: '#faq' },
+      { label: 'Cómo funciona', href: landingSection('how-it-works') },
+      { label: 'Funcionalidades', href: landingSection('features') },
+      { label: 'Opiniones', href: landingSection('testimonials') },
+      { label: 'Preguntas frecuentes', href: landingSection('faq') },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Política de privacidad', href: '#privacy' },
-      { label: 'Términos y condiciones', href: '#terms' },
-      { label: 'Política de cookies', href: '#cookies' },
+      { label: 'Política de privacidad', href: '/privacy' },
+      { label: 'Términos y condiciones', href: '/terms' },
+      { label: 'Política de cookies', href: '/cookies' },
     ],
   },
   {
     title: 'Contacto',
     links: [
       { label: 'hola@sumiclas.es', href: 'mailto:hola@sumiclas.es' },
-      { label: 'Soporte', href: '#support' },
+      { label: 'Soporte', href: '/support' },
       { label: 'Iniciar sesión', href: '/login' },
     ],
   },
@@ -49,7 +51,7 @@ export function Footer() {
               <ul className="mt-3 space-y-2">
                 {col.links.map((l) => (
                   <li key={l.label}>
-                    {l.href.startsWith('/') ? (
+                    {!l.href.startsWith('mailto:') ? (
                       <Link
                         to={l.href}
                         className="text-sm text-slate-600 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
