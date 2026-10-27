@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRepository } from '@/hooks/useUserRepository';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { PASSWORD_CHANGED_NOTICE } from '@/lib/auth';
+import { PASSWORD_CHANGED_NOTICE, setLoginNotice } from '@/lib/auth';
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/lib/validation';
 import { PasswordField } from './PasswordField';
 
@@ -41,8 +41,8 @@ export function ProfilePasswordForm() {
       setSaving(false);
       return;
     }
-    // Same tick: the navigation and the sign-out render together, so RequireSession cannot redirect first and drop the notice.
-    navigate('/login', { replace: true, state: { notice: PASSWORD_CHANGED_NOTICE } });
+    setLoginNotice(PASSWORD_CHANGED_NOTICE);
+    navigate('/login', { replace: true });
     signOutLocally();
   };
 

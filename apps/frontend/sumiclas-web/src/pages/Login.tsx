@@ -1,16 +1,19 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
 import { SessionLoading } from '@/components/layout/SessionLoading';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { setGuardianInfo, toGuardianDisplayName } from '@/lib/auth';
+import { clearLoginNotice, peekLoginNotice, setGuardianInfo, toGuardianDisplayName } from '@/lib/auth';
 import { isValidEmail } from '@/lib/validation';
 
 export default function Login() {
   const navigate = useNavigate();
-  const notice = (useLocation().state as { notice?: string } | null)?.notice;
+  const [notice] = useState(peekLoginNotice);
+  useEffect(() => {
+    clearLoginNotice();
+  }, []);
   const { status, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

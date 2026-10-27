@@ -19,6 +19,33 @@ export function removeLegacySessionKeys() {
 
 export const PASSWORD_CHANGED_NOTICE = 'Contraseña cambiada. Vuelve a iniciar sesión.';
 
+const LOGIN_NOTICE_KEY = 'sumiclas-login-notice';
+
+// sessionStorage, not router state: the redirect to /login that follows a local sign-out drops the state.
+export function setLoginNotice(message: string) {
+  try {
+    sessionStorage.setItem(LOGIN_NOTICE_KEY, message);
+  } catch {
+    // sessionStorage unavailable — the notice is just not shown
+  }
+}
+
+export function peekLoginNotice(): string | null {
+  try {
+    return sessionStorage.getItem(LOGIN_NOTICE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearLoginNotice() {
+  try {
+    sessionStorage.removeItem(LOGIN_NOTICE_KEY);
+  } catch {
+    // sessionStorage unavailable — ignored
+  }
+}
+
 const DISPLAY_NAME_WORDS = 2;
 
 /** The name and first surname of a full name, as the navbar shows the guardian. */
