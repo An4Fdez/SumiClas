@@ -15,7 +15,8 @@ public static class LostItemMother
         string? description = null,
         string? photoUrl = null,
         Guid? authorId = null,
-        DateTimeOffset? createdAt = null)
+        DateTimeOffset? createdAt = null,
+        IEnumerable<LostItemClaim>? claims = null)
         => new(
             id ?? GuidMother.Random(),
             scope,
@@ -27,12 +28,22 @@ public static class LostItemMother
             photoUrl,
             photoUrl is not null,
             authorId ?? GuidMother.Random(),
-            createdAt ?? UnitTestCase.Now);
+            createdAt ?? UnitTestCase.Now,
+            claims: claims);
 
     public static LostItem ForClass(
         Guid classId,
         Guid? id = null,
         bool recovered = false,
-        DateTimeOffset? createdAt = null)
-        => With(id: id, scope: ItemScope.Class, classId: classId, recovered: recovered, createdAt: createdAt);
+        DateTimeOffset? createdAt = null,
+        Guid? authorId = null,
+        IEnumerable<LostItemClaim>? claims = null)
+        => With(
+            id: id,
+            scope: ItemScope.Class,
+            classId: classId,
+            recovered: recovered,
+            authorId: authorId,
+            createdAt: createdAt,
+            claims: claims);
 }

@@ -17,6 +17,13 @@ public sealed record LostItemCreateRequest(
 
 public sealed record LostItemUpdateRequest(string Description);
 
+public sealed record LostItemClaimCreateRequest(
+    Guid Id,
+    [StringLength(LostItemClaimLimits.MessageMaxLength)] string Message);
+
+public sealed record LostItemClaimAcceptRequest(
+    [StringLength(LostItemClaimLimits.ResponseMessageMaxLength)] string? ResponseMessage);
+
 public sealed class LostItemsEndpoints : IEndpoints
 {
     public void Map(IEndpointRouteBuilder app)
@@ -83,5 +90,39 @@ public sealed class LostItemsEndpoints : IEndpoints
             Results.Ok(await sender.Send(new LostItemFinderByClass.Query(classId, limit, cursor), ct)))
             .WithName("LostItemFinderByClass")
             .Produces<PagedResponse<LostItemResponse>>(StatusCodes.Status200OK);
+
+        lostItems.MapPost("/{lostItemId:guid}/claims", async (Guid lostItemId, LostItemClaimCreateRequest request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LostItemClaimCreate.Command(request.Id, lostItemId, request.Message), ct);
+
+            return Results.StatusCode(StatusCodes.Status201Created);
+        })
+            .WithName("LostItemClaimCreate")
+            .Produces(StatusCodes.Status201Created)
+            .ProducesValidationProblem();
+
+        lostItems.MapGet("/{lostItemId:guid}/claims", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new LostItemClaimFinderByItem.Query(lostItemId), ct)))
+            .WithName("LostItemClaimFinderByItem")
+            .Produces<IReadOnlyCollection<LostItemClaimResponse>>(StatusCodes.Status200OK);
+
+        lostItems.MapPut("/{lostItemId:guid}/claims/{claimId:guid}/accept", async (Guid lostItemId, Guid claimId, LostItemClaimAcceptRequest? request, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LostItemClaimAccept.Command(lostItemId, claimId, request?.ResponseMessage), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("LostItemClaimAccept")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem();
+
+        lostItems.MapPut("/{lostItemId:guid}/claims/{claimId:guid}/reject", async (Guid lostItemId, Guid claimId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LostItemClaimReject.Command(lostItemId, claimId), ct);
+
+            return Results.NoContent();
+        })
+            .WithName("LostItemClaimReject")
+            .Produces(StatusCodes.Status204NoContent);
     }
 }

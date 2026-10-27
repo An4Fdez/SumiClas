@@ -15,6 +15,8 @@ public static class RequestBodyMother
     public const int PHOTO_URL_MAX = 2048;
     public const int STUDENT_NAME_MAX = 100;
     public const int USER_NAME_MAX = 200;
+    public const int CLAIM_MESSAGE_MAX = 300;
+    public const int CLAIM_RESPONSE_MESSAGE_MAX = 200;
 
     public static string Expense(
         string? item = null,
@@ -48,6 +50,12 @@ public static class RequestBodyMother
             StringMother.Random("description"),
             photoUrl,
             photoUrl is not null));
+
+    public static string LostItemClaim(Guid? id = null, string? message = null)
+        => Json(new LostItemClaimCreateRequest(id ?? GuidMother.Random(), message ?? StringMother.Random("detail")));
+
+    public static string LostItemClaimAcceptance(string? responseMessage = null)
+        => Json(new LostItemClaimAcceptRequest(responseMessage));
 
     public static string Student(string? firstName = null)
         => Json(new StudentRegisterRequest(

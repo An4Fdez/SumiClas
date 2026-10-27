@@ -23,6 +23,9 @@ public static class DashboardCountersMother
     public static LostItemRecentSummaryResponse LostItems()
         => new(Random.Shared.Next(1, MAXIMUM_COUNT));
 
+    public static LostItemClaimPendingSummaryResponse LostItemClaims()
+        => new(Random.Shared.Next(1, MAXIMUM_COUNT));
+
     public static IReadOnlyCollection<CalendarEventUpcomingResponse> UpcomingEvents()
         =>
         [

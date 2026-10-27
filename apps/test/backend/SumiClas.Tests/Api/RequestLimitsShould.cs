@@ -163,6 +163,41 @@ public class RequestLimitsShould
         await this.ShouldHaveRefusedNamingTheField(response, "FirstName");
     }
 
+    [Test]
+    public async Task refuse_a_claim_message_longer_than_the_column()
+    {
+        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
+
+        using HttpResponseMessage response = await PostAsync(
+            host,
+            $"{ApiPrefix}/lost-items/{GuidMother.Random()}/claims",
+            RequestBodyMother.LostItemClaim(message: RequestBodyMother.OfLength(RequestBodyMother.CLAIM_MESSAGE_MAX + 1)),
+            authenticated: true);
+
+        await this.ShouldHaveRefusedNamingTheField(response, "Message");
+    }
+
+    [Test]
+    public async Task refuse_a_claim_response_message_longer_than_the_column()
+    {
+        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
+        using HttpClient client = host.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            host.AccessTokenOf(GuidMother.Random()));
+        using StringContent content = new(
+            RequestBodyMother.LostItemClaimAcceptance(
+                RequestBodyMother.OfLength(RequestBodyMother.CLAIM_RESPONSE_MESSAGE_MAX + 1)),
+            Encoding.UTF8,
+            "application/json");
+
+        using HttpResponseMessage response = await client.PutAsync(
+            $"{ApiPrefix}/lost-items/{GuidMother.Random()}/claims/{GuidMother.Random()}/accept",
+            content);
+
+        await this.ShouldHaveRefusedNamingTheField(response, "ResponseMessage");
+    }
+
     private static async Task<HttpResponseMessage> PostAsync(
         EndpointsHost host,
         string path,

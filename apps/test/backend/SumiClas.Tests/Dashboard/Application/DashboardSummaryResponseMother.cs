@@ -16,6 +16,7 @@ public static class DashboardSummaryResponseMother
             DashboardCountersMother.Assignments(),
             DashboardCountersMother.Expenses(),
             DashboardCountersMother.LostItems(),
+            DashboardCountersMother.LostItemClaims(),
             DashboardCountersMother.UpcomingEvents());
 
     public static DashboardSummaryResponse With(
@@ -24,6 +25,7 @@ public static class DashboardSummaryResponseMother
         AssignmentPendingSummaryResponse assignments,
         ClassExpensePendingSummaryResponse expenses,
         LostItemRecentSummaryResponse lostItems,
+        LostItemClaimPendingSummaryResponse lostItemClaims,
         IReadOnlyCollection<CalendarEventUpcomingResponse> upcomingEvents)
-        => new(days, announcements, assignments, expenses, lostItems, upcomingEvents);
+        => new(days, announcements, assignments, expenses, lostItems, lostItemClaims, upcomingEvents);
 }

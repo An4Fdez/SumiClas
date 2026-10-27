@@ -529,6 +529,63 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
         this.ShouldNotHaveSearched();
     }
 
+    [Test]
+    public async Task return_the_pending_claims_count_to_the_author_and_no_claim_status()
+    {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        LostItemClaim[] pending = [LostItemClaimMother.With(), LostItemClaimMother.With()];
+        LostItem lostItem = LostItemMother.ForClass(
+            classId,
+            authorId: currentUserId,
+            claims: [.. pending, LostItemClaimMother.With(status: ClaimStatus.Rejected)]);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldSearchLostItems(lostItem);
+
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
+            LostItemFinderByClassQueryMother.WithClassId(classId));
+
+        LostItemResponse item = result.Items.Should().ContainSingle().Subject;
+        item.PendingClaimsCount.Should().Be(pending.Length);
+        item.MyClaimStatus.Should().BeNull();
+    }
+
+    [Test]
+    public async Task return_the_status_of_the_latest_own_claim_to_a_member_and_no_count()
+    {
+        Guid schoolYearId = GuidMother.Random();
+        Guid schoolId = GuidMother.Random();
+        Guid classId = GuidMother.Random();
+        Guid currentUserId = GuidMother.Random();
+        LostItem withClaim = LostItemMother.ForClass(
+            classId,
+            claims:
+            [
+                LostItemClaimMother.With(claimantId: currentUserId, status: ClaimStatus.Rejected),
+                LostItemClaimMother.PendingOf(GuidMother.Random()),
+            ]);
+        LostItem withoutClaim = LostItemMother.ForClass(classId, claims: [LostItemClaimMother.PendingOf(GuidMother.Random())]);
+        this.ShouldFindClassInSchoolYear(classId, schoolYearId);
+        this.ShouldFindSchoolOfSchoolYear(schoolYearId, schoolId);
+        this.ShouldResolveCurrentUser(currentUserId);
+        this.ShouldAllowClassAccess(currentUserId, classId);
+        this.ShouldHaveClassMembers();
+        this.ShouldSearchLostItems(withClaim, withoutClaim);
+
+        PagedResponse<LostItemResponse> result = await this._useCase.ExecuteAsync(
+            LostItemFinderByClassQueryMother.WithClassId(classId));
+
+        result.Items.Should().OnlyContain(item => item.PendingClaimsCount == null);
+        result.Items.Single(item => item.Id == withClaim.Id).MyClaimStatus.Should().Be("Rejected");
+        result.Items.Single(item => item.Id == withoutClaim.Id).MyClaimStatus.Should().BeNull();
+    }
+
     private void ShouldHaveClassMembers(params UserClassMemberResponse[] members)
         => this.QueryBus
             .Setup(bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()))

@@ -47,6 +47,10 @@ public sealed class LostItemConfiguration : IEntityTypeConfiguration<LostItem>
             .IsRequired();
 
 
+        builder.OwnsMany(i => i.Claims, claim => new LostItemClaimConfiguration().Configure(claim));
+        builder.Navigation(i => i.Claims)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Ignore(i => i.DomainEvents);
     }
 }

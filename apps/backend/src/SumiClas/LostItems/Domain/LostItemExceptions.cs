@@ -48,6 +48,44 @@ public static class LostItemExceptions
             "LostItem.PhotoPrivacyConfirmationRequired",
             "Antes de adjuntar una foto hay que confirmar que no muestra a ningún menor.");
 
+    public sealed class ClaimNotFound()
+        : DomainException("LostItem.ClaimNotFound", "No se ha encontrado la reclamación.");
+
+    public sealed class ClaimIdRequired()
+        : DomainException("LostItem.ClaimIdRequired", "El identificador de la reclamación no puede estar vacío.");
+
+    public sealed class ClaimantRequired()
+        : DomainException("LostItem.ClaimantRequired", "La reclamación debe tener quien la hace.");
+
+    public sealed class ClaimMessageRequired()
+        : DomainException("LostItem.ClaimMessageRequired", "Cuenta el detalle que identifica el objeto.");
+
+    public sealed class ClaimClassRequired()
+        : DomainException(
+            "LostItem.ClaimClassRequired",
+            "Solo se pueden reclamar los objetos publicados en una clase.");
+
+    public sealed class ClaimOwnItemForbidden()
+        : DomainException(
+            "LostItem.ClaimOwnItemForbidden",
+            "No puedes reclamar un objeto que has publicado tú.");
+
+    public sealed class ClaimResolveForbidden()
+        : DomainException(
+            "LostItem.ClaimResolveForbidden",
+            "Solo el autor del objeto puede aceptar o rechazar una reclamación.");
+
+    public sealed class AlreadyRecovered()
+        : DomainException("LostItem.AlreadyRecovered", "El objeto ya está marcado como recuperado.");
+
+    public sealed class ClaimAlreadyExists()
+        : DomainException(
+            "LostItem.ClaimAlreadyExists",
+            "Ya tienes una reclamación pendiente sobre este objeto.");
+
+    public sealed class ClaimNotPending()
+        : DomainException("LostItem.ClaimNotPending", "La reclamación ya estaba resuelta.");
+
     public sealed class AuthorRequired()
         : DomainException("LostItem.AuthorRequired", "El objeto debe tener un autor.");
 }

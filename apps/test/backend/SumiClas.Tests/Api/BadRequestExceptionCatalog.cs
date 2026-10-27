@@ -19,6 +19,8 @@ public static class BadRequestExceptionCatalog
         "Enrollment.DifferentSchool",
         "Enrollment.SameClass",
         "Enrollment.SameSchoolYear",
+        "LostItem.AlreadyRecovered",
+        "LostItem.ClaimNotPending",
         "SchoolYear.Archived",
         "Session.RefreshTokenReused",
         "Student.GuardianAlreadyLinked",

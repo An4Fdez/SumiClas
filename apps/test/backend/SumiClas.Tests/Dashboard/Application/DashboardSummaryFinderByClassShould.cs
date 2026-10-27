@@ -34,8 +34,9 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
         AssignmentPendingSummaryResponse assignments = DashboardCountersMother.Assignments();
         ClassExpensePendingSummaryResponse expenses = DashboardCountersMother.Expenses();
         LostItemRecentSummaryResponse lostItems = DashboardCountersMother.LostItems();
+        LostItemClaimPendingSummaryResponse lostItemClaims = DashboardCountersMother.LostItemClaims();
         IReadOnlyCollection<CalendarEventUpcomingResponse> upcomingEvents = DashboardCountersMother.UpcomingEvents();
-        this.ShouldAnswerEveryModule(announcements, assignments, expenses, lostItems, upcomingEvents);
+        this.ShouldAnswerEveryModule(announcements, assignments, expenses, lostItems, lostItemClaims, upcomingEvents);
 
         DashboardSummaryResponse result = await this._useCase.ExecuteAsync(
             DashboardSummaryFinderByClassQueryMother.WithDays(classId, REQUESTED_DAYS),
@@ -47,6 +48,7 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
             assignments,
             expenses,
             lostItems,
+            lostItemClaims,
             upcomingEvents));
     }
 
@@ -64,6 +66,7 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
         this.ShouldHaveSent(new AssignmentPendingSummaryFinderByClass.Query(classId));
         this.ShouldHaveSent(new ClassExpensePendingSummaryFinderByClass.Query(classId));
         this.ShouldHaveSent(new LostItemRecentSummaryFinderByClass.Query(classId, REQUESTED_DAYS));
+        this.ShouldHaveSent(new LostItemClaimPendingSummaryFinderByClass.Query(classId));
         this.ShouldHaveSent(new CalendarEventUpcomingFinderByClass.Query(classId, REQUESTED_DAYS));
         this.QueryBus.VerifyNoOtherCalls();
     }
@@ -140,6 +143,7 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
         AssignmentPendingSummaryResponse? assignments = null,
         ClassExpensePendingSummaryResponse? expenses = null,
         LostItemRecentSummaryResponse? lostItems = null,
+        LostItemClaimPendingSummaryResponse? lostItemClaims = null,
         IReadOnlyCollection<CalendarEventUpcomingResponse>? upcomingEvents = null)
     {
         this.QueryBus
@@ -162,6 +166,11 @@ public class DashboardSummaryFinderByClassShould : UnitTestCase
                 It.IsAny<LostItemRecentSummaryFinderByClass.Query>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lostItems ?? DashboardCountersMother.LostItems());
+        this.QueryBus
+            .Setup(bus => bus.Send(
+                It.IsAny<LostItemClaimPendingSummaryFinderByClass.Query>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lostItemClaims ?? DashboardCountersMother.LostItemClaims());
         this.QueryBus
             .Setup(bus => bus.Send(
                 It.IsAny<CalendarEventUpcomingFinderByClass.Query>(),

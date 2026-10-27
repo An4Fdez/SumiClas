@@ -167,4 +167,22 @@ public abstract class LostItemsUnitTestCase : UnitTestCase
         => this.QueryBus.Verify(
             bus => bus.Send(It.IsAny<UserSchoolPublishEnsure.Query>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+    protected void ShouldFindClassMembers(params UserClassMemberResponse[] members)
+        => this.QueryBus
+            .Setup(bus => bus.Send(It.IsAny<UserClassMemberFinderByIds.Query>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserClassMemberFinderByIds.Query query, CancellationToken _)
+                => (IReadOnlyCollection<UserClassMemberResponse>)members
+                    .Where(member => query.UserIds.Contains(member.UserId))
+                    .ToList());
+
+    protected void ShouldHaveEnsuredClassAccess(Guid userId, Guid classId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(new UserClassAccessEnsure.Query(userId, classId), It.IsAny<CancellationToken>()),
+            Times.Once);
+
+    protected void ShouldHaveEnsuredSchoolYearIsActive(Guid schoolYearId)
+        => this.QueryBus.Verify(
+            bus => bus.Send(new SchoolYearEnsureIsActive.Query(schoolYearId), It.IsAny<CancellationToken>()),
+            Times.Once);
 }

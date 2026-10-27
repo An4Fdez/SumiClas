@@ -43,7 +43,7 @@ SumiClas/
   ClassExpenses/Domain/  → ClassExpense (raíz) + ExpenseParticipant (value object)
     · ClassId (no StudentId): a diferencia de Birthday, un gasto es puntual, no recurrente — no hay problema de "seguir al alumno" entre cursos.
     · Participantes y su estado de pago van juntos en ExpenseParticipant (GuardianId + HasPaid) en vez de dos listas separadas (participantIds/paidBy del mock), para que no puedan desincronizarse.
-  LostItems/Domain/      → LostItem (raíz)
+  LostItems/Domain/      → LostItem (raíz) + LostItemClaim (entidad hija: reclamación privada con estado)
     · ClassId (no StudentId): igual que ClassExpense, no es recurrente — se publica una vez y se resuelve, no hay que "seguir" al alumno entre cursos.
     · PhotoPrivacyConfirmed protege en Domain la regla de privacidad de la sección 7.3 (opt-in por foto): si hay PhotoUrl, tiene que venir confirmado, si no Create falla.
   WeeklySummaries/       → WeeklySummary (raíz): el resumen semanal con IA de una clase (Domain + Application + Infrastructure; ver "Resumen semanal con IA" (skill `backend-weekly-summary`))

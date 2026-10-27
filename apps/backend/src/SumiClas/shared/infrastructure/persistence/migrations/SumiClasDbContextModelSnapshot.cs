@@ -707,6 +707,51 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Migrations
                     b.Navigation("Participants");
                 });
 
+            modelBuilder.Entity("SumiClas.LostItems.Domain.LostItem", b =>
+                {
+                    b.OwnsMany("SumiClas.LostItems.Domain.LostItemClaim", "Claims", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ClaimantId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTimeOffset>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Guid>("LostItemId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Message")
+                                .IsRequired()
+                                .HasMaxLength(300)
+                                .HasColumnType("character varying(300)");
+
+                            b1.Property<string>("ResponseMessage")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("Status")
+                                .IsRequired()
+                                .HasMaxLength(30)
+                                .HasColumnType("character varying(30)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("LostItemId", "ClaimantId")
+                                .IsUnique()
+                                .HasFilter("\"Status\" = 'Pending'");
+
+                            b1.ToTable("LostItemClaims", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("LostItemId");
+                        });
+
+                    b.Navigation("Claims");
+                });
+
             modelBuilder.Entity("SumiClas.Sessions.Domain.Session", b =>
                 {
                     b.OwnsMany("SumiClas.Sessions.Domain.RefreshToken", "RefreshTokens", b1 =>

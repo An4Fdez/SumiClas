@@ -55,7 +55,9 @@ public static class LostItemFinderByClass
                     authors.GetValueOrDefault(lostItem.AuthorId)?.ClassRole,
                     lostItem.CreatedAt,
                     lostItem.UpdatedAt,
-                    lostItem.AuthorId == current))
+                    lostItem.AuthorId == current,
+                    lostItem.AuthorId == current ? lostItem.CountPendingClaims() : null,
+                    lostItem.AuthorId == current ? null : lostItem.LatestClaimStatusOf(current)?.ToString()))
                 .ToList();
 
             return new PagedResponse<LostItemResponse>(items, nextCursor);

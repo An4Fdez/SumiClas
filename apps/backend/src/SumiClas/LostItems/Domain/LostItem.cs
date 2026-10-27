@@ -4,6 +4,9 @@ namespace SumiClas.LostItems.Domain;
 
 public sealed class LostItem : AggregateRoot
 {
+    private readonly List<LostItemClaim> _claims = new();
+    public IReadOnlyCollection<LostItemClaim> Claims => _claims.AsReadOnly();
+
     public ItemScope Scope { get; private set; }
 
     /// <summary>Only set when Scope == Class.</summary>
@@ -47,7 +50,8 @@ public sealed class LostItem : AggregateRoot
         bool photoPrivacyConfirmed,
         Guid authorId,
         DateTimeOffset createdAt,
-        DateTimeOffset? updatedAt = null) : base(id)
+        DateTimeOffset? updatedAt = null,
+        IEnumerable<LostItemClaim>? claims = null) : base(id)
     {
         Scope = scope;
         ClassId = classId;
@@ -60,6 +64,13 @@ public sealed class LostItem : AggregateRoot
         AuthorId = authorId;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
+        _claims.AddRange(claims ?? []);
+    }
+
+    private LostItem()
+    {
+        // For reflection purposes (EF Core materialization): the claims parameter is an owned navigation
+        Description = null!;
     }
 
     public static LostItem Create(
@@ -141,4 +152,58 @@ public sealed class LostItem : AggregateRoot
     public void MarkAsRecovered() => Recovered = true;
 
     public void MarkAsNotRecovered() => Recovered = false;
+
+    /// <summary>
+    /// Someone other than the author offers to resolve the item. A user can have only one pending claim at a time, but
+    /// can claim again once the previous one was resolved.
+    /// </summary>
+    public void AddClaim(Guid claimId, Guid claimantId, string message, IClock clock)
+    {
+        LostItemClaim claim = LostItemClaim.Create(claimId, claimantId, message, clock);
+
+        if (claimantId == AuthorId)
+        {
+            throw new LostItemExceptions.ClaimOwnItemForbidden();
+        }
+        if (Recovered)
+        {
+            throw new LostItemExceptions.AlreadyRecovered();
+        }
+        if (_claims.Any(existing => existing.ClaimantId == claimantId && existing.Status == ClaimStatus.Pending))
+        {
+            throw new LostItemExceptions.ClaimAlreadyExists();
+        }
+
+        _claims.Add(claim);
+    }
+
+    /// <summary>Accepting a claim resolves the item: it is marked as recovered and the other pending claims are rejected.</summary>
+    public void AcceptClaim(Guid claimId, string? responseMessage)
+    {
+        LostItemClaim accepted = FindClaim(claimId);
+
+        accepted.Accept(responseMessage);
+
+        foreach (LostItemClaim other in _claims.Where(claim => claim.Status == ClaimStatus.Pending))
+        {
+            other.Reject();
+        }
+
+        MarkAsRecovered();
+    }
+
+    public void RejectClaim(Guid claimId) => FindClaim(claimId).Reject();
+
+    public int CountPendingClaims() => _claims.Count(claim => claim.Status == ClaimStatus.Pending);
+
+    /// <summary>The status of the most recent claim the user made on this item; null if they never claimed it.</summary>
+    public ClaimStatus? LatestClaimStatusOf(Guid claimantId)
+        => _claims
+            .Where(claim => claim.ClaimantId == claimantId)
+            .OrderByDescending(claim => claim.CreatedAt)
+            .Select(claim => (ClaimStatus?)claim.Status)
+            .FirstOrDefault();
+
+    private LostItemClaim FindClaim(Guid claimId)
+        => _claims.FirstOrDefault(claim => claim.Id == claimId) ?? throw new LostItemExceptions.ClaimNotFound();
 }

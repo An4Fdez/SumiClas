@@ -33,10 +33,12 @@ public static class DashboardSummaryFinderByClass
                 new ClassExpensePendingSummaryFinderByClass.Query(query.ClassId), ct);
             LostItemRecentSummaryResponse lostItems = await queryBus.Send(
                 new LostItemRecentSummaryFinderByClass.Query(query.ClassId, days), ct);
+            LostItemClaimPendingSummaryResponse lostItemClaims = await queryBus.Send(
+                new LostItemClaimPendingSummaryFinderByClass.Query(query.ClassId), ct);
             IReadOnlyCollection<CalendarEventUpcomingResponse> upcomingEvents = await queryBus.Send(
                 new CalendarEventUpcomingFinderByClass.Query(query.ClassId, days), ct);
 
-            return new DashboardSummaryResponse(days, announcements, assignments, expenses, lostItems, upcomingEvents);
+            return new DashboardSummaryResponse(days, announcements, assignments, expenses, lostItems, lostItemClaims, upcomingEvents);
         }
     }
 
