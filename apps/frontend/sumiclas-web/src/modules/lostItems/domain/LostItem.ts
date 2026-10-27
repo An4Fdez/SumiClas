@@ -1,4 +1,5 @@
 import type { ClassRole } from '@/lib/roles';
+import type { ClaimStatus } from './ClaimStatus';
 import type { ItemScope } from './ItemScope';
 import type { ItemStatus } from './ItemStatus';
 
@@ -16,4 +17,8 @@ export type LostItem = {
   createdAt: Date;
   updatedAt?: Date;
   isAuthor: boolean;
+  /** Set for the author only. */
+  pendingClaimsCount?: number;
+  /** Set for everyone but the author: the status of their latest claim, if any. */
+  myClaimStatus?: ClaimStatus;
 };

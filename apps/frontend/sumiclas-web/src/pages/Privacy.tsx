@@ -22,6 +22,7 @@ const sections: LegalSection[] = [
       'Datos de tu pertenencia a colegios y clases: el colegio, la clase y el rol que tienes en ella (delegado de clase o participante), así como tu relación con cada alumno (padre, madre o tutor).',
       'Datos de los alumnos menores a tu cargo: nombre y apellidos, y la clase en la que están matriculados. Estos datos los introducen sus padres, madres o tutores legales. No pedimos fecha de nacimiento ni fotografías de los alumnos.',
       'Contenido que tú o tu clase publicáis: avisos, eventos del calendario, deberes y sus comentarios, gastos compartidos y su estado de pago por familia, y objetos perdidos con su descripción. También guardamos quién es el autor de cada contenido y cuándo se creó o se modificó.',
+      'Reclamaciones de objetos perdidos: el mensaje breve que envía un miembro de la clase sobre un objeto y la respuesta opcional del autor. Solo las ven el autor del objeto y quien reclama, y no deben incluir nombres de menores ni teléfonos.',
       'Cumpleaños: si decides publicar el cumpleaños de un hijo o hija, solo se guarda el día y el mes, nunca el año de nacimiento.',
       'Datos de sesión y técnicos: un identificador de sesión que se guarda en una cookie para mantenerte conectado, y registros técnicos de funcionamiento y errores necesarios para mantener el servicio seguro y estable.',
     ],

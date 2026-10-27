@@ -6,6 +6,8 @@ import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 import { AuthorActions } from './AuthorActions';
+import { PendingClaimsBadge } from './ClaimStatusChip';
+import { ItemClaims } from './ItemClaims';
 
 export function ItemDetailModal({
   item,
@@ -16,6 +18,7 @@ export function ItemDetailModal({
   onClose,
   onEdit,
   onDelete,
+  onClaimsChanged,
 }: {
   item: LostItem;
   className?: string;
@@ -25,6 +28,7 @@ export function ItemDetailModal({
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
+  onClaimsChanged: (patch: Partial<LostItem>) => void;
 }) {
   const meta = itemStatusMeta[item.status];
   const c = badgeColorClasses[meta.color];
@@ -51,6 +55,9 @@ export function ItemDetailModal({
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {scopeLabel}
             </span>
+            {item.isAuthor && (item.pendingClaimsCount ?? 0) > 0 && (
+              <PendingClaimsBadge count={item.pendingClaimsCount ?? 0} />
+            )}
           </div>
           <button
             type="button"
@@ -101,6 +108,8 @@ export function ItemDetailModal({
             {recovered ? 'Recuperado' : 'Marcar como recuperado'}
           </button>
         )}
+
+        <ItemClaims item={item} onChanged={onClaimsChanged} />
 
         {item.isAuthor && (
           <AuthorActions

@@ -24,6 +24,7 @@ export class NSwagDashboardRepository implements IDashboardRepository {
       },
       expenses: { pending: response.expenses.pending, item: response.expenses.item ?? undefined },
       lostAndFound: { count: response.lostItems.count },
+      lostItemClaims: { count: response.lostItemClaims.count },
       upcomingEvents: response.upcomingEvents.map((event) => ({
         title: event.title,
         type: toType(event.type),

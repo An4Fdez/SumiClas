@@ -27,7 +27,7 @@ export default function LostAndFound() {
   const classId = currentChild?.classId;
   const repository = useLostItemRepository();
   const ids = useWizardIds();
-  const { state, reload, loadMore, loadingMore, loadMoreError, setRecovered, toggleError } = useClassLostItems(classId);
+  const { state, reload, loadMore, loadingMore, loadMoreError, setRecovered, toggleError, patchItem } = useClassLostItems(classId);
 
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<ItemStatusFilter>('active');
@@ -230,6 +230,7 @@ export default function LostAndFound() {
             setOpenItemId(null);
           }}
           onDelete={() => handleDeleteItem(openItem)}
+          onClaimsChanged={(patch) => patchItem(openItem.id, patch)}
         />
       )}
 

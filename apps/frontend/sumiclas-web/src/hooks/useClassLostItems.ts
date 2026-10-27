@@ -52,6 +52,14 @@ export function useClassLostItems(classId: string | undefined) {
     };
   }, [classId, repository, reloadKey]);
 
+  const patchItem = useCallback((id: string, patch: Partial<LostItem>) => {
+    setState((prev) =>
+      prev.status !== 'ready'
+        ? prev
+        : { ...prev, items: prev.items.map((item) => (item.id === id ? { ...item, ...patch } : item)) },
+    );
+  }, []);
+
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
   const loadMore = useCallback(async () => {
@@ -97,5 +105,5 @@ export function useClassLostItems(classId: string | undefined) {
     [repository],
   );
 
-  return { state, reload, loadMore, loadingMore, loadMoreError, setRecovered, toggleError };
+  return { state, reload, loadMore, loadingMore, loadMoreError, setRecovered, toggleError, patchItem };
 }

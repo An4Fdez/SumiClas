@@ -57,6 +57,7 @@ const sections: LegalSection[] = [
     items: [
       'Publicar contenido ofensivo, discriminatorio, difamatorio, amenazante o ilegal.',
       'Publicar datos personales de terceros que no sean estrictamente necesarios, y en especial datos o imágenes de menores que no sean tus hijos.',
+      'Incluir nombres de menores o números de teléfono en las reclamaciones privadas de objetos perdidos, que solo ven el autor del objeto y quien reclama.',
       'Suplantar a otra persona o dar datos falsos.',
       'Intentar acceder a datos de otras clases o a cuentas ajenas, o interferir en el funcionamiento del servicio.',
       'Usar el servicio con fines comerciales, publicitarios o ajenos a la coordinación escolar.',

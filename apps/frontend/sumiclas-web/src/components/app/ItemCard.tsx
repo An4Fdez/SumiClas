@@ -3,6 +3,7 @@ import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
+import { ClaimStatusChip, PendingClaimsBadge } from './ClaimStatusChip';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 export function ItemCard({
@@ -73,6 +74,10 @@ export function ItemCard({
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {scopeLabel}
             </span>
+            {item.isAuthor && (item.pendingClaimsCount ?? 0) > 0 && (
+              <PendingClaimsBadge count={item.pendingClaimsCount ?? 0} />
+            )}
+            {!item.isAuthor && item.myClaimStatus && <ClaimStatusChip status={item.myClaimStatus} />}
             {recovered && (
               <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                 Recuperado

@@ -246,6 +246,27 @@ export interface IGeneratedApiClient {
     lostItemNotRecoveredMark(lostItemId: string): Promise<void>;
 
     /**
+     * @return Created
+     */
+    lostItemClaimCreate(lostItemId: string, body: LostItemClaimCreateRequest): Promise<void>;
+
+    /**
+     * @return OK
+     */
+    lostItemClaimFinderByItem(lostItemId: string): Promise<LostItemClaimResponse[]>;
+
+    /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    lostItemClaimAccept(lostItemId: string, claimId: string, body: LostItemClaimAcceptRequest | null | undefined): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    lostItemClaimReject(lostItemId: string, claimId: string): Promise<void>;
+
+    /**
      * @return OK
      */
     provinceFinderAll(): Promise<ProvinceResponse[]>;
@@ -3334,6 +3355,290 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
     }
 
     /**
+     * @return Created
+     */
+    lostItemClaimCreate(lostItemId: string, body: LostItemClaimCreateRequest): Promise<void> {
+        let url_ = this.baseUrl + "/api/lost-items/{lostItemId}/claims";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemClaimCreate(_response));
+        });
+    }
+
+    protected processLostItemClaimCreate(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 201) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    lostItemClaimFinderByItem(lostItemId: string): Promise<LostItemClaimResponse[]> {
+        let url_ = this.baseUrl + "/api/lost-items/{lostItemId}/claims";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemClaimFinderByItem(_response));
+        });
+    }
+
+    protected processLostItemClaimFinderByItem(response: Response): Promise<LostItemClaimResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LostItemClaimResponse[];
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LostItemClaimResponse[]>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    lostItemClaimAccept(lostItemId: string, claimId: string, body: LostItemClaimAcceptRequest | null | undefined): Promise<void> {
+        let url_ = this.baseUrl + "/api/lost-items/{lostItemId}/claims/{claimId}/accept";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        if (claimId === undefined || claimId === null)
+            throw new globalThis.Error("The parameter 'claimId' must be defined.");
+        url_ = url_.replace("{claimId}", encodeURIComponent("" + claimId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemClaimAccept(_response));
+        });
+    }
+
+    protected processLostItemClaimAccept(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    lostItemClaimReject(lostItemId: string, claimId: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/lost-items/{lostItemId}/claims/{claimId}/reject";
+        if (lostItemId === undefined || lostItemId === null)
+            throw new globalThis.Error("The parameter 'lostItemId' must be defined.");
+        url_ = url_.replace("{lostItemId}", encodeURIComponent("" + lostItemId));
+        if (claimId === undefined || claimId === null)
+            throw new globalThis.Error("The parameter 'claimId' must be defined.");
+        url_ = url_.replace("{claimId}", encodeURIComponent("" + claimId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "PUT",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processLostItemClaimReject(_response));
+        });
+    }
+
+    protected processLostItemClaimReject(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No autenticado: falta el access token o no es v\u00e1lido.", status, _responseText, _headers, result401);
+            });
+        } else if (status === 403) {
+            return response.text().then((_responseText) => {
+            let result403: any = null;
+            result403 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No tienes permiso para hacer esto.", status, _responseText, _headers, result403);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("No se ha encontrado lo que se ped\u00eda.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            result409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La operaci\u00f3n entra en conflicto con datos que ya existen.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
      * @return OK
      */
     provinceFinderAll(): Promise<ProvinceResponse[]> {
@@ -4940,6 +5245,7 @@ export interface DashboardSummaryResponse {
     assignments: AssignmentPendingSummaryResponse;
     expenses: ClassExpensePendingSummaryResponse;
     lostItems: LostItemRecentSummaryResponse;
+    lostItemClaims: LostItemClaimPendingSummaryResponse;
     upcomingEvents: CalendarEventUpcomingResponse[];
 
     [key: string]: any;
@@ -4993,6 +5299,39 @@ export interface LocalityResponse {
     [key: string]: any;
 }
 
+export interface LostItemClaimAcceptRequest {
+    responseMessage: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface LostItemClaimCreateRequest {
+    id: string;
+    message: string;
+
+    [key: string]: any;
+}
+
+export interface LostItemClaimPendingSummaryResponse {
+    count: number;
+
+    [key: string]: any;
+}
+
+export interface LostItemClaimResponse {
+    id: string;
+    claimantId: string;
+    claimantName: string;
+    claimantRole: string | undefined;
+    message: string;
+    status: string;
+    responseMessage: string | undefined;
+    createdAt: Date;
+    isMine: boolean;
+
+    [key: string]: any;
+}
+
 export interface LostItemCreateRequest {
     id: string;
     scope: string;
@@ -5025,6 +5364,8 @@ export interface LostItemResponse {
     createdAt: Date;
     updatedAt: Date | undefined;
     isAuthor: boolean;
+    pendingClaimsCount: number | undefined;
+    myClaimStatus: string | undefined;
 
     [key: string]: any;
 }

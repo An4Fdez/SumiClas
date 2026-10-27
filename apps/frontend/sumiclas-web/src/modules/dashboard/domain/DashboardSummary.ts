@@ -14,6 +14,8 @@ export type DashboardSummary = {
   homework: { pending: number; nextDueDate?: Date };
   expenses: { pending: boolean; item?: string };
   lostAndFound: { count: number };
+  /** Pending claims on the user's own open lost items. */
+  lostItemClaims: { count: number };
   /** Soonest first, so the first one is the next event of the class. */
   upcomingEvents: UpcomingEvent[];
 };

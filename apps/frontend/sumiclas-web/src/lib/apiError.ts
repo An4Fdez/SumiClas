@@ -19,6 +19,14 @@ const MESSAGE_BY_CODE: Record<string, string> = {
   'User.LastClassRepresentativeCannotResign': 'Eres el único delegado/a de la clase: nombra antes a otra persona.',
   'User.NotClassRepresentative': 'Esa persona no es delegado/a de esta clase.',
   'User.ClassMembersForbidden': 'Solo las familias de esta clase pueden ver quién forma parte de ella.',
+  'LostItem.ClaimOwnItemForbidden': 'No puedes reclamar un objeto que has publicado tú.',
+  'LostItem.ClaimResolveForbidden': 'Solo quien publicó el objeto puede aceptar o rechazar reclamaciones.',
+  'LostItem.ClaimAlreadyExists': 'Ya tienes una reclamación pendiente sobre este objeto.',
+  'LostItem.AlreadyRecovered': 'Este objeto ya está marcado como recuperado.',
+  'LostItem.ClaimNotPending': 'Esta reclamación ya ha sido resuelta.',
+  'LostItem.ClaimMessageRequired': 'Escribe un detalle para que el autor pueda comprobarlo.',
+  'LostItem.ClaimNotFound': 'No hemos encontrado esa reclamación.',
+  'SchoolYear.Archived': 'El curso de esta clase está archivado y ya no admite cambios.',
 };
 
 const MESSAGE_BY_STATUS: Record<number, string> = {

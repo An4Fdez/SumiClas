@@ -1,0 +1,2 @@
+export const CLAIM_MESSAGE_MAX_LENGTH = 300;
+export const CLAIM_RESPONSE_MAX_LENGTH = 200;

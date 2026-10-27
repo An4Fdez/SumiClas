@@ -237,6 +237,20 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
             }
           />
         </Reveal>
+
+        {summary.lostItemClaims.count > 0 && (
+          <Reveal delay={300} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
+            <SectionCard
+              to="/lost-and-found"
+              color="orange"
+              icon={PackageSearch}
+              title="Reclamaciones pendientes en tus objetos"
+              value={withCount(summary.lostItemClaims.count, 'reclamación por revisar', 'reclamaciones por revisar')}
+              highlight
+              highlightLabel="Por revisar"
+            />
+          </Reveal>
+        )}
       </div>
     </>
   );
