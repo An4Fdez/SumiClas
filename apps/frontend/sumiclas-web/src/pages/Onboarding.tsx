@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, LayoutGrid, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
+import { LogoTile } from '@/components/app/LogoTile';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { SchoolSearchStep } from '@/components/onboarding/SchoolSearchStep';
 import { ClassStep } from '@/components/onboarding/ClassStep';
@@ -203,17 +204,13 @@ function SelectionSummary({
     color === 'brand'
       ? 'border-brand-200 bg-brand-50/50 dark:border-brand-700/40 dark:bg-brand-900/15'
       : 'border-mint-200 bg-mint-50/50 dark:border-mint-700/40 dark:bg-mint-900/15';
-  const iconStyles =
-    color === 'brand' ? 'from-brand-400 via-mint-400 to-rose-400' : 'from-mint-400 via-brand-400 to-rose-400';
 
   return (
     <div className={`mb-3 flex items-center justify-between gap-3 rounded-2xl border p-3.5 ${wrapStyles}`}>
       <div className="flex min-w-0 items-center gap-3">
-        <div
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white ${iconStyles}`}
-        >
+        <LogoTile>
           <Icon className="h-4 w-4" />
-        </div>
+        </LogoTile>
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{title}</p>
           {subtitle && <p className="truncate text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}

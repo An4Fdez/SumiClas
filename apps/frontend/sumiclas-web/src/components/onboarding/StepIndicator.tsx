@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { LOGO_GRADIENT_CLASS } from '@/lib/colorClasses';
 
 const steps = ['Colegio', 'Clase', 'Alumno'];
 
@@ -16,11 +17,19 @@ export function StepIndicator({ current }: { current: number }) {
                   state === 'done'
                     ? 'bg-brand-500 text-white'
                     : state === 'active'
-                    ? 'bg-gradient-to-br from-brand-500 via-mint-500 to-rose-500 text-white shadow-md shadow-brand-500/30'
+                    ? `p-0.5 shadow-md shadow-brand-500/30 ${LOGO_GRADIENT_CLASS}`
                     : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                 }`}
               >
-                {state === 'done' ? <Check className="h-4 w-4" /> : step}
+                {state === 'done' ? (
+                  <Check className="h-4 w-4" />
+                ) : state === 'active' ? (
+                  <span className="grid h-full w-full place-items-center rounded-full bg-violet-100 text-[#6464d0] dark:bg-violet-950 dark:text-[#9c9cf0]">
+                    {step}
+                  </span>
+                ) : (
+                  step
+                )}
               </span>
               <span
                 className={`hidden text-sm font-semibold sm:inline ${

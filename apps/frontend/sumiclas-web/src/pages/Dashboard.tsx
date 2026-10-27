@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Calendar, BookOpen, Wallet, PackageSearch, AlertCircle, Sparkles, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
+import { LogoTile } from '@/components/app/LogoTile';
 import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
 import { useChildContext } from '@/hooks/useChildContext';
 import { useClassDashboardSummary } from '@/hooks/useClassDashboardSummary';
@@ -33,9 +34,9 @@ export default function Dashboard() {
       {onboardingState.student && (
         <Reveal className="mb-6">
           <div className="flex items-start gap-3 rounded-2xl border border-mint-200 bg-mint-50/60 p-4 dark:border-mint-700/40 dark:bg-mint-900/15">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-400 via-mint-400 to-rose-400 text-white">
+            <LogoTile>
               <Sparkles className="h-4 w-4" />
-            </div>
+            </LogoTile>
             <p className="text-sm text-slate-700 dark:text-slate-300">
               Hemos {onboardingState.secondGuardian ? 'vinculado' : 'dado de alta'} a{' '}
               <strong className="font-semibold text-slate-900 dark:text-white">{onboardingState.student}</strong>
