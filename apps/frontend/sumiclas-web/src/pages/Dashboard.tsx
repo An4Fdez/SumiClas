@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Calendar, BookOpen, Wallet, PackageSearch, AlertCircle, Sparkles, type LucideIcon } from 'lucide-react';
+import { Bell, Calendar, BookOpen, Wallet, PackageSearch, AlertCircle, PartyPopper, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
 import { LogoTile } from '@/components/app/LogoTile';
 import { WeeklySummaryCard } from '@/components/app/WeeklySummaryCard';
@@ -35,7 +35,7 @@ export default function Dashboard() {
         <Reveal className="mb-6">
           <div className="flex items-start gap-3 rounded-2xl border border-mint-200 bg-mint-50/60 p-4 dark:border-mint-700/40 dark:bg-mint-900/15">
             <LogoTile>
-              <Sparkles className="h-4 w-4" />
+              <PartyPopper className="h-4 w-4" />
             </LogoTile>
             <p className="text-sm text-slate-700 dark:text-slate-300">
               Hemos {onboardingState.secondGuardian ? 'vinculado' : 'dado de alta'} a{' '}
