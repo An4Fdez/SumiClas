@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, Bell, Calendar, BookOpen, CheckCircle2, Sparkles } from 'lucide-react';
+import { ArrowRight, Bell, Calendar, BookOpen, CheckCircle2, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -7,7 +7,7 @@ export function Hero() {
   const navigate = useNavigate();
   const { status } = useAuth();
 
-  const handleSearchSchool = () => {
+  const handleStart = () => {
     navigate(status === 'authenticated' ? '/onboarding' : '/login');
   };
 
@@ -54,23 +54,15 @@ export function Hero() {
           </Reveal>
 
           <Reveal delay={240}>
-            <div id="search-school" className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-900">
-                <Search className="ml-2 h-5 w-5 shrink-0 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Escribe el nombre de tu colegio…"
-                  className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
-                />
-                <button
-                  type="button"
-                  onClick={handleSearchSchool}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.03] active:scale-95"
-                >
-                  Empezar
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
+            <div className="mt-8 flex justify-center lg:justify-start">
+              <button
+                type="button"
+                onClick={handleStart}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-base font-semibold text-white shadow-md shadow-brand-500/25 transition-transform hover:scale-[1.03] active:scale-95"
+              >
+                Empezar
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
           </Reveal>
 

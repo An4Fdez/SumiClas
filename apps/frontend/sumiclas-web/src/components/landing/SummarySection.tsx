@@ -23,7 +23,7 @@ export function SummarySection() {
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 La IA lee lo publicado esa semana en Avisos, Calendario y Deberes, y te lo resume en tres líneas.
-                Para el padre que no abre la app cada día, también llega como notificación.
+                Pensado para el padre que no abre la app cada día.
               </p>
             </Reveal>
 
@@ -31,7 +31,6 @@ export function SummarySection() {
               <ul className="mt-7 space-y-3">
                 {[
                   'Solo lo importante: fechas límite, excursiones, exámenes.',
-                  'Llega como notificación push, no tienes que abrir la app.',
                   'Si quieres detalle, un toque y vas al aviso original.',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">

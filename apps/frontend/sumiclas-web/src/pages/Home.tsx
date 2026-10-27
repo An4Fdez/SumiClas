@@ -3,7 +3,7 @@ import { Problem } from '@/components/landing/Problem';
 import { SummarySection } from '@/components/landing/SummarySection';
 import { Features } from '@/components/landing/Features';
 import { SocialProof } from '@/components/landing/SocialProof';
-import { FinalCTA } from '@/components/landing/FinalCTA';
+import { Faq } from '@/components/landing/Faq';
 
 export default function Home() {
   return (
@@ -13,7 +13,7 @@ export default function Home() {
       <SummarySection />
       <Features />
       <SocialProof />
-      <FinalCTA />
+      <Faq />
     </>
   );
 }
