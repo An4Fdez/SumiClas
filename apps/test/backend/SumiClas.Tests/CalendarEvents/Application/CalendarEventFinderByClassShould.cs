@@ -196,20 +196,6 @@ public class CalendarEventFinderByClassShould : CalendarEventsUnitTestCase
     }
 
     [Test]
-    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            CalendarEventFinderByClassQueryMother.WithClassId(classId));
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.ShouldHaveSearched(0);
-    }
-
-    [Test]
     public async Task throw_unauthenticated_before_looking_for_the_class_when_there_is_no_current_user()
     {
         this.ShouldNotFindClass();

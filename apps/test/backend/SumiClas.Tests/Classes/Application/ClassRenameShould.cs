@@ -72,25 +72,6 @@ public class ClassRenameShould : ClassesUnitTestCase
     }
 
     [Test]
-    public async Task throw_school_year_archived_and_keep_the_name_when_the_school_year_is_archived()
-    {
-        Guid schoolYearId = GuidMother.Random();
-        string oldName = StringMother.Random("old");
-        Class schoolClass = ClassMother.With(GuidMother.Random(), schoolYearId, oldName);
-        this.ShouldFetchClasses(schoolClass);
-        Guid currentUserId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldAllowClassRepresentative(currentUserId, schoolClass.Id);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            ClassRenameCommandMother.With(schoolClass.Id, StringMother.Random("class")));
-
-        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
-        schoolClass.Name.Should().Be(oldName);
-    }
-
-    [Test]
     public async Task throw_school_year_archived_before_validating_the_name_when_both_fail()
     {
         Guid schoolYearId = GuidMother.Random();

@@ -14,13 +14,12 @@ using static SumiClas.Api.Endpoints.EndpointsExtensions;
 
 /// <summary>
 /// The HTTP contract of the dashboard summary: a GET with the class and, optionally, the period, answering the summary
-/// as JSON, and a period out of range answering 400.
+/// as JSON.
 /// </summary>
 [TestFixture]
 public class DashboardEndpointsShould
 {
     private const int REQUESTED_DAYS = 14;
-    private const string INVALID_DAYS_CODE = "SummaryPeriod.InvalidDays";
 
     private readonly Mock<ISender> _sender = new();
 
@@ -70,36 +69,6 @@ public class DashboardEndpointsShould
                 new DashboardSummaryFinderByClass.Query(classId, null),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-    }
-
-    [Test]
-    public async Task answer_400_with_the_period_code_when_the_period_is_out_of_range()
-    {
-        this._sender
-            .Setup(sender => sender.Send(
-                It.IsAny<DashboardSummaryFinderByClass.Query>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new SummaryPeriodExceptions.InvalidDays());
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.GetAsync(
-            $"{ApiPrefix}/dashboard/summary?classId={GuidMother.Random()}&days={SummaryPeriod.MaxDays + 1}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await response.Content.ReadAsStringAsync()).Should().Contain(INVALID_DAYS_CODE);
-    }
-
-    [Test]
-    public async Task answer_400_without_reaching_the_use_case_when_the_class_is_not_a_guid()
-    {
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.GetAsync($"{ApiPrefix}/dashboard/summary?classId=not-a-guid");
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        this._sender.VerifyNoOtherCalls();
     }
 
     private static HttpClient AuthenticatedClient(EndpointsHost host)

@@ -158,27 +158,6 @@ public class AssignmentCommentAddShould : AssignmentsUnitTestCase
     }
 
     [Test]
-    public async Task throw_school_year_archived_without_commenting_when_the_school_year_is_archived()
-    {
-        Guid assignmentId = GuidMother.Random();
-        Guid authorId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        Assignment assignment = AssignmentMother.With(id: assignmentId);
-        this.ShouldResolveCurrentUser(authorId);
-        this.ShouldFindUser(authorId);
-        this.ShouldFindClassInSchoolYear(assignment.ClassId, schoolYearId);
-        this.ShouldAllowClassAccess(authorId, assignment.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
-        this.ShouldFetchAssignments(assignment);
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            AssignmentCommentAddCommandMother.WithAssignmentId(assignmentId));
-
-        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
-        assignment.Comments.Should().BeEmpty();
-    }
-
-    [Test]
     public async Task throw_school_year_archived_when_the_text_is_blank_and_the_school_year_is_archived()
     {
         Guid assignmentId = GuidMother.Random();

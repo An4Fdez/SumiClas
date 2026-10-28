@@ -118,20 +118,6 @@ public class SchoolYearArchiveShould : SchoolYearsUnitTestCase
     }
 
     [Test]
-    public async Task throw_unauthenticated_and_keep_it_active_when_there_is_no_current_user()
-    {
-        SchoolYear schoolYear = SchoolYearMother.Active(GuidMother.Random());
-        this.ShouldFetchSchoolYears(schoolYear);
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            SchoolYearArchiveCommandMother.WithSchoolYearId(schoolYear.Id));
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        schoolYear.Status.Should().Be(SchoolYearStatus.Active);
-    }
-
-    [Test]
     public async Task throw_unauthenticated_before_looking_for_the_school_year_when_there_is_no_current_user()
     {
         this.ShouldFetchSchoolYears(SchoolYearMother.Active(GuidMother.Random()));

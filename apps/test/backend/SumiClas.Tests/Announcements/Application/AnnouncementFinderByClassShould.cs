@@ -406,12 +406,13 @@ public class AnnouncementFinderByClassShould : AnnouncementsUnitTestCase
         this.ShouldNotHaveSearched();
     }
 
-    [Test]
-    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date()
+    [TestCase(long.MaxValue)]
+    [TestCase(-1)]
+    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date(long key)
     {
         Guid classId = GuidMother.Random();
         this.ShouldResolveCurrentUser(GuidMother.Random());
-        string cursor = PageCursorMother.Create(long.MaxValue, GuidMother.Random()).Encode();
+        string cursor = PageCursorMother.Create(key, GuidMother.Random()).Encode();
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             AnnouncementFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor),

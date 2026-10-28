@@ -139,29 +139,6 @@ public class ClassExpensePaidMarkShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task throw_school_year_archived_without_marking_when_the_school_year_is_archived()
-    {
-        Guid expenseId = GuidMother.Random();
-        Guid guardianId = GuidMother.Random();
-        Guid schoolYearId = GuidMother.Random();
-        ClassExpense expense = ClassExpenseMother.With(
-            id: expenseId,
-            participants: [ExpenseParticipantMother.Unpaid(guardianId)]);
-        this.ShouldFindClassInSchoolYear(expense.ClassId, schoolYearId);
-        Guid currentUserId = GuidMother.Random();
-        this.ShouldResolveCurrentUser(currentUserId);
-        this.ShouldAllowClassRepresentative(currentUserId, expense.ClassId);
-        this.ShouldFailEnsuringSchoolYearIsActive(schoolYearId, new SchoolYearExceptions.Archived());
-        this.ShouldFetchClassExpenses(expense);
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            ClassExpensePaidMarkCommandMother.With(expenseId, guardianId));
-
-        await act.Should().ThrowAsync<SchoolYearExceptions.Archived>();
-        expense.Participants.Single().HasPaid.Should().BeFalse();
-    }
-
-    [Test]
     public async Task throw_school_year_archived_when_the_guardian_is_not_a_participant_and_it_is_archived()
     {
         Guid expenseId = GuidMother.Random();

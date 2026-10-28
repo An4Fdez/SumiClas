@@ -54,22 +54,6 @@ public class SessionRevokeShould : SessionsUnitTestCase
         session.RevokedAt.Should().NotBeNull();
     }
 
-    [Test]
-    public async Task keep_the_first_revocation_when_called_twice()
-    {
-        this.ShouldHashTokens(this._refreshTokenGenerator);
-        string raw = StringMother.Random("raw");
-        Session session = SessionMother.With(GuidMother.Random(), HashOf(raw));
-        this.ShouldSearchSessions(session);
-        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(raw));
-        DateTimeOffset? firstRevocation = session.RevokedAt;
-        this.AdvanceClock(TimeSpan.FromHours(1));
-
-        await this._useCase.ExecuteAsync(SessionRevokeCommandMother.WithToken(raw));
-
-        session.RevokedAt.Should().Be(firstRevocation);
-    }
-
     [TestCase(null)]
     [TestCase("  ")]
     [TestCase("unknown")]

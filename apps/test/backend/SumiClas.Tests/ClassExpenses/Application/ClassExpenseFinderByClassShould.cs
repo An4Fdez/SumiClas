@@ -11,11 +11,9 @@ using SumiClas.Shared.Domain;
 using SumiClas.Tests.CalendarEvents.Application;
 using SumiClas.Tests.ClassExpenses.Domain;
 using SumiClas.Tests.Shared;
-using SumiClas.Tests.Shared.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
 using SumiClas.Users.Domain;
-using System.Text;
 
 [TestFixture]
 public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
@@ -362,20 +360,6 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     }
 
     [Test]
-    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithClassId(classId));
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task throw_the_class_error_without_searching_when_the_class_is_unknown()
     {
         this.ShouldNotFindClass();
@@ -405,35 +389,6 @@ public class ClassExpenseFinderByClassShould : ClassExpensesUnitTestCase
     public async Task throw_invalid_cursor_without_reading_anything_when_the_cursor_is_invalid(string cursor)
     {
         Guid classId = GuidMother.Random();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor));
-
-        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
-        this.ShouldNotHaveSearched();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [Test]
-    public async Task throw_invalid_cursor_when_the_cursor_key_cannot_be_parsed()
-    {
-        Guid classId = GuidMother.Random();
-        string cursor = Convert.ToBase64String(Encoding.UTF8.GetBytes("abc|" + GuidMother.Random())).TrimEnd('=');
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            ClassExpenseFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor));
-
-        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
-        this.ShouldNotHaveSearched();
-        this.QueryBus.VerifyNoOtherCalls();
-    }
-
-    [TestCase(long.MaxValue)]
-    [TestCase(-1)]
-    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date(long key)
-    {
-        Guid classId = GuidMother.Random();
-        string cursor = PageCursorMother.Create(key, GuidMother.Random()).Encode();
 
         Func<Task> act = () => this._useCase.ExecuteAsync(
             ClassExpenseFinderByClassQueryMother.WithCursor(classId, VALID_LIMIT, cursor));

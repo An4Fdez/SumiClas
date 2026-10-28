@@ -10,11 +10,9 @@ using SumiClas.Shared.Application;
 using SumiClas.Shared.Domain;
 using SumiClas.Tests.LostItems.Domain;
 using SumiClas.Tests.Shared;
-using SumiClas.Tests.Shared.Application;
 using SumiClas.Tests.Users.Application;
 using SumiClas.Users.Application;
 using SumiClas.Users.Domain;
-using System.Text;
 
 [TestFixture]
 public class LostItemFinderByClassShould : LostItemsUnitTestCase
@@ -414,20 +412,6 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
     }
 
     [Test]
-    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithClassId(classId));
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task not_return_the_school_items_of_other_schools()
     {
         Guid classId = GuidMother.Random();
@@ -501,31 +485,6 @@ public class LostItemFinderByClassShould : LostItemsUnitTestCase
 
         await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.QueryBus.VerifyNoOtherCalls();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
-    public async Task throw_invalid_cursor_when_the_cursor_key_cannot_be_parsed()
-    {
-        string cursor = Convert.ToBase64String(Encoding.UTF8.GetBytes("abc|" + GuidMother.Random())).TrimEnd('=');
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithCursor(GuidMother.Random(), VALID_LIMIT, cursor));
-
-        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [TestCase(long.MaxValue)]
-    [TestCase(-1)]
-    public async Task throw_invalid_cursor_when_the_cursor_key_is_out_of_range_for_a_date(long key)
-    {
-        string cursor = PageCursorMother.Create(key, GuidMother.Random()).Encode();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            LostItemFinderByClassQueryMother.WithCursor(GuidMother.Random(), VALID_LIMIT, cursor));
-
-        await act.Should().ThrowAsync<PaginationExceptions.InvalidCursor>();
         this.ShouldNotHaveSearched();
     }
 

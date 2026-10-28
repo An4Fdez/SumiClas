@@ -145,46 +145,24 @@ public class ApiExceptionHandlerShould : ApiUnitTestCase
         logger.ShouldHaveLoggedTheOnlyError(exception, traceId);
     }
 
-    [Test]
-    public async Task answer_503_with_retry_after_when_the_database_is_not_available()
+    private static IEnumerable<TestCaseData> TransientDatabaseFailures()
+    {
+        yield return new TestCaseData(InfrastructureExceptionMother.TransientDatabase());
+        yield return new TestCaseData(InfrastructureExceptionMother.DatabaseTimeout());
+        yield return new TestCaseData(InfrastructureExceptionMother.WrappedTransientDatabase());
+    }
+
+    [TestCaseSource(nameof(TransientDatabaseFailures))]
+    public async Task answer_503_with_retry_after_when_the_database_is_not_available(Exception failure)
     {
         DefaultHttpContext http = HttpContextMother.WithProblemDetails();
 
-        bool handled = await this._handler.TryHandleAsync(
-            http,
-            InfrastructureExceptionMother.TransientDatabase(),
-            CancellationToken.None);
+        bool handled = await this._handler.TryHandleAsync(http, failure, CancellationToken.None);
 
         handled.Should().BeTrue();
         http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
         http.Response.Headers.RetryAfter.ToString().Should().Be(ApiExceptionHandler.RetryAfterSeconds.ToString());
         (await ReadBodyAsync(http)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.ServiceUnavailable);
-    }
-
-    [Test]
-    public async Task answer_503_when_a_database_command_timed_out()
-    {
-        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
-
-        await this._handler.TryHandleAsync(
-            http,
-            InfrastructureExceptionMother.DatabaseTimeout(),
-            CancellationToken.None);
-
-        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
-    }
-
-    [Test]
-    public async Task find_the_transient_database_failure_wrapped_inside_another_exception()
-    {
-        DefaultHttpContext http = HttpContextMother.WithProblemDetails();
-
-        await this._handler.TryHandleAsync(
-            http,
-            InfrastructureExceptionMother.WrappedTransientDatabase(),
-            CancellationToken.None);
-
-        http.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
     }
 
     [Test]

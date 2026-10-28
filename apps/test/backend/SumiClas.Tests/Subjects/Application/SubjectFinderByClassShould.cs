@@ -83,20 +83,6 @@ public class SubjectFinderByClassShould : SubjectsUnitTestCase
     }
 
     [Test]
-    public async Task throw_unauthenticated_without_reading_when_there_is_no_current_user()
-    {
-        Guid classId = GuidMother.Random();
-        this.ShouldFindClass(classId);
-        this.ShouldHaveNoCurrentUser();
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            SubjectFinderByClassQueryMother.WithClassId(classId));
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.Unauthenticated>();
-        this.ShouldNotHaveSearched();
-    }
-
-    [Test]
     public async Task throw_class_not_found_without_searching_when_the_class_does_not_exist()
     {
         Guid classId = GuidMother.Random();

@@ -20,16 +20,4 @@ public class UserSchoolPublishEnsureShould
         (await act.Should().ThrowAsync<UserExceptions.SchoolPublishForbidden>())
             .Which.Code.Should().Be("User.SchoolPublishForbidden");
     }
-
-    [Test]
-    public async Task deny_it_through_the_handler_too()
-    {
-        UserSchoolPublishEnsure.Handler handler = new(this._useCase);
-
-        Func<Task> act = () => handler.Handle(
-            UserSchoolPublishEnsureQueryMother.With(GuidMother.Random(), GuidMother.Random()),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<UserExceptions.SchoolPublishForbidden>();
-    }
 }

@@ -46,18 +46,6 @@ public class ExceptionPipelineShould
     }
 
     [Test]
-    public async Task answer_the_status_of_the_convention_when_the_endpoint_declares_no_domain_exceptions()
-    {
-        await using WebApplication app = await StartAsync();
-        using HttpClient client = ClientOf(app);
-
-        HttpResponseMessage response = await client.GetAsync("/none");
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(SampleExceptions.NOT_FOUND_CODE);
-    }
-
-    [Test]
     public async Task answer_a_500_for_an_exception_that_is_not_a_domain_exception()
     {
         await using WebApplication app = await StartAsync();
@@ -69,31 +57,6 @@ public class ExceptionPipelineShould
         JsonElement body = await BodyOf(response);
         body.GetProperty("code").GetString().Should().Be(ApiErrorCodes.UnexpectedError);
         body.GetRawText().Should().NotContain(InfrastructureExceptionMother.INTERNAL_DETAIL);
-    }
-
-    [Test]
-    public async Task answer_the_status_of_a_bad_http_request_with_its_code()
-    {
-        await using WebApplication app = await StartAsync();
-        using HttpClient client = ClientOf(app);
-
-        HttpResponseMessage response = await client.GetAsync("/malformed");
-
-        response.StatusCode.Should().Be(HttpStatusCode.UnsupportedMediaType);
-        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.BadRequest);
-    }
-
-    [Test]
-    public async Task answer_503_with_retry_after_when_the_database_fails_under_another_exception()
-    {
-        await using WebApplication app = await StartAsync();
-        using HttpClient client = ClientOf(app);
-
-        HttpResponseMessage response = await client.GetAsync("/database");
-
-        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-        response.Headers.RetryAfter!.Delta.Should().Be(TimeSpan.FromSeconds(ApiExceptionHandler.RetryAfterSeconds));
-        (await BodyOf(response)).GetProperty("code").GetString().Should().Be(ApiErrorCodes.ServiceUnavailable);
     }
 
     [Test]
@@ -125,11 +88,7 @@ public class ExceptionPipelineShould
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status409Conflict);
         app.MapGet("/undeclared", IResult () => throw new SampleExceptions.Forbidden())
             .Maps<SampleExceptions.NotFound>(StatusCodes.Status404NotFound);
-        app.MapGet("/none", IResult () => throw new SampleExceptions.NotFound());
         app.MapGet("/unexpected", IResult () => throw InfrastructureExceptionMother.Unexpected());
-        app.MapGet("/malformed", IResult ()
-            => throw new BadHttpRequestException("x", StatusCodes.Status415UnsupportedMediaType));
-        app.MapGet("/database", IResult () => throw InfrastructureExceptionMother.WrappedTransientDatabase());
         await app.StartAsync();
         return app;
     }

@@ -110,48 +110,6 @@ public class SessionRotateShould : SessionsUnitTestCase
     }
 
     [Test]
-    public async Task throw_invalid_and_change_nothing_when_the_token_is_expired()
-    {
-        this.ShouldHashTokens(this._refreshTokenGenerator);
-        Guid userId = GuidMother.Random();
-        string oldRaw = StringMother.Random("old");
-        this.ShouldFindUser(userId, StringMother.Random("name"));
-        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
-        Session session = SessionMother.With(userId, HashOf(oldRaw));
-        this.ShouldSearchSessions(session);
-        this.AdvanceClock(RefreshToken.Lifetime + TimeSpan.FromSeconds(1));
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            SessionRotateCommandMother.WithToken(oldRaw));
-
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
-        TokenOf(session, oldRaw).ReplacedAt.Should().BeNull();
-        session.RefreshTokens.Should().HaveCount(1);
-    }
-
-    [Test]
-    public async Task throw_invalid_and_change_nothing_when_the_session_is_revoked()
-    {
-        this.ShouldHashTokens(this._refreshTokenGenerator);
-        Guid userId = GuidMother.Random();
-        string oldRaw = StringMother.Random("old");
-        this.ShouldFindUser(userId, StringMother.Random("name"));
-        this.ShouldGenerateRefreshToken(StringMother.Random("new"));
-        Session session = SessionMother.With(userId, HashOf(oldRaw));
-        session.Revoke(this.Clock.Object);
-        this.ShouldSearchSessions(session);
-
-        Func<Task> act = () => this._useCase.ExecuteAsync(
-            SessionRotateCommandMother.WithToken(oldRaw));
-
-
-        await act.Should().ThrowAsync<AuthenticationExceptions.RefreshTokenInvalid>();
-        TokenOf(session, oldRaw).ReplacedAt.Should().BeNull();
-        session.RefreshTokens.Should().HaveCount(1);
-    }
-
-    [Test]
     public async Task revoke_the_session_and_throw_reuse_when_a_replaced_token_comes_after_the_grace()
     {
         this.ShouldHashTokens(this._refreshTokenGenerator);

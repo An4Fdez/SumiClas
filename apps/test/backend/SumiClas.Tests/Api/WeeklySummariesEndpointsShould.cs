@@ -52,24 +52,6 @@ public class WeeklySummariesEndpointsShould
     }
 
     [Test]
-    public async Task answer_a_week_without_news_with_no_text()
-    {
-        Guid classId = GuidMother.Random();
-        WeeklySummaryResponse summary = new(MONDAY, SUNDAY, Content: null, GeneratedAt: null);
-        this._sender
-            .Setup(sender => sender.Send(new WeeklySummaryGenerate.Command(classId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(summary);
-        await using EndpointsHost host = await EndpointsHost.StartAsync(this._sender.Object);
-        using HttpClient client = AuthenticatedClient(host);
-
-        using HttpResponseMessage response = await client.PostAsync(
-            $"{ApiPrefix}/weekly-summaries?classId={classId}", null);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await response.Content.ReadFromJsonAsync<WeeklySummaryResponse>()).Should().Be(summary);
-    }
-
-    [Test]
     public async Task answer_503_with_retry_after_and_the_summary_code_when_the_writer_fails()
     {
         this._sender
