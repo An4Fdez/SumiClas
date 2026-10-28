@@ -2,7 +2,16 @@
 
 Cargador de datos de prueba para presentar la web completa. Usa la **API real** (registro, cursos, clases, hijos, matrículas, asignaturas, eventos, avisos, objetos perdidos, deberes y gastos), así que se aplican las mismas reglas que en la aplicación. No lleva dependencias: Node 20 o superior.
 
-**Solo para desarrollo local.** Se niega a hablar con una API que no sea `localhost`, y las contraseñas de las cuentas son falsas y públicas a propósito. No lo uses nunca contra un entorno real.
+**Pensado para desarrollo local.** Por defecto se niega a hablar con una API que no sea `localhost`. Las cuentas son falsas y su contraseña (`Demo1234`) es pública a propósito.
+
+**Contra una API remota (por ejemplo el App Service de pruebas):** hay que pedirlo expresamente con `--allow-remote`, solo vale con `https`, mantiene la contraseña de la demo y pide escribir el nombre del servidor para confirmar. Ojo: en un entorno remoto cualquiera que conozca el `Readme` podrá entrar con esas cuentas. `reset` no funciona en remoto, porque borra con `docker exec` en la base de datos local; para limpiar un entorno remoto hay que borrar a mano.
+
+```bash
+node scripts/demo-data/seed.mjs load --api=https://<tu-app>.azurewebsites.net --allow-remote
+node scripts/demo-data/seed.mjs verify --api=https://<tu-app>.azurewebsites.net --allow-remote
+```
+
+Antes hay que tener cargado el catálogo de colegios en esa base de datos (los colegios de la demo son del catálogo oficial). La API de producción limita los intentos de acceso, así que la carga espera cuando se lo pide y tarda unos minutos.
 
 ## Uso
 

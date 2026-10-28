@@ -1,4 +1,3 @@
-location    = "westeurope"
 environment = "prod"
 
 postgres_admin_password = "change-me-use-a-long-password"

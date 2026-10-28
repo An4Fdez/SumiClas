@@ -1,7 +1,7 @@
-variable "location" {
-  description = "Azure region for every resource."
+variable "resource_group_name" {
+  description = "Existing resource group where everything is created. Region and tags of the group are not changed."
   type        = string
-  default     = "westeurope"
+  default     = "Dev-Resource-Group-Ana"
 }
 
 variable "environment" {

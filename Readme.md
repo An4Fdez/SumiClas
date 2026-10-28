@@ -210,6 +210,18 @@ El código solo lee `IConfiguration`, así que ningún secreto vive en el reposi
 
 ### Publicar la API con la web
 
+El camino normal es el script, que lo hace todo y comprueba el resultado (desde la raíz del repositorio, en PowerShell, con `az login` hecho y la API parada):
+
+```powershell
+.\scripts\deploy\publish-prod.ps1                                  # lee el nombre del App Service de «terraform output»
+.\scripts\deploy\publish-prod.ps1 -AppName app-sumiclas-prod-xxxxx # o se indica a mano
+.\scripts\deploy\publish-prod.ps1 -BuildOnly                       # compila y empaqueta, sin desplegar
+```
+
+El script comprueba las herramientas y la sesión de Azure, publica en una carpeta temporal, verifica que la web está dentro del paquete, **pide confirmación escribiendo «si»** (se salta con `-SkipConfirmation`), sube el zip y espera a que `/healthy` responda 200. No toca los ajustes del App Service. Por defecto usa el grupo `Dev-Resource-Group-Ana` (cambia con `-ResourceGroup`).
+
+Para hacerlo a mano:
+
 ```bash
 dotnet publish apps/backend/api/SumiClas.Api.csproj -c Release -o publish
 ```

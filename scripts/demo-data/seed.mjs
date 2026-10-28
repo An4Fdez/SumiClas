@@ -1,31 +1,39 @@
 #!/usr/bin/env node
 // Loads (or removes) the demo data of SumiClas through the real HTTP API.
-// Local development only: it refuses to talk to any host that is not local.
+// Local by default: it refuses any host that is not local unless --allow-remote is given. The default demo
+// password is public, so on a remote API anyone can sign in to the demo accounts (a conscious choice).
 import { spawnSync } from 'node:child_process';
+import { createInterface } from 'node:readline/promises';
 import {
   ALL_CHILDREN,
   CLASSES,
   CONTENT,
   FAMILIES,
   FEATURED,
-  PASSWORD,
+  PASSWORD as DEFAULT_PASSWORD,
   PEOPLE,
   SCHOOLS,
   SCHOOL_YEAR,
   addDays,
   allDemoIds,
   ids,
+  plannedCreatedAt,
 } from './dataset.mjs';
 
 const HELP = `Uso: node scripts/demo-data/seed.mjs [load|reset|verify] [opciones]
 
-  load     Crea los datos de demostración (por defecto). Se puede repetir: lo que ya existe se salta.
+  load     Crea los datos de demostración (por defecto). Se puede repetir: lo que ya existe se salta. En local,
+           además coloca la fecha de publicación de avisos, objetos perdidos y gastos alrededor del día de referencia.
   reset    Borra solo lo creado por la demo (por sus ids) en la base de datos.
   verify   Entra con las cuentas destacadas y muestra lo que ve cada una.
 
 Opciones:
   --day=AAAA-MM-DD       Día de referencia de las fechas (por defecto, hoy en UTC).
-  --api=URL              API local (por defecto https://localhost:7064).
+  --api=URL              API (por defecto la local, https://localhost:7064).
+  --allow-remote         Permite una API que no sea local (solo load y verify) y pide escribir el nombre del
+                         servidor para confirmar. reset solo funciona en local.
+  --password=CLAVE       Contraseña de todas las cuentas (por defecto, la de la demo; también se puede dar con
+                         la variable SUMICLAS_DEMO_PASSWORD). Si es pública, cualquiera podrá entrar con ella.
   --db-container=NOMBRE  Contenedor de PostgreSQL para reset (por defecto sumiclas-postgres).
   --db-user=USUARIO      Usuario de la base (por defecto sumiclas).
   --db-name=BASE         Nombre de la base (por defecto sumiclas).
@@ -71,12 +79,38 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(DAY) || Number.isNaN(Date.parse(`${DAY}T00:00:00
   process.exit(1);
 }
 
-const apiHost = new URL(API).hostname;
-if (!['localhost', '127.0.0.1', '[::1]', '::1'].includes(apiHost)) {
-  console.error(`Este script solo habla con una API local, y «${apiHost}» no lo es.`);
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '[::1]', '::1'];
+const MIN_REMOTE_PASSWORD_LENGTH = 8;
+const apiUrl = new URL(API);
+const isLocal = LOCAL_HOSTS.includes(apiUrl.hostname);
+const passwordFlag = typeof flags.password === 'string' ? flags.password : undefined;
+const PASSWORD = passwordFlag ?? process.env.SUMICLAS_DEMO_PASSWORD ?? DEFAULT_PASSWORD;
+
+function exitWith(message) {
+  console.error(message);
   process.exit(1);
 }
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+if (isLocal) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+} else {
+  if (!flags['allow-remote']) {
+    exitWith(`«${apiUrl.hostname}» no es una API local. Para usar una remota hay que añadir --allow-remote (ver --help).`);
+  }
+  if (apiUrl.protocol !== 'https:') exitWith('Una API remota tiene que ser https.');
+  if (command === 'reset') exitWith('reset solo funciona contra la base de datos local (borra con docker exec).');
+  if (PASSWORD.length < MIN_REMOTE_PASSWORD_LENGTH) {
+    exitWith(`La contraseña tiene que tener ${MIN_REMOTE_PASSWORD_LENGTH} caracteres o más.`);
+  }
+  if (command === 'load') {
+    const terminal = createInterface({ input: process.stdin, output: process.stdout });
+    const answer = await terminal.question(
+      `Vas a crear cuentas y datos de demostración en ${apiUrl.host}. Escribe ese nombre para continuar: `,
+    );
+    terminal.close();
+    if (answer.trim() !== apiUrl.host) exitWith('Cancelado: no se ha creado nada.');
+  }
+}
 
 const stats = { created: {}, skipped: {} };
 const tokens = new Map();
@@ -323,6 +357,7 @@ async function loadAll() {
     }
   }
 
+  spreadCreationDates();
   printSummary();
 }
 
@@ -387,6 +422,41 @@ function runSql(sql) {
 
 const quoteList = (values) => values.map((value) => `'${value}'`).join(',');
 
+// The API stamps announcements, lost items and expenses with the moment of loading and cannot be told otherwise, so
+// their planned creation date (offset from the reference day) is written straight into the local database, the same way
+// reset deletes. Applying it again is harmless: it always writes the same absolute value. Against a remote API there is
+// no docker access, so nothing is spread there (the refresh SQL script handles dates in that case).
+function spreadCreationDates() {
+  if (!isLocal) {
+    console.log('
+API remota: las fechas de publicación de avisos, objetos y gastos quedan con el momento de la carga.');
+    return;
+  }
+  const rows = { Announcements: [], LostItems: [], ClassExpenses: [] };
+  for (const [classKey, content] of Object.entries(CONTENT)) {
+    for (const item of content.announcements) {
+      rows.Announcements.push([ids.announcement(classKey, item.key), plannedCreatedAt(DAY, item.offset, item.at)]);
+    }
+    for (const item of content.lostItems) rows.LostItems.push([ids.lostItem(classKey, item.key), plannedCreatedAt(DAY, item.offset)]);
+    for (const item of content.expenses) rows.ClassExpenses.push([ids.expense(classKey, item.key), plannedCreatedAt(DAY, item.offset)]);
+  }
+  const statements = Object.entries(rows).map(([table, values]) => {
+    const list = values.map(([id, createdAt]) => `('${id}'::uuid, '${createdAt}'::timestamptz)`).join(', ');
+    return `UPDATE "${table}" AS t SET "CreatedAt" = v.created_at FROM (VALUES ${list}) AS v(id, created_at) WHERE t."Id" = v.id;`;
+  });
+  try {
+    runSql(`BEGIN;
+${statements.join('
+')}
+COMMIT;`);
+    console.log(`
+Fechas de publicación de avisos, objetos perdidos y gastos colocadas alrededor de ${DAY}.`);
+  } catch (error) {
+    console.log(`
+No se pudieron colocar las fechas de publicación (${error.message.trim()}).`);
+  }
+}
+
 function resetAll() {
   const demo = allDemoIds();
   const users = quoteList(demo.users);
@@ -408,6 +478,7 @@ function resetAll() {
     ['Assignments', `"Id" IN (${quoteList(demo.assignments)})`],
     ['ClassExpenseParticipants', `"ClassExpenseId" IN (${quoteList(demo.expenses)})`],
     ['ClassExpenses', `"Id" IN (${quoteList(demo.expenses)})`],
+    ['LostItemClaims', `"LostItemId" IN (${quoteList(demo.lostItems)})`],
     ['LostItems', `"Id" IN (${quoteList(demo.lostItems)})`],
     ['CalendarEvents', `"Id" IN (${quoteList(demo.events)})`],
     ['Subjects', `"Id" IN (${quoteList(demo.subjects)})`],

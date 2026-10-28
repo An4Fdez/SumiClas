@@ -3,6 +3,9 @@ locals {
   database    = "sumiclas"
   db_user     = "sumiclas"
 
+  # Minutes an unhealthy instance waits before it is taken out of rotation (the provider accepts 2 to 10).
+  health_check_eviction_minutes = 10
+
   tags = {
     app         = "sumiclas"
     environment = var.environment
@@ -16,16 +19,15 @@ resource "random_string" "suffix" {
   special = false
 }
 
-resource "azurerm_resource_group" "main" {
-  name     = "rg-${local.name_prefix}"
-  location = var.location
-  tags     = local.tags
+# The resource group already exists and is not managed here, so `terraform destroy` never deletes it.
+data "azurerm_resource_group" "main" {
+  name = var.resource_group_name
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
   name                          = "psql-${local.name_prefix}-${random_string.suffix.result}"
-  resource_group_name           = azurerm_resource_group.main.name
-  location                      = azurerm_resource_group.main.location
+  resource_group_name           = data.azurerm_resource_group.main.name
+  location                      = data.azurerm_resource_group.main.location
   version                       = "17"
   sku_name                      = var.postgres_sku
   storage_mb                    = var.postgres_storage_mb
@@ -56,8 +58,8 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
 
 resource "azurerm_service_plan" "main" {
   name                = "asp-${local.name_prefix}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
   os_type             = "Windows"
   sku_name            = var.app_service_sku
   tags                = local.tags
@@ -65,8 +67,8 @@ resource "azurerm_service_plan" "main" {
 
 resource "azurerm_windows_web_app" "main" {
   name                = "app-${local.name_prefix}-${random_string.suffix.result}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
   service_plan_id     = azurerm_service_plan.main.id
   https_only          = true
   tags                = local.tags
@@ -78,8 +80,10 @@ resource "azurerm_windows_web_app" "main" {
     ftps_state          = "Disabled"
     health_check_path   = "/healthy"
 
+    health_check_eviction_time_in_min = local.health_check_eviction_minutes
+
     application_stack {
-      current_stack  = "dotnetcore"
+      current_stack  = "dotnet"
       dotnet_version = "v10.0"
     }
   }
