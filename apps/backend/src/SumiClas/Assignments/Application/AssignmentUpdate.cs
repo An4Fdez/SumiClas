@@ -35,6 +35,8 @@ public static class AssignmentUpdate
                 throw new AssignmentExceptions.ChangeForbidden();
             }
 
+            Assignment.ValidateContent(command.SubjectId, command.Title);
+
             ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(assignment.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);

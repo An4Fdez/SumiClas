@@ -193,6 +193,8 @@ terraform apply
 
 `terraform.tfvars` y el estado de Terraform están en el `.gitignore` y no se suben. Al terminar, `terraform output` muestra el nombre del App Service, su URL y el servidor de PostgreSQL. La versión de .NET del App Service depende de que tu versión del proveedor `azurerm` ya admita `v10.0`; si `plan` la rechaza, actualiza el proveedor.
 
+**Ojo con la red de PostgreSQL**: la regla `AllowAzureServices` (`0.0.0.0`) deja que **cualquier servicio de Azure**, también los de otras suscripciones, intente conectarse al servidor (sigue haciendo falta usuario y contraseña, y el SSL es obligatorio). Es aceptable para la beta; para producción hay que sustituirla por acceso privado (red virtual) o por reglas con las IP concretas de salida del App Service.
+
 ### Configuración de la aplicación
 
 Terraform **no** define los ajustes del App Service (los ignora a propósito para no pisarlos): se escriben a mano en *Configuración → Variables de entorno* del portal de Azure.

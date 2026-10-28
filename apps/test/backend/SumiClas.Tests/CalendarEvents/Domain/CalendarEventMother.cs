@@ -23,7 +23,8 @@ public static class CalendarEventMother
             null,
             null,
             GuidMother.Random(),
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null);
 
     public static CalendarEvent SchoolWide(Guid schoolId, string title, DateOnly date, Guid authorId)
         => new(
@@ -39,7 +40,8 @@ public static class CalendarEventMother
             null,
             null,
             authorId,
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null);
 
     public static CalendarEvent ForClass(Guid classId, string title, DateOnly date, Guid authorId)
         => new(
@@ -55,7 +57,8 @@ public static class CalendarEventMother
             null,
             null,
             authorId,
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null);
 
     public static CalendarEvent Trip(
         Guid classId,
@@ -79,7 +82,8 @@ public static class CalendarEventMother
             location,
             cost,
             authorId,
-            createdAt);
+            createdAt,
+            null);
 
     public static CalendarEvent Birthday(Guid studentId, string title, int month, int day, Guid authorId)
         => new(
@@ -95,5 +99,6 @@ public static class CalendarEventMother
             null,
             null,
             authorId,
-            UnitTestCase.Now);
+            UnitTestCase.Now,
+            null);
 }

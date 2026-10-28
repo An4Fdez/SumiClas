@@ -35,6 +35,8 @@ public static class AnnouncementUpdate
                 throw new AnnouncementExceptions.ChangeForbidden();
             }
 
+            Announcement.ValidateContent(command.Title, command.Body);
+
             if (!Enum.TryParse<Priority>(command.Priority, ignoreCase: true, out Priority priority) || !Enum.IsDefined(priority))
             {
                 throw new AnnouncementExceptions.InvalidPriority();

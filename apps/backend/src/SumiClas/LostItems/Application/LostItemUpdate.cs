@@ -29,6 +29,8 @@ public static class LostItemUpdate
                 throw new LostItemExceptions.ChangeForbidden();
             }
 
+            LostItem.ValidateContent(command.Description);
+
             if (lostItem.ClassId is { } classId)
             {
                 ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);

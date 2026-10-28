@@ -56,8 +56,7 @@ public sealed class LostItemsEndpoints : IEndpoints
             return Results.NoContent();
         })
             .WithName("LostItemUpdate")
-            .Produces(StatusCodes.Status204NoContent)
-            .ProducesValidationProblem();
+            .Produces(StatusCodes.Status204NoContent);
 
         lostItems.MapDelete("/{lostItemId:guid}", async (Guid lostItemId, ISender sender, CancellationToken ct) =>
         {

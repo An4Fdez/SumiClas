@@ -38,7 +38,7 @@ public sealed class Assignment : AggregateRoot
         bool isProposal,
         DateTimeOffset createdAt,
         IEnumerable<AssignmentComment> comments,
-        DateTimeOffset? updatedAt = null) : base(id)
+        DateTimeOffset? updatedAt) : base(id)
     {
         ClassId = classId;
         SubjectId = subjectId;
@@ -80,7 +80,8 @@ public sealed class Assignment : AggregateRoot
             authorId,
             isProposal,
             clock.UtcNow,
-            []);
+            [],
+            null);
     }
 
     private static void Validate(Guid id, Guid classId, Guid subjectId, string title, Guid authorId)
@@ -100,7 +101,7 @@ public sealed class Assignment : AggregateRoot
         }
     }
 
-    private static void ValidateContent(Guid subjectId, string title)
+    public static void ValidateContent(Guid subjectId, string title)
     {
         if (subjectId == Guid.Empty)
         {

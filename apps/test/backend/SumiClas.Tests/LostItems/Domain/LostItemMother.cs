@@ -29,6 +29,7 @@ public static class LostItemMother
             photoUrl is not null,
             authorId ?? GuidMother.Random(),
             createdAt ?? UnitTestCase.Now,
+            null,
             claims: claims);
 
     public static LostItem ForClass(

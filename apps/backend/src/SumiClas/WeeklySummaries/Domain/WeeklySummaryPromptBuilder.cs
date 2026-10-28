@@ -15,7 +15,7 @@ public static class WeeklySummaryPromptBuilder
     public const int MaxBodyLength = 300;
 
     /// <summary>How much of a title is looked at before cleaning, so the patterns never run over an unbounded text.</summary>
-    public const int MaxRawTitleLength = 1000;
+    public const int MaxRawTextLength = 1000;
 
     private const int MinLines = 3;
     private const int MaxLines = 5;
@@ -127,16 +127,16 @@ public static class WeeklySummaryPromptBuilder
 
     private static string Day(DateOnly date) => date.ToString(DateFormat, CultureInfo.InvariantCulture);
 
-    /// <summary>The first <see cref="MaxRawTitleLength"/> characters, without a last word cut in the middle (it could be half an email).</summary>
-    private static string Bound(string title)
+    /// <summary>The first <see cref="MaxRawTextLength"/> characters, without a last word cut in the middle (it could be half an email).</summary>
+    private static string BoundRaw(string text)
     {
-        if (title.Length <= MaxRawTitleLength)
+        if (text.Length <= MaxRawTextLength)
         {
-            return title;
+            return text;
         }
 
-        string head = title[..MaxRawTitleLength];
-        if (char.IsWhiteSpace(title[MaxRawTitleLength]))
+        string head = text[..MaxRawTextLength];
+        if (char.IsWhiteSpace(text[MaxRawTextLength]))
         {
             return head;
         }
@@ -152,7 +152,7 @@ public static class WeeklySummaryPromptBuilder
 
     private static string Clean(string text, int maxLength)
     {
-        string cleaned = Unsafe.Replace(Email.Replace(Bound(text), EmailPlaceholder), " ").Trim();
+        string cleaned = Unsafe.Replace(Email.Replace(BoundRaw(text), EmailPlaceholder), " ").Trim();
         if (cleaned.Length <= maxLength)
         {
             return cleaned;

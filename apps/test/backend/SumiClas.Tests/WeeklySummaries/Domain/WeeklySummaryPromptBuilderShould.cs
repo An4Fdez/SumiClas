@@ -98,7 +98,7 @@ public class WeeklySummaryPromptBuilderShould
     {
         string title = StringMother.Random("title");
         string visible = StringMother.Random("visible");
-        string body = visible + new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength) + "late text";
+        string body = visible + new string(' ', WeeklySummaryPromptBuilder.MaxRawTextLength) + "late text";
 
         string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(title, body)).User;
 
@@ -237,9 +237,9 @@ public class WeeklySummaryPromptBuilderShould
     [Test]
     public void look_only_at_the_first_part_of_a_title_before_cleaning_it()
     {
-        string blankThenText = new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength) + "late text";
+        string blankThenText = new string(' ', WeeklySummaryPromptBuilder.MaxRawTextLength) + "late text";
         string visible = StringMother.Random("visible");
-        string both = visible + new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength) + "late text";
+        string both = visible + new string(' ', WeeklySummaryPromptBuilder.MaxRawTextLength) + "late text";
 
         string onlyBlank = WeeklySummaryPromptBuilder.Build(OneAnnouncement(blankThenText)).User;
         string kept = WeeklySummaryPromptBuilder.Build(OneAnnouncement(both)).User;
@@ -252,7 +252,7 @@ public class WeeklySummaryPromptBuilderShould
     public void not_leave_half_of_an_email_when_the_first_part_of_a_title_ends_inside_it()
     {
         const string BEGINNING_OF_EMAIL = "x@exam";
-        string title = new string(' ', WeeklySummaryPromptBuilder.MaxRawTitleLength - BEGINNING_OF_EMAIL.Length)
+        string title = new string(' ', WeeklySummaryPromptBuilder.MaxRawTextLength - BEGINNING_OF_EMAIL.Length)
             + BEGINNING_OF_EMAIL + "ple.com";
 
         string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(title)).User;
@@ -264,7 +264,7 @@ public class WeeklySummaryPromptBuilderShould
     [Test]
     public void keep_a_long_word_that_only_has_a_space_in_front_of_it()
     {
-        string title = " " + new string('w', WeeklySummaryPromptBuilder.MaxRawTitleLength * HUGE_FACTOR);
+        string title = " " + new string('w', WeeklySummaryPromptBuilder.MaxRawTextLength * HUGE_FACTOR);
 
         string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(title)).User;
 
@@ -275,7 +275,7 @@ public class WeeklySummaryPromptBuilderShould
     [Test]
     public void accept_a_title_of_exactly_the_length_that_is_looked_at()
     {
-        string title = new string('w', WeeklySummaryPromptBuilder.MaxRawTitleLength);
+        string title = new string('w', WeeklySummaryPromptBuilder.MaxRawTextLength);
 
         string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(title)).User;
 
@@ -286,7 +286,7 @@ public class WeeklySummaryPromptBuilderShould
     [Test]
     public void keep_a_title_made_of_a_single_long_word_up_to_the_first_part()
     {
-        string word = new string('w', WeeklySummaryPromptBuilder.MaxRawTitleLength * HUGE_FACTOR);
+        string word = new string('w', WeeklySummaryPromptBuilder.MaxRawTextLength * HUGE_FACTOR);
 
         string user = WeeklySummaryPromptBuilder.Build(OneAnnouncement(word)).User;
 

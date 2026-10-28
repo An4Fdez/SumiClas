@@ -41,6 +41,8 @@ public static class CalendarEventUpdate
                 throw new CalendarEventExceptions.InvalidType();
             }
 
+            CalendarEvent.ValidateContent(type, command.Title);
+
             if (calendarEvent.ClassId is { } classId)
             {
                 ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classId), ct);

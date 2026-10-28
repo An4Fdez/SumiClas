@@ -186,6 +186,29 @@ public class AnnouncementUpdateShould : AnnouncementsUnitTestCase
     }
 
     [Test]
+    public async Task throw_title_required_without_asking_the_bus_when_the_new_title_is_blank()
+    {
+        Guid authorId = GuidMother.Random();
+        Guid announcementId = GuidMother.Random();
+        Announcement announcement = AnnouncementMother.With(
+            Now,
+            id: announcementId,
+            scope: AnnouncementScope.Class,
+            classId: GuidMother.Random(),
+            authorId: authorId);
+        string title = announcement.Title;
+        this.ShouldFetchAnnouncements(announcement);
+        this.ShouldResolveCurrentUser(authorId);
+
+        Func<Task> act = () => this._useCase.ExecuteAsync(
+            AnnouncementUpdateCommandMother.Valid(announcementId, title: " ", relatedEventId: GuidMother.Random()));
+
+        await act.Should().ThrowAsync<AnnouncementExceptions.TitleRequired>();
+        announcement.Title.Should().Be(title);
+        this.QueryBus.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public async Task throw_school_year_archived_without_changing_anything_when_the_year_of_the_class_is_archived()
     {
         Guid authorId = GuidMother.Random();

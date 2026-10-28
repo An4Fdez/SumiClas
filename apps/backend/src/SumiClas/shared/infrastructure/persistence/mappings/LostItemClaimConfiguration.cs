@@ -11,13 +11,13 @@ namespace SumiClas.Shared.Infrastructure.Persistence.Mappings;
 /// </summary>
 public sealed class LostItemClaimConfiguration
 {
-    private const string LOST_ITEM_ID = "LostItemId";
+    private const string LostItemIdColumn = "LostItemId";
 
     public void Configure(OwnedNavigationBuilder<LostItem, LostItemClaim> builder)
     {
         builder.ToTable("LostItemClaims");
 
-        builder.WithOwner().HasForeignKey(LOST_ITEM_ID);
+        builder.WithOwner().HasForeignKey(LostItemIdColumn);
 
         builder.HasKey(c => c.Id);
 
@@ -44,7 +44,7 @@ public sealed class LostItemClaimConfiguration
             .IsRequired();
 
         // The database backs up the rule of the domain: a user has at most one pending claim on an item.
-        builder.HasIndex(LOST_ITEM_ID, nameof(LostItemClaim.ClaimantId))
+        builder.HasIndex(LostItemIdColumn, nameof(LostItemClaim.ClaimantId))
             .IsUnique()
             .HasFilter($"\"{nameof(LostItemClaim.Status)}\" = '{nameof(ClaimStatus.Pending)}'");
     }

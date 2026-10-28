@@ -32,7 +32,8 @@ public static class AssignmentMother
             authorId ?? GuidMother.Random(),
             isProposal,
             UnitTestCase.Now,
-            comments ?? []);
+            comments ?? [],
+            null);
 
     public static Assignment DoneBy(
         Guid assignmentId,

@@ -7,7 +7,11 @@ public static class SpaWebApplicationExtensions
 {
     private const string AssetsPrefix = "/assets";
     private const string IndexFile = "index.html";
-    private const int AssetsMaxAgeSeconds = 60 * 60 * 24 * 365;
+    private const int SecondsPerMinute = 60;
+    private const int MinutesPerHour = 60;
+    private const int HoursPerDay = 24;
+    private const int DaysPerYear = 365;
+    private const int AssetsMaxAgeSeconds = SecondsPerMinute * MinutesPerHour * HoursPerDay * DaysPerYear;
 
     /// <summary>
     /// Serves the Vite build from wwwroot, with a fallback to <c>index.html</c> for the React Router routes.

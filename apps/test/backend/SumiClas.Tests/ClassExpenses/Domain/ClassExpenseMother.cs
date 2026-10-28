@@ -21,5 +21,6 @@ public static class ClassExpenseMother
             relatedEventId,
             authorId ?? GuidMother.Random(),
             createdAt ?? UnitTestCase.Now,
-            participants ?? [ExpenseParticipantMother.Unpaid(GuidMother.Random())]);
+            participants ?? [ExpenseParticipantMother.Unpaid(GuidMother.Random())],
+            null);
 }

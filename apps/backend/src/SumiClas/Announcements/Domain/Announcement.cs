@@ -118,7 +118,7 @@ public sealed class Announcement : AggregateRoot
         }
     }
 
-    private static void ValidateContent(string title, string body)
+    public static void ValidateContent(string title, string body)
     {
         if (string.IsNullOrWhiteSpace(title))
         {

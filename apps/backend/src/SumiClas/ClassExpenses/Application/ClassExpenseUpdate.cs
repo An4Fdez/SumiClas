@@ -34,6 +34,8 @@ public static class ClassExpenseUpdate
                 throw new ClassExpenseExceptions.ChangeForbidden();
             }
 
+            ClassExpense.ValidateContent(command.Item, command.TotalAmount);
+
             ClassResponse schoolClass = await queryBus.Send(new ClassFinderById.Query(classExpense.ClassId), ct);
 
             await queryBus.Send(new SchoolYearEnsureIsActive.Query(schoolClass.SchoolYearId), ct);

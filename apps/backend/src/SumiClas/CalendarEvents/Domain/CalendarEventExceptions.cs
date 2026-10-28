@@ -50,9 +50,9 @@ public static class CalendarEventExceptions
             "CalendarEvent.ChangeForbidden",
             "Solo el autor del evento puede modificarlo o eliminarlo.");
 
-    public sealed class BirthdayChangeForbidden()
+    public sealed class BirthdayChangeInvalid()
         : DomainException(
-            "CalendarEvent.BirthdayChangeForbidden",
+            "CalendarEvent.BirthdayChangeInvalid",
             "Un cumpleaños no se puede modificar. Elimínalo y añade el cumpleaños de nuevo.");
 
     public sealed class InvalidMonth()

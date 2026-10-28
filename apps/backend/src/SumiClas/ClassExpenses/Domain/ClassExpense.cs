@@ -31,7 +31,7 @@ public sealed class ClassExpense : AggregateRoot
         Guid authorId,
         DateTimeOffset createdAt,
         IEnumerable<ExpenseParticipant> participants,
-        DateTimeOffset? updatedAt = null) : base(id)
+        DateTimeOffset? updatedAt) : base(id)
     {
         ClassId = classId;
         Item = item;
@@ -70,7 +70,8 @@ public sealed class ClassExpense : AggregateRoot
             relatedEventId,
             authorId,
             clock.UtcNow,
-            distinctParticipantIds.Select(guardianId => new ExpenseParticipant(guardianId, false)));
+            distinctParticipantIds.Select(guardianId => new ExpenseParticipant(guardianId, false)),
+            null);
     }
 
     private static void Validate(Guid id, Guid classId, string item, decimal totalAmount, IReadOnlyCollection<Guid> distinctParticipantIds, Guid authorId)
@@ -94,7 +95,7 @@ public sealed class ClassExpense : AggregateRoot
         }
     }
 
-    private static void ValidateContent(string item, decimal totalAmount)
+    public static void ValidateContent(string item, decimal totalAmount)
     {
         if (string.IsNullOrWhiteSpace(item))
         {

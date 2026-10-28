@@ -50,7 +50,7 @@ public sealed class CalendarEvent : AggregateRoot
         string? cost,
         Guid authorId,
         DateTimeOffset createdAt,
-        DateTimeOffset? updatedAt = null) : base(id)
+        DateTimeOffset? updatedAt) : base(id)
     {
         Scope = scope;
         ClassId = classId;
@@ -102,7 +102,8 @@ public sealed class CalendarEvent : AggregateRoot
             NormalizeOptional(location),
             NormalizeOptional(cost),
             authorId,
-            clock.UtcNow);
+            clock.UtcNow,
+            null);
     }
 
     private static void Validate(Guid id, EventScope scope, Guid? classId, Guid? schoolId, EventType type, string title, Guid authorId)
@@ -138,7 +139,7 @@ public sealed class CalendarEvent : AggregateRoot
     {
         if (Type == EventType.Birthday)
         {
-            throw new CalendarEventExceptions.BirthdayChangeForbidden();
+            throw new CalendarEventExceptions.BirthdayChangeInvalid();
         }
 
         ValidateContent(type, title);
@@ -152,7 +153,7 @@ public sealed class CalendarEvent : AggregateRoot
         UpdatedAt = clock.UtcNow;
     }
 
-    private static void ValidateContent(EventType type, string title)
+    public static void ValidateContent(EventType type, string title)
     {
         if (type == EventType.Birthday)
         {
@@ -194,7 +195,8 @@ public sealed class CalendarEvent : AggregateRoot
             null,
             null,
             authorId,
-            clock.UtcNow);
+            clock.UtcNow,
+            null);
     }
 
     private static void ValidateBirthday(Guid id, Guid studentId, string title, Guid authorId)

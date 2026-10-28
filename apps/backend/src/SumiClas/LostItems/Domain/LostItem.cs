@@ -50,7 +50,7 @@ public sealed class LostItem : AggregateRoot
         bool photoPrivacyConfirmed,
         Guid authorId,
         DateTimeOffset createdAt,
-        DateTimeOffset? updatedAt = null,
+        DateTimeOffset? updatedAt,
         IEnumerable<LostItemClaim>? claims = null) : base(id)
     {
         Scope = scope;
@@ -98,7 +98,8 @@ public sealed class LostItem : AggregateRoot
             string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim(),
             photoPrivacyConfirmed,
             authorId,
-            clock.UtcNow);
+            clock.UtcNow,
+            null);
     }
 
     private static void Validate(
@@ -123,10 +124,7 @@ public sealed class LostItem : AggregateRoot
         {
             throw new LostItemExceptions.SchoolRequiredForSchoolScope();
         }
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            throw new LostItemExceptions.DescriptionRequired();
-        }
+        ValidateContent(description);
         if (!string.IsNullOrWhiteSpace(photoUrl) && !photoPrivacyConfirmed)
         {
             throw new LostItemExceptions.PhotoPrivacyConfirmationRequired();
@@ -137,13 +135,18 @@ public sealed class LostItem : AggregateRoot
         }
     }
 
-    /// <summary>Changes the description. The status, the photo and whether it was recovered stay as they were.</summary>
-    public void Update(string description, IClock clock)
+    public static void ValidateContent(string description)
     {
         if (string.IsNullOrWhiteSpace(description))
         {
             throw new LostItemExceptions.DescriptionRequired();
         }
+    }
+
+    /// <summary>Changes the description. The status, the photo and whether it was recovered stay as they were.</summary>
+    public void Update(string description, IClock clock)
+    {
+        ValidateContent(description);
 
         Description = description.Trim();
         UpdatedAt = clock.UtcNow;
