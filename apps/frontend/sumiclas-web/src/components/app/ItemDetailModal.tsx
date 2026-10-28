@@ -6,7 +6,7 @@ import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 import { AuthorActions } from './AuthorActions';
-import { PendingClaimsBadge } from './ClaimStatusChip';
+import { PendingClaimsBadge } from './PendingClaimsBadge';
 import { ItemClaims } from './ItemClaims';
 
 export function ItemDetailModal({

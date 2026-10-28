@@ -4,17 +4,12 @@ import { ClaimStatusChip } from '@/components/app/ClaimStatusChip';
 import { ClaimTextForm } from '@/components/app/ClaimTextForm';
 import { RepresentativeConfirm } from '@/components/app/RepresentativeConfirm';
 import { useLostItemClaims } from '@/hooks/useLostItemClaims';
-import { useLostItemRepository } from '@/hooks/useLostItemRepository';
-import { useWizardIds } from '@/hooks/useWizardIds';
-import { getApiErrorMessage, getApiErrorStatus, UserFacingError } from '@/lib/apiError';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
 import { CLAIM_MESSAGE_MAX_LENGTH, CLAIM_RESPONSE_MAX_LENGTH } from '@/modules/lostItems/domain/ClaimLimits';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 import type { LostItemClaim } from '@/modules/lostItems/domain/LostItemClaim';
-
-const TRANSIENT_CLIENT_ERRORS = [408, 429];
-const CONFLICT_STATUS = 409;
 
 const CLAIM_COPY = {
   lost: { action: 'Creo que lo he visto / lo tengo yo', title: 'Cuéntale al autor lo que sabes' },
@@ -27,9 +22,7 @@ const ACCEPT_HINT = 'Si quieres, deja una frase para coordinar la entrega. Solo 
 type Resolving = { claimId: string; kind: 'accept' | 'reject' } | null;
 
 export function ItemClaims({ item, onChanged }: { item: LostItem; onChanged: (patch: Partial<LostItem>) => void }) {
-  const repository = useLostItemRepository();
-  const ids = useWizardIds();
-  const { state, reload } = useLostItemClaims(item.id);
+  const { state, reload, createClaim, acceptClaim, rejectClaim } = useLostItemClaims(item, onChanged);
   const [claiming, setClaiming] = useState(false);
   const [resolving, setResolving] = useState<Resolving>(null);
   const [resolveError, setResolveError] = useState<string | null>(null);
@@ -60,48 +53,24 @@ export function ItemClaims({ item, onChanged }: { item: LostItem; onChanged: (pa
   const claims = state.claims;
 
   const handleCreate = async (message: string) => {
-    const key = `lostItemClaim:${item.id}:${message}`;
-    let id: string;
-    try {
-      id = ids.take(key);
-    } catch {
-      throw new UserFacingError('Tu navegador no permite enviar reclamaciones fuera de una conexión segura (HTTPS).');
-    }
-    try {
-      await repository.createClaim(item.id, { id, message });
-    } catch (error) {
-      const status = getApiErrorStatus(error);
-      if (status !== undefined && status < 500 && !TRANSIENT_CLIENT_ERRORS.includes(status)) ids.consume(key);
-      if (status === CONFLICT_STATUS) {
-        onChanged({ myClaimStatus: 'pending' });
-        reload();
-      }
-      throw error;
-    }
-    ids.consume(key);
+    await createClaim(message);
     setClaiming(false);
-    onChanged({ myClaimStatus: 'pending' });
-    reload();
   };
 
   const handleAccept = async (claim: LostItemClaim, responseMessage: string) => {
-    await repository.acceptClaim(item.id, claim.id, responseMessage || undefined);
+    await acceptClaim(claim.id, responseMessage);
     setResolving(null);
-    onChanged({ recovered: true, pendingClaimsCount: 0 });
-    reload();
   };
 
   const handleReject = async (claim: LostItemClaim) => {
     setResolveError(null);
     try {
-      await repository.rejectClaim(item.id, claim.id);
+      await rejectClaim(claim.id);
     } catch (error) {
       setResolveError(getApiErrorMessage(error));
       return;
     }
     setResolving(null);
-    onChanged({ pendingClaimsCount: Math.max((item.pendingClaimsCount ?? 1) - 1, 0) });
-    reload();
   };
 
   if (item.isAuthor) {

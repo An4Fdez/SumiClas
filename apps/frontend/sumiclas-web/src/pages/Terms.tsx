@@ -1,4 +1,7 @@
-import { CONTROLLER_NAME, ContactLink, LegalLink, LegalPage, type LegalSection } from '@/components/legal/LegalPage';
+import { ContactLink } from '@/components/legal/ContactLink';
+import { LegalLink } from '@/components/legal/LegalLink';
+import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
+import { CONTROLLER_NAME } from '@/lib/legal';
 
 const sections: LegalSection[] = [
   {

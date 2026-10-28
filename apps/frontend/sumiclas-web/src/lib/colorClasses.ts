@@ -12,6 +12,10 @@ export const badgeColorClasses: Record<PaletteColor, { bg: string; text: string 
 /** The stroke colors of the logo, in its order; used as a thin ring around the tiles that carry the brand (child avatar, AI summary). */
 export const LOGO_GRADIENT_CLASS = 'bg-[linear-gradient(135deg,#00f090,#00d8f0,#7878d8,#f03078,#ffa830)]';
 
+/** The inner face of the logo-ringed tiles (the square `LogoTile` and the round buttons); the caller adds the corner rounding. */
+export const LOGO_TILE_INNER_CLASS =
+  'grid h-full w-full place-items-center bg-violet-100 text-[#6464d0] dark:bg-violet-950 dark:text-[#9c9cf0]';
+
 export const dotColorClasses: Record<PaletteColor, string> = {
   rose: 'bg-rose-500',
   brand: 'bg-brand-500',

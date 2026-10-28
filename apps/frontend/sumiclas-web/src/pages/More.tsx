@@ -2,10 +2,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { UserRound, Smartphone, HelpCircle, ShieldCheck, LogOut, ChevronRight, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-const items: { icon: LucideIcon; label: string; href: string }[] = [
-  { icon: UserRound, label: 'Mi perfil', href: '/more/profile' },
-  { icon: Smartphone, label: 'Notificaciones', href: '/more/notifications' },
-  { icon: HelpCircle, label: 'Ayuda y soporte', href: '/more/help' },
+const items: { icon: LucideIcon; label: string; to: string }[] = [
+  { icon: UserRound, label: 'Mi perfil', to: '/more/profile' },
+  { icon: Smartphone, label: 'Notificaciones', to: '/more/notifications' },
+  { icon: HelpCircle, label: 'Ayuda y soporte', to: '/more/help' },
 ];
 
 const ROW_CLASS =
@@ -36,24 +36,13 @@ export default function More() {
           </span>
           <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
         </Link>
-        {items.map((item) => {
-          const content = (
-            <>
-              <item.icon className="h-4 w-4 text-slate-400" />
-              <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</span>
-              <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
-            </>
-          );
-          return item.href.startsWith('/') ? (
-            <Link key={item.label} to={item.href} className={ROW_CLASS}>
-              {content}
-            </Link>
-          ) : (
-            <a key={item.label} href={item.href} className={ROW_CLASS}>
-              {content}
-            </a>
-          );
-        })}
+        {items.map((item) => (
+          <Link key={item.label} to={item.to} className={ROW_CLASS}>
+            <item.icon className="h-4 w-4 text-slate-400" />
+            <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</span>
+            <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+          </Link>
+        ))}
         <button
           type="button"
           onClick={handleLogout}

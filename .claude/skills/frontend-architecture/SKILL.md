@@ -13,13 +13,14 @@ Aplica a `apps/frontend/sumiclas-web/**`. Las reglas obligatorias, la tabla de s
 src/
   components/
     app/          → componentes de UI de una pantalla/feature concreta (formularios, modales, tarjetas, desplegables). Se queda plano, sin subcarpetas por módulo.
-    layout/        → AppLayout, Navbar, Reveal — armazón de la aplicación
+    layout/        → AppLayout, Navbar, Footer, Reveal, ScrollOnNavigate, ScrollToTopButton — armazón de la aplicación
+    legal/          → piezas de las páginas legales (`LegalPage`, `ContactLink`, `LegalLink`); `Privacy`, `Terms` y `Cookies` se componen con ellas
     landing/        → secciones de la página pública (Home)
     onboarding/       → pasos del flujo de alta (colegio/clase/alumno)
   context/         → Contextos de React (ej. ChildContext.ts + ChildProvider.tsx: split definición/provider)
   data/           → solo `featureMeta.ts`, el icono y el color de cada función de la página pública (landing). Los datos mock de las pantallas ya se sustituyeron por `modules/<module>/` (ver la skill `frontend-api-integration`); no añadas datos de pantalla aquí
   hooks/           → hooks reutilizables (useTheme, useChildContext...)
-  lib/            → utilidades sin estado (date.ts, auth.ts, roles.ts, colorClasses.ts)
+  lib/            → utilidades y constantes sin estado (date.ts, auth.ts, roles.ts, colorClasses.ts, wordmarkColors.ts, reveal.ts, `legal.ts` con el correo de contacto, el responsable, la fecha de actualización y `LINK_CLASS`)
   pages/           → componentes de página, uno por ruta de React Router (Announcements.tsx, Calendar.tsx, Homework.tsx, Expenses.tsx, LostAndFound.tsx...)
   modules/
     <module>/      → capa de datos de un módulo (announcements, calendar, homework, expenses, lostAndFound...), sin UI
@@ -40,7 +41,7 @@ No añadas una carpeta `application/` en `modules/<module>/` sin que se pida exp
 ## Nomenclatura
 
 - Inglés en todo el código: nombres de componentes, archivos, props, hooks propios y variables (`AnnouncementForm`, `eventsForDay`, `className`, `useChildContext`). Ver `docs/glosario-dominio.md` para traducir términos de negocio de forma consistente.
-- Un componente por archivo, nombre de archivo = nombre del componente en PascalCase.
+- Un componente por archivo, nombre de archivo = nombre del componente en PascalCase. Si un archivo exporta dos componentes se parte (`ClaimStatusChip.tsx` y `PendingClaimsBadge.tsx`; `ContactLink.tsx` y `LegalLink.tsx` salieron de `LegalPage.tsx`). Las constantes sin estado van en `lib/`, no junto a un componente (`LAST_UPDATED`, `CONTACT_EMAIL`, `CONTROLLER_NAME` y `LINK_CLASS` en `lib/legal.ts`; los colores del logotipo en `lib/wordmarkColors.ts`).
 - Las interfaces (contratos/puertos, p. ej. los repositorios en `domain/`) llevan prefijo `I` (`IUserRepository`) y el fichero se llama igual (`domain/IUserRepository.ts`); su implementación contra la API se llama `NSwag<Entidad>Repository` (`NSwagUserRepository`, en `infrastructure/NSwagUserRepository.ts`) porque usa el cliente generado por NSwag; si algún día otra implementación usara otra fuente, llevaría su propio prefijo. Los tipos de datos (`Child`, `Profile`) no llevan prefijo y van **un fichero por tipo en `domain/`** (nombre del fichero = nombre del tipo, p. ej. `domain/Profile.ts`): el contrato `I<Entidad>Repository.ts` contiene solo la interfaz, y los tipos compartidos entre módulos (p. ej. `PageRequest`) viven en `modules/Shared/domain/`.
 - Tipos/props inline en la firma del componente (`{ prop1, prop2 }: { prop1: X; prop2: Y }`), no interfaces `Props` separadas salvo que el tipo se reutilice en más de un sitio.
 

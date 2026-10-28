@@ -1,4 +1,5 @@
-import { ContactLink, LegalPage, type LegalSection } from '@/components/legal/LegalPage';
+import { ContactLink } from '@/components/legal/ContactLink';
+import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
 
 const sections: LegalSection[] = [
   {
@@ -15,6 +16,7 @@ const sections: LegalSection[] = [
     items: [
       'sumiclas_refresh (cookie): mantiene tu sesión iniciada y permite renovarla sin pedirte la contraseña de nuevo. Es una cookie propia, no accesible desde el código de la página (HttpOnly), que solo se envía por conexión segura (HTTPS) y solo a la dirección de autenticación de SumiClas (SameSite Strict). Caduca cuando termina la sesión que renueva, o antes si cierras sesión.',
       'sumiclas-theme (almacenamiento local): guarda si prefieres el tema claro u oscuro.',
+      'sumiclas-login-notice (almacenamiento de sesión): guarda de forma temporal un mensaje que se muestra una sola vez al iniciar sesión tras cambiar la contraseña. Se borra en cuanto se muestra y, en todo caso, al cerrar la pestaña.',
       'sumiclas-guardian (almacenamiento local): guarda tu nombre y tu rol (padre, madre o tutor) para mostrarlos en la barra de navegación sin esperar a la red. Se borra al cerrar sesión.',
     ],
   },

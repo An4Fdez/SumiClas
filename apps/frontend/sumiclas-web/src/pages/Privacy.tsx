@@ -1,4 +1,7 @@
-import { CONTROLLER_NAME, ContactLink, LegalLink, LegalPage, type LegalSection } from '@/components/legal/LegalPage';
+import { ContactLink } from '@/components/legal/ContactLink';
+import { LegalLink } from '@/components/legal/LegalLink';
+import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
+import { CONTROLLER_NAME, LINK_CLASS } from '@/lib/legal';
 
 const AEPD_URL = 'https://www.aepd.es';
 
@@ -69,7 +72,7 @@ const sections: LegalSection[] = [
     ],
     items: [
       'Microsoft Azure: alojamiento de la aplicación y de la base de datos. Los servidores están en la región Europa Occidental (Países Bajos), dentro del Espacio Económico Europeo.',
-      'Anthropic: proveedor del modelo de inteligencia artificial que redacta el resumen semanal. Para generarlo enviamos únicamente los títulos y fechas de los avisos, eventos y deberes de la semana, un fragmento breve y depurado del texto de los avisos, el concepto de los gastos con pagos pendientes y el número de objetos perdidos abiertos. No enviamos nombres de alumnos ni de familias, ni correos electrónicos. Solo se genera cuando la semana tiene novedades.',
+      'Anthropic: proveedor del modelo de inteligencia artificial que redacta el resumen semanal. Para generarlo enviamos únicamente los títulos y fechas de los avisos, eventos y deberes de la semana, un fragmento breve y depurado del texto de los avisos, el concepto de los gastos con pagos pendientes y el número de objetos perdidos abiertos. No enviamos a propósito nombres ni correos electrónicos, y pedimos al modelo que no mencione nombres de menores ni de familias. Como el fragmento de los avisos es texto libre escrito por los usuarios, te pedimos que no incluyas nombres de menores ni teléfonos en los avisos. Solo se genera cuando la semana tiene novedades.',
       'Google Fonts: la web carga sus tipos de letra desde los servidores de Google, por lo que Google puede recibir tu dirección IP y los datos técnicos habituales de cualquier petición web.',
     ],
   },
@@ -109,12 +112,7 @@ const sections: LegalSection[] = [
       </>,
       <>
         Si consideras que no hemos tratado tus datos conforme a la normativa, tienes derecho a presentar una reclamación ante la Agencia Española de Protección de Datos (
-        <a
-          href={AEPD_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-brand-600 underline-offset-2 hover:underline dark:text-brand-400"
-        >
+        <a href={AEPD_URL} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
           www.aepd.es
         </a>
         ).

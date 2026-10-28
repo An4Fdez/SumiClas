@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
+import { CONTACT_EMAIL } from '@/lib/legal';
 
 const landingSection = (id: string) => `/#${id}`;
 
@@ -24,7 +25,7 @@ const cols = [
   {
     title: 'Contacto',
     links: [
-      { label: 'hola@sumiclas.es', href: 'mailto:hola@sumiclas.es' },
+      { label: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
       { label: 'Soporte', href: '/support' },
       { label: 'Iniciar sesión', href: '/login' },
     ],

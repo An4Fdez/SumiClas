@@ -1,33 +1,11 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-
-export const LAST_UPDATED = '27 de octubre de 2026';
-export const CONTACT_EMAIL = 'hola@sumiclas.es';
-export const CONTROLLER_NAME = 'Ana Fernández Muñoz';
-
-const LINK_CLASS = 'font-semibold text-brand-600 underline-offset-2 hover:underline dark:text-brand-400';
+import { LAST_UPDATED } from '@/lib/legal';
 
 export type LegalSection = {
   title: string;
   paragraphs?: ReactNode[];
   items?: ReactNode[];
 };
-
-export function ContactLink() {
-  return (
-    <a href={`mailto:${CONTACT_EMAIL}`} className={LINK_CLASS}>
-      {CONTACT_EMAIL}
-    </a>
-  );
-}
-
-export function LegalLink({ to, children }: { to: string; children: ReactNode }) {
-  return (
-    <Link to={to} className={LINK_CLASS}>
-      {children}
-    </Link>
-  );
-}
 
 export function LegalPage({ title, sections }: { title: string; sections: LegalSection[] }) {
   return (

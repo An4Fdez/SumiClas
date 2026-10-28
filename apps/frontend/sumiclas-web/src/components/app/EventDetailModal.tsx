@@ -1,9 +1,8 @@
 import { useRef, type MouseEvent } from 'react';
 import { Coins, MapPin, X } from 'lucide-react';
 import { badgeColorClasses } from '@/lib/colorClasses';
-import { formatFullDay, monthNames, occurrenceInYear } from '@/lib/date';
+import { formatFullDay, formatRelativeDate, monthNames, occurrenceInYear } from '@/lib/date';
 import { eventTypeMeta } from '@/lib/eventTypeMeta';
-import { formatRelativeDate } from '@/lib/date';
 import { roleLabel } from '@/lib/roles';
 import type { CalendarEvent } from '@/modules/calendarEvents/domain/CalendarEvent';
 import { AuthorActions } from './AuthorActions';

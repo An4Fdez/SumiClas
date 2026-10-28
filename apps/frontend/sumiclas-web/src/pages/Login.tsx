@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { PasswordToggle } from '@/components/app/PasswordToggle';
 import { Reveal } from '@/components/layout/Reveal';
 import { SessionLoading } from '@/components/layout/SessionLoading';
 import { useAuth } from '@/hooks/useAuth';
@@ -130,14 +131,7 @@ export default function Login() {
                   placeholder="••••••••"
                   className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  className="shrink-0 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <PasswordToggle visible={showPassword} onToggle={() => setShowPassword((v) => !v)} />
               </div>
             </div>
 

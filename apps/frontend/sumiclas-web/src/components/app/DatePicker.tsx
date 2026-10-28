@@ -2,17 +2,10 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { CalendarNavHeader } from './CalendarNavHeader';
 import { FloatingPanel } from './FloatingPanel';
-import { isSameCalendarDay, formatMonthYear, generateMonthMatrix } from '@/lib/date';
+import { isSameCalendarDay, formatMonthYear, generateMonthMatrix, toDateInputValue } from '@/lib/date';
 
 const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 const PANEL_MIN_WIDTH = 280;
-
-function toISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function fromISODate(s: string): Date | null {
   if (!s) return null;
@@ -85,7 +78,7 @@ export function DatePicker({ value, onChange }: { value: string; onChange: (valu
                     key={`${wi}-${di}`}
                     type="button"
                     onClick={() => {
-                      onChange(toISODate(day.date));
+                      onChange(toDateInputValue(day.date));
                       setOpen(false);
                     }}
                     className={`grid h-8 place-items-center rounded-lg text-xs font-semibold transition-colors ${

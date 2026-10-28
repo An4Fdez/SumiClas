@@ -1,4 +1,4 @@
-import { WORDMARK_LETTER_COLORS } from './wordmarkColors';
+import { WORDMARK_LETTER_COLORS } from '@/lib/wordmarkColors';
 
 const WORDMARK_ACCENT = 'Clas';
 

@@ -1,6 +1,16 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 
+function hashToId(hash: string): string {
+  const raw = hash.slice(1);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    // A malformed escape such as "#%" must not crash the app.
+    return raw;
+  }
+}
+
 export function ScrollOnNavigate() {
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
@@ -14,7 +24,7 @@ export function ScrollOnNavigate() {
       return;
     }
 
-    const target = document.getElementById(decodeURIComponent(hash.slice(1)));
+    const target = document.getElementById(hashToId(hash));
     if (!target) return;
     const navbarHeight = document.querySelector('header')?.getBoundingClientRect().height ?? 0;
     window.scrollTo({

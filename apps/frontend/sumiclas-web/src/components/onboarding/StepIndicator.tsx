@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { LOGO_GRADIENT_CLASS } from '@/lib/colorClasses';
+import { LOGO_GRADIENT_CLASS, LOGO_TILE_INNER_CLASS } from '@/lib/colorClasses';
 
 const steps = ['Colegio', 'Clase', 'Alumno'];
 
@@ -24,7 +24,7 @@ export function StepIndicator({ current }: { current: number }) {
                 {state === 'done' ? (
                   <Check className="h-4 w-4" />
                 ) : state === 'active' ? (
-                  <span className="grid h-full w-full place-items-center rounded-full bg-violet-100 text-[#6464d0] dark:bg-violet-950 dark:text-[#9c9cf0]">
+                  <span className={`${LOGO_TILE_INNER_CLASS} rounded-full`}>
                     {step}
                   </span>
                 ) : (

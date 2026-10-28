@@ -9,6 +9,7 @@ import { useClassDashboardSummary } from '@/hooks/useClassDashboardSummary';
 import { useClassWeeklySummary } from '@/hooks/useClassWeeklySummary';
 import { badgeColorClasses, type PaletteColor } from '@/lib/colorClasses';
 import { formatDueDate } from '@/lib/date';
+import { REVEAL_STEP_MS } from '@/lib/reveal';
 import { roleMeta, type ClassRole } from '@/lib/roles';
 import type { DashboardSummary } from '@/modules/dashboard/domain/DashboardSummary';
 import { DEFAULT_SUMMARY_PERIOD, SUMMARY_PERIODS, type SummaryPeriod } from '@/modules/dashboard/domain/SummaryPeriod';
@@ -71,18 +72,18 @@ export default function Dashboard() {
         </p>
       </Reveal>
 
-      <Reveal delay={20} className="mt-5">
+      <Reveal delay={REVEAL_STEP_MS} className="mt-5">
         <PeriodSelector value={period} onChange={setPeriod} />
       </Reveal>
 
       {weeklySummary.status !== 'idle' && (
-        <Reveal delay={40} className="mt-6">
+        <Reveal delay={2 * REVEAL_STEP_MS} className="mt-6">
           <WeeklySummaryCard state={weeklySummary} onGenerate={generateWeeklySummary} />
         </Reveal>
       )}
 
       {!currentChild ? (
-        <Reveal delay={80} className="mt-6">
+        <Reveal delay={4 * REVEAL_STEP_MS} className="mt-6">
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Todavía no tienes ningún hijo/a registrado.{' '}
@@ -122,7 +123,7 @@ export default function Dashboard() {
 }
 
 const PERIOD_LABEL = 'Novedades de los últimos';
-const CLAIMS_CARD_REVEAL_DELAY_MS = 300;
+const CLAIMS_CARD_REVEAL_DELAY_MS = 15 * REVEAL_STEP_MS;
 
 function PeriodSelector({ value, onChange }: { value: SummaryPeriod; onChange: (period: SummaryPeriod) => void }) {
   return (
@@ -170,7 +171,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
   return (
     <>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Reveal delay={0}>
+        <Reveal>
           <SectionCard
             to="/announcements"
             color="rose"
@@ -182,7 +183,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
           />
         </Reveal>
 
-        <Reveal delay={60}>
+        <Reveal delay={3 * REVEAL_STEP_MS}>
           <SectionCard
             to="/calendar"
             color="violet"
@@ -196,7 +197,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
           />
         </Reveal>
 
-        <Reveal delay={120}>
+        <Reveal delay={6 * REVEAL_STEP_MS}>
           <SectionCard
             to="/homework"
             color="mint"
@@ -214,7 +215,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
       </div>
 
       <div className="mt-4 flex flex-wrap justify-center gap-4">
-        <Reveal delay={180} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
+        <Reveal delay={9 * REVEAL_STEP_MS} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
           <SectionCard
             to="/expenses"
             color="sun"
@@ -226,7 +227,7 @@ function SummaryCards({ summary }: { summary: DashboardSummary }) {
           />
         </Reveal>
 
-        <Reveal delay={240} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
+        <Reveal delay={12 * REVEAL_STEP_MS} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)]">
           <SectionCard
             to="/lost-and-found"
             color="orange"

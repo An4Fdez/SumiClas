@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Reveal } from '@/components/layout/Reveal';
+import { REVEAL_STEP_MS } from '@/lib/reveal';
+
+const FAQ_REVEAL_STEP = 4 * REVEAL_STEP_MS;
 
 const faqs = [
   {
@@ -17,7 +20,7 @@ const faqs = [
   },
   {
     q: '¿Puede unirse el profesor o el AMPA?',
-    a: 'Por supuesto. Los roles dentro de una clase son profesor/tutor, delegado y participante (el resto de padres). A nivel de colegio existe además un rol de administrador para el AMPA o dirección, que puede publicar avisos visibles para todas las clases.',
+    a: 'Por supuesto. Dentro de una clase hay delegados, que publican la información oficial, y participantes (el resto de familias). Publicar avisos para todo el colegio, pensado para el AMPA o la dirección, está previsto para más adelante.',
   },
 ];
 
@@ -38,7 +41,7 @@ export function Faq() {
 
         <div className="mt-10 space-y-3">
           {faqs.map((f, i) => (
-            <Reveal key={f.q} delay={i * 80}>
+            <Reveal key={f.q} delay={i * FAQ_REVEAL_STEP}>
               <FaqItem q={f.q} a={f.a} />
             </Reveal>
           ))}

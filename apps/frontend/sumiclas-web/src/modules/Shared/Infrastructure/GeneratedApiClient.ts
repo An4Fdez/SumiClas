@@ -3115,8 +3115,8 @@ export class GeneratedApiClient extends ClientBase implements IGeneratedApiClien
         } else if (status === 400) {
             return response.text().then((_responseText) => {
             let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HttpValidationProblemDetails;
-            return throwException("Bad Request", status, _responseText, _headers, result400);
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("La petici\u00f3n no es v\u00e1lida.", status, _responseText, _headers, result400);
             });
         } else if (status === 401) {
             return response.text().then((_responseText) => {

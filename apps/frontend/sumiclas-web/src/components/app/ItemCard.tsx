@@ -3,7 +3,8 @@ import { badgeColorClasses } from '@/lib/colorClasses';
 import { formatRelativeDate } from '@/lib/date';
 import { itemStatusMeta } from '@/lib/itemStatusMeta';
 import { roleLabel } from '@/lib/roles';
-import { ClaimStatusChip, PendingClaimsBadge } from './ClaimStatusChip';
+import { ClaimStatusChip } from './ClaimStatusChip';
+import { PendingClaimsBadge } from './PendingClaimsBadge';
 import type { LostItem } from '@/modules/lostItems/domain/LostItem';
 
 export function ItemCard({

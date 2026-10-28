@@ -24,6 +24,7 @@ const inputClasses =
 
 const TOTAL_TOO_HIGH = 'El importe total supera el máximo permitido.';
 const CENT_DIGITS = 2;
+const MAX_ITEM_LENGTH = 200;
 
 export function ExpenseForm({
   className,
@@ -75,7 +76,7 @@ export function ExpenseForm({
   const handleEventChange = (id: string) => {
     setEventId(id);
     const event = events?.find((ev) => ev.id === id);
-    if (event && !editing) setItem(event.title.slice(0, 200));
+    if (event && !editing) setItem(event.title.slice(0, MAX_ITEM_LENGTH));
   };
 
   const handleSubmit = async (e: FormEvent) => {
