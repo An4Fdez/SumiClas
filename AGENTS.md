@@ -29,7 +29,7 @@ apps/
     frontend/    → tests del frontend, Vitest + React Testing Library (la carpeta aún no existe: todavía no hay tests del frontend)
 docs/           → documentación de producto/arquitectura (y la presentación en docs/presentacion)
 terraform/      → infraestructura de Azure (PostgreSQL Flexible Server y App Service en Windows) definida con Terraform
-scripts/        → scripts auxiliares (demo-data: cargador de datos de demostración; deploy: publish-prod.ps1, que publica en el App Service de Azure; el agente no lo ejecuta, lo lanza el usuario)
+scripts/        → scripts auxiliares (demo-data: cargador de datos de demostración y export-sql.mjs, que genera los SQL de la demo y el de refresco de fechas; deploy: publish-prod.ps1, que publica en el App Service de Azure; el agente no lo ejecuta, lo lanza el usuario)
 SumiClas.slnx   → solución que agrupa los proyectos anteriores
 .claude/skills/ → skills del proyecto (ver "Skills del proyecto")
 ```
@@ -75,7 +75,7 @@ pnpm dev
 - Frontend (Vite): `http://localhost:4004` (HTTP; `vite.config.ts` no activa HTTPS, y el proxy llama a la API por HTTPS con `secure: false`).
 - Backend (perfil `https` en `launchSettings.json`): `https://localhost:7064`.
 - El proxy de Vite reenvía `/api/` a `https://localhost:7064` por defecto (el perfil `https` de `launchSettings.json`); se puede cambiar con la variable `API_PROXY_TARGET` (ver `vite.config.ts`). Web y API comparten así origen y no hay CORS.
-- **Datos de demostración**: `scripts/demo-data/` (Node, sin dependencias, fuera de `SumiClas.slnx`) carga por la API real unas familias, clases y contenido inventados, en español, para presentar la web (`node scripts/demo-data/seed.mjs load|reset|verify`). Las cuentas y la contraseña (`Demo1234`) son falsas y están en el `Readme.md` a propósito; el script se niega por defecto a hablar con una API que no sea local (solo `--allow-remote` y `https`, decisión del usuario del 2026-10-28; cuidado: en remoto la contraseña pública permite entrar a cualquiera) y añade él mismo el prefijo `/api` a las rutas (hay que tocarlo si cambia el prefijo). Las fechas son relativas al día de la carga, y `reset` borra solo lo creado por la demo.
+- **Datos de demostración**: `scripts/demo-data/` (Node, sin dependencias, fuera de `SumiClas.slnx`) carga por la API real unas familias, clases y contenido inventados, en español, para presentar la web (`node scripts/demo-data/seed.mjs load|reset|verify`). Las cuentas y la contraseña (`Demo1234`) son falsas y están en el `Readme.md` a propósito; el script se niega por defecto a hablar con una API que no sea local (solo `--allow-remote` y `https`, decisión del usuario del 2026-10-28; cuidado: en remoto la contraseña pública permite entrar a cualquiera) y añade él mismo el prefijo `/api` a las rutas (hay que tocarlo si cambia el prefijo). Las fechas son relativas a un único día ancla (`--day`, por defecto hoy; ventana de 6 días antes a 14 después): las de eventos, deberes y cumpleaños salen de la API, y las de publicación de avisos, objetos perdidos y gastos se colocan con un `UPDATE` local por `docker exec` (la API no deja fijarlas). Un aviso centinela con fecha exactamente igual al ancla permite a un script SQL de refresco saber en qué día está la demo. `reset` borra solo lo creado por la demo.
 
 ## Convenciones comunes
 

@@ -148,7 +148,7 @@ Se entra en `http://localhost:4004` con cualquiera de estas cuentas. **La contra
 | Correo | Qué caso muestra |
 | --- | --- |
 | `lucia.navarro@demo.sumiclas.test` | Madre y **delegada** de 3ºA (Aravaca): publica avisos, eventos, deberes y gastos, y gestiona su clase. |
-| `marcos.gil@demo.sumiclas.test` | Padre con **dos hijos** (mellizos) en la misma clase, con un aviso sin leer y un gasto pendiente. |
+| `marcos.gil@demo.sumiclas.test` | Padre con **dos hijos** (mellizos) en la misma clase, con varios avisos sin leer y un gasto pendiente. |
 | `elena.ruiz@demo.sumiclas.test` | Madre con **dos hijos en clases distintas** (4ºB y 3ºA): se cambia de hijo y de clase con el selector de hijo. |
 | `tomas.herrero@demo.sumiclas.test` | Padre con la hija **al día**: todo leído, deberes hechos y gastos pagados (nada pendiente). |
 | `carmen.ruiz@demo.sumiclas.test` | Madre y delegada de 2ºA en **otro colegio y otra ciudad** (Sevilla). |
@@ -156,7 +156,7 @@ Se entra en `http://localhost:4004` con cualquiera de estas cuentas. **La contra
 
 El resto de familias (otras doce cuentas del mismo dominio) completan las listas de la clase. Todos los datos son ficticios; solo los nombres de los colegios son oficiales (del catálogo ya cargado).
 
-Las fechas de los eventos, los deberes y los cumpleaños son **relativas al día en que se carga la demo**, así que conviene recargarla el día de la presentación o el anterior (se necesitan Docker con PostgreSQL levantado y la API en marcha):
+Las fechas de los eventos, los deberes, los cumpleaños y, en local, la publicación de avisos, objetos perdidos y gastos son **relativas al día en que se carga la demo** (cubren unas dos semanas: de 6 días antes a 14 después, para que el resumen semanal tenga material), así que conviene recargarla el día de la presentación o el anterior (se necesitan Docker con PostgreSQL levantado y la API en marcha):
 
 ```bash
 node scripts/demo-data/seed.mjs load             # primera vez, o tras vaciar la base de datos
@@ -167,7 +167,7 @@ node scripts/demo-data/seed.mjs verify           # lo que ve cada cuenta destaca
 
 El script habla con la API real (`https://localhost:7064` por defecto, o la que se indique con `--api=`) usando las rutas bajo `/api`, así que la API tiene que estar arrancada con el código actual. Si al entrar con las cuentas de demostración el servidor responde «credenciales incorrectas», lo más probable es que la base de datos se haya vaciado o recreado: ejecuta `load` de nuevo.
 
-El resumen semanal con IA del panel solo aparece si la API se arranca con la clave de Anthropic (`Ai:ApiKey`, ver `AGENTS.md`); sin ella la tarjeta muestra el botón «Generar resumen». Más detalles en `scripts/demo-data/README.md`.
+El resumen semanal con IA del panel solo aparece si la API se arranca con la clave de Anthropic (`Ai:ApiKey`, ver `AGENTS.md`); sin ella la tarjeta muestra el botón «Generar resumen». Para desplegar la demo sin la API hay ficheros SQL (`node scripts/demo-data/export-sql.mjs --out=<carpeta>`: datos completos, ampliación aditiva y un script que recoloca las fechas en el día que quieras, para ejecutar cada dos semanas). Más detalles en `scripts/demo-data/README.md`.
 
 ## 📦 Despliegue
 

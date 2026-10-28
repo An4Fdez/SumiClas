@@ -428,8 +428,7 @@ const quoteList = (values) => values.map((value) => `'${value}'`).join(',');
 // no docker access, so nothing is spread there (the refresh SQL script handles dates in that case).
 function spreadCreationDates() {
   if (!isLocal) {
-    console.log('
-API remota: las fechas de publicación de avisos, objetos y gastos quedan con el momento de la carga.');
+    console.log('\nAPI remota: las fechas de publicación de avisos, objetos y gastos quedan con el momento de la carga.');
     return;
   }
   const rows = { Announcements: [], LostItems: [], ClassExpenses: [] };
@@ -445,15 +444,10 @@ API remota: las fechas de publicación de avisos, objetos y gastos quedan con el
     return `UPDATE "${table}" AS t SET "CreatedAt" = v.created_at FROM (VALUES ${list}) AS v(id, created_at) WHERE t."Id" = v.id;`;
   });
   try {
-    runSql(`BEGIN;
-${statements.join('
-')}
-COMMIT;`);
-    console.log(`
-Fechas de publicación de avisos, objetos perdidos y gastos colocadas alrededor de ${DAY}.`);
+    runSql(`BEGIN;\n${statements.join('\n')}\nCOMMIT;`);
+    console.log(`\nFechas de publicación de avisos, objetos perdidos y gastos colocadas alrededor de ${DAY}.`);
   } catch (error) {
-    console.log(`
-No se pudieron colocar las fechas de publicación (${error.message.trim()}).`);
+    console.log(`\nNo se pudieron colocar las fechas de publicación (${error.message.trim()}).`);
   }
 }
 
